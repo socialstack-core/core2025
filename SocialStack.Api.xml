@@ -10305,12 +10305,6 @@
             Config indicating how a service should cache its content.
             </summary>
         </member>
-        <member name="P:Api.Startup.CacheConfig.LowFrequencySequentialIds">
-            <summary>
-            True if this type is created at a very low frequency and should use purely sequential IDs.
-            This works by adding 1 to the highest ID in the cache.
-            </summary>
-        </member>
         <member name="P:Api.Startup.CacheConfig.Preload">
             <summary>
             True if all content should be preloaded in the cache.
@@ -10331,13 +10325,6 @@
         <member name="F:Api.Startup.CacheConfig.OnCacheLoaded">
             <summary>
             An action which is triggered when the cache is loaded, if Preload is true.
-            </summary>
-        </member>
-        <member name="F:Api.Startup.CacheConfig.ClusterSync">
-            <summary>
-            Very rare that this is false. If you are using the cache, you should almost always sync it across the cluster automatically.
-            Only turn this off if your type is otherwise handled. For example, you have an in-memory only 
-            type which is permitted to vary from server to server, or all servers know how to populate the cache anyway without it needing to be network synced.
             </summary>
         </member>
         <member name="M:Api.Startup.CacheConfig.#ctor">
@@ -15754,105 +15741,6 @@
             Handles an endpoint which describes the permissions on each role.
             </summary>
         </member>
-        <member name="M:Api.ContentSync.ContentSyncController.#ctor(Api.ContentSync.ContentSyncService)">
-            <summary>
-            Instanced automatically.
-            </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncController.FileSet(System.String)">
-            <summary>
-            Gets a fileset within a particular folder in the public content directory.
-            </summary>
-            <param name="subfolder"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncController.VideoSync(System.Int32,System.Int32,System.Int32)">
-            <summary>
-            Gets a fileset within a particular folder in the public content directory.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncController.Diff(System.String)">
-            <summary>
-            Gets a fileset within a particular folder in the public content directory.
-            </summary>
-            <param name="subfolder"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncController.ContentFiles(System.String)">
-            <summary>
-            Performs a sync with the configured upstream host.
-            </summary>
-            <param name="subfolder"></param>
-            <returns></returns>
-        </member>
-        <member name="T:Api.ContentSync.ContentFileDiffSet">
-            <summary>
-            Diff between local + remote.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentFileDiffSet.LocalOnly">
-            <summary>
-            Locally added or updated files.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentFileDiffSet.RemoteOnly">
-            <summary>
-            Remote added or updated files.
-            </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentFileDiffSet.#ctor(System.Collections.Generic.List{Api.ContentSync.ContentFileInfo},System.Collections.Generic.List{Api.ContentSync.ContentFileInfo})">
-            <summary>
-            Create a set
-            </summary>
-            <param name="local"></param>
-            <param name="remote"></param>
-        </member>
-        <member name="T:Api.ContentSync.SyncStats">
-            <summary>
-            
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.SyncStats.Downloaded">
-            <summary>
-            
-            </summary>
-        </member>
-        <member name="T:Api.ContentSync.ContentFileInfo">
-            <summary>
-            Info about a file in the content tree.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentFileInfo.Path">
-            <summary>
-            Path rel to content directory
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentFileInfo.Size">
-            <summary>
-            File size.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentFileInfo.ModifiedTicksUtc">
-            <summary>
-            UTC ticks last modded.
-            </summary>
-        </member>
-        <member name="T:Api.ContentSync.ContentSyncServer">
-            <summary>
-            Another ContentSync server in the cluster connected to "us".
-            </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncServer.Close">
-            <summary>
-            Called on disconnect
-            </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncServer.Start">
-            <summary>
-            Called just after connecting to a remote server.
-            </summary>
-        </member>
         <member name="T:Api.ContentSync.ContentSyncServerInfo">
             <summary>
             Another ContentSync server in the cluster connected to "us".
@@ -15880,20 +15768,14 @@
         </member>
         <member name="T:Api.ContentSync.ContentSyncService">
             <summary>
-            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            ContentSync manages cache invalidations and related live messaging between a cluster of servers.
+            It operates based on simply the amount of servers which start and register themselves in to the database.
             </summary>
         </member>
         <member name="P:Api.ContentSync.ContentSyncService.ServerId">
             <summary>
             This server's ID.
             </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.Reverse(System.UInt32)">
-            <summary>
-            Reverses the bits in the given number.
-            </summary>
-            <param name="x"></param>
-            <returns></returns>
         </member>
         <member name="P:Api.ContentSync.ContentSyncService.HandshakeOpCode">
             <summary>
@@ -15903,16 +15785,6 @@
         <member name="F:Api.ContentSync.ContentSyncService.Verbose">
             <summary>
             True if sync should be in verbose mode.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentSyncService.SyncServer">
-            <summary>
-            Private LAN sync server.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentSyncService.RemoteServers">
-            <summary>
-            Servers connected to this one, indexed by its ID. To prevent ID allocation being wasteful, servers MUST be given ascending IDs, making this array particularly efficient.
             </summary>
         </member>
         <member name="P:Api.ContentSync.ContentSyncService.Port">
@@ -15930,11 +15802,6 @@
             Instanced automatically. Use injection to use this service, or Startup.Services.Get.
             </summary>
         </member>
-        <member name="F:Api.ContentSync.ContentSyncService.MaxIdMask">
-            <summary>
-            A bitmask used for identifying the max ID in a given server's block.
-            </summary>
-        </member>
         <member name="F:Api.ContentSync.ContentSyncService.SyncFileMode">
             <summary>
             True if the sync file is active.
@@ -15945,202 +15812,16 @@
             The name of this ContentSync host
             </summary>
         </member>
-        <member name="M:Api.ContentSync.ContentSyncService.Diff(System.String)">
-            <summary>
-            Generate a diffset with the configured remote host.
-            </summary>
-            <param name="subfolder"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.VideoSync(System.Int32,System.Int32,System.Int32)">
-            <summary>
-            Sync a video from the upstream host.
-            </summary>
-            <param name="videoId"></param>
-            <param name="firstChunk"></param>
-            <param name="lastChunkId"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.GetLocalFiles(System.String)">
-            <summary>
-            Get local files
-            </summary>
-            <param name="subfolder"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.SyncContentFiles(System.String)">
-            <summary>
-            Performs a sync with the configured upstream host.
-            </summary>
-            <param name="subfolder"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.GetRemoteFileList(System.String,System.String)">
-            <summary>
-            Gets a remote file list.
-            </summary>
-            <param name="remoteCookieValue"></param>
-            <param name="remoteHost"></param>
-            <returns></returns>
-        </member>
         <member name="M:Api.ContentSync.ContentSyncService.Startup">
             <summary>
             Sets up the config required to connect to other servers.
             </summary>
             <returns></returns>
         </member>
-        <member name="M:Api.ContentSync.ContentSyncService.CreateAssigner``2(AutoService{``0,``1})">
-            <summary>
-            Creates an ID assigner for the given service.
-            </summary>
-            <typeparam name="T"></typeparam>
-            <typeparam name="ID"></typeparam>
-            <param name="service"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.ApplyRemoteDataAndStart">
-            <summary>
-            Starts the cSync server. Must occur after other services have started.
-            </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.GetServer(System.UInt32)">
-            <summary>
-            Gets the given server. Returns null if it is "this".
-            </summary>
-            <param name="id"></param>
-            <returns></returns>
-        </member>
-        <member name="F:Api.ContentSync.ContentSyncService.AllServers">
-            <summary>
-            All servers (including "me").
-            </summary>
-        </member>
         <member name="F:Api.ContentSync.ContentSyncService.Self">
             <summary>
             The clustered server representing this specific server. Has IP addresses setup and ready.
             </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.RemoveServer(Api.ContentSync.ContentSyncServer)">
-            <summary>
-            Removes the given server from the lookups.
-            </summary>
-            <param name="server"></param>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.AddStandardTypeInternal``3(AutoService{``0,``1},System.Boolean)">
-            <summary>
-            Register a content type as an opcode.
-            </summary>
-            <typeparam name="T"></typeparam>
-            <typeparam name="ID"></typeparam>
-            <typeparam name="INST_T"></typeparam>
-            <param name="svc"></param>
-            <param name="sendToEveryServer"></param>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.AddMappingTypeInternal``3(Api.Startup.MappingService{``0,``1},System.Boolean)">
-            <summary>
-            Register a content type as an opcode.
-            </summary>
-            <typeparam name="SRC_ID"></typeparam>
-            <typeparam name="TARG_ID"></typeparam>
-            <typeparam name="INST_T"></typeparam>
-            <param name="svc"></param>
-            <param name="sendToEveryServer"></param>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncService.SyncRemoteType(AutoService,System.Boolean)">
-            <summary>
-            Informs CSync to start syncing the given type as the given opcode.
-            </summary>
-            <param name="service"></param>
-            <param name="sendToEveryServer"></param>
-        </member>
-        <member name="T:Api.ContentSync.ContentSyncStandardMeta`3">
-            <summary>
-            Stores sync meta for a given type.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentSyncStandardMeta`3.ReaderWriter">
-            <summary>
-            The reader/writer.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentSyncStandardMeta`3.Service">
-            <summary>
-            The service for the type.
-            </summary>
-        </member>
-        <member name="P:Api.ContentSync.ContentSyncStandardMeta`3.LoadCapability">
-            <summary>
-            Gets the load capability from the host service.
-            </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncStandardMeta`3.#ctor(AutoService{`0,`1})">
-            <summary>
-            Creates new type meta.
-            </summary>
-            <param name="svc"></param>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncStandardMeta`3.GetOrCreateRoom(System.UInt64)">
-            <summary>
-            Gets or creates the network room of the given ID.
-            </summary>
-            <param name="roomId"></param>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncStandardMeta`3.Handle(Api.SocketServerLibrary.OpCode{Api.ContentSync.SyncServerRemoteType},Api.SocketServerLibrary.Client,Api.ContentSync.SyncServerRemoteType,System.Int32)">
-            <summary>
-            Reads an object of this type from the given client.
-            </summary>
-            <param name="opcode"></param>
-            <param name="client"></param>
-            <param name="remoteType"></param>
-            <param name="action"></param>
-            <returns></returns>
-        </member>
-        <member name="T:Api.ContentSync.ContentSyncMappingdMeta`3">
-            <summary>
-            Stores sync meta for a given type.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentSyncMappingdMeta`3.ReaderWriter">
-            <summary>
-            The reader/writer.
-            </summary>
-        </member>
-        <member name="F:Api.ContentSync.ContentSyncMappingdMeta`3.Service">
-            <summary>
-            The service for the type.
-            </summary>
-        </member>
-        <member name="P:Api.ContentSync.ContentSyncMappingdMeta`3.IsMapping">
-            <summary>
-            True if this is a mapping type.
-            </summary>
-        </member>
-        <member name="P:Api.ContentSync.ContentSyncMappingdMeta`3.LoadCapability">
-            <summary>
-            Gets the load capability from the host service.
-            </summary>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncMappingdMeta`3.#ctor(Api.Startup.MappingService{`0,`1})">
-            <summary>
-            Creates new type meta.
-            </summary>
-            <param name="svc"></param>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncMappingdMeta`3.GetOrCreateRoom(System.UInt64)">
-            <summary>
-            Gets or creates the network room of the given ID.
-            </summary>
-            <param name="roomId"></param>
-        </member>
-        <member name="M:Api.ContentSync.ContentSyncMappingdMeta`3.Handle(Api.SocketServerLibrary.OpCode{Api.ContentSync.SyncServerRemoteType},Api.SocketServerLibrary.Client,Api.ContentSync.SyncServerRemoteType,System.Int32)">
-            <summary>
-            Reads an object of this type from the given client.
-            </summary>
-            <param name="opcode"></param>
-            <param name="client"></param>
-            <param name="remoteType"></param>
-            <param name="action"></param>
-            <returns></returns>
         </member>
         <member name="T:Api.ContentSync.PlatformJsonFile">
             <summary>
@@ -16211,38 +15892,6 @@
             <summary>
             Instanced automatically.
             </summary>
-        </member>
-        <member name="M:Api.ContentSync.EventListener.Setup(AutoService)">
-            <summary>
-            Sets up the given autoservice, potentially adding ID management etc to it.
-            </summary>
-            <param name="svc"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.EventListener.SetupService``2(AutoService{``0,``1})">
-            <summary>
-            Sets up a given non-mapping service.
-            </summary>
-            <typeparam name="T"></typeparam>
-            <typeparam name="ID"></typeparam>
-            <param name="service"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.ContentSync.EventListener.AddSequentialIdAssigner``1(AutoService{``0,System.UInt32})">
-            <summary>
-            Adds a sequential ID assigner to the given service. Low frequency types only.
-            </summary>
-            <typeparam name="T"></typeparam>
-            <param name="service"></param>
-        </member>
-        <member name="M:Api.ContentSync.EventListener.AddIdAssigner``2(Api.ContentSync.IdAssigner{``1},Api.Eventing.EventGroup{``0,``1})">
-            <summary>
-            Adds ID assigners to the given event group.
-            </summary>
-            <typeparam name="T"></typeparam>
-            <typeparam name="ID"></typeparam>
-            <param name="assigner"></param>
-            <param name="evtGroup"></param>
         </member>
         <member name="T:Api.ContentSync.NetworkRoomLookup">
             <summary>
@@ -27066,11 +26715,6 @@
             Schedules the install to happen either immediately if services have not yet started (async) or after services have started.
             </summary>
             <param name="templates"></param>
-        </member>
-        <member name="F:AutoService.Synced">
-            <summary>
-            True if this type is synced. This is typically set to true if the cache is active.
-            </summary>
         </member>
         <member name="F:AutoService.ServicedType">
             <summary>
