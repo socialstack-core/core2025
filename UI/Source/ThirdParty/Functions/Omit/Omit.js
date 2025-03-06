@@ -1,29 +1,9 @@
-/*
-* Clones an object but omits certain keys.
-* Great for forwarding props - will also accept a prop spec.
-* For example
-* omit({a: 1, b: 2}, 'b') will return {a: 1}.
-* omit({a: 1, b: 2, c: 3}, ['b', 'c']) will return {a: 1}.
-* keys called 'children' are ignored by default unless you set noDefaults to true.
-*/
-export default function(object, keyOrKeys, noDefaults){
-	if(!object){
-		return object;
-	}
-	keyOrKeys = keyOrKeys instanceof Array ? keyOrKeys : [keyOrKeys];
-	var result = {};
-	for(var key in object){
-		if(!noDefaults){
-			if(key == 'children'){
-				// exclude
-				continue;
-			}
-		}
-		
-		if(keyOrKeys.indexOf(key) == -1){
-			// not excluded
-			result[key] = object[key];
-		}
-	}
-	return result;
+export default function (object, keyOrKeys, noDefaults) {
+
+	// Omit is frequently used to leave out particular fields, but object destructuring is now widely supported and effectively means the JS engine can do it
+	// whilst also simultaneously preserving type safety.
+	//
+	// Previous usage: omit(props, 'b')
+	// Destructure instead: {b, ...props}
+	throw new Exception('Use object destructuring instead of Omit. Omit will shortly be deleted. Find this error for deets!');
 }
