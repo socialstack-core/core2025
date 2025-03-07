@@ -38,10 +38,15 @@ interface IconProps {
 	 * True if this icon should be a fixed width.
 	 */
 	fixedWidth?: boolean,
+
+	/**
+	 * True if the icon should spin.
+	 */
+	spin?: boolean
 }
 
 const Icon: React.FC<IconProps> = (props) => {
-	const {type, light, solid, duotone, regular, brand, fixedWidth } = props;
+	const { type, light, solid, duotone, regular, brand, fixedWidth, spin } = props;
 	
 	var variant = 'fa';
 	
@@ -62,6 +67,10 @@ const Icon: React.FC<IconProps> = (props) => {
 	if (fixedWidth) {
 		className += " fa-fw";
     }
+
+	if (spin) {
+		className += " fa-spin";
+	}
 
 	// NB: count removal: if you need it, use a wrapping component instead 
 	// due to the special case that Icon is to the compiler.
