@@ -1,12 +1,41 @@
 import isNumeric from 'UI/Functions/IsNumeric';
 
-/*
+/**
+ * Holds basic information about a particular endpoint derived exclusively from the URL itself.
+ */
+interface EndpointType {
+
+	/**
+	 * The content type name.
+	 */
+	type: string,
+
+	/**
+	 * True if this is an update endpoint.
+	 */
+	isUpdate: boolean,
+
+	/**
+	 * If this is an update endpoint, the ID of the content being updated.
+	 */
+	updatingId: int | undefined,
+
+	/**
+	 * True if this is a list endpoint.
+	 */
+	isList: boolean
+
+}
+
+/**
 * Gets the core endpoint type from either a full URL or just the endpoint URL.
 * For example, 'site.com/v1/answer/list'  => 'answer',  'v1/answer/list'  => 'answer', 'v1/answer'  => 'answer'
 * Similarly 'site.com/v1/forum/reply' => 'forum/reply'.
 * Note that this does not handle custom endpoints such as 'forum/reply/blah'.
-*/
-export default function GetEndpointType(ep){
+ * @param ep The endpoint URL.
+ * @returns
+ */
+export default function GetEndpointType(ep : string) : EndpointType {
 	var parts = ep.split('v1/');
 	
 	if(parts.length == 2){
@@ -35,7 +64,7 @@ export default function GetEndpointType(ep){
 	return {
 		type: parts.join('/'),
 		isUpdate,
-		updatingId: isUpdate ? parseInt(last) : undefined,
+		updatingId: isUpdate ? parseInt(last) as int : undefined,
 		isList
 	};
 }

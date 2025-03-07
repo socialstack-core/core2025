@@ -1,29 +1,45 @@
-import omit from 'UI/Functions/Omit';
+/**
+ * Props for the Column component.
+ */
+interface ColumnProps extends React.HTMLAttributes<HTMLDivElement> {
+
+	className?: string;
+	customClass?: string;
+	size?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	sizeXs?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	sizeSm?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	sizeMd?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	sizeLg?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	sizeXl?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	offset?: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	offsetXs?: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	offsetSm?: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	offsetMd?: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+	offsetLg?: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+
+	/**
+		An amount, in bootstrap grid columns, to offset your column by.
+	*/
+	offsetXl?: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+
+	/**
+		Optionally add a specific type of margin to your column. See the bootstrap docs for what the available options do.
+	*/
+	margin?: "" | "ml-auto ms-auto" | "mr-auto me-auto" | "mx-auto";
+
+	/**
+		Set this to true if you don't want gutters on your column.
+	*/
+	noGutters?: boolean;
+
+}
 
 /**
  * A 12 segment responsive column. Usually used within a <Row>.
  */
 
-export default function Column (props) {
+const Column: React.FC<ColumnProps> = ({ className, noGutters, customClass, ...props }) => {
 	var colClass = '';
-
-	// PropEditor did at one point allow <option>s such as "Pick a value" to be selected;
-	// ensure value saved in canvas JSON is a valid number
-	var propList = ['', 'Xs', 'Sm', 'Md', 'Lg', 'Xl'];
-
-	propList.forEach(prop => {
-		var sizeProp = 'size' + prop;
-		var offsetProp = 'offset' + prop;
-
-		if (isNaN(props[sizeProp])) {
-			props[sizeProp] = undefined;
-		}
-
-		if (isNaN(props[offsetProp])) {
-			props[offsetProp] = undefined;
-		}
-
-	});
 
 	// only define a default col-md- width if we don't have a col-xs- / col-sm- value which overrides it
 	var sizeMd = props.sizeMd || props.size || (!props.sizeXs && !props.sizeMd ? 6 : undefined);
@@ -97,27 +113,30 @@ export default function Column (props) {
 		colClass += ' ' + props.margin;
 	}
 
-	if (props.noGutters) {
+	if (noGutters) {
 		colClass += ' gx-0';
 	}
 
-	if (props.className) {
-		colClass += ' ' + props.className;
+	if (className) {
+		colClass += ' ' + className;
 	}
 
-	if (props.customClass) {
-		colClass += ' ' + props.customClass;
+	if (customClass) {
+		colClass += ' ' + customClass;
 	}
 
 	return <div
 		className={colClass} 
-		{...(omit(props, ['className', 'noGutters', 'customClass']))}
+		{...props}
 	>
 		{props.children}
 	</div>;
 
-}
+};
 
+export default Column;
+
+/*
 var sizeOptions = [
 	{ name: 'Auto', value: 'auto' },
 	{ name: '1/12', value: 1 },
@@ -164,3 +183,4 @@ Column.propTypes = {
 };
 
 Column.icon = 'columns';
+*/
