@@ -19,6 +19,18 @@ declare global {
 	 * Convertible to a date with isoConvert from DateTools.
 	 */
 	type Dateish = number | Date | string;
+
+	interface PublicError {
+		/**
+		 * Textual message to display.
+		 */
+		message: string,
+
+		/**
+		 * Error type.
+		 */
+		type: string
+	}
 }
 
 export {};
