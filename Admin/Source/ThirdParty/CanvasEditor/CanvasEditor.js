@@ -6,7 +6,6 @@ import { ErrorCatcher } from 'UI/Canvas';
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import ModuleSelector from 'Admin/CanvasEditor/ModuleSelector'
 import PropEditor from 'Admin/CanvasEditor/PropEditor';
-import omit from 'UI/Functions/Omit';
 import RichEditor from 'Admin/CanvasEditor/RichEditor';
 import Draft from 'Admin/CanvasEditor/DraftJs/Draft.min.js';
 const { EditorState, convertToRaw } = Draft;
@@ -24,29 +23,29 @@ const DEFAULT_BLOCK_TYPE = 'p';
 var inputTypes = global.inputTypes = global.inputTypes || {};
 
 // type="canvas"
-inputTypes.ontypecanvas = function(props, _this){
+inputTypes.ontypecanvas = function({ id, className, type, inline, ...props }, _this){
 	
 	return <CanvasEditor
-		id={props.id || _this.fieldId}
-		className={props.className || "form-control"}
+		id={id || _this.fieldId}
+		className={className || "form-control"}
 		toolbar 
 		modules
 		groups = {"formatting"}
-		{...omit(props, ['id', 'className', 'type', 'inline'])}
+		{...props}
 	/>;
 	
 };
 
 // contentType="application/canvas"
-inputTypes['application/canvas'] = function(props, _this){
+inputTypes['application/canvas'] = function({ id, className, type, inline, ...props }, _this){
 	return <CanvasEditor
-		id={props.id || _this.fieldId}
-		className={props.className || "form-control"}
+		id={id || _this.fieldId}
+		className={className || "form-control"}
 		toolbar 
 		modules
 		enableAdd
 		groups = {"formatting"}
-		{...omit(props, ['id', 'className', 'type', 'inline'])}
+		{...props}
 	/>;
 };
 

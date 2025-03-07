@@ -1,5 +1,4 @@
 import getRef from 'UI/Functions/GetRef';
-import omit from 'UI/Functions/Omit';
 import { useConfig } from 'UI/Session';
 
 const uploaderConfig = useConfig('uploader') || {};
@@ -14,7 +13,7 @@ Min required props: size, fileRef. Size must be an available size from your uplo
 export default function Image(props) {
 	const { onClick, fileRef, linkUrl, size, fullWidth, float, className,
 		animation, animationDirection, animationDuration,
-		width, height, disableBlurhash } = props;
+		width, height, disableBlurhash, ...attribs } = props;
 
 	var anim = animation ? animation : undefined;
 	var animOnce = animation ? true : undefined;
@@ -77,9 +76,7 @@ export default function Image(props) {
 	if (className) {
 		imageClass += " " + className;
 	}
-
-	var attribs = omit(props, ['fileRef', 'onClick', 'linkUrl', 'size', 'width', 'height', 'fullWidth', 'float', 'className', 'animation', 'animationDirection', 'animationDuration']);
-
+	
 	attribs.alt = attribs.alt || attribs.title;
 
 	if (!isNaN(testWidth)) {

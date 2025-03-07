@@ -1,5 +1,4 @@
 import webRequest from 'UI/Functions/WebRequest';
-import omit from 'UI/Functions/Omit';
 import Input from 'UI/Input';
 import Search from 'UI/Search';
 import AutoForm from 'Admin/AutoForm';
@@ -80,6 +79,8 @@ export default class ContentSelect extends React.Component {
 	}
 		
 	render(){
+		const {contentType, ...props} = this.props;
+		
 		if(this.props.search){
 			
 			var {searchSelected} = this.state;
@@ -111,7 +112,7 @@ export default class ContentSelect extends React.Component {
 					}
 				}
 				name={this.props.name} />
-				<Search for={this.props.contentType} field={this.props.titleField || this.props.search} limit={5} placeholder={"Search for a " + this.props.contentType + ".."} onFind={entry => {
+				<Search for={contentType} field={this.props.titleField || this.props.search} limit={5} placeholder={"Search for a " + contentType + ".."} onFind={entry => {
 					this.setState({
 						searchSelected: entry
 					});
@@ -188,7 +189,7 @@ export default class ContentSelect extends React.Component {
 		}
 
 		return (<div className="content-select">
-			<Input {...omit(this.props, ['contentType'])} noWrapper
+			<Input {...props} noWrapper
 				type="select" defaultValue={this.state.selected ? this.state.selected : null} onChange={e => { this.onChange(e); }}>{
 				all ? all.map(content => {
 					if(!content){
@@ -224,7 +225,7 @@ export default class ContentSelect extends React.Component {
 
 				{this.state.selected &&
 					<a className="btn btn-sm btn-outline-secondary btn-content-select-action btn-visit-content"
-						href={"/en-admin/" + this.props.contentType.toLowerCase() + "/" + this.state.selected}>
+						href={"/en-admin/" + contentType.toLowerCase() + "/" + this.state.selected}>
 						{/*<i className="fal fa-fw fa-external-link"></i> {`Visit ${this.props.label}`}*/}
 						<i className="fal fa-fw fa-external-link"></i> {`Visit`}
 					</a>
@@ -246,7 +247,7 @@ export default class ContentSelect extends React.Component {
 					modalCancelCallback={() => {
 						this.setState({ showCreateOrEditModal: false, entityToEditId: null });
 					}}
-						endpoint={this.props.contentType.toLowerCase()}
+						endpoint={contentType.toLowerCase()}
 						singular={this.props.label} 
 						plural={this.props.label + "s"}
 						id={this.state.entityToEditId ? this.state.entityToEditId : null}

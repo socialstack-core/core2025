@@ -3,7 +3,6 @@ import Container from 'UI/Container';
 import Row from 'UI/Row';
 import Modal from 'UI/Modal';
 import Uploader from 'UI/Uploader';
-import omit from 'UI/Functions/Omit';
 import getRef from 'UI/Functions/GetRef';
 import IconSelector from 'UI/FileSelector/IconSelector';
 import Dropdown from 'UI/Dropdown';
@@ -19,45 +18,45 @@ const PREVIEW_SIZE = 512;
 
 var searchFields = ['originalName', 'alt', 'author', 'id'];
 
-inputTypes.ontypefile = inputTypes.ontypeimage = function (props, _this) {
+inputTypes.ontypefile = inputTypes.ontypeimage = function ({id, className, type, inline, ...props}, _this) {
     return (
         <FileSelector
-            id={props.id || _this.fieldId}
-            className={props.className || "form-control"}
-            {...omit(props, ['id', 'className', 'type', 'inline'])}
+            id={id || _this.fieldId}
+            className={className || "form-control"}
+            {...props}
         />
     );
 };
 
-inputTypes.ontypeicon = function (props, _this) {
+inputTypes.ontypeicon = function ({id, className, type, inline, ...props}, _this) {
     return (
         <FileSelector
-            id={props.id || _this.fieldId}
+            id={id || _this.fieldId}
             iconOnly
-            className={props.className || "form-control"}
-            {...omit(props, ['id', 'className', 'type', 'inline'])}
+            className={className || "form-control"}
+            {...props}
         />
     );
 };
 
-inputTypes.ontypeupload = function (props, _this) {
+inputTypes.ontypeupload = function ({id, className, type, inline, ...props}, _this) {
     return (
         <FileSelector
-            id={props.id || _this.fieldId}
+            id={id || _this.fieldId}
             browseOnly
-            className={props.className || "form-control"}
-            {...omit(props, ['id', 'className', 'type', 'inline'])}
+            className={className || "form-control"}
+            {...props}
         />
     );
 };
 
-inputTypes.ontypenopaging = function (props, _this) {
+inputTypes.ontypenopaging = function ({id, className, type, inline, ...props}, _this) {
     return (
         <FileSelector
-            id={props.id || _this.fieldId}
+            id={id || _this.fieldId}
             disablePaging
-            className={props.className || "form-control"}
-            {...omit(props, ['id', 'className', 'type', 'inline'])}
+            className={className || "form-control"}
+            {...props}
         />
     );
 };

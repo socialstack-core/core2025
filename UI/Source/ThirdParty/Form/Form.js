@@ -1,5 +1,4 @@
 import submitForm from 'UI/Functions/SubmitForm';
-import omit from 'UI/Functions/Omit';
 import Spacer from 'UI/Spacer';
 import Alert from 'UI/Alert';
 import Loading from 'UI/Loading';
@@ -100,11 +99,20 @@ export default class Form extends React.Component {
 	render() {
 		var {
 			action,
+			method,
 			loadingMessage,
 			submitLabel,
 			submitEnabled,
 			failedMessage,
-			successMessage
+			successMessage,
+			onSuccess,
+			onFailed,
+			onValues,
+			children,
+			locale,
+			requestOpts,
+			formRef,
+			...props
 		} = this.props;
 		
 		var showFormResponse = !!(loadingMessage || submitLabel || failedMessage);
@@ -129,13 +137,13 @@ export default class Form extends React.Component {
 					if(f){
 						f.submit = this.onSubmit;
 					}
-					this.props.formRef && this.props.formRef(f);
+					formRef && formRef(f);
 				}}
 				action={action}
-				method={this.props.method || "post"}
-				{...(omit(this.props, ['action', 'method', 'onSuccess', 'onFailed', 'onValues', 'children', 'locale', 'requestOpts']))}
+				method={method || "post"}
+				{...props}
 			>
-				{this.props.children}
+				{children}
 				{showFormResponse && (
 					<div className="form-response">
 						<Spacer />
@@ -179,9 +187,3 @@ export default class Form extends React.Component {
 	}
 	
 }
-
-Form.propTypes={
-	action: 'string'
-};
-
-Form.icon = 'question';
