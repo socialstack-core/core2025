@@ -18,6 +18,7 @@ namespace Api.Pages
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
 	[LoadPriority(9)]
+	[HostType("web")]
 	public partial class PageService : AutoService<Page>
 	{
 		/// <summary>

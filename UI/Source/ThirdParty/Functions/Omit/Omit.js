@@ -5,5 +5,5 @@ export default function (object, keyOrKeys, noDefaults) {
 	//
 	// Previous usage: omit(props, 'b')
 	// Destructure instead: {b, ...props}
-	throw new Exception('Use object destructuring instead of Omit. Omit will shortly be deleted. Find this error for deets!');
+	throw new Error('Use object destructuring instead of Omit. Omit will shortly be deleted. Find this error for deets!');
 }

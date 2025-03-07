@@ -16,6 +16,7 @@ namespace Api.Themes
     /// This service manages and generates (for devs) the frontend code.
     /// It does it by using either precompiled (as much as possible) bundles with metadata, or by compiling in-memory for devs using V8.
     /// </summary>
+    [HostType("web")]
     public class ThemeService : AutoService
     {
         /// <summary>

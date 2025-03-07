@@ -1416,6 +1416,18 @@
             You can however specify a custom type or instance them yourself if you'd like to do so.
             </summary>
             <summary>
+            Events are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
+            <summary>
+            Events are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
+            <summary>
+            Events are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
+            <summary>
             
             Event handlers are instanced automatically. 
             You can however specify a custom type or instance them yourself if you'd like to do so.
@@ -1514,6 +1526,21 @@
         <member name="F:Api.Eventing.Events.FrontendAfterUpdate">
             <summary>
             Triggers whenever the frontend changed at all.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.Events.DomainCertificateChallenge">
+            <summary>
+            Set of events for a domainCertificateChallenge.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.Events.DomainCertificate">
+            <summary>
+            Set of events for a domainCertificate.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.Events.Redirect">
+            <summary>
+            Set of events for a redirect.
             </summary>
         </member>
         <member name="F:Api.Eventing.Events.Configuration">
@@ -8406,6 +8433,18 @@
             Attempts to purge V8 engines from the canvas renderer service.
             </summary>
         </member>
+        <member name="M:Api.Startup.StdOutController.UpdateCerts">
+            <summary>
+            Triggers a certificate update (admin only).
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.Startup.StdOutController.UpdateWebserverConfig">
+            <summary>
+            Triggers a webserver config file update (admin only).
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:Api.Startup.StdOutController.WhoAmI">
             <summary>
             Forces a GC run. Convenience for testing for memory leaks.
@@ -11734,6 +11773,16 @@
             Otherwise, it must match the type of ID that the referenced type uses.</param>
             <param name="idSourceField"></param>
         </member>
+        <member name="T:Api.Startup.HostTypeAttribute">
+            <summary>
+            Add [HostType("task")] attributes to your service classes to define their context for microservices.	/// 
+            </summary>
+        </member>
+        <member name="F:Api.Startup.HostTypeAttribute.HostType">
+            <summary>
+            The host type. So "web" "task" "indexing" for example
+            </summary>
+        </member>
         <member name="T:Api.Startup.IDConverter`1">
             <summary>
             ID converter. Turns a ulong into a specific ID type.
@@ -11790,6 +11839,12 @@
             </summary>
             <param name="input"></param>
             <returns></returns>
+        </member>
+        <member name="T:Api.Startup.InternalApiAttribute">
+            <summary>
+            This can then be used to block sensitive classed from being processed
+            For example the HtmlController from being exposed to the public via graphql and swagger etc 
+            </summary>
         </member>
         <member name="T:Api.Startup.IpDiscovery">
             <summary>
@@ -13680,9 +13735,9 @@
             The underlying service provider, used to obtain injected service instances.
             </summary>
         </member>
-        <member name="F:Api.Startup.Services.HostMapping">
+        <member name="F:Api.Startup.Services.HostMappings">
             <summary>
-            Server type.
+            Server types.
             </summary>
             <returns></returns>
         </member>
@@ -13709,7 +13764,7 @@
             </summary>
             <param name="services"></param>
         </member>
-        <member name="M:Api.Startup.Services.GetHostMapping(System.String)">
+        <member name="M:Api.Startup.Services.GetHostMappings(System.String)">
             <summary>
             Gets a mapping for the given host name or returns a default if none.
             </summary>
@@ -13723,6 +13778,13 @@
             <param name="typeName"></param>
             <returns></returns>
         </member>
+        <member name="M:Api.Startup.Services.HasHostType(System.Collections.Generic.List{System.String})">
+            <summary>
+            True if this server has any of the given host types.
+            </summary>
+            <param name="typeNames"></param>
+            <returns></returns>
+        </member>
         <member name="M:Api.Startup.Services.IsHostTypeDefined(System.String)">
             <summary>
             True if the given host type is declared in this cluster.
@@ -13730,9 +13792,9 @@
             <param name="typeName"></param>
             <returns></returns>
         </member>
-        <member name="P:Api.Startup.Services.HostType">
+        <member name="P:Api.Startup.Services.HostTypes">
             <summary>
-            Server type.
+            Server types.
             </summary>
             <returns></returns>
         </member>
@@ -13823,7 +13885,7 @@
             Host name mapping
             </summary>
         </member>
-        <member name="P:Api.Startup.HostMapping.Regex">
+        <member name="P:Api.Startup.HostMapping.Hostname">
             <summary>
             The hostname regex to use.
             </summary>
@@ -15243,6 +15305,971 @@
             </summary>
             <param name="ms"></param>
         </member>
+        <member name="T:Api.CloudHosts.CloudHostConfig">
+            <summary>
+            The configuration for cloud services.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.CloudHostConfig.DigitalOcean">
+            <summary>
+            Config for digitalOcean.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.CloudHostConfig.AWS">
+            <summary>
+            Config for AWS.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.CloudHostConfig.Azure">
+            <summary>
+            Config for MS Azure.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.CloudHostPlatform">
+            <summary>
+            Host platform.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.CloudHostPlatform.configuredState">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostPlatform.SetConfigured(System.String)">
+            <summary>
+            Sets the given service as configured.
+            </summary>
+            <param name="key"></param>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostPlatform.GetContentUrl">
+            <summary>
+            The URL for the upload host (excluding /content/) if this host platform is providing file services.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostPlatform.GetSignedRef(Api.Uploader.Upload,System.String)">
+            <summary>
+            Gets a signed URL for the given private upload.
+            </summary>
+            <param name="upload"></param>
+            <param name="sizeName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostPlatform.ListFiles(Api.Uploader.FileMetaStream)">
+            <summary>
+            Lists files from the storage area into the given file meta stream.
+            The source can cancel the request via cancelling the meta stream.
+            </summary>
+            <param name="metaStream"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostPlatform.HasService(System.String)">
+            <summary>
+            True if this host platform has the given service type configured. Key is e.g. "upload".
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostPlatform.ReadFile(Api.Uploader.FilePartLocator)">
+            <summary>
+            Reads a files bytes from the remote host.
+            </summary>
+            <param name="locator">Describes info about a file including its relative path and if it is private or not.</param>
+            <returns></returns>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostPlatform.Upload(Api.Contexts.Context,Api.Uploader.Upload,System.String,System.String)">
+            <summary>
+            Runs when uploading a file.
+            </summary>
+            <param name="context"></param>
+            <param name="upload"></param>
+            <param name="tempFile"></param>
+            <param name="variantName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostPlatform.Delete(Api.Contexts.Context,Api.Uploader.FileDelete)">
+            <summary>
+            Runs when deleting a file.
+            </summary>
+            <param name="context"></param>
+            <param name="fDel"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.CloudHosts.CloudHostService">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostService.#ctor(Api.Uploader.UploadService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.CloudHostService._uploadHost">
+            <summary>
+            The host to direct uploads to, if any.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.CloudHostService.SelectConfiguredHost">
+            <summary>
+            Updates the preferred host based on what is actually configured.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.DomainCertificateChallenge">
+            <summary>
+            A DomainCertificateChallenge
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificateChallenge.VerificationValue">
+            <summary>
+            The value to return when a request for the token arrives.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificateChallenge.Token">
+            <summary>
+            The token.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificateChallenge.DomainCertificateId">
+            <summary>
+            The request which this challenge spawned from.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.DomainCertificateChallengeController">
+            <summary>Handles domainCertificateChallenge endpoints.</summary>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateChallengeController.CatchAll(System.String)">
+            <summary>
+            Handles all token requests.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.CloudHosts.DomainCertificateChallengeService">
+            <summary>
+            Handles domainCertificateChallenges.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateChallengeService.#ctor">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.DomainChallengePermissions">
+            <summary>
+            Instances capabilities during the very earliest phases of startup.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.DomainChallengePermissions.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.DomainCertificate">
+            <summary>
+            A DomainCertificate
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificate.Domain">
+            <summary>
+            The domain that has been requested.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificate.Ready">
+            <summary>
+            True if the certificate is ready. Status is also 1.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificate.FileKey">
+            <summary>
+            A random file key to avoid ID collisions in the filesystem.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificate.ExpiryUtc">
+            <summary>
+            Expiry time (UTC) of this certificate.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificate.ServerId">
+            <summary>
+            The serverId of the server in a cluster which created this request.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificate.OrderUrl">
+            <summary>
+            Let's encrypt order URL for debugging the status.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificate.Status">
+            <summary>
+            0=Not yet started, 1=Completed (may have failed), 2=Requesting, 3=Ordered, 4=Waiting for verification
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificate.LastPingUtc">
+            <summary>
+            Clustered servers can be all waiting for a singular request.
+            This informs the cluster that the server being waited on is still here.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.DomainCertificateController">
+            <summary>Handles domainCertificate endpoints.</summary>
+        </member>
+        <member name="T:Api.CloudHosts.DomainCertificateService">
+            <summary>
+            Handles domainCertificates.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateService.#ctor(Api.ContentSync.ContentSyncService,Api.Uploader.UploadService,Api.CloudHosts.DomainCertificateChallengeService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateService.GetLatestCertificates">
+            <summary>
+            Returns the latest set of certificate information. Returns null if it hasn't happened yet.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateService.UpdateValidSet(Api.Contexts.Context)">
+            <summary>
+            Gets the valid set of certificates for all this sites applied domains.
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateService.RequireCertificate(Api.Contexts.Context,System.String,System.String)">
+            <summary>
+            Requests a certificate for http validation. 
+            If another server has requested a certificate then this request will instead go in to a holding pattern waiting for it.
+            </summary>
+            <param name="context"></param>
+            <param name="domain"></param>
+            <param name="contactEmail"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateService.GetCertificate(Api.Contexts.Context,System.String,System.String)">
+            <summary>
+            Requests a certificate for http validation. 
+            If another server has requested a certificate then this request will instead go in to a holding pattern waiting for it.
+            </summary>
+            <param name="context"></param>
+            <param name="domain"></param>
+            <param name="contactEmail"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateService.ReadCertificate(Api.CloudHosts.DomainCertificate)">
+            <summary>
+            Reads a cert from the (usually remote) filesystem.
+            </summary>
+            <param name="cert"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateService.GetAccount(Api.Contexts.Context,LetsEncrypt.Client.AcmeClient,System.String)">
+            <summary>
+            Gets an account from private storage or creates one.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.CloudHosts.DomainCertificatePermissions">
+            <summary>
+            Instances capabilities during the very earliest phases of startup.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificatePermissions.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.ServiceCertificate">
+            <summary>
+            A certificate which can be used by the webserver.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.ServiceCertificate.FullchainPem">
+            <summary>
+            Raw textual fullchain (PEM format, compatible with most things such as NGINX).
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.ServiceCertificate.PrivateKeyPem">
+            <summary>
+            Raw textual private key (PEM format, compatible with most things such as NGINX).
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.ServiceCertificate.ExpiryUtc">
+            <summary>
+            This certs expiry.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.AwsConfig">
+            <summary>
+            AWS config.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AwsConfig.S3ServiceUrl">
+            <summary>
+            The S3 service URL used to declare the region, e.g. s3.eu-west-2.amazonaws.com
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AwsConfig.S3AccessKey">
+            <summary>
+            S3 access key.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AwsConfig.S3AccessSecret">
+            <summary>
+            S3 access secret.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AwsConfig.S3BucketName">
+            <summary>
+            S3 bucket name.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AwsConfig.DisplayPdfInline">
+            <summary>
+            If true, add content-disposition header as inline to pdf files
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AwsConfig.CustomCdnUrl">
+            <summary>
+            Custom URL for the CDN. Of the form https://www.example.com (starts with https, does not end with a fwd slash).
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AwsConfig.LockedDownAccess">
+            <summary>
+            Is the s3 bucket locked down for public access and needs to use S3CannedACL.BucketOwnerFullControl
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.AwsHost">
+            <summary>
+            A representation of AWS.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.AwsHost.#ctor(Api.CloudHosts.CloudHostService,Api.CloudHosts.AwsConfig)">
+            <summary>
+            Creates a new AWS host, shared by all requests.
+            </summary>
+            <param name="chs"></param>
+            <param name="config"></param>
+        </member>
+        <member name="M:Api.CloudHosts.AwsHost.GetSignedRef(Api.Uploader.Upload,System.String)">
+            <summary>
+            Gets a signed URL for the given private upload.
+            </summary>
+            <param name="upload"></param>
+            <param name="sizeName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.AwsHost.GetContentUrl">
+            <summary>
+            The URL for the upload host (excluding any paths) if this host platform is providing file services.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.AwsHost.ListFiles(Api.Uploader.FileMetaStream)">
+            <summary>
+            Lists files from the storage area into the given file meta stream.
+            The source can cancel the request via cancelling the meta stream.
+            </summary>
+            <param name="metaStream"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.AwsHost.ReadFile(Api.Uploader.FilePartLocator)">
+            <summary>
+            Reads a files bytes from the remote host.
+            </summary>
+            <param name="locator">Used to locate all or part of a file</param>
+            <returns></returns>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:Api.CloudHosts.AwsHost.Delete(Api.Contexts.Context,Api.Uploader.FileDelete)">
+            <summary>
+            Runs when deleting a file.
+            </summary>
+            <param name="context"></param>
+            <param name="fDel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.AwsHost.Upload(Api.Contexts.Context,Api.Uploader.Upload,System.String,System.String)">
+            <summary>
+            Runs when uploading a file.
+            </summary>
+            <param name="context"></param>
+            <param name="upload"></param>
+            <param name="tempFile"></param>
+            <param name="variantName"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.CloudHosts.AzureConfig">
+            <summary>
+            Azure config.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AzureConfig.StorageConnectionString">
+            <summary>
+            The connection string for Azure blob storage. Containers called "content" and "content-private" will be created inside this if they don't already exist.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AzureConfig.DisplayPdfInline">
+            <summary>
+            If true, add content-disposition header as inline to pdf files
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.AzureConfig.LocalProxy">
+            <summary>
+            True if the files should be proxied via the NGINX API.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.AzureHost">
+            <summary>
+            A representation of Azure.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.AzureHost.#ctor(Api.CloudHosts.CloudHostService,Api.CloudHosts.AzureConfig)">
+            <summary>
+            Creates a new Azure host, shared by all requests.
+            </summary>
+            <param name="chs"></param>
+            <param name="config"></param>
+        </member>
+        <member name="M:Api.CloudHosts.AzureHost.GetContentUrl">
+            <summary>
+            The URL for the upload host (excluding any paths) if this host platform is providing file services.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.AzureHost.ReadFile(Api.Uploader.FilePartLocator)">
+            <summary>
+            Reads a files bytes from the remote host.
+            </summary>
+            <param name="locator">e.g. 123-original.png</param>
+            <returns></returns>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:Api.CloudHosts.AzureHost.Delete(Api.Contexts.Context,Api.Uploader.FileDelete)">
+            <summary>
+            Runs when deleting a file.
+            </summary>
+            <param name="context"></param>
+            <param name="fDel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.AzureHost.Upload(Api.Contexts.Context,Api.Uploader.Upload,System.String,System.String)">
+            <summary>
+            Runs when uploading a file.
+            </summary>
+            <param name="context"></param>
+            <param name="upload"></param>
+            <param name="tempFile"></param>
+            <param name="variantName"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.CloudHosts.DigitalOceanConfig">
+            <summary>
+            DigitalOcean config.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.DigitalOceanConfig.SpaceOriginUrl">
+            <summary>
+            The space "origin" endpoint URL (not the edge/ CDN one)
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.DigitalOceanConfig.SpaceKey">
+            <summary>
+            A space key.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.DigitalOceanConfig.SpaceSecret">
+            <summary>
+            A space secret.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.DigitalOceanConfig.DisplayPdfInline">
+            <summary>
+            If true, add content-disposition header as inline to pdf files
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.DigitalOceanConfig.DisableCDN">
+            <summary>
+            True if should use origin URLs
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.DigitalOceanConfig.CustomCdnUrl">
+            <summary>
+            Custom URL for the CDN. Of the form https://www.example.com (starts with https, does not end with a fwd slash).
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.DigitalOceanHost">
+            <summary>
+            A representation of DigitalOcean.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.DigitalOceanHost.#ctor(Api.CloudHosts.CloudHostService,Api.CloudHosts.DigitalOceanConfig)">
+            <summary>
+            Creates a new digitalocean host, shared by all requests.
+            </summary>
+            <param name="chs"></param>
+            <param name="config"></param>
+        </member>
+        <member name="M:Api.CloudHosts.DigitalOceanHost.GetSignedRef(Api.Uploader.Upload,System.String)">
+            <summary>
+            Gets a signed URL for the given private upload.
+            </summary>
+            <param name="upload"></param>
+            <param name="sizeName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DigitalOceanHost.ReadFile(Api.Uploader.FilePartLocator)">
+            <summary>
+            Reads a files bytes from the remote host.
+            </summary>
+            <param name="locator">e.g. 123-original.png</param>
+            <returns></returns>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:Api.CloudHosts.DigitalOceanHost.ListFiles(Api.Uploader.FileMetaStream)">
+            <summary>
+            Lists files from the storage area into the given file meta stream.
+            The source can cancel the request via cancelling the meta stream.
+            </summary>
+            <param name="metaStream"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DigitalOceanHost.GetContentUrl">
+            <summary>
+            The URL for the upload host (excluding any paths) if this host platform is providing file services. e.g. https://thing.ams.cdn.digitaloceanspaces.com
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DigitalOceanHost.Delete(Api.Contexts.Context,Api.Uploader.FileDelete)">
+            <summary>
+            Runs when deleting a file.
+            </summary>
+            <param name="context"></param>
+            <param name="fDel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.DigitalOceanHost.Upload(Api.Contexts.Context,Api.Uploader.Upload,System.String,System.String)">
+            <summary>
+            Runs when uploading a file.
+            </summary>
+            <param name="context"></param>
+            <param name="upload"></param>
+            <param name="tempFile"></param>
+            <param name="variantName"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.CloudHosts.SignedUrlGenerator">
+            <summary>
+            Generates signed URLs for private files when cloudHosts is present.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.SignedUrlGenerator.Host">
+            <summary>
+            The current cloud host.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.SignedUrlGenerator.GetSignedRef(Api.Uploader.Upload,System.String)">
+            <summary>
+            Gets a signed ref (typically a URL) for the given upload.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.WebSecurityConfig">
+            <summary>
+            The configuration for cloud services.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.WebSecurityConfig.AutoCertificate">
+            <summary>
+            True if certs should auto renew.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.WebSecurityConfig.UseLetsEncryptStaging">
+            <summary>
+            True if the LE staging site should be used when renewing certs.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.WebSecurityService">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            Used to generate TLS certificates either via a remote source or a http challenge on Let's Encrypt.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.WebSecurityService.#ctor(Api.CloudHosts.DomainCertificateService,Api.CloudHosts.WebServerService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.WebSecurityService.CheckCertificate(Api.Contexts.Context)">
+            <summary>
+            Checks the date on installed certs and renews them if necessary.
+            Considers that other servers in the cluster are doing the same thing at the same time.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.CloudHosts.DomainCertificateLocales">
+            <summary>
+            A set of locales used a particular hostname.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificateLocales.Host">
+            <summary>
+            The hostname (domain).
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificateLocales.Locales">
+            <summary>
+            The locale IDs.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.DomainCertificateLocales.Certificate">
+            <summary>
+            The obtained certificate.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.DomainCertificateLocales.Add(System.UInt32)">
+            <summary>
+            Adds a new locale to this set.
+            </summary>
+            <param name="id"></param>
+        </member>
+        <member name="T:Api.CloudHosts.WebServerService">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            Handles configuring the webserver which is currently always NGINX.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.WebServerService.platform">
+            <summary>
+            Underlying platform. Currently it's always NGINX.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.WebServerService.#ctor(Api.CloudHosts.DomainCertificateService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.WebServerService.GetCertificateInfo">
+            <summary>
+            Get the latest cert info. Will generate incomplete info if they haven't been obtained yet.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.WebServerService.UpdateCertificates(Api.Contexts.Context,System.Collections.Generic.Dictionary{System.String,Api.CloudHosts.DomainCertificateLocales})">
+            <summary>
+            Informs the webserver that the certificate set has updated. It might have not changed at all.
+            </summary>
+            <param name="context"></param>
+            <param name="certSet"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.WebServerService.Regenerate(Api.Contexts.Context)">
+            <summary>
+            Regenerates website config
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.CloudHosts.NGINX">
+            <summary>
+            NGINX specific configuration.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.NGINX.Service">
+            <summary>
+            The webserver service this belongs to.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINX.#ctor(Api.CloudHosts.WebServerService)">
+            <summary>
+            Creates a new NGINX config manager as part of the given webserver service.
+            </summary>
+            <param name="service"></param>
+        </member>
+        <member name="M:Api.CloudHosts.NGINX.Apply(Api.Contexts.Context)">
+            <summary>
+            Applies config changes and then performs a reload.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.NGINX.GetAllLocales(Api.Contexts.Context)">
+            <summary>
+            Get all the active locales 
+            </summary>
+            <param name="ctx"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.NGINX.Reload">
+            <summary>
+            Tells the webserver to reload config live. On supported servers this results in no downtime.
+            Unsupported servers will perform a restart instead.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINX.Restart">
+            <summary>
+            Stop/starts the web server service. Causes some downtime unlike Reload does.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.NGINXConfigFile">
+            <summary>
+            A class which represents and can generate NGINX configuration files.
+            An nginx config file is essentially just an NGINX "context" (otherwise known as a block in typical coding languages).
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXConfigFile.WriteToFile(System.String)">
+            <summary>
+            Convenience version of WriteToFile, writing to a standard file based on the determined environment.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXConfigFile.AddServerContext">
+            <summary>
+            Adds a server context as a child of this file.
+            A server context is e.g. "server { ...}" in the config file.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXConfigFile.GetConfigurableContext">
+            <summary>
+            Gets the context into which you should add your custom config. Only available after setting up defaults.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXConfigFile.SetupDefaults(System.String,System.Collections.Generic.Dictionary{System.String,Api.CloudHosts.DomainCertificateLocales})">
+            <summary>
+            Sets up the default NGINX config for *this* server.
+            It will generate different things depending on which environment the server is (stage/ prod mainly).
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.NGINXContext">
+             <summary>
+             A class which represents a "context" in NGINX config lingo.
+             A context is what you might call a block - it has a list of directives and can potentially have blocks nested inside it too.
+            
+              
+             location / {
+            	
+             }
+             ^ a location context
+             "location /" is the directive of the above context.
+             The list of directives (inside the brackets) in this example is empty.
+             </summary>
+        </member>
+        <member name="F:Api.CloudHosts.NGINXContext.Directive">
+            <summary>
+            The directive of the context itself.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.NGINXContext.Contexts">
+            <summary>
+            The list of contexts within this context. NGINX context (blocks) are nestable.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.NGINXContext.Directives">
+            <summary>
+            The classic key/value pairing which defines a particular config value is called a directive.
+            It is a list rather than a dictionary because for a variety of directives, order matters.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXContext.AddLocationContext(System.String)">
+            <summary>
+            Adds a location context as a child of this one.
+            A location context is e.g. "location / { ...}" in the config file.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXContext.AddContext(System.String,System.String)">
+            <summary>
+            Add a context of the given type as a child. Returns the new context. See also: AddLocationContext.
+            Returns *the child context*.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXContext.AddContext(Api.CloudHosts.NGINXContext)">
+            <summary>
+            Adds the given context to this one as a child context.
+            Returns *the child context*.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXContext.AddDirective(System.String,System.String)">
+            <summary>
+            Adds the given directive (key/value config pair) to this one as a child.
+            Returns this context for easy chaining.
+            Like this:
+            
+             nginxConfigFile.AddDirective("error_log", "/var/log/nginx/error.log").AddDirective("server_name", "www.site.com")...
+            
+            If you need the actual NGINXDirective object, use the other AddDirective.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXContext.AddDirective(Api.CloudHosts.NGINXDirective)">
+            <summary>
+            Adds the given directive (key/value config pair) to this one as a child.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXContext.ToString">
+            <summary>
+            Generates the textual configuration of this context.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXContext.ToString(System.Text.StringBuilder,System.Int32)">
+            <summary>
+            Efficient mechanism for stringifying this block.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXContext.Indent(System.Text.StringBuilder,System.Int32)">
+            <summary>
+            Adds tabs to the given builder based on the current indent depth.
+            I.e. depth 0 is 0 tabs added, 1 is 1 tab added etc.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.NGINXDirective">
+             <summary>
+             A class which represents a "directive" in NGINX config lingo.
+             Essentially a key/value pair which sets a particular piece of config. Some directives are order sensitive so they are a list not a dictionary.
+            
+               error_log "/var/log/nginx/error.log";    -- a directive
+                 ^                ^
+                key             value
+             </summary>
+        </member>
+        <member name="F:Api.CloudHosts.NGINXDirective.Key">
+            <summary>
+            The key (config variable name usually) of this directive.
+            </summary>
+        </member>
+        <member name="F:Api.CloudHosts.NGINXDirective.Value">
+            <summary>
+            The value of this directive.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXDirective.#ctor">
+            <summary>
+            Creates an empty NGINXDirective.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXDirective.#ctor(System.String,System.String)">
+            <summary>
+            Creates a new NGINX directive with the given key/ value pair.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.NGINXDirective.ToString(System.Text.StringBuilder,System.Int32)">
+            <summary>
+            Efficient mechanism for stringifying this directive.
+            Does not output ; as the presence of the semicolon varies based on where the directive is.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.WebServer">
+            <summary>
+            Generic webserver features.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.WebServer.Apply(Api.Contexts.Context)">
+            <summary>
+            Applies config changes and then performs a reload.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.WebServer.UpdateCertificates(Api.Contexts.Context,System.Collections.Generic.Dictionary{System.String,Api.CloudHosts.DomainCertificateLocales})">
+            <summary>
+            Informs the webserver that the certificate set has updated. It might have not changed at all.
+            </summary>
+            <param name="context"></param>
+            <param name="certSet"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.CloudHosts.WebServer.Reload">
+            <summary>
+            Tells the webserver to reload config live. On supported servers this results in no downtime.
+            Unsupported servers will perform a restart instead.
+            </summary>
+        </member>
+        <member name="M:Api.CloudHosts.WebServer.Restart">
+            <summary>
+            Stop/starts the web server service. Causes some downtime unlike Reload does.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.WebServerConfig">
+            <summary>
+            The webserver configuration.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.WebServerConfig.Domains">
+            <summary>
+            Use this to specify additional domain config, such as handling a root domain on a live site alongside www.
+            For most stage sites this is empty, whilst on prod sites it is usually the root domain in here.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.WebServerConfig.NGINX">
+            <summary>
+            Config specifically for NGINX.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.NGINXConfig">
+            <summary>
+            Config specifically for NGINX.
+            </summary>
+        </member>
+        <member name="T:Api.CloudHosts.DomainConfig">
+            <summary>
+            Use this to specify additional domain config, such as handling a root domain on a live site alongside www 
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.DomainConfig.Domain">
+            <summary>
+            The domain.
+            </summary>
+        </member>
+        <member name="P:Api.CloudHosts.DomainConfig.RedirectTo">
+            <summary>
+            Optional - if not set, the target is derived from the configured domains (in frontend service config).
+            For example if domain is "site.com" and a site URL is "www.site.com" then redirectTo will be "www.site.com".
+            </summary>
+        </member>
+        <member name="T:Api.Redirects.Permissions">
+            <summary>
+            Instances capabilities during the very earliest phases of startup.
+            </summary>
+        </member>
+        <member name="M:Api.Redirects.Permissions.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.Redirects.Redirect">
+            <summary>
+            A Redirect
+            </summary>
+        </member>
+        <member name="F:Api.Redirects.Redirect.From">
+            <summary>
+            Source URL to redirect from. MUST be site relative and start with a forwardslash always.
+            For example, "/hello-world/"
+            If it ends with a forward slash, then both with and without the fwdslash will be redirected.
+            I.e. "/hello-world/" and "/hello-world"
+            </summary>
+        </member>
+        <member name="F:Api.Redirects.Redirect.To">
+            <summary>
+            Target URL to redirect to. SHOULD be site relative and start with a forwardslash always.
+            Only use full URLs with a host name if they are not "this" site to make the redirect rules portable between environments.
+            </summary>
+        </member>
+        <member name="F:Api.Redirects.Redirect.PermanentRedirect">
+            <summary>
+            True if this redirect should be considered permanent (i.e. a 301);
+            Will default to a temporary 302 redirect if not set
+            </summary>
+        </member>
+        <member name="T:Api.Redirects.RedirectController">
+            <summary>Handles redirect endpoints.</summary>
+        </member>
+        <member name="T:Api.Redirects.RedirectService">
+            <summary>
+            Handles redirects.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Redirects.RedirectService.#ctor(Api.CloudHosts.WebServerService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
         <member name="T:Api.Configuration.AppSettings">
             <summary>
             This is the global config. It originates from the appsettings.json file.
@@ -15643,32 +16670,6 @@
             </summary>
             <param name="key"></param>
             <returns></returns>
-        </member>
-        <member name="T:Api.Configuration.Environment">
-            <summary>
-            Used to determine which environment we're in - production, staging or dev.
-            Really just a wrapper around the ASPNETCORE_ENVIRONMENT environment variable.
-            </summary>
-        </member>
-        <member name="F:Api.Configuration.Environment.Name">
-            <summary>
-            The ASPNETCORE_ENVIRONMENT environment variable as a fast readonly string.
-            </summary>
-        </member>
-        <member name="M:Api.Configuration.Environment.IsProduction">
-            <summary>
-            True if this is the production environment.
-            </summary>
-        </member>
-        <member name="M:Api.Configuration.Environment.IsStaging">
-            <summary>
-            True if this is the staging environment.
-            </summary>
-        </member>
-        <member name="M:Api.Configuration.Environment.IsDevelopment">
-            <summary>
-            True if this is the dev environment.
-            </summary>
         </member>
         <member name="T:Api.Configuration.FrontendAttribute">
             <summary>
@@ -25557,6 +26558,93 @@
             </summary>
             <param name="message"></param>
         </member>
+        <member name="T:Api.Swagger.EventListener">
+            <summary>
+            Listens for events to setup the development pack directory.
+            </summary>
+        </member>
+        <member name="M:Api.Swagger.EventListener.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.Swagger.SwaggerConfig">
+            <summary>
+            Config for swagger integration and controller mapping
+            </summary>
+        </member>
+        <member name="P:Api.Swagger.SwaggerConfig.Title">
+            <summary>
+            Overide the title in the swagger rendering
+            </summary>
+        </member>
+        <member name="P:Api.Swagger.SwaggerConfig.Description">
+            <summary>
+            Overide the description in the swagger rendering
+            </summary>
+        </member>
+        <member name="P:Api.Swagger.SwaggerConfig.Version">
+            <summary>
+            Overide the version in the swagger rendering
+            </summary>
+        </member>
+        <member name="P:Api.Swagger.SwaggerConfig.ExcludedEndpointTypes">
+            <summary>
+             Excluded endpoint types csv, pot etc 
+            </summary>
+        </member>
+        <member name="P:Api.Swagger.SwaggerConfig.ExcludedServices">
+            <summary>
+            Excluded controllers (list oif service names to exclude)
+            </summary>
+        </member>
+        <member name="P:Api.Swagger.SwaggerConfig.ExcludedOperations">
+            <summary>
+            Excluded operations (list of httpoperations POST, DELETE etc to exclude)
+            </summary>
+        </member>
+        <member name="P:Api.Swagger.SwaggerConfig.IncludedServices">
+            <summary>
+            Included controllers (list of service names to include, if set only services in this list will be exposed)
+            </summary>
+        </member>
+        <member name="P:Api.Swagger.SwaggerConfig.ExcludeSchema">
+            <summary>
+            Exclude the schema section
+            </summary>
+        </member>
+        <member name="T:Api.Swagger.SwaggerService">
+            <summary>
+            Service to assist with swagger content management
+            </summary>
+        </member>
+        <member name="F:Api.Swagger.SwaggerService._isConfigured">
+            <summary>
+            True if the service is active.
+            </summary>
+        </member>
+        <member name="M:Api.Swagger.SwaggerService.#ctor">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Swagger.SwaggerService.GetConfiguration">
+            <summary>
+            Gets the service config (readonly).
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.Swagger.SwaggerService.IsConfigured">
+            <summary>
+            True if this service is configured and active.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.Swagger.SwaggerService.UpdateIsConfigured">
+            <summary>
+            Sets _isConfigured
+            </summary>
+        </member>
         <member name="T:Api.Templates.Template">
             <summary>
             A template.
@@ -27039,6 +28127,965 @@
             Replace media refs 
             </summary>
             <returns></returns>
+        </member>
+        <member name="T:LetsEncrypt.Client.AcmeClient">
+            <summary>
+            </summary>
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.CreateNewAccountAsync(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.GenerateCertificateAsync(LetsEncrypt.Client.Entities.Account,LetsEncrypt.Client.Entities.Order,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.RevokeCertificateAsync(LetsEncrypt.Client.Entities.Certificate,LetsEncrypt.Client.Entities.RevocationReason)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.GetDnsChallenges(LetsEncrypt.Client.Entities.Account,LetsEncrypt.Client.Entities.Order)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.GetChallengeAsync(LetsEncrypt.Client.Entities.Account,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.ValidateChallengeAsync(LetsEncrypt.Client.Entities.Account,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.GetAuthorizationAsync(LetsEncrypt.Client.Entities.Account,System.Uri)">
+            <summary>
+            
+            </summary>
+            <param name="account"></param>
+            <param name="authorizationId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.GetChalangeKey(LetsEncrypt.Client.Entities.Account,System.String)">
+            <summary>
+            
+            </summary>
+            <param name="account"></param>
+            <param name="token"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.#ctor(System.Uri)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.GetOrderAsync(LetsEncrypt.Client.Entities.Account,System.Uri)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.AcmeClient.NewOrderAsync(LetsEncrypt.Client.Entities.Account,System.Collections.Generic.List{System.String})">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.BaseAcmeClient">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.BaseAcmeClient.#ctor(System.Uri)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.BaseAcmeClient.GetAsync``1(System.Uri)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.BaseAcmeClient.PostAsync``1(System.Uri,System.Object)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.BaseAcmeClient.GetDirectoryAsync">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.BaseAcmeClient.GetNonceAsync">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.BaseAcmeClient.InitAsync">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Constants">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Constants.DATE_FORMAT_SHORT">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Constants.DATE_FORMAT_LONG">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Constants.PREFIX_MAILTO">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Cryptography.CertificateBuilder">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.CertificateBuilder.CreateSigningRequest(System.Security.Cryptography.RSA,System.String,System.Collections.Generic.List{System.String})">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.CertificateBuilder.Generate(System.Security.Cryptography.RSA,LetsEncrypt.Client.Entities.CertificateChain,System.String,System.Security.Cryptography.X509Certificates.X509ContentType)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Cryptography.RsaKeyPair">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Cryptography.RsaKeyPair.KEY_SIZE">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Cryptography.RsaKeyPair.KEY_TYPE">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Cryptography.RsaKeyPair.THUMBPRINT_ALGORITHM_NAME">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Cryptography.RsaKeyPair.ALGORITHM_NAME">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Cryptography.RsaKeyPair.Private">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Cryptography.RsaKeyPair.Public">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Cryptography.RsaKeyPair.Jwk">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.#ctor(System.Security.Cryptography.RSAParameters,System.Security.Cryptography.RSAParameters)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.#ctor(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.SignData(System.Byte[])">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.SignHash(System.Byte[])">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.Encrypt(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.Decrypt(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.ToRSA">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.ToPrivateKeyPem">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.ToPublicKeyPem">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.RsaKeyPair.New">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Cryptography.Sha256HashProvider">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Cryptography.Sha256HashProvider.ComputeHash(System.Byte[])">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.Account">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Account.Status">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Account.Contact">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Account.TermsOfServiceAgreed">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Account.InitialIp">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Account.CreatedAt">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Account.Key">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Account.Signer">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Account.#ctor">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Account.#ctor(LetsEncrypt.Client.Cryptography.RsaKeyPair)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Account.#ctor(LetsEncrypt.Client.Cryptography.RsaKeyPair,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Account.SaveAsync">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Account.FillBy(LetsEncrypt.Client.Entities.Account)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Account.Create(System.Collections.Generic.List{System.String})">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Account.LoadAsync(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.AccountStatus">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AccountStatus.Valid">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AccountStatus.Deactivated">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AccountStatus.Revoked">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.AccountPersisted">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.AccountPersisted.AccountContactEmail">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.AccountPersisted.AccountLocation">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.AccountPersisted.PrivateKeyPem">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.AccountPersisted.PublicKeyPem">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.Authorization">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Authorization.Identifier">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Authorization.Status">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Authorization.Expires">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Authorization.Scope">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Authorization.Challenges">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Authorization.Wildcard">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.AuthorizationStatus">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AuthorizationStatus.Pending">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AuthorizationStatus.Processing">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AuthorizationStatus.Valid">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AuthorizationStatus.Invalid">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AuthorizationStatus.Revoked">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AuthorizationStatus.Deactivated">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.AuthorizationStatus.Expired">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.Certificate">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Certificate.Key">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.#ctor(LetsEncrypt.Client.Cryptography.RsaKeyPair)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.CreateSigningRequest(System.String,System.Collections.Generic.List{System.String})">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.AddChain(LetsEncrypt.Client.Entities.CertificateChain)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.GetOriginalCertificate">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.GeneratePfx(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.GenerateCrt(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.GenerateCrtPem(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.GenerateKeyPem">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.Serialize">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.Certificate.Deserialize(System.String,LetsEncrypt.Client.Cryptography.RsaKeyPair)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.CertificateChain">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.CertificateChain.Content">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.CertificateChain.Certificate">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.CertificateChain.CertificateBytes">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.CertificateChain.Issuer">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.CertificateChain.IssuerBytes">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.CertificateChain.#ctor">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Entities.CertificateChain.#ctor(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.CertificateRevocation">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.CertificateRevocation.Certificate">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.CertificateRevocation.Reason">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.RevocationReason">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.Unspecified">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.KeyCompromise">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.CACompromise">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.AffiliationChanged">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.Superseded">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.CessationOfOperation">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.CertificateHold">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.RemoveFromCRL">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.PrivilegeWithdrawn">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.RevocationReason.AACompromise">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.Challenge">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Challenge.Type">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Challenge.Status">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Challenge.Validated">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Challenge.Url">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Challenge.Token">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Challenge.DnsKey">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Challenge.VerificationKey">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Challenge.VerificationValue">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.ChallengeStatus">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.ChallengeStatus.Pending">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.ChallengeStatus.Processing">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.ChallengeStatus.Valid">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.ChallengeStatus.Invalid">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.ChallengeType">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.ChallengeType.Http01">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.ChallengeType.Dns01">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.ChallengeType.TlsAlpn01">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.Directory">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Directory.NewNonce">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Directory.NewAccount">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Directory.NewOrder">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Directory.RevokeCert">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Directory.KeyChange">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Directory.Meta">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.DirectoryMeta">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.DirectoryMeta.TermsOfService">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.DirectoryMeta.Website">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.DirectoryMeta.CaaIdentities">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.DirectoryMeta.ExternalAccountRequired">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.Empty">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.ApiEnvironment">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.ApiEnvironment.LetsEncryptV2">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.ApiEnvironment.LetsEncryptV2Staging">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.Identifier">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Identifier.Type">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Identifier.Value">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.IdentifierType">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.IdentifierType.Dns">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.Order">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Order.Status">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Order.Expires">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Order.Identifiers">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Order.NotBefore">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Order.NotAfter">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Order.Authorizations">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Order.Finalize">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.Order.Certificate">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.OrderStatus">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.OrderStatus.Pending">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.OrderStatus.Ready">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.OrderStatus.Processing">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.OrderStatus.Valid">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.Entities.OrderStatus.Invalid">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.OrderCertificate">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.OrderCertificate.Csr">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.BaseEntity">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.BaseEntity.UnknownContent">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.BaseEntity.Location">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.BaseEntity.Error">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Entities.AcmeError">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.AcmeError.Type">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.AcmeError.Detail">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Entities.AcmeError.Status">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Extensions.Extensions">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Extensions.Extensions.CreateRsaParametersFromKeyBytes(System.Byte[])">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Extensions.Extensions.ToStandardString(System.Security.SecureString)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Extensions.Extensions.ToSecureString(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Interfaces.ILogger">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Interfaces.ILogger.LogError(System.Exception)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Interfaces.ILogger.LogErrorAsync(System.Exception)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Interfaces.ILogger.LogError(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Interfaces.ILogger.LogErrorAsync(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Interfaces.ILogger.LogMessage(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Interfaces.ILogger.LogMessageAsync(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.IO.LocalStorage">
+            <summary>
+            </summary>
+        </member>
+        <member name="F:LetsEncrypt.Client.IO.LocalStorage.FOLDER">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.#ctor">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.PersistAccount(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.LoadAccount(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.PersistPrivateKey(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.LoadPrivateKey(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.PersistPublicKey(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.LoadPublicKey(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.ReadAsync(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.WriteAsync(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.IO.LocalStorage.WriteAsync(System.String,System.Byte[])">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Json.JsonSettings">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Json.JsonSettings.CreateSettings">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Jws.JwsConvert">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Jws.JwsConvert.ToBase64String(System.Byte[])">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Jws.JwsConvert.FromBase64String(System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Jws.JwsSigner">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Jws.JwsSigner.#ctor(LetsEncrypt.Client.Cryptography.RsaKeyPair)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Jws.JwsSigner.Sign(System.Object,System.Uri,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Jws.JwsSigner.Sign(System.Object,System.Uri,System.Uri,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Jws.JwsData">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Jws.JwsData.Protected">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Jws.JwsData.Payload">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Jws.JwsData.Signature">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Jws.RsaJsonWebKey">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Jws.RsaJsonWebKey.Exponent">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Jws.RsaJsonWebKey.KeyType">
+            <summary>
+            </summary>
+        </member>
+        <member name="P:LetsEncrypt.Client.Jws.RsaJsonWebKey.Modulus">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Loggers.ConsoleLogger">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.ConsoleLogger.LogError(System.Exception)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.ConsoleLogger.LogErrorAsync(System.Exception)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.ConsoleLogger.LogError(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.ConsoleLogger.LogErrorAsync(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.ConsoleLogger.LogMessage(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.ConsoleLogger.LogMessageAsync(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:LetsEncrypt.Client.Loggers.LocalFileLogger">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.LocalFileLogger.LogError(System.Exception)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.LocalFileLogger.LogErrorAsync(System.Exception)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.LocalFileLogger.LogError(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.LocalFileLogger.LogErrorAsync(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.LocalFileLogger.LogMessage(System.String,System.String)">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:LetsEncrypt.Client.Loggers.LocalFileLogger.LogMessageAsync(System.String,System.String)">
+            <summary>
+            </summary>
         </member>
         <member name="T:System.Log">
             <summary>

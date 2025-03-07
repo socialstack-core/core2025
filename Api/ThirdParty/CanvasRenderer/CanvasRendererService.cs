@@ -23,6 +23,7 @@ namespace Api.CanvasRenderer
     /// Handles rendering canvases server side. Particularly useful for e.g. sending emails.
     /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
     /// </summary>
+    [HostType("web")]
     public partial class CanvasRendererService : AutoService
     {
         private readonly FrontendCodeService _frontendService;

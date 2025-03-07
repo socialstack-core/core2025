@@ -167,7 +167,11 @@ namespace Api.Startup
 			// Fire off an event so services can also extend app if they want (IEventListener implementors can use).
 			OnConfigureApplication?.Invoke(app);
 
-			app.UseRouting();
+            // use these if needed to debug swagger as when invoked above the exceptions are lost
+            //app.UseSwagger();
+            //app.UseSwaggerUI();
+
+            app.UseRouting();
 #endif
 
 			app.UseCors(options => SetupCors(options));

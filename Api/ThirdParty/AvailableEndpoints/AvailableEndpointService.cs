@@ -14,15 +14,16 @@ using System.Reflection;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Api.Eventing;
+using Api.Startup;
 
 namespace Api.AvailableEndpoints
 {
-	/// <summary>
-	/// This optional service is for self-documentation and automated testing.
-	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-	/// </summary>
-
-	public partial class AvailableEndpointService : AutoService<ApiStructure, uint>
+    /// <summary>
+    /// This optional service is for self-documentation and automated testing.
+    /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+    /// </summary>
+    [HostType("web")]
+    public partial class AvailableEndpointService : AutoService<ApiStructure, uint>
 	{
 		private List<Endpoint> _cachedList;
 		private IActionDescriptorCollectionProvider _descriptionProvider;

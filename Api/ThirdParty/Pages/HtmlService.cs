@@ -23,11 +23,11 @@ using System.Collections.Concurrent;
 
 namespace Api.Pages
 {
-	/// <summary>
-	/// Handles the main generation of HTML from the index.html base template at UI/public/index.html and Admin/public/index.html
-	/// </summary>
-
-	public partial class HtmlService : AutoService
+    /// <summary>
+    /// Handles the main generation of HTML from the index.html base template at UI/public/index.html and Admin/public/index.html
+    /// </summary>
+    [HostType("web")]
+    public partial class HtmlService : AutoService
 	{
 		private readonly PageService _pages;
 		private readonly CanvasRendererService _canvasRendererService;

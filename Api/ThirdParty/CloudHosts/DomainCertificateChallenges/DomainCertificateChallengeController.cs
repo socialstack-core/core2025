@@ -1,5 +1,4 @@
 using Api.Contexts;
-using Api.Pages;
 using Api.Startup;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,14 +8,15 @@ namespace Api.CloudHosts
 {
     /// <summary>Handles domainCertificateChallenge endpoints.</summary>
     [Route(".well-known/acme-challenge")]
-	public partial class DomainCertificateChallengeController : Controller
+    [InternalApi]
+    public partial class DomainCertificateChallengeController : Controller
     {
 
 		/// <summary>
 		/// Handles all token requests.
 		/// </summary>
 		/// <returns></returns>
-		[Route("{token}")]
+		[HttpGet("{token}")]
 		public async ValueTask CatchAll([FromRoute] string token)
 		{
 			var context = await Request.GetContext();

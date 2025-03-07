@@ -9,14 +9,15 @@ using Api.Contexts;
 using System.Text;
 using Microsoft.Extensions.Primitives;
 using Api.SocketServerLibrary;
+using Api.Startup;
 
 namespace Api.CanvasRenderer
 {
-	/// <summary>
-	/// Handles requests to /pack/* for frontend code files.
-	/// </summary>
-
-	public partial class FrontendCodeController : Controller
+    /// <summary>
+    /// Handles requests to /pack/* for frontend code files.
+    /// </summary>
+    [InternalApi]
+    public partial class FrontendCodeController : Controller
     {
 		private FrontendCodeService _codeService;
 

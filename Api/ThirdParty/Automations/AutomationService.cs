@@ -1,25 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using Api.Contexts;
 using System.Collections.Generic;
-using System.Reflection;
-using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Api.Eventing;
 using Api.Pages;
 using Api.CanvasRenderer;
 using Api.NavMenus;
+using Api.Startup;
 namespace Api.Automations
 {
 
-	/// <summary>
-	/// Indicates the set of available automations.
-	/// </summary>
-
-	public partial class AutomationService : AutoService<AutomationStructure, uint>
+    /// <summary>
+    /// Indicates the set of available automations.
+    /// </summary>
+    [HostType("task")]
+    public partial class AutomationService : AutoService<AutomationStructure, uint>
 	{
 
 		/// <summary>

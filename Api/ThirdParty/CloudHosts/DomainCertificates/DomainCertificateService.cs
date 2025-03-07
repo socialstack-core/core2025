@@ -14,6 +14,7 @@ using System.Linq;
 using Org.BouncyCastle.X509;
 using Api.PasswordResetRequests;
 using Api.Configuration;
+using Api.Startup;
 
 namespace Api.CloudHosts;
 
@@ -32,7 +33,7 @@ public partial class DomainCertificateService : AutoService<DomainCertificate>
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
 	public DomainCertificateService(ContentSyncService csync, UploadService uploads, DomainCertificateChallengeService challengeService) : base(Events.DomainCertificate)
-    {
+        {
 		_contentSync = csync;
 		_uploads = uploads;
 		_challengeService = challengeService;
@@ -311,8 +312,10 @@ public partial class DomainCertificateService : AutoService<DomainCertificate>
 			toUpdate.LastPingUtc = DateTime.UtcNow;
 		}, DataOptions.IgnorePermissions);
 
-		// Create the request:
-		var acmeClient = new AcmeClient(ApiEnvironment.LetsEncryptV2); // LetsEncryptV2Staging if testing
+		var webSecurityService = Services.Get<WebSecurityService>().GetWebSecurityConfig();
+
+        // Create the request - LetsEncryptV2Staging if testing
+        var acmeClient = new AcmeClient(webSecurityService.UseLetsEncryptStaging ? ApiEnvironment.LetsEncryptV2Staging : ApiEnvironment.LetsEncryptV2); 
 
 		// Load or create the account:
 		var account = await GetAccount(context, acmeClient, contactEmail);

@@ -12,12 +12,12 @@ using System.Linq;
 
 namespace Api.Pages
 {
-	/// <summary>
-	/// This is the main frontend controller - its job is to serve html for URLs.
-	/// If you're looking for the handlers for /content/ etc, you'll find that over in Api/Uploads/EventListener.cs
-	/// </summary>
-
-	public partial class HtmlController : Controller
+    /// <summary>
+    /// This is the main frontend controller - its job is to serve html for URLs.
+    /// If you're looking for the handlers for /content/ etc, you'll find that over in Api/Uploads/EventListener.cs
+    /// </summary>
+    [InternalApi]
+    public partial class HtmlController : Controller
     {
 		private static HtmlService _htmlService;
 

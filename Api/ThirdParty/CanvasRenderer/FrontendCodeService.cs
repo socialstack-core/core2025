@@ -15,12 +15,13 @@ using System.Threading.Tasks;
 
 namespace Api.CanvasRenderer
 {
-	
-	/// <summary>
-	/// This service manages and generates (for devs) the frontend code.
-	/// It does it by using either precompiled (as much as possible) bundles with metadata, or by compiling in-memory for devs using V8.
-	/// </summary>
-	public class FrontendCodeService : AutoService
+
+    /// <summary>
+    /// This service manages and generates (for devs) the frontend code.
+    /// It does it by using either precompiled (as much as possible) bundles with metadata, or by compiling in-memory for devs using V8.
+    /// </summary>
+    [HostType("web")]
+    public class FrontendCodeService : AutoService
 	{
 		private UIBundle UIBuilder;
 		private UIBundle EmailBuilder;
@@ -137,7 +138,7 @@ namespace Api.CanvasRenderer
 			{
 				// Generate the ws host now, based on the public URL.
 				// A dev site will always assume localhost:WSPORT.
-				if (Configuration.Environment.IsDevelopment())
+				if (Services.IsDevelopment())
 				{
 					var portNumber = AppSettings.GetInt32("WebsocketPort", AppSettings.GetInt32("Port", 5000) + 1);
 
