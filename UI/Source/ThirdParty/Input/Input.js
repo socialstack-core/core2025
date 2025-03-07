@@ -40,7 +40,7 @@ function caseInsensitivePropCheck(props, checkFor) {
  * Note that you can still use them directly if you want.
  * You can also use validate={[..]} and provide either a module name from the 
  * UI/Functions/Validation set of modules or a function which receives the value to validate and returns nothing or an error object.
- * See e.g. UI/Functions/Validation/Required/Required.js for the structure of a custom method.
+ * See e.g. UI/Functions/Validation/Required/Required.tsx for the structure of a custom method.
  */
 export default class Input extends React.Component {
 
@@ -123,7 +123,7 @@ export default class Input extends React.Component {
             {
                 (this.state.validationFailure && this.props.validateErrorLocation && this.props.validateErrorLocation == "above") && (
                     <div className="validation-error">
-                        {this.props.validationFailure ? this.props.validationFailure(this.state.validationFailure) : this.state.validationFailure.ui}
+                        {this.props.validationFailure ? this.props.validationFailure(this.state.validationFailure) : this.state.validationFailure.message}
                     </div>
                 )
             }
