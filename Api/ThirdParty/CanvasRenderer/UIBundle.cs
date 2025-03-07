@@ -78,13 +78,29 @@ namespace Api.CanvasRenderer
         private long BuildTimestampMs = 1;
 
         /// <summary>
-        /// UTC timestamp in milliseconds of last build. 
+        /// The build timestamp as a string.
         /// </summary>
-        public long BuildTimestamp
+        private string BuildTimestampMsString = "1";
+
+		/// <summary>
+		/// UTC timestamp in milliseconds of last build. 
+		/// </summary>
+		public long BuildTimestamp
         {
             get
             {
                 return BuildTimestampMs;
+            }
+        }
+        
+		/// <summary>
+		/// UTC timestamp in milliseconds of last build as a string.
+		/// </summary>
+		public string BuildTimestampString
+        {
+            get
+            {
+                return BuildTimestampMsString;
             }
         }
 
@@ -944,7 +960,8 @@ namespace Api.CanvasRenderer
 
                 // Build time:
                 BuildTimestampMs = meta.BuildTime;
-                ContainsStarterModule = meta.Starter;
+				BuildTimestampMsString = BuildTimestampMs.ToString();
+				ContainsStarterModule = meta.Starter;
 
                 // Construct the JS segments now.
                 var currentIndex = 0;
@@ -1412,7 +1429,8 @@ namespace Api.CanvasRenderer
         private void UpdateBuildTimestamp()
         {
             BuildTimestampMs = (long)((DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds);
-
+			BuildTimestampMsString = BuildTimestampMs.ToString();
+			
             if (CssFile.FileContent != null)
             {
                 SetCssPath(1);

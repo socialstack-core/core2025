@@ -1038,6 +1038,8 @@ svg {
 			var reactRoot = new DocumentNode("div").With("id", "react-root");
 
 			var body = doc.Body;
+			doc.Body
+				.With("data-ts", _frontend.VersionString);
 			body.AppendChild(reactRoot);
 
 			// Handle all start body JS scripts
@@ -1235,6 +1237,9 @@ svg {
 			{
 				doc.Html.With("data-env", Services.Environment);
 			}
+
+			doc.Body
+				.With("data-ts", _frontend.VersionString);
 
 			var head = doc.Head;
 

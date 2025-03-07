@@ -6089,6 +6089,11 @@
             Frontend version. This is the same as the version of the main frontend css/js build.
             </summary>
         </member>
+        <member name="P:Api.CanvasRenderer.FrontendCodeService.VersionString">
+            <summary>
+            Frontend version as a string. This is the same as the version of the main frontend css/js build.
+            </summary>
+        </member>
         <member name="M:Api.CanvasRenderer.FrontendCodeService.GetStaticFiles">
             <summary>
             Gets the set of static files. Only used during an app build process as it needs to collect all static files.
@@ -7438,9 +7443,19 @@
             UTC timestamp in milliseconds of last build. This regularly changes on a dev instance, but is constant on prod as it comes from a file.
             </summary>
         </member>
+        <member name="F:Api.CanvasRenderer.UIBundle.BuildTimestampMsString">
+            <summary>
+            The build timestamp as a string.
+            </summary>
+        </member>
         <member name="P:Api.CanvasRenderer.UIBundle.BuildTimestamp">
             <summary>
             UTC timestamp in milliseconds of last build. 
+            </summary>
+        </member>
+        <member name="P:Api.CanvasRenderer.UIBundle.BuildTimestampString">
+            <summary>
+            UTC timestamp in milliseconds of last build as a string.
             </summary>
         </member>
         <member name="F:Api.CanvasRenderer.UIBundle.OnMapChange">

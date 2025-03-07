@@ -8,6 +8,9 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "lib": [ "es2016", "DOM" ],
+    "strict": true,
+    "noImplicitAny": true
   }
 }

@@ -374,6 +374,16 @@ namespace Api.CanvasRenderer
 				return UIBuilder.BuildTimestamp;
 			}
 		}
+		
+		/// <summary>
+		/// Frontend version as a string. This is the same as the version of the main frontend css/js build.
+		/// </summary>
+		public string VersionString
+		{
+			get {
+				return UIBuilder.BuildTimestampString;
+			}
+		}
 
 		/// <summary>
 		/// Gets the set of static files. Only used during an app build process as it needs to collect all static files.
