@@ -27,16 +27,16 @@ const Heading: React.FC<React.PropsWithChildren<HeadingProps>> = (props) => {
 		componentClasses.push(className);
 	}
 
-	let anim : string | undefined = animation ? (animation.type === 'none' ? undefined : animation.type) : undefined;
+	let animType : string | undefined = animation ? (animation.type === 'none' ? undefined : animation.type) : undefined;
 
-	if (anim) {
+	if (animType) {
 
-		switch (anim) {
+		switch (animType) {
 			case 'fade':
 			case 'flip':
 			case 'slide':
 				// possible for animation.direction to be undefined? may need to set a default direction here
-				anim = `${anim}-${animation?.direction}`;
+				animType = `${animType}-${animation?.direction}`;
 				break;
 
 			// TODO
@@ -52,7 +52,7 @@ const Heading: React.FC<React.PropsWithChildren<HeadingProps>> = (props) => {
 
 	}
 
-	return <Tag className={componentClasses.join(' ')} data-aos={anim}>
+	return <Tag className={componentClasses.join(' ')} data-aos={animType}>
 		{children}
 	</Tag>;
 }

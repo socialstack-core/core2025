@@ -1,26 +1,37 @@
-import omit from 'UI/Functions/Omit';
-//import Canvas from 'UI/Canvas';
+
+interface TextProps {
+	/**
+	 * optional additional class name(s)
+	 */
+	className?: string,
+
+	paragraph?: boolean,
+	bold?: boolean,
+	/**
+	 * optionally animate Text into place on scroll
+	 */
+	animation?: AnimationProps
+}
+
 /**
  * This component displays translated text. Usage:
  * <Text>Hello world</Text>
  * <Text group='header'>Hello world</Text>
  * <Text group='header' key='hello_world'>Hello world</Text>
  */
-export default function Text (props) {
-	const { paragraph, bold, className, animation, animationDirection } = props;
-	const omitProps = ['text', 'children', 'paragraph', 'bold', 'className', 'animation', 'animationDirection'];
+const Text: React.FC<React.PropsWithChildren<TextProps>> = ({ children, paragraph, bold, className, animation, ...props }) => {
 
-	var anim = animation ? animation : undefined;
+	let animType: string | undefined = animation ? (animation.type === 'none' ? undefined : animation.type) : undefined;
 
 	// ref: https://github.com/michalsnik/aos
 	// TODO: disable horizontal anims on mobile to prevent triggering horizontal scrolling issues
-	switch (anim) {
+	switch (animType) {
 		case 'fade':
 		case 'zoom-in':
 		case 'zoom-out':
 
-			if (animationDirection) {
-				anim += "-" + animationDirection;
+			if (animation?.direction) {
+				animType += "-" + animation.direction;
 			}
 
 			break;
@@ -29,37 +40,38 @@ export default function Text (props) {
 		case 'slide':
 
 			// default static flip / slide animations to "up" variants
-			if (animationDirection) {
-				anim += "-" + animationDirection;
+			if (animation?.direction) {
+				animType += "-" + animation.direction;
 			} else {
-				anim += "-up";
+				animType += "-up";
 			}
 
 		break;
 	}
 
-	var Tag = paragraph ? "p" : "span";
+	var Tag = (paragraph ? "p" : "span") as React.ElementType;
 
 	if (bold && !paragraph) {
 		Tag = "strong";
 	}
 
+	var content = children as string;
+
 	if (bold && paragraph) {
-		return <p className={className} data-aos={anim} {...omit(props, omitProps)}>
-				<strong dangerouslySetInnerHTML={{__html: (props.text || props.children)}}>
-				</strong>
+		return <p className={className} data-aos={animType} {...props}>
+				<strong dangerouslySetInnerHTML={{__html: content}} />
 			</p>;
 	}
 
-	return <Tag className={className} data-aos={anim} dangerouslySetInnerHTML={{ __html: (props.text || props.children) }} {...omit(props, omitProps)}>
-			{
-				/*<Canvas>props.text</Canvas>*/
-				props.text ? props.text : props.children
-			}
-			
-		</Tag>;
+	return <Tag
+		className={className}
+		data-aos={animType}
+		dangerouslySetInnerHTML={{ __html: content }}
+		{...props}
+	/>;
 }
 
+/*
 Text.propTypes = {
 	text: 'canvas',
 	paragraph: 'boolean',
@@ -105,3 +117,4 @@ Text.rendererPropTypes = {
 };
 
 Text.priority = true;
+*/
