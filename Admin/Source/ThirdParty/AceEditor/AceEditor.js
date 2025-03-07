@@ -1,15 +1,14 @@
-import omit from 'UI/Functions/Omit';
 import getRef from 'UI/Functions/GetRef';
 import aceJs from './static/ace.js';
 
 var inputTypes = global.inputTypes = global.inputTypes || {};
 
-inputTypes.ontypecode = inputTypes['application/json'] = inputTypes['text/html'] = inputTypes['text/javascript'] = inputTypes['text/css']  = inputTypes['application/sql']  = function(props, _this){
+inputTypes.ontypecode = inputTypes['application/json'] = inputTypes['text/html'] = inputTypes['text/javascript'] = inputTypes['text/css'] = inputTypes['application/sql'] = function ({ id, className, type, inline, ...props }, _this){
 	
 	return <AceEditor 
-		id={props.id || _this.fieldId}
-		className={props.className || "form-control"}
-		{...omit(props, ['id', 'className', 'type', 'inline'])}
+		id={id || _this.fieldId}
+		className={className || "form-control"}
+		{...props}
 	/>;
 	
 };

@@ -1,13 +1,11 @@
-// Module import examples - none are required:
-import omit from 'UI/Functions/Omit';
 import * as dateTools from 'UI/Functions/DateTools';
 var inputTypes = global.inputTypes = global.inputTypes || {};
 
-inputTypes.ontypedatetime = function(props, _this){
+inputTypes.ontypedatetime = function({ id, className, type, inline, ...props }, _this){
 	return <DateTimePicker 
-		id={props.id || _this.fieldId}
-		className={props.className || "form-control"}
-		{...omit(props, ['id', 'className', 'type', 'inline'])}
+		id={id || _this.fieldId}
+		className={className || "form-control"}
+		{...props}
 	/>;
 };
 
