@@ -1,12 +1,47 @@
 import Row from 'UI/Row';
 
-const GRID_DEFAULT_NOGUTTERS = false;
+/**
+ * Props for the Grid component.
+ */
+interface GridProps extends React.HTMLAttributes<HTMLSpanElement> {
+	/**
+		Set this to true if you don't want gutters on your grid.
+	*/
+	noGutters?: boolean;
+
+	/**
+	 * The number of rows in the grid.
+	 */
+	rows?: int;
+
+	/**
+	 * The number of columns in the grid.
+	 */
+	columns?: int;
+
+	/**
+	 * Grid layout mode. Only auto is permitted at the moment.
+	 */
+	layout?: 'auto' | 'manual';
+
+	/**
+	 * The cells of the grid.
+	 */
+	cells: React.ReactNode[]
+}
+
+
 const GRID_DEFAULT_ROWS = 1;
 const GRID_DEFAULT_COLUMNS = 2;
 const GRID_DEFAULT_LAYOUT = 'auto';
 
-export default function Grid(props) {
-	var noGutters = (props.noGutters == undefined) ? GRID_DEFAULT_NOGUTTERS : props.noGutters;
+
+/**
+ * Used to define a grid based layout.
+ * @param props
+ * @returns
+ */
+const Grid: React.FC<GridProps> = (props) => {
 	var rows = props.rows || GRID_DEFAULT_ROWS;
 	var columns = props.columns || GRID_DEFAULT_COLUMNS;
 	var layout = props.layout || GRID_DEFAULT_LAYOUT;
@@ -30,7 +65,7 @@ export default function Grid(props) {
 			var colSet = [];
 
 			for (var c = 0; c < columns; c++) {
-				var colContent = props['c' + (i++)];
+				var colContent = props.cells[(i++)];
 
 				if (colContent === undefined) {
 					colContent = null; // react requires null if this happens
@@ -44,7 +79,7 @@ export default function Grid(props) {
 			}
 
 			rowSet.push(<>
-				<Row noGutters={noGutters ? true : undefined}>
+				<Row noGutters={props.noGutters ? true : undefined}>
 					{colSet}
 				</Row>
 			</>);
@@ -55,6 +90,7 @@ export default function Grid(props) {
 	return rowSet;
 }
 
+/*
 Grid.propTypes = {
 	rows: 'int',
 	//columns: 'int',
@@ -65,7 +101,7 @@ Grid.propTypes = {
 		{ name: `Automatic`, value: 'auto' },
 		{ name: `Manual`, value: 'manual' }
 	]
-	 */
+	 *
 };
 
 Grid.defaultProps = {
@@ -98,3 +134,4 @@ Grid.onEditorUpdate = (node, rte) => {
 };
 
 Grid.priority = true;
+*/

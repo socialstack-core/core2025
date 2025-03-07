@@ -3,8 +3,11 @@
  */
 interface ColumnProps extends React.HTMLAttributes<HTMLDivElement> {
 
+	/**
+	 * Custom class name.
+	 */
 	className?: string;
-	customClass?: string;
+
 	size?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
 	sizeXs?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
 	sizeSm?: "auto" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
@@ -119,10 +122,6 @@ const Column: React.FC<ColumnProps> = ({ className, noGutters, customClass, ...p
 
 	if (className) {
 		colClass += ' ' + className;
-	}
-
-	if (customClass) {
-		colClass += ' ' + customClass;
 	}
 
 	return <div

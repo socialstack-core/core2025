@@ -1,9 +1,8 @@
-import omit from 'UI/Functions/Omit';
 import { useSession } from 'UI/Session';
 import { useState, useEffect } from 'react';
 import { useTokens } from 'UI/Token';
 
-export default function Link(props) {
+export default function Link({ children, text, href, _rte, doNotLower, hreflang, ...attribs}) {
 	const [initialRender, setInitialRender] = useState(true);
 
 	useEffect(() => {
@@ -12,12 +11,11 @@ export default function Link(props) {
 
 	const { session, setSession } = useSession();
 	
-	var attribs = omit(props, ['children', 'href', '_rte', 'hreflang']);
 	attribs.alt = attribs.alt || attribs.title;
 	attribs.ref = attribs.rootRef;
 	
-	var children = props.children || props.text;
-	var url = useTokens(props.url || props.href);
+	var children = children || text;
+	var url = useTokens(href);
 
 	function isExternalUrl(string) {
 
@@ -66,7 +64,7 @@ export default function Link(props) {
 		}
 
 		// ensure internal links are lowercase unless doNotLower is passed to this component
-		if (!props.doNotLower && !isExternalUrl(url) && !url.includes("/content/")) {
+		if (!doNotLower && !isExternalUrl(url) && !url.includes("/content/")) {
 			url = url.toLowerCase();
 		}
 
@@ -86,6 +84,7 @@ export default function Link(props) {
 	</a>;
 }
 
+/*
 Link.editable = true;
 
 Link.propTypes = {
@@ -93,3 +92,4 @@ Link.propTypes = {
 	href: 'string',
 	children: 'jsx'
 };
+*/
