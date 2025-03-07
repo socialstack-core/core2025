@@ -1,4 +1,9 @@
-function ordinal(i) {
+/**
+ * Date ordinal for the given index. e.g. 1 is '1st', 2 is '2nd' etc.
+ * @param i
+ * @returns
+ */
+function ordinal(i: int): string {
     var j = i % 10,
         k = i % 100;
     if (j == 1 && k != 11) {
@@ -22,16 +27,26 @@ const shortMonthNames = [`Jan`, `Feb`, `Mar`, `Apr`, `May`, `Jun`, `Jul`, `Aug`,
 const epochTicks = 62135596800000;
 const ticksPerMillisecond = 10000;
 
-const ticks = (date) => {
+/**
+ * Converts a JS date to a number of C# ticks.
+ * @param date
+ * @returns
+ */
+const ticks = (date : Date) => {
 	return epochTicks + (date.getTime() * ticksPerMillisecond);
 }
 
-const isoConvert = (isoish) => {
+/**
+ * Converts a variety of date formats in to a JS Date. All are expected to be UTC.
+ * @param isoish
+ * @returns
+ */
+const isoConvert = (isoish : Dateish) : Date => {
 	var type = typeof isoish;
 	
 	if(type == 'number'){
 		// milliseconds from year 0
-		return new Date(isoish - epochTicks);
+		return new Date((isoish as number) - epochTicks);
 	}
 	
 	if(type != 'string'){
@@ -39,11 +54,12 @@ const isoConvert = (isoish) => {
 		if(isoish && isoish.valueOf){
 			return new Date(isoish.valueOf());
 		}
-		return isoish;
+		return isoish as Date;
 	}
 	
 	 // Split the string into an array based on the digit groups.
-	 var dateParts = isoish.split( /\D+/ );
+	var dateParts = (isoish as string).split(/\D+/);
+
 	 // Set up a date object with the current time.
 	 var returnDate = new Date();
  
@@ -53,7 +69,7 @@ const isoConvert = (isoish) => {
 	 // string.
 	// The month numbers are one "off" from what normal humans would expect
 	 // because January == 0.
-	 returnDate.setUTCFullYear( parseInt( dateParts[ 0 ] ), parseInt( dateParts[ 1 ] - 1 ), parseInt( dateParts[ 2 ] ));
+	 returnDate.setUTCFullYear( parseInt( dateParts[ 0 ] ), parseInt( dateParts[ 1 ] ) - 1, parseInt( dateParts[ 2 ] ));
  
 	 // Set the time parts of the date object.
 	 returnDate.setUTCHours( parseInt( dateParts[ 3 ] ), parseInt( dateParts[ 4 ] ), parseInt( dateParts[ 5 ] )  );
@@ -82,7 +98,7 @@ const isoConvert = (isoish) => {
  
 		 // If the sign for the timezone is a plus to indicate the
 		 // timezone is ahead of UTC time.
-		 if ( isoish.substr( -6, 1 ) == "+" ) {
+		 if ((isoish as string).slice(-6, -5) == "+" ) {
  
 			 // Make the offset negative since the hours will need to be
 			 // subtracted from the date.
@@ -97,50 +113,100 @@ const isoConvert = (isoish) => {
 	 return returnDate;
 }
 
-function localToUtc(date){
+/**
+ * Converts a local date to UTC.
+ * @param date
+ * @returns
+ */
+function localToUtc(date : Date){
 	return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
 	date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()));
 }
 
-function utcToLocal(date) {
+/**
+ * Converts a UTC date to local.
+ * @param date
+ * @returns
+ */
+function utcToLocal(date : Date) {
     return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(),  date.getHours(), date.getMinutes(), date.getSeconds()));
 }
 
-function getMonday(date) {
-  d = new Date(date);
+/**
+ * Gets the most recent previous monday.
+ * @param date
+ * @returns
+ */
+function getMonday(date: Date) {
+  var d = new Date(date);
   var day = d.getDay(),
       diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
   return new Date(d.setDate(diff));
 }
 
-function getSunday(date) {
-  d = new Date(date);
+/**
+ * Gets the most recent previous sunday.
+ * @param date
+ * @returns
+ */
+function getSunday(date: Date) {
+  var d = new Date(date);
   var day = d.getDay(),
       diff = d.getDate() - day;
   return new Date(d.setDate(diff));
 }
 
-function addDays(date, days) {
-    var date = new Date(date.valueOf());
-    date.setDate(date.getDate() + days);
-    return date;
+/**
+ * Adds n days to the given date, returning the updated date.
+ * @param date
+ * @param days
+ * @returns
+ */
+function addDays(date: Date, days : float) {
+    var newDate = new Date(date.valueOf());
+	newDate.setDate(date.getDate() + days);
+	return newDate;
 }
 
-function addHours(date, hours) {
+/**
+ * Adds n hours to the given date, returning the updated date.
+ * @param date
+ * @param days
+ * @returns
+ */
+function addHours(date : Date, hours : float) {
 	return addMinutes(date, hours * 60);
 }
 
-function addMinutes(date, minutes) {
+/**
+ * Adds n minutes to the given date, returning the updated date.
+ * @param date
+ * @param days
+ * @returns
+ */
+function addMinutes(date : Date, minutes : float) {
 	var date = new Date(date.valueOf() + (1000 * 60 * minutes));
 	return date;
 }
 
-function addSeconds(date, seconds) {
+/**
+ * Adds n seconds to the given date, returning the updated date.
+ * @param date
+ * @param days
+ * @returns
+ */
+function addSeconds(date : Date, seconds : float) {
 	var date = new Date(date.valueOf() + (1000 * seconds));
 	return date;
 }
 
-function daysUntilDate(date) {
+/**
+ * Gets the number of days until the given date. Can be negative.
+ * @param date
+ * @param days
+ * @returns
+ */
+function daysUntilDate(date: Dateish) : float {
 	var start = isoConvert(date);
 	var currentTimeUTC = new Date();
 	var diff = start.getTime() - currentTimeUTC.getTime();
@@ -156,7 +222,13 @@ function daysUntilDate(date) {
 	}
 }
 
-function daysBetween(startdate , enddate) {
+/**
+ * The number of days between the two given dates.
+ * @param startdate
+ * @param enddate
+ * @returns
+ */
+function daysBetween(startdate: Dateish, enddate: Dateish) : float {
 	var start = isoConvert(startdate).setHours(0, 0, 0, 0);
 	var end = isoConvert(enddate).setHours(0, 0, 0, 0);	
 	var diff = end - start;
@@ -165,28 +237,53 @@ function daysBetween(startdate , enddate) {
 	return days;
 }
 
-function minsBetween(startdate , enddate) {
+/**
+ * The number of minutes between the two given dates.
+ * @param startdate
+ * @param enddate
+ * @returns
+ */
+function minsBetween(startdate: Dateish, enddate: Dateish): float{
 	var start = isoConvert(startdate);
 	var end = isoConvert(enddate);	
-	var diff = Math.abs(end - start);
+	var diff = Math.abs(end.valueOf() - start.valueOf());
 	var mins = Math.floor((diff /1000) /60);
-
 	return mins;
 }
 
-function toLocaleUTCDateString(date, locales, options) {
+/**
+ * Displays the given date using the named locales date formatting.
+ * @param date
+ * @param locales
+ * @param options
+ * @returns
+ */
+function toLocaleUTCDateString(date: Date, locales: string, options?: Intl.DateTimeFormatOptions) {
 	const timeDiff = date.getTimezoneOffset() * 60000;
 	const adjustedDate = new Date(date.valueOf() + timeDiff);
 	return adjustedDate.toLocaleDateString(locales, options);
 }
 
-function toLocaleUTCTimeString(date, locales, options) {
+/**
+ * Displays the given date as only its time using the named locales date formatting.
+ * @param date
+ * @param locales
+ * @param options
+ * @returns
+ */
+function toLocaleUTCTimeString(date: Date, locales: string, options?: Intl.DateTimeFormatOptions) {
 	const timeDiff = date.getTimezoneOffset() * 60000;
 	const adjustedDate = new Date(date.valueOf() + timeDiff);
 	return adjustedDate.toLocaleTimeString(locales, options);
 }
 
-function isSameDay(d1, d2) {
+/**
+ * True if the given dates are the same day.
+ * @param d1
+ * @param d2
+ * @returns
+ */
+function isSameDay(d1: Date, d2: Date) {
 	return d1.getUTCFullYear() === d2.getUTCFullYear() &&
 		d1.getUTCMonth() === d2.getUTCMonth() &&
 		d1.getUTCDate() === d2.getUTCDate();
