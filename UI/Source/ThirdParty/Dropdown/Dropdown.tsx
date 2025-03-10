@@ -3,15 +3,6 @@
   
   params:
   
-  label:            override label text / JSX ("dropdown" by default)
-  arrow:            override arrow icon (caret SVG by default)
-  title:            optional title attribute (useful if no text label visible)
-  variant:          Bootstrap variant to use (e.g. primary / secondary / danger / success, etc.
-  isOutline:        outlined version (defaults to solid colour)
-  isLarge:			renders large size version
-  isSmall:			renders small size version
-  splitCallback:    optional function to be called when pressing button (dropdown controlled by a separate button)
-  stayOpenOnSelection: keeps the dropdown open after selecting an option (disabled by default)
   align:            alignment of menu with respect to the button (left / right if vertical, top / bottom if horizontal)
   position:         which side of the button the menu will appear on (top, bottom, left or right)
   menuTag:          tag to use to wrap the dropdown contents (defaults to <ul>)
@@ -57,7 +48,6 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { tabNext, tabPrev } from "UI/Functions/Tabbable";
 
 // TODO: popper support
 //import { Manager, Reference, Popper } from 'UI/Popper';
@@ -69,9 +59,95 @@ function newId() {
 	return `dropdown${lastId}`;
 }
 
-export default function Dropdown(props) {
+interface DropdownProps {
+	/**
+	 * Optional custom classname.
+	 */
+	className?: string,
+
+	/**
+	 * Style variant e.g. primary, secondary etc. If not specified primary is assumed.
+	 */
+	variant?: string,
+
+	/**
+	 * A title which appears when hovering the trigger button.
+	 */
+	title?: string,
+
+	/**
+	 * The label of the trigger button.
+	 */
+	label?: React.ReactNode,
+
+	/**
+	 * Optional custom arrow icon.
+	 */
+	arrow?: React.ReactElement,
+
+	/**
+	 * True if the dropdown should use the outline style.
+	 */
+	isOutline?: boolean,
+
+	/**
+	 * True if it should be a large button.
+	 */
+	isLarge?: boolean,
+
+	/**
+	 * True if it should be a small button.
+	 */
+	isSmall?: boolean,
+
+	/**
+	 * optional function to be called when pressing button (dropdown controlled by a separate button)
+	 */
+	splitCallback?: (event: React.MouseEvent<HTMLButtonElement>) => void,
+
+	/**
+	 * True if the menu starts open.
+	 */
+	initialState?: boolean,
+
+	/**
+	 * keeps the dropdown open after selecting an option (disabled by default)
+	 */
+	stayOpenOnSelection?: boolean,
+
+	/**
+	 * alignment of menu with respect to the button (left / right if vertical, top / bottom if horizontal)
+	 */
+	align?: string,
+
+	/**
+	 * which side of the button the menu will appear on (top, bottom, left or right)
+	 */
+	position?: string,
+
+	/**
+	 * tag to use to wrap the dropdown contents (defaults to <ul>)
+	 */
+	menuTag?: React.ElementType,
+
+	/**
+	 * True if the menu is disabled.
+	 */
+	disabled?: boolean,
+
+	/**
+	 * True if the menu should be as compact as possible.
+	 */
+	noMinWidth?: boolean
+}
+
+/**
+ * Dropdown component
+ */
+const Dropdown: React.FC<React.PropsWithChildren<DropdownProps>> = (props) => {
 	var { className, variant, title, label, arrow, isOutline, isLarge, isSmall,
-		splitCallback, children, initialState, stayOpenOnSelection, align, position, disabled, menuTag, noMinWidth } = props;
+		splitCallback, children, initialState,
+		stayOpenOnSelection, align, position, disabled, menuTag, noMinWidth } = props;
 	var dropdownClasses = ['dropdown'];
 
 	if (className) {
@@ -97,6 +173,7 @@ export default function Dropdown(props) {
 	if (!align) {
 		align = "";
 	}
+
 	align = align.toLowerCase();
 
 	const MenuTag = menuTag || 'ul';
@@ -144,7 +221,7 @@ export default function Dropdown(props) {
 	dropdownClasses.push('dropdown--position-' + position);
 
 	const [open, setOpen] = useState(initialState);
-	const dropdownWrapperRef = useRef(null);
+	const dropdownWrapperRef = useRef<HTMLDivElement>(null);
 	const toggleRef = useRef(null);
 	const dropdownRef = useRef(null);
 	var menuItems, firstMenuItem, lastMenuItem;
@@ -180,14 +257,12 @@ export default function Dropdown(props) {
 
 	// default arrow icon
 	if (!arrow) {
-		arrow = <>
-			<svg className="dropdown__chevron" xmlns="http://www.w3.org/2000/svg" overflow="visible" viewBox="0 0 58 34">
-				<path d="M29 34c-1.1 0-2.1-.4-2.9-1.2l-25-26c-1.5-1.6-1.5-4.1.1-5.7 1.6-1.5 4.1-1.5 5.7.1l22.1 23 22.1-23c1.5-1.6 4.1-1.6 5.7-.1s1.6 4.1.1 5.7l-25 26c-.8.8-1.8 1.2-2.9 1.2z" fill="currentColor" />
-			</svg>
-		</>;
+		arrow = <svg className="dropdown__chevron" xmlns="http://www.w3.org/2000/svg" overflow="visible" viewBox="0 0 58 34">
+			<path d="M29 34c-1.1 0-2.1-.4-2.9-1.2l-25-26c-1.5-1.6-1.5-4.1.1-5.7 1.6-1.5 4.1-1.5 5.7.1l22.1 23 22.1-23c1.5-1.6 4.1-1.6 5.7-.1s1.6 4.1.1 5.7l-25 26c-.8.8-1.8 1.2-2.9 1.2z" fill="currentColor" />
+		</svg>;
 	}
 
-	function handleClick(event) {
+	function handleClick(event: MouseEvent) {
 		// toggle dropdown
 		if (toggleRef && toggleRef.current == event.target) {
 
@@ -203,8 +278,15 @@ export default function Dropdown(props) {
 
 		// clicked a form control within a dropdown?
 		// assume we want to keep the menu open
-		var target = event.target;
-		var isFormControl = target.type == 'radio' || target.type == 'checkbox' ||
+		var target = event.target as HTMLElement;
+
+		if (!target) {
+			return;
+		}
+
+		var targetInput = target as HTMLInputElement;
+
+		var isFormControl = targetInput?.type == 'radio' || targetInput?.type == 'checkbox' ||
 			target.nodeName.toUpperCase() == 'LABEL' && target.classList.contains("form-check-label");
 
 		// if we want to close even if we selected an item in the dropdown (default)
@@ -214,122 +296,24 @@ export default function Dropdown(props) {
 
 			// only close if we clicked outside of the dropdown
 			// (leave dropdown open after making a selection)
-			if (dropdownWrapperRef && !dropdownWrapperRef.current.contains(event.target)) {
+			if (dropdownWrapperRef && !dropdownWrapperRef.current?.contains(target)) {
 				closeDropdown();
 			}
 		}
 	}
 
-	function checkShiftTab(event) {
-
-		// if we're shift-tabbing back from the trigger, close the dropdown
-		if (event.keyCode === 9 && event.shiftKey) {
-			closeDropdown();
-		}
-
-		// cursor down
-		if (event.keyCode === 40) {
-			event.preventDefault();
-			tabNext();
-		}
-
-	}
-
-	function checkCursorKey(event) {
-
-		// cursor up
-		if (event.keyCode === 38 && event.target != firstMenuItem) {
-			event.preventDefault();
-			tabPrev();
-		}
-
-		// cursor down
-		if (event.keyCode === 40 && event.target != lastMenuItem) {
-			event.preventDefault();
-			tabNext();
-		}
-
-	}
-
-	function checkTab(event) {
-
-		// if we're tabbing past this item, close the dropdown
-		if (event.keyCode === 9 && !event.shiftKey) {
-			closeDropdown();
-		}
-
-	}
-
 	function closeDropdown() {
-
-		if (menuItems) {
-			menuItems.forEach(menuItem => {
-				menuItem.removeEventListener("keydown", checkCursorKey);
-			});
-		}
-
-		if (lastMenuItem) {
-			lastMenuItem.removeEventListener("keydown", checkTab);
-		}
-
-		menuItems = undefined;
-		firstMenuItem = undefined;
-		lastMenuItem = undefined;
-
 		setOpen(false);
 	}
 
 	useEffect(() => {
-
-		if (dropdownWrapperRef && dropdownWrapperRef.current) {
-			dropdownWrapperRef.current.ownerDocument.addEventListener("click", handleClick);
-		}
-
-		if (toggleRef && toggleRef.current) {
-			toggleRef.current.addEventListener("keydown", checkShiftTab);
-		}
-
+		window.document.addEventListener("click", handleClick);
+		
 		return () => {
-			if (dropdownWrapperRef && dropdownWrapperRef.current) {
-				dropdownWrapperRef.current.ownerDocument.removeEventListener("click", handleClick);
-			}
-
-			if (toggleRef && toggleRef.current) {
-				toggleRef.current.removeEventListener("keydown", checkShiftTab);
-			}
-
+			window.document.removeEventListener("click", handleClick);
 		};
 
 	}, []);
-
-	useEffect(() => {
-
-		if (!dropdownRef || !dropdownRef.current) {
-			return;
-		}
-
-		// bind to each dropdown item
-		// (checks for up/down cursor key usage)
-		menuItems = dropdownRef.current.querySelectorAll("li > .dropdown-item");
-
-		menuItems.forEach(menuItem => {
-			menuItem.addEventListener("keydown", checkCursorKey);
-		});
-
-		if (open && dropdownRef) {
-			firstMenuItem = dropdownRef.current.querySelector("li:first-child > .dropdown-item");
-
-			// find last item and bind to tab event
-			// (as tabbing past this should close the dropdown)
-			lastMenuItem = dropdownRef.current.querySelector("li:last-child > .dropdown-item");
-
-			if (lastMenuItem) {
-				lastMenuItem.addEventListener("keydown", checkTab);
-			}
-
-		}
-
-	}, [open]);
 
 	let dropdownMenuClass = ['dropdown-menu'];
 
@@ -431,6 +415,9 @@ export default function Dropdown(props) {
 	);
 }
 
+export default Dropdown;
+
+/*
 Dropdown.propTypes = {
 	stayOpenOnSelection: 'bool',
 	align: ['Top', 'Bottom', 'Left', 'Right'],
@@ -444,3 +431,4 @@ Dropdown.defaultProps = {
 }
 
 Dropdown.icon = 'caret-square-down';
+*/
