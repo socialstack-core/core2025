@@ -1,4 +1,4 @@
-import webRequest from 'UI/Functions/WebRequest';
+import userApi from 'Api/User';
 
 function clearAndNav(url, setSession, setPage, ctx){
 	if(ctx){
@@ -19,7 +19,7 @@ export default (url, setSession, setPage) => {
 		throw new Error('Logout requires ctx');
 	}
 	
-	return webRequest('user/logout')
+	return userApi.logout()
 		.then(response => clearAndNav(url || '/', setSession, setPage, response.json))
 		.catch(e => clearAndNav(url || '/', setSession, setPage));
 };

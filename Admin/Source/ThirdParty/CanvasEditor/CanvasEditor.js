@@ -1,6 +1,6 @@
 import Alert from 'UI/Alert';
 import Input from 'UI/Input';
-import Graph from 'UI/Functions/GraphRuntime/Graph';
+import Graph from 'Admin/CanvasEditor/GraphEditor/Graph';
 import Collapsible from 'UI/Collapsible';
 import { ErrorCatcher } from 'UI/Canvas';
 import getBuildDate from 'UI/Functions/GetBuildDate';

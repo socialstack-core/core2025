@@ -377,9 +377,10 @@ export default class Loop extends React.Component {
 		return true;
 	}
 
-	onContentChange(e) {
-
+	onContentChange(e : CustomEvent) {
 		// Content changed! Is it relevant to this loop?
+		var detail = e.detail as ContentChangeDetail;
+		
 		var results = this.state.results;
 
 		if (typeof this.props.over != 'string' || !results) {
@@ -390,12 +391,12 @@ export default class Loop extends React.Component {
 		if (this.props.updateContentType) {
 			// If you're using custom endpoints, specify this updateContentType prop to be able to still receive live updates.
 
-			if (this.props.updateContentType != e.entity.type) {
+			if (this.props.updateContentType != detail.entity.type) {
 				// This content isn't of the same type as this loop.
 				return;
 			}
 
-		} else if (getEndpointType(this.props.over).type != e.endpointType) {
+		} else if (getEndpointType(this.props.over).type != detail.endpointType) {
 			// This content isn't of the same type as this loop.
 			return;
 		}
@@ -413,8 +414,8 @@ export default class Loop extends React.Component {
 		}
 		*/
 		
-		var entity = e.entity;
-		this.onLiveMessage({entity, method: e.deleted ? 'delete' : (e.created ? 'create' : 'update')});
+		var entity = detail.entity;
+		this.onLiveMessage({entity, method: detail.deleted ? 'delete' : (detail.created ? 'create' : 'update')});
 	}
 
 	componentDidMount() {
@@ -522,7 +523,6 @@ export default class Loop extends React.Component {
 			this.setState(newState);
 			var filter = this.getPagedFilter(props.filter, newPageIndex || this.state.pageIndex, props.paged);
 			
-			// NB: still using webRequest here rather than Content.list because props.over can also be custom named endpoints (for now!)
 			webRequest(props.over.indexOf('/') == -1 ? props.over + '/list' : props.over, filter, props.requestOpts ? {includes: props.includes, ...props.requestOpts} : {includes: props.includes}).then(responseJson => {
 				var responseJson = responseJson.json;
 				var results = (responseJson && responseJson.results) ? responseJson.results : [];

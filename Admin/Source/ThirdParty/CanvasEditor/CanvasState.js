@@ -1,5 +1,5 @@
 import { getRootInfo } from './Utils';
-import Graph from 'UI/Functions/GraphRuntime/Graph';
+import Graph from 'Admin/CanvasEditor/GraphEditor/Graph';
 import Draft from 'Admin/CanvasEditor/DraftJs/Draft.min.js';
 import { createLinkDecorator } from 'Admin/CanvasEditor/Link';
 const { EditorState, convertFromHTML, ContentState, convertToRaw, getSafeBodyFromHTML } = Draft;

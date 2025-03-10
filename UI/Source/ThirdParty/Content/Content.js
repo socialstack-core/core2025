@@ -1,6 +1,6 @@
 import webRequest, {expandIncludes} from 'UI/Functions/WebRequest';
 import webSocket from 'UI/Functions/WebSocket';
-import { SessionConsumer, RouterConsumer } from 'UI/Session';
+import { SessionConsumer, useRouter } from 'UI/Session';
 
 const ContentContext = React.createContext();
 
@@ -53,8 +53,10 @@ class ContentIntl extends React.Component {
 		}
 	}
 	
-	onContentChange(e) {
+	onContentChange(e : CustomEvent) {
 		// Content changed! Is it a thing relative to us?
+		var detail = e.detail as ContentChangeDetail;
+		
 		var content = this.state.content;
 		
 		if (!content) {
@@ -62,7 +64,7 @@ class ContentIntl extends React.Component {
 			return;
 		}
 		
-		var entity = e.entity;
+		var entity = detail.entity;
 		if(entity && entity.type != this.evtType()){
 			return;
 		}
@@ -75,7 +77,7 @@ class ContentIntl extends React.Component {
 			}
 		}
 		
-		if (e.deleted) {
+		if (detail.deleted) {
 			// Deleted it. _err indicates an object that is known to not exist:
 			this.setState({
 				content: {_err: true}
@@ -106,7 +108,8 @@ class ContentIntl extends React.Component {
 	}
 	
 	load(type, id, includes){
-		Content.get(type, id, includes)
+		var url = type + '/' + id;
+		webRequest(url, null, includes ? {includes} : null).then(response => response.json)
 			.then(content => this.setState({content}))
 			.catch(e => {
 				// E.g. doesn't exist.
@@ -170,26 +173,26 @@ class ContentIntl extends React.Component {
 }
 
 /*
-* A convenience mechanism for obtaining 1 piece of content. Outputs no DOM structure.
+* Obtains 1 piece of content. Outputs no DOM structure.
 * Very similar to <Loop> with a where:{Id: x}.
 */
 export default function Content(props) {
+	const {pgState} = useRouter();
 	
-	return (props.primary) ? <RouterConsumer>{
-		pgState => {
-			if(!pgState.po){
-				return null;
-			}
-			
-			if(pgState.po.type && pgState.po.id){
-				return <ContentIntl type={pgState.po.type} id={pgState.po.id} {...props}/>;
-			}
-			
-			// Occurs when po is a customData object:
-			return props.children ? props.children(pgState.po, false) : null;
+	if(props.primary){
+		if(!pgState.po){
+			return null;
 		}
-	}</RouterConsumer> : <ContentIntl {...props}/>;
+		
+		if(pgState.po.type && pgState.po.id){
+			return <ContentIntl type={pgState.po.type} id={pgState.po.id} {...props}/>;
+		}
+		
+		// Occurs when po is a customData object:
+		return props.children ? props.children(pgState.po, false) : null;
+	}
 	
+	return <ContentIntl {...props}/>;
 }
 
 export function useContent(){
@@ -198,25 +201,3 @@ export function useContent(){
 
 // Use this to use <Content> via context. Used primarily by tokens.
 export const ContentConsumer = ContentContext.Consumer;
-
-// E.g:
-// content.get("blog", 1);
-// A convenience wrapper which is shorted serverside for rapid performance.
-// Returns a promise which will either resolve directly to the object, 
-// or be rejected with a message and statusCode if there was an error.
-// You should only use this from componentDidMount and componentDidUpdate (or useEffect) for correct React usage.
-Content.get = function(type, id, includes) {
-	var url = type + '/' + id;
-	return webRequest(url, null, includes ? {includes} : null).then(response => response.json);
-};
-
-// E.g:
-// content.list("blog", {where: ...});
-// A convenience wrapper which is shorted serverside for rapid performance.
-// Returns a promise which will either resolve directly to the object, 
-// or be rejected with a message and statusCode if there was an error.
-// You should only use this from componentDidMount and componentDidUpdate (or useEffect) for correct React usage.
-Content.list = function(type, filter, includes) {
-	var url = type + '/list';
-	return webRequest(url, filter, includes ? {includes} : null).then(response => response.json);
-};

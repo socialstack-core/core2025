@@ -5,49 +5,33 @@ import * as dateTools from 'UI/Functions/DateTools';
 */
 const longMonths = [`January`, `February`, `March`, `April`, `May`, `June`, `July`, `August`, `September`, `October`, `November`, `December`];
 
-export function ordinal_suffix_of(i) {
-    var j = i % 10,
-        k = i % 100;
-    if (j == 1 && k != 11) {
-        return i + `st`;
-    }
-    if (j == 2 && k != 12) {
-        return i + `nd`;
-    }
-    if (j == 3 && k != 13) {
-        return i + `rd`;
-    }
-    return i + `th`;
-}
-
-export default function FormatTime(date, format, noTime = false, delimiter = null, noDate = false, isHtml = false){
-    if(!date || (noDate && noTime)){
+export default function FormatTime(dateish : Dateish, format : string, noTime = false, delimiter : string | null = null, noDate = false, isHtml = false){
+    if (!dateish || (noDate && noTime)){
         return '-';
     }
 	
-	date = dateTools.isoConvert(date);
-    var day = date.getDate();
-    var year = date.getFullYear();
-    var month = date.getMonth() + 1;
-    var hour = date.getHours();
-    var minute = date.getMinutes();
+	var date = dateTools.isoConvert(dateish);
+    var day = date.getDate() as int;
+    var year = date.getFullYear() as int;
+    var month = (date.getMonth() + 1) as int;
+    var hour = date.getHours() as int;
+    var minute = date.getMinutes() as int;
     var evening = false;
 
     if(hour >= 12 ){
         evening = true;
-        hour -= 12; 
+        hour = (hour - 12) as int; 
     }
     if(hour == 0){
-        hour = 12;
+        hour = 12 as int;
     }
 
-    now = new Date();
+    var now = new Date();
     
     var meridiem = "";
     evening ? meridiem = `PM` : meridiem = `AM`;
-    if (minute < 10){
-        minute = "0" + minute;
-    }
+    var minuteStr = (minute < 10) ? "0" + minute : minute.toString();
+    
     if(format == "us") {
         var dateString = "";
 
@@ -61,7 +45,7 @@ export default function FormatTime(date, format, noTime = false, delimiter = nul
                 dateString += "<time>";
             }
 
-            dateString += " " + hour + ":" + minute + " " + meridiem;
+            dateString += " " + hour + ":" + minuteStr + " " + meridiem;
 
             if (isHtml) {
                 dateString += "</time>";
@@ -88,7 +72,7 @@ export default function FormatTime(date, format, noTime = false, delimiter = nul
                 dateString += "<time>";
             }
 
-            dateString += " " + hour + ":" + minute + " " + meridiem;
+            dateString += " " + hour + ":" + minuteStr + " " + meridiem;
 
             if (isHtml) {
                 dateString += "</time>";
@@ -102,7 +86,7 @@ export default function FormatTime(date, format, noTime = false, delimiter = nul
         var dateString = "";
 
         if(!noDate) {
-            dateString += ordinal_suffix_of(day) + " " + longMonths[month - 1] + " " + year;
+            dateString += dateTools.ordinal(day) + " " + longMonths[month - 1] + " " + year;
         }
         
         if(!noTime) {
@@ -111,7 +95,7 @@ export default function FormatTime(date, format, noTime = false, delimiter = nul
                 dateString += "<time>";
             }
 
-            dateString += " " + hour + ":" + minute + " " + meridiem;
+            dateString += " " + hour + ":" + minuteStr + " " + meridiem;
 
             if (isHtml) {
                 dateString += "</time>";
@@ -135,7 +119,7 @@ export default function FormatTime(date, format, noTime = false, delimiter = nul
                 dateString += "<time>";
             }
 
-            dateString += " " + hour + ":" + minute + " " + meridiem;
+            dateString += " " + hour + ":" + minuteStr + " " + meridiem;
 
             if (isHtml) {
                 dateString += "</time>";

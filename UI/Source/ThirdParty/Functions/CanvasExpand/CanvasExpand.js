@@ -1,5 +1,4 @@
 import {expandIncludes} from 'UI/Functions/WebRequest';
-import Graph from 'UI/Functions/GraphRuntime/Graph';
 import Text from 'UI/Text';
 
 var inlineTypes = [
@@ -33,7 +32,7 @@ function isCanvas2(node){
 		return false;
 	}
 	
-	return (node.c || node.r || node.t || node.g);
+	return (node.c || node.r || node.t);
 }
 
 function readMap(dataMap, ptr){
@@ -140,7 +139,7 @@ function convertToNodesFromCanvas(node, onContentNode, dataMap){
 	}
 	
 	if(node.g){
-		result.graph = new Graph(node.g);
+		throw new Error('Unexpanded graph');
 	}
 	
 	if(node.i){

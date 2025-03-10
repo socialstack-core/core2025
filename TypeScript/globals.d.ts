@@ -31,6 +31,36 @@ declare global {
 		 */
 		type: string
 	}
+	
+	/**
+	* Public configuration objects from the API.
+	*/
+	interface Config {
+		
+	}
+
+	/**
+	 * Internal site configuration.
+	 */
+	var __cfg: Record<string, Config>;
+
+	/**
+	 * URL where static content originates from.
+	 */
+	var staticContentSource: string;
+
+	/**
+	 * URL where upload content originates from.
+	 */
+	var contentSource: string;
+
+	/**
+	 * True if this is executing on the serverside. Only use if absolutely necessary 
+	 * as it will cause odd behaviour (mainly React not hydrating correctly) with the SSR if this is used too much.
+	 * Most of the time you should do client specific things in useEffect instead 
+	 * as a useEffect does not run on the server and is designed by react to be able to manipulate the DOM after rendering.
+	 */
+	var SERVER: boolean;
 }
 
 export {};

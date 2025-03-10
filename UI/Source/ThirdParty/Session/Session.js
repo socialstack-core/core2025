@@ -27,14 +27,6 @@ export function useTheme(){
 	return getCfg('globaltheme') || {};
 }
 
-export function useConfig(name){
-	return getCfg(name);
-}
-
-function getCfg(name){
-	return global.__cfg ? global.__cfg[name.toLowerCase()] : null;
-}
-
 export function getDeviceId(){
 	var store = window.localStorage;
 	if(!store){
@@ -103,7 +95,7 @@ export const Provider = (props) => {
 
 export const SessionConsumer = (props) => <Session.Consumer>{v => props.children(v.session, v.setSession)}</Session.Consumer>;
 export const RouterConsumer = (props) => <Router.Consumer>{v => props.children(v.pageState, v.setPage)}</Router.Consumer>;
-export const ConfigConsumer = (props) => props.children(getCfg(props.name));
+
 export const ThemeConsumer = (props) => props.children(getCfg('globaltheme'));
 
 export function useRouter() {

@@ -228,10 +228,11 @@ export default (props) => {
 	
 	React.useEffect(() => {
 		
-		const onContentChange = (e) => {
+		const onContentChange = (e : CustomEvent) => {
 			var {po} = pageState;
-			if(po && po.type == e.type && po.id == e.entity.id){
-				var pgState = {...pageState, po: e.entity};
+			var detail = e.detail as ContentChangeDetail;
+			if(po && po.type == detail.type && po.id == detail.entity.id){
+				var pgState = {...pageState, po: detail.entity};
 				setPage(pgState);
 			}
 		};

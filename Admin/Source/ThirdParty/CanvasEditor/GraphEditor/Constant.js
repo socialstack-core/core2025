@@ -1,6 +1,4 @@
-import Executor from 'UI/Functions/GraphRuntime/Executor';
-
-export default class Constant extends Executor {
+export default class Constant {
 	
 	constructor(props){
 		super(props);

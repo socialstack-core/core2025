@@ -1,4 +1,4 @@
-import webRequest from 'UI/Functions/WebRequest';
+import roleApi from 'Api/Role';
 
 /* cache */
 var cache = null;
@@ -21,9 +21,9 @@ function loadCached(capName, session) {
 	
 	var roleId = session.user ? session.user.role : 0;
 	
-	return cache = webRequest("permission/role/" + roleId).then(response => {
+	return cache = roleApi.get(roleId).then(role => {
 		cache = {};
-		response.json.capabilities.forEach(c => {
+		role.capabilities.forEach(c => {
 			cache[c.name] = c;
 		});
 		return cache;

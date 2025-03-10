@@ -7,7 +7,7 @@ import ConfirmModal from 'UI/Modal/ConfirmModal';
 import isNumeric from 'UI/Functions/IsNumeric';
 import getAutoForm from 'Admin/Functions/GetAutoForm';
 import webRequest from 'UI/Functions/WebRequest';
-import formatTime from "UI/Functions/FormatTime";
+import formatTime from "Admin/Functions/FormatTime";
 import CanvasEditor from "Admin/CanvasEditor";
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import { useSession, RouterConsumer, Router } from 'UI/Session';
