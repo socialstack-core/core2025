@@ -1,4 +1,6 @@
-import getRef from 'UI/Functions/GetRef';
+import * as fileRef from 'UI/FileRef';
+import Video from 'UI/Video';
+import Image from 'UI/Image';
 
 var DEFAULT_ABORTED = `Upload aborted`;
 var DEFAULT_ERROR = `Unable to upload`;
@@ -38,7 +40,7 @@ export default class Uploader extends React.Component {
 			ref: this.props.currentRef,
 			aspect169: this.props.aspect169,
 			aspect43: this.props.aspect43,
-			filename: this.props.currentRef ? getRef.parse(this.props.currentRef).ref : undefined,
+			filename: this.props.currentRef ? fileRef.parse(this.props.currentRef).ref : undefined,
 			files: [],
 			draggedOver: false
 		};
@@ -389,33 +391,26 @@ export default class Uploader extends React.Component {
 						var labelStyle = {};
 
 						if (hasRef) {
-							var refInfo = getRef.parse(file.ref);
-							var canShowImage = getRef.isImage(file.ref);
-							var canShowVideo = getRef.isVideo(file.ref, false);
-							var canShowIcon = getRef.isIcon(file.ref);
+							var refInfo = fileRef.parse(file.ref);
+							var canShowImage = refInfo.isImage();
+							var canShowVideo = refInfo.isVideo(false);
 
 							fileClasses.push("uploader--content");
 							fileLabel = "";
 
 							// TODO: check original image width/height values here; if both are less than 256px,
 							// use the original image and set background-size to auto
-							if (canShowImage && !canShowVideo && !canShowIcon) {
-								labelStyle = { "background-image": "url(" + getRef(file.ref, { url: true, size: 256 }) + ")" };
+							if (canShowImage && !canShowVideo) {
+								labelStyle = { "background-image": "url(" + fileRef.getUrl(refInfo, { size: 256 }) + ")" };
 							}
 
-							if ((canShowImage || canShowVideo) && !canShowIcon) {
+							if ((canShowImage || canShowVideo)) {
 								fileClasses.push("uploader--image");
 							}
 
 							if (canShowVideo) {
 								labelClasses.push("video");
 							}
-
-							if (canShowIcon) {
-								iconClass = refInfo.scheme + " " + refInfo.ref + " uploader__file";
-								iconName = refInfo.ref;
-							}
-
 						}
 
 						var renderedSize = 256;
@@ -425,14 +420,10 @@ export default class Uploader extends React.Component {
 							caption = originalName;
 						}
 
-						if (canShowIcon) {
-							caption = iconName;
-						}
-
 						return <div className={fileClasses.join(' ')}>
 							<div className="uploader__internal">
 
-								{(canShowImage || canShowVideo) && !canShowIcon &&
+								{(canShowImage || canShowVideo) &&
 									<div className="uploader__imagebackground">
 									</div>
 								}
@@ -445,17 +436,12 @@ export default class Uploader extends React.Component {
 									</>}
 
 									{/* has a reference, but isn't an image */}
-									{hasRef && !canShowImage && !canShowVideo && !canShowIcon && <>
+									{hasRef && !canShowImage && !canShowVideo && <>
 										<i className="fal fa-file uploader__file" />
 									</>}
 
 									{/* has an video reference */}
-									{hasRef && canShowVideo && getRef(file.ref, { size: renderedSize })}
-
-									{/* has an icon reference */}
-									{hasRef && canShowIcon && <>
-										<i className={iconClass} />
-									</>}
+									{hasRef && canShowVideo && <Video fileRef={file.ref} size={renderedSize} />}
 
 									{/* failed to upload */}
 									{file.failed && <>
@@ -519,10 +505,10 @@ export default class Uploader extends React.Component {
 		if (loading && progressPercent == 100) {
 			label = `Processing ...`;
 		}
-
-		var canShowImage = getRef.isImage(ref);
-		var canShowVideo = getRef.isVideo(ref, false);
-		var canShowIcon = getRef.isIcon(ref);
+		
+		var parsedRef = fileRef.parse(ref);
+		var canShowImage = parsedRef.isImage();
+		var canShowVideo = parsedRef.isVideo(false);
 		var labelStyle = {};
 		var uploaderClasses = ['uploader'];
 		var uploaderLabelClasses = ['uploader__label'];
@@ -561,7 +547,7 @@ export default class Uploader extends React.Component {
 		var author = '';
 
 		if (hasRef) {
-			var refInfo = getRef.parse(ref);
+			var refInfo = fileRef.parse(ref);
 
 			uploaderClasses.push("uploader--content");
 			label = "";
@@ -584,21 +570,16 @@ export default class Uploader extends React.Component {
 
 			// TODO: check original image width/height values here; if both are less than 256px,
 			// use the original image and set background-size to auto
-			if (canShowImage && !canShowVideo && !canShowIcon) {
-				labelStyle = { "background-image": "url(" + getRef(ref, { url: true, size: 256 }) + ")" };
+			if (canShowImage && !canShowVideo) {
+				labelStyle = { "background-image": "url(" + fileRef.getUrl(refInfo, { size: 256 }) + ")" };
 			}
 
-			if ((canShowImage || canShowVideo) && !canShowIcon) {
+			if ((canShowImage || canShowVideo)) {
 				uploaderClasses.push("uploader--image");
 			}
 
 			if (canShowVideo) {
 				uploaderLabelClasses.push("video");
-			}
-
-			if (canShowIcon) {
-				iconClass = refInfo.scheme + " " + refInfo.ref + " uploader__file";
-				iconName = refInfo.ref;
 			}
 
 		}
@@ -614,16 +595,12 @@ export default class Uploader extends React.Component {
 			caption = originalName;
 		}
 
-		if (canShowIcon) {
-			caption = iconName;
-		}
-
 		var currentXhr = this.state.fileIndex == undefined ? this.state.xhr : this.state.files[this.state.fileIndex].xhr;
 
 		return <div className={uploaderClass}>
 			<div className={this.props.iconOnly ? "uploader__internal uploader__internal--icon" : "uploader__internal"}>
 
-				{(canShowImage || canShowVideo) && !canShowIcon &&
+				{(canShowImage || canShowVideo) &&
 					<div className="uploader__imagebackground">
 										<div className="uploader__imagebackground-crosshair" style={{
                                                     left: focalX + '%',
@@ -642,17 +619,12 @@ export default class Uploader extends React.Component {
 					</>}
 
 					{/* has a reference, but isn't an image */}
-					{hasRef && !canShowImage && !canShowVideo && !canShowIcon && <>
+					{hasRef && !canShowImage && !canShowVideo && <>
 						<i className="fal fa-file uploader__file" />
 					</>}
 
 					{/* has an video  reference */}
-					{hasRef && canShowVideo && getRef(ref, { size: renderedSize })}
-
-					{/* has an icon reference */}
-					{hasRef && canShowIcon && <>
-						<i className={iconClass} />
-					</>}
+					{hasRef && canShowVideo && <Video fileRef={ref} size={renderedSize} />}
 
 					{/* failed to upload */}
 					{failed && <>

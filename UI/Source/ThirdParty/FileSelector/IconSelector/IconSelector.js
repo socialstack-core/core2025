@@ -8,7 +8,7 @@ import Loading from 'UI/Loading';
 import Spacer from 'UI/Spacer';
 import Debounce from 'UI/Functions/Debounce';
 import webRequest from 'UI/Functions/WebRequest';
-import getRef from 'UI/Functions/GetRef';
+import * as fileRef from 'UI/FileRef';
 
 let icons = [];
 let iconStyles = [];
@@ -32,11 +32,11 @@ export default class IconSelector extends React.Component {
 			var styles = [{name: `All`, key: 'all'},{name:`Regular`, key: 'regular', prefix: 'far'}, {name:`Solid`, key: 'solid', prefix: 'fas'}, {name: `Brands`, key: 'brands', prefix: 'fab'}];
 			var sets = [{name: `All`, key: 'all'}, {name: `Default (FontAwesome)`, key: 'default'}];
 			
-			var proms = [webRequest(getRef(faIconsRef, {url: true}))];
+			var proms = [webRequest(fileRef.getUrl(faIconsRef))];
 			
 			if(global.customIcons){
 				global.customIcons.forEach(ci => {
-					proms.push(webRequest(getRef(ci.listRef, {url: true})).then(response=>{
+					proms.push(webRequest(fileRef.getUrl(ci.listRef)).then(response=>{
 						response.json.forEach(icon => {
 							if(ci.prefix){
 								icon.prefix = ci.prefix;

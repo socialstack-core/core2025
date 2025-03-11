@@ -1,4 +1,4 @@
-import getRef from 'UI/Functions/GetRef';
+import {getUrl} from 'UI/FileRef';
 import aceJs from './static/ace.js';
 
 var inputTypes = global.inputTypes = global.inputTypes || {};
@@ -23,7 +23,7 @@ function loadAce(){
 	return aceLoading = new Promise((s, r) => {
 		// Ace is lazy loaded. Go get it now:
 		var script = document.createElement("script");
-		script.src = getRef(aceJs, {url: true});
+		script.src = getUrl(aceJs);
 		script.onload = () => {
 			s(global.ace);
 		};

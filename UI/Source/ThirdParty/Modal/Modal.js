@@ -1,4 +1,4 @@
-import getRef from 'UI/Functions/GetRef';
+import * as fileRef from 'UI/FileRef';
 /*
 * A popup modal. Usage is e.g.:
 
@@ -115,7 +115,7 @@ export default class Modal extends React.Component {
 
 		var style = {};
 		if(this.props.backgroundImageRef) {
-			style.backgroundImage = "url("+ getRef(this.props.backgroundImageRef, {url: true}) +")"
+			style.backgroundImage = "url("+ fileRef.getUrl(this.props.backgroundImageRef) +")"
 			style.height= "690px"; /* You must set a specified height */
   			style.backgroundPosition= "center"; /* Center the image */
 			style.backgroundRepeat= "no-repeat"; /* Do not repeat the image */

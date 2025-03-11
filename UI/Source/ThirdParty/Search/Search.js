@@ -1,5 +1,5 @@
 import webRequest from 'UI/Functions/WebRequest';
-import getRef from 'UI/Functions/GetRef';
+import Image from 'UI/Image';
 import Debounce from 'UI/Functions/Debounce';
 
 /**
@@ -133,7 +133,7 @@ export default class Search extends React.Component {
 			return '';
 		}
 		
-		return getRef(result.avatarRef);
+		return <Image fileRef={result.avatarRef} />;
 	}
 	
 	display(result, isSuggestion){

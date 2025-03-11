@@ -1,4 +1,3 @@
-import getRef from 'UI/Functions/GetRef';
 import getConfig from 'UI/Config';
 
 const uploaderConfig = useConfig('uploader') || {};

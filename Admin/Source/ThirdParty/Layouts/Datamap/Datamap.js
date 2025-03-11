@@ -3,7 +3,7 @@ import Default from 'Admin/Layouts/Default';
 import webRequest from 'UI/Functions/WebRequest';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'UI/Session';
-import getRef from 'UI/Functions/GetRef';
+import {getUrl} from 'UI/FileRef';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
 import Input from 'UI/Input';
@@ -327,7 +327,7 @@ export default function Datamap(props) {
 		}
 
 		var buttons = isInstance ? [editButton] : [newButton, editButton];
-		var largeIcon = data.iconRef ? getRef(data.iconRef, { classNameOnly: true }) : (isInstance ? 'fa-file-alt' : 'fa-database');
+		var largeIcon = data.iconRef ? getUrl(data.iconRef, { classNameOnly: true }) : (isInstance ? 'fa-file-alt' : 'fa-database');
 
 		return <>
 			{/* NB: set defaultClick={editClick} to allow editing by clicking anywhere on expander */}

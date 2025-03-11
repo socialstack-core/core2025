@@ -3,12 +3,13 @@ import Container from 'UI/Container';
 import Row from 'UI/Row';
 import Column from 'UI/Column';
 import Input from 'UI/Input';
+import Image from 'UI/Image';
 import Search from 'UI/Search';
 import Uploader from 'UI/Uploader';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
 import webRequest from 'UI/Functions/WebRequest';
-import getRef from 'UI/Functions/GetRef';
+import * as fileRef from 'UI/FileRef';
 import Default from 'Admin/Layouts/Default';
 import MultiSelect from 'Admin/MultiSelect'
 
@@ -49,7 +50,7 @@ export default class MediaCenter extends React.Component {
     }
 
     showRef(ref, size) {
-        var parsedRef = getRef.parse(ref);
+        var parsedRef = fileRef.parse(ref);
         var size = size || 256;
         var targetSize = size;
         //var minSize = size == 256 ? 238 : size;
@@ -57,19 +58,20 @@ export default class MediaCenter extends React.Component {
         var fileClassName = parsedRef.fileType != '' ? 'fal fa-4x fa-file fa-file-' + parsedRef.fileType : 'fal fa-4x fa-file';
 
         // Check if it's an image/ video/ audio file. If yes, a preview is shown. Otherwise it'll be a placeholder icon.
-        var canShowImage = getRef.isImage(ref);
+        var canShowImage = parsedRef.isImage();
 
-        if (canShowImage && parsedRef.args) {
-            var args = parsedRef.args;
-
-            if ((args.w && args.w < size) && (args.h && args.h < size)) {
+        if (canShowImage) {
+			var argW = parsedRef.getNumericArg('w', 0);
+			var argH = parsedRef.getNumericArg('h', 0);
+			
+            if ((argW && argW < size) && (argH && argH < size)) {
                 targetSize = undefined;
             }
 
         }
 
         return canShowImage ?
-            getRef(ref, { size: targetSize, portraitCheck: true }) :
+            <Image fileRef={ref} size={targetSize} portraitCheck /> :
             <span className={fileClassName}></span>;
 
     }
@@ -204,12 +206,12 @@ export default class MediaCenter extends React.Component {
     renderEntry(entry) {
         var { bulkSelections } = this.state;
         var id = `upload_${entry.id}`;
-        var parsedRef = getRef.parse(entry.ref);
-        var focalX = parsedRef.args && parsedRef.args.fx || 50;
-        var focalY = parsedRef.args && parsedRef.args.fy || 50;
-        var url = getRef(entry.ref, { url: true });
-        var isImage = getRef.isImage(entry.ref);
-        var isVideo = getRef.isVideo(entry.ref);
+        var parsedRef = fileRef.parse(entry.ref);
+        var focalX = parsedRef.focalX || 50;
+        var focalY = parsedRef.focalY || 50;
+        var url = fileRef.getUrl(parsedRef);
+        var isImage = parsedRef.isImage();
+        var isVideo = parsedRef.isVideo();
         var checked = bulkSelections && !!bulkSelections[entry.id];
         var checkbox = <>
             <input type='checkbox' className="btn-check" checked={checked} id={id} autocomplete="off" onChange={() => {
@@ -364,9 +366,10 @@ export default class MediaCenter extends React.Component {
 
     renderUploadModal() {
         var isNewMedia = this.state.uploadModal === true;
-        var url = isNewMedia ? undefined : getRef(this.state.uploadModal, { url: true });
-        var isImage = isNewMedia ? undefined : getRef.isImage(this.state.uploadModal);
-        var isVideo = isNewMedia ? undefined : getRef.isVideo(this.state.uploadModal);
+		var parsedRef = fileRef.parse(this.state.uploadModal);
+        var url = isNewMedia ? undefined : fileRef.getUrl(parsedRef);
+        var isImage = isNewMedia ? undefined : parsedRef.isImage();
+        var isVideo = isNewMedia ? undefined : parsedRef.isVideo();
         var title = isNewMedia ? `Upload media` : `Edit - ` + this.state.originalName;
 
         if (isNewMedia && this.state.uploadMode == UPLOAD_MULTIPLE) {

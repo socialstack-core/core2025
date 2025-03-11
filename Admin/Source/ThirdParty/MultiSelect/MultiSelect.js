@@ -2,7 +2,8 @@ import Search from 'UI/Search';
 import webRequest from 'UI/Functions/WebRequest';
 import Modal from 'UI/Modal';
 import Canvas from 'UI/Canvas';
-import getRef from 'UI/Functions/GetRef';
+import Image from 'UI/Image';
+import * as fileRef from 'UI/FileRef';
 import { isoConvert } from 'UI/Functions/DateTools';
 
 var AutoForm = null;
@@ -125,7 +126,7 @@ export default class MultiSelect extends React.Component {
 
 				let val = tempObject[key].toString();
 
-				if (getRef.isImage(val) || getRef.isMedia(val)) {
+				if (fileRef.isImage(val) || fileRef.isVideo(val)) {
 					mediaRefFieldName = key;
 					return false;
 				}
@@ -188,10 +189,10 @@ export default class MultiSelect extends React.Component {
 								<div className="admin-multiselect__entry-options">
 									{mediaRefFieldName && mediaRefFieldName.length > 0 &&
 										<div className="admin-multiselect__avatar">
-											{getRef.isImage(entry[mediaRefFieldName]) && <>
-												<img width='32' height='32' src={getRef(entry[mediaRefFieldName], { url: true, size: 128 })} />
+											{fileRef.isImage(entry[mediaRefFieldName]) && <>
+												<Image fileRef={entry[mediaRefFieldName]} size={32} />
 											</>}
-											{getRef.isMedia(entry[mediaRefFieldName]) && <>
+											{fileRef.isVideo(entry[mediaRefFieldName]) && <>
 												<i className="fa fa-2x far-file"></i>
 											</>}
 										</div>

@@ -1,9 +1,10 @@
 import Loop from 'UI/Loop';
 import Container from 'UI/Container';
 import Row from 'UI/Row';
+import Image from 'UI/Image';
 import Modal from 'UI/Modal';
 import Uploader from 'UI/Uploader';
-import getRef from 'UI/Functions/GetRef';
+import * as fileRef from 'UI/FileRef';
 import IconSelector from 'UI/FileSelector/IconSelector';
 import Dropdown from 'UI/Dropdown';
 import Col from 'UI/Column';
@@ -87,25 +88,25 @@ export default class FileSelector extends React.Component {
     }
 
     showRef(ref, size) {
-        var parsedRef = getRef.parse(ref);
+        var parsedRef = fileRef.parse(ref);
         var size = size || 256;
         var targetSize = size;
         //var minSize = size == 256 ? 238 : size;
 
         // Check if it's an image/ video/ audio file. If yes, a preview is shown. Otherwise it'll be a placeholder icon.
-        var canShowImage = getRef.isImage(ref);
+        var canShowImage = parsedRef.isImage();
 
-        if (canShowImage && parsedRef.args) {
-            var args = parsedRef.args;
-
-            if ((args.w && args.w < size) && (args.h && args.h < size)) {
+        if (canShowImage) {
+            var argW = parsedRef.getNumericArg('w', 0);
+            var argH = parsedRef.getNumericArg('h', 0);
+            if ((argW && argW < size) && (argH && argH < size)) {
                 targetSize = undefined;
             }
 
         }
 
         return canShowImage ?
-            getRef(ref, { size: targetSize, portraitCheck: true}) :
+            <Image fileRef={ref} size={targetSize} portraitCheck /> :
             <span className="fal fa-4x fa-file"></span>;
     }
 
@@ -115,8 +116,6 @@ export default class FileSelector extends React.Component {
         }
 
         var originalName = newRef ? newRef.originalName : '';
-
-        //this.props.currentRef ? getRef.parse(this.props.currentRef).ref
 
         if (!newRef) {
             newRef = '';
@@ -146,16 +145,15 @@ export default class FileSelector extends React.Component {
         if (this.state.value !== undefined) {
             currentRef = this.state.value;
         }
-
-        var args = {
-            fx : this.state.focalX,
-            fy : this.state.focalY,
-            au: this.state.author,
-            al:this.state.alt
-       };
-
-        var newRef = getRef.update(currentRef, args);
-
+		
+		var pr = fileRef.parse(currentRef);
+		pr.setNumericArg('fx', this.state.focalX);
+		pr.setNumericArg('fy', this.state.focalY);
+		pr.setArg('au', this.state.author);
+		pr.setArg('al', this.state.alt);
+		
+        var newRef = pr.toString();
+		
         console.log('new', newRef);
 
         this.setState({ value: newRef , editModalOpen : false});
@@ -176,7 +174,7 @@ export default class FileSelector extends React.Component {
             currentRef = this.state.value;
         }
 
-        var refInfo = getRef.parse(currentRef);
+        var refInfo = fileRef.parse(currentRef);
 
         this.setState({
             editModalOpen: true,
@@ -197,9 +195,10 @@ export default class FileSelector extends React.Component {
         if (this.state.value !== undefined) {
             currentRef = this.state.value;
         }
-
-        var isImage = getRef.isImage(currentRef);
-        var isVideo = getRef.isVideo(currentRef);
+		
+		var parsedRef = fileRef.parse(currentRef);
+        var isImage = parsedRef.isImage();
+        var isVideo = parsedRef.isVideo();
         var title = `Edit`;
 
         return <>
@@ -360,7 +359,7 @@ export default class FileSelector extends React.Component {
         }
 
         var hasRef = currentRef && currentRef.length;
-        var filename = hasRef ? getRef.parse(currentRef).ref : "";
+        var filename = hasRef ? fileRef.parse(currentRef).ref : "";
         var originalName = this.state.originalName && this.state.originalName.length ? this.state.originalName : '';
 
         if (originalName) {
@@ -449,7 +448,7 @@ export default class FileSelector extends React.Component {
 
                                 // NB: API has been seen to report valid images with isImage=false
                                 //var isImage = entry.isImage;
-                                var isImage = getRef.isImage(entry.ref);
+                                var isImage = fileRef.isImage(entry.ref);
 
                                 // default to 256px preview
                                 var renderedSize = 256;
@@ -468,7 +467,7 @@ export default class FileSelector extends React.Component {
                                     <div class="loop-item">
                                         <button title={entry.originalName} type="button" className="btn file-selector__item" onClick={(e) => this.updateValue(e, entry)}>
                                             <div className={previewClass}>
-                                                {isImage && getRef(entry.ref, { size: renderedSize })}
+                                                {isImage && <Image fileRef={entry.ref} size={renderedSize} />}
                                                 {!isImage && (
                                                     <i className="fal fa-4x fa-file"></i>
                                                 )}
@@ -552,13 +551,13 @@ export default class FileSelector extends React.Component {
 
                 </>}
                 {hasRef && <>
-                    {!getRef.isIcon(currentRef) && <>
-                        <a href={getRef(currentRef, { url: true })} alt={filename} className="btn btn-primary file-selector__link" target="_blank" rel="noopener noreferrer">
+                    {<>
+                        <a href={fileRef.getUrl(currentRef)} alt={filename} className="btn btn-primary file-selector__link" target="_blank" rel="noopener noreferrer">
                             {`Preview`}
                         </a>
                     </>}
 
-                    {!getRef.isIcon(currentRef) && <>
+                    {<>
                         <button type="button" className="btn btn-primary file-selector__select" onClick={() => this.showEditModal()}>
                             {`Edit`}
                         </button>

@@ -1,6 +1,5 @@
 import Dropdown from 'UI/Dropdown';
 import Canvas from 'UI/Canvas';
-import getRef from 'UI/Functions/GetRef';
 import { useRef, useState, useEffect } from 'react';
 
 export default function Collapsible(props) {
@@ -36,21 +35,7 @@ export default function Collapsible(props) {
 		detailsClass += " " + className;
 	}
 
-	let largeIcon;
-
-	// check: is the icon prop given a reference (rather than a string)?
-	if (props.icon) {
-		let parsedRef = getRef.parse(props.icon);
-
-		if (parsedRef.fileType == 'svg') {
-			largeIcon = getRef(props.icon);
-		} else {
-			largeIcon = getRef.isIcon(props.icon) ?
-				getRef(props.icon, { className: 'fa-2x fa-fw collapsible__large-icon' }) :
-				<i className={"far fa-2x fa-fw collapsible__large-icon " + props.icon}></i>;
-		}
-
-	}
+	let largeIcon = props.icon; // must be an <Icon>
 
 	function toggleEvent(e) {
 
