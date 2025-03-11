@@ -538,12 +538,39 @@ namespace Api.Startup
             return null;
         }
 
-        /// <summary>
-        /// Gets a service by the content type that it serves.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static AutoService GetByContentType(Type type)
+		/// <summary>
+		/// Attempts to find the AutoController type for the given type, or null if it isn't one.
+		/// </summary>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		public static Type GetAutoControllerType(Type type)
+		{
+
+			if (type.IsGenericType)
+			{
+
+				if (type.GetGenericTypeDefinition() == typeof(AutoController<,>))
+				{
+					// Yep, this is an AutoController type.
+					return type;
+				}
+
+			}
+
+			if (type.BaseType != null)
+			{
+				return GetAutoControllerType(type.BaseType);
+			}
+
+			return null;
+		}
+
+		/// <summary>
+		/// Gets a service by the content type that it serves.
+		/// </summary>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		public static AutoService GetByContentType(Type type)
         {
             ServicedTypes.TryGetValue(type, out AutoService result);
             return result;

@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Api.Eventing;
 using Api.Startup;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace Api.AvailableEndpoints
 {
@@ -25,7 +26,7 @@ namespace Api.AvailableEndpoints
     [HostType("web")]
     public partial class AvailableEndpointService : AutoService<ApiStructure, uint>
 	{
-		private List<Endpoint> _cachedList;
+		private List<ModuleEndpoints> _cachedList;
 		private IActionDescriptorCollectionProvider _descriptionProvider;
 
 
@@ -67,15 +68,11 @@ namespace Api.AvailableEndpoints
 		}
 
 		/// <summary>
-		/// Obtains the set of all available endpoints in this API.
+		/// Obtains the set of all available endpoints, grouped by the module (controller) that they are from.
 		/// </summary>
 		/// <returns></returns>
-		public List<Endpoint> List()
+		public List<ModuleEndpoints> ListByModule()
 		{
-			if (_cachedList != null)
-			{
-				return _cachedList;
-			}
 
 			// Got the Api.xml file?
 			var xmlDocFile = "Api.xml";
@@ -87,9 +84,11 @@ namespace Api.AvailableEndpoints
 				docs.LoadFrom(xmlDocFile);
 			}
 
-			var result = new List<Endpoint>();
+			var result = new List<ModuleEndpoints>();
 			_cachedList = result;
-			
+
+			var mapByControllerType = new Dictionary<Type, ModuleEndpoints>();
+
 			foreach (var actionDescription in _descriptionProvider.ActionDescriptors.Items)
 			{
 				var cad = actionDescription as ControllerActionDescriptor;
@@ -100,6 +99,7 @@ namespace Api.AvailableEndpoints
 					continue;
 				}
 
+				var controllerType = cad.ControllerTypeInfo;
 				var url = cad.AttributeRouteInfo.Template;
 				var methodInfo = cad.MethodInfo;
 
@@ -121,14 +121,39 @@ namespace Api.AvailableEndpoints
 					// We treat each as a unique EP.
 					foreach (var httpMethod in methodConstraint.HttpMethods)
 					{
+						if (!mapByControllerType.TryGetValue(controllerType, out ModuleEndpoints module))
+						{
+							module = new ModuleEndpoints();
+							module.ControllerType = controllerType;
+							mapByControllerType[controllerType] = module;
+							result.Add(module);
+						}
+
 						// httpMethod is e.g. "GET" or "POST". Uppercase it just in case.
 						var ep = CreateEndpointInfo(url, httpMethod.ToUpper(), methodInfo, docs);
-						result.Add(ep);
+						module.Endpoints.Add(ep);
 					}
 				}
 			}
-			
+
 			return result;
+		}
+
+		/// <summary>
+		/// Obtains the set of all available endpoints in this API.
+		/// </summary>
+		/// <returns></returns>
+		public List<Endpoint> List()
+		{
+			var byModule = ListByModule();
+
+			var allEndpoints = new List<Endpoint>();
+
+			foreach (var mod in byModule) {
+				allEndpoints.AddRange(mod.Endpoints);
+			}
+
+			return allEndpoints;
 		}
 
 		private Endpoint CreateEndpointInfo(string url, string httpMethod, MethodInfo methodInfo, XmlDoc docs = null)
