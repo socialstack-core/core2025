@@ -39,7 +39,7 @@ function loadCached(capName: string, session: Session) : Promise<boolean> {
 			capabilities: new Map<string, boolean>()
 		};
 
-		newRole.loading = roleApi.get(roleId).then(role => {
+		newRole.loading = roleApi.load(roleId).then(role => {
 			role.capabilities?.forEach(c => {
 				cachedRole?.capabilities.set(c, true);
 			});

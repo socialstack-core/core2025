@@ -1,5 +1,6 @@
 import { useSession, useRouter } from 'UI/Session';
 import Dropdown from 'UI/Dropdown';
+import Icon from 'UI/Icon';
 import webRequest from 'UI/Functions/WebRequest';
 
 export default function AdminTrigger(props) {
@@ -37,7 +38,7 @@ export default function AdminTrigger(props) {
     */
 
 	var triggerLabelJsx = <>
-		<i className="fal fa-cog"></i>
+		<Icon name="fa-cog" light />
 	</>;
 
 	function endImpersonation() {
@@ -52,17 +53,17 @@ export default function AdminTrigger(props) {
 				label={triggerLabelJsx} variant="dark" align="Right" position="Top">
 				<li className="admin-trigger__env admin-trigger__env--stage">
 					<h6 className="dropdown-header">
-						<i className="fal fa-fw fa-exclamation-triangle"></i> {`STAGE`}
+						<Icon name="fa-exclamation-triangle" light /> {`STAGE`}
 					</h6>
 				</li>
 				<li className="admin-trigger__env admin-trigger__env--uat">
 					<h6 className="dropdown-header">
-						<i className="fal fa-fw fa-exclamation-triangle"></i> {`UAT`}
+						<Icon name="fa-exclamation-triangle" light /> {`UAT`}
 					</h6>
 				</li>
 				<li className="admin-trigger__env admin-trigger__env--prod">
 					<h6 className="dropdown-header">
-						<i className="fal fa-fw fa-exclamation-triangle"></i> {`PRODUCTION`}
+						<Icon name="fa-exclamation-triangle" light /> {`PRODUCTION`}
 					</h6>
 				</li>
 
@@ -79,7 +80,7 @@ export default function AdminTrigger(props) {
 				{editUrl && <>
 					<li>
 						<a href={editUrl} className="btn dropdown-item">
-							<i className="fal fa-fw fa-edit"></i> {`Edit this page`}
+							<Icon name="fa-edit" light /> {`Edit this page`}
 						</a>
 					</li>
 					<li>
@@ -92,7 +93,7 @@ export default function AdminTrigger(props) {
 					</a>
 				</li>
 			</Dropdown>
-			{isImpersonating && <i className="fa fa-mask impersonating"></i>}
+			{isImpersonating && <Icon name="fa-mask" light />}
 		</div>
 		{props.children}
 	</>;
