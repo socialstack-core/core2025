@@ -1,7 +1,7 @@
 export default class NodeOutput {
 	
 	constructor(props){
-		super(props);
+		// super(props); Commented out, no parent class
 	}
 	
 	loadData(d){

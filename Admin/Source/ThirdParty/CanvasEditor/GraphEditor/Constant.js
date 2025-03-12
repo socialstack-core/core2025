@@ -1,7 +1,7 @@
 export default class Constant {
 	
 	constructor(props){
-		super(props);
+		// super(props); taken out due to no parent class
 		if(props && props.output !== undefined){
 			this.state.output = props.output;
 		}
