@@ -1,22 +1,38 @@
-// File generated from the C# definition
-declare global {
-    interface User {
+/* * * * * * * | Auto Generated Script, do not edit | * * * * * * * */
+// Imports
+import { AutoApi, VersionedContent } from 'TypeScript/Api/ApiEndpoints';
+import webRequest, { ApiSuccess, ApiFailure } from 'UI/Functions/WebRequest';
 
-        role: int
-
-    }
+// Module
+export type User = VersionedContent<number> & {
+    email?: string,
+    emailOptOutFlags?: number,
+    emailVerifyToken?: string,
+    passwordHash?: string,
+    loginAttempts?: number,
+    loginRevokeCount?: number,
+    role?: number,
+    privateVerify?: number,
+    featureRef?: string,
+    avatarRef?: string,
+    username?: string,
 }
 
-interface UserApi {
-    get: (userId: int) => Promise<User>;
+class UserApi extends AutoApi<User>{
+    public constructor(){
+        super('v1/user')
+    }
+
+    public self(): Promise<ApiSuccess<User> | ApiFailure> {
+        return webRequest(this.apiUrl + '/self')
+    }
+    
+    public unpersonate(): Promise<ApiSuccess<User> | ApiFailure> {
+        return webRequest(this.apiUrl + '/unpersonate')
+    }
+
 }
 
-const userApi: UserApi = {
-    get: (userId: int) => {
-        return new Promise((s, r) => {
-            s({});
-        });
-    }
-};
+const api = new UserApi();
+export default api;
 
-export default userApi;

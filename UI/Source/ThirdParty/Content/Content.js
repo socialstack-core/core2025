@@ -1,6 +1,6 @@
 import webRequest, {expandIncludes} from 'UI/Functions/WebRequest';
 import webSocket from 'UI/Functions/WebSocket';
-import { SessionConsumer, useRouter } from 'UI/Session';
+import { useRouter } from 'UI/Router';
 
 const ContentContext = React.createContext();
 

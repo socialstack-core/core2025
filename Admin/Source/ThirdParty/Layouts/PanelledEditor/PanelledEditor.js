@@ -1,5 +1,5 @@
 import Input from 'UI/Input';
-import { useSession, RouterConsumer } from 'UI/Session';
+import { useSession } from 'UI/Session';
 
 // left-hand tabs
 var StructureEnum = {
@@ -72,11 +72,7 @@ class PanelledEditorInternal extends React.Component {
 				{this.renderFormFields()}
 			</div>
 		}
-
-		return <RouterConsumer>{(pageState, setPage) => this.renderIntl(pageState, setPage)}</RouterConsumer>;
-	}
-
-	renderIntl(pageState, setPage) {
+		
 		var rightPanel = this.props.rightPanel && this.props.rightPanel();
 		var editorClass = ["admin-page", "panelled-editor"];
 

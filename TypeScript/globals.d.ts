@@ -55,6 +55,11 @@ declare global {
 	var contentSource: string;
 
 	/**
+	 * Global Session Init data. Originates from the server serialising the user's context.
+	 */
+	var gsInit: Session | undefined;
+	
+	/**
 	 * True if this is executing on the serverside. Only use if absolutely necessary 
 	 * as it will cause odd behaviour (mainly React not hydrating correctly) with the SSR if this is used too much.
 	 * Most of the time you should do client specific things in useEffect instead 

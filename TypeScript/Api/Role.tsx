@@ -1,21 +1,17 @@
-declare global {
+import { AutoApi, VersionedContent } from 'TypeScript/Api/ApiEndpoints'
 
-    interface Role {
-        capabilities?: string[]
+// Module
+export type Role = VersionedContent<int> & {
+    capabilities?: string[]
+}
+
+class RoleApi extends AutoApi<Role>{
+    public constructor() {
+        super('v1/role')
     }
 
 }
 
-interface RoleApi {
-    get: (roleId: int) => Promise<Role>;
-}
+const rApi = new RoleApi();
+export default rApi;
 
-const roleApi : RoleApi = {
-    get: (roleId: int) => {
-        return new Promise((s, r) => {
-            s({});
-        });
-    }
-};
-
-export default roleApi;

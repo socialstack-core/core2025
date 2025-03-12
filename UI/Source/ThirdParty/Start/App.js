@@ -1,4 +1,4 @@
-import PageRouter from 'UI/PageRouter';
+import Router from 'UI/Router';
 
 /**
  * The root component. It stores state for us, such as the currently logged in user.
@@ -7,7 +7,7 @@ import PageRouter from 'UI/PageRouter';
  */
 export default function App(props) {
 	
-	var tree = <PageRouter/>
+	var tree = <Router/>
 
 	props.providers.forEach(Element => {
 		tree = <Element>{tree}</Element>

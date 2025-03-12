@@ -10,7 +10,8 @@ import webRequest from 'UI/Functions/WebRequest';
 import formatTime from "Admin/Functions/FormatTime";
 import CanvasEditor from "Admin/CanvasEditor";
 import getBuildDate from 'UI/Functions/GetBuildDate';
-import { useSession, RouterConsumer, Router } from 'UI/Session';
+import { useSession } from 'UI/Session';
+import { useRouter, routerCtx } from 'UI/Router';
 
 var locales = null;
 var defaultLocale = 1;
@@ -24,7 +25,8 @@ var defaultLocale = 1;
 
 export default function AutoForm(props) {
 	var { session, setSession } = useSession();
-	return <AutoFormInternal {...props} session={session} setSession={setSession} />;
+	var { setPage, pageState } = useRouter();
+	return <AutoFormInternal {...props} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
 }
 
 class AutoFormInternal extends React.Component {
@@ -597,18 +599,16 @@ class AutoFormInternal extends React.Component {
 			// Loading page state for the context.
 			return <Loading />;
 		}
-
-		return <RouterConsumer>{(pageState, setPage) => {
-			return <Router.Provider
-				value={{
-					canGoBack: () => false,
-					pageState: this.state.pageState || {url: ''},
-					setPage
-				}}
-			>
-				{this.renderIntl(pageState, setPage)}
-			</Router.Provider>;
-		}}</RouterConsumer>;
+		
+		return <routerCtx.Provider
+			value={{
+				canGoBack: () => false,
+				pageState: this.state.pageState || {url: ''},
+				setPage
+			}}
+		>
+			{this.renderIntl(this.props.pageState, this.props.setPage)}
+		</routerCtx.Provider>;
 	}
 
 	renderFormFields() {

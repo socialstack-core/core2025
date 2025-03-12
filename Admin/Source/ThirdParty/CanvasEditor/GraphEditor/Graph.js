@@ -1,5 +1,6 @@
 import NodeOutput from './NodeOutput';
-import { useRouter, useSession } from 'UI/Session';
+import { useSession } from 'UI/Session';
+import { useRouter } from 'UI/Router';
 import webRequest from 'UI/Functions/WebRequest';
 import Content from 'UI/Content';
 

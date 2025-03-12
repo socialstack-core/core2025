@@ -1,12 +1,24 @@
-import { useSession, useRouter } from 'UI/Session';
+import { useSession } from 'UI/Session';
 import Dropdown from 'UI/Dropdown';
 import Icon from 'UI/Icon';
-import webRequest from 'UI/Functions/WebRequest';
+import userApi from 'Api/User';
+import { Page } from 'Api/Page';
 
-export default function AdminTrigger(props) {
+/**
+ * Props for the admin trigger menu component.
+ */
+interface AdminTriggerProps {
+	page?:Page
+};
+
+/**
+ * Admin menu
+ * @param props
+ * @returns
+ */
+const AdminTrigger: React.FC<React.PropsWithChildren<AdminTriggerProps>> = props => {
 	
-	const { session, setSession } = useSession();
-
+	const { session } = useSession();
 	var { user, realUser, role } = session;
 	
 	// not logged in
@@ -17,8 +29,6 @@ export default function AdminTrigger(props) {
 	var editUrl = '/en-admin/page/' + props.page.id + '/?context=' + encodeURIComponent(window.location.pathname);
 	
 	// impersonating?
-	console.log("USER: ", user);
-	console.log("REALUSER: ", realUser);
 	var isImpersonating = realUser && (user.id != realUser.id);
 
 	// not an admin
@@ -38,11 +48,11 @@ export default function AdminTrigger(props) {
     */
 
 	var triggerLabelJsx = <>
-		<Icon name="fa-cog" light />
+		<Icon type="fa-cog" light />
 	</>;
 
 	function endImpersonation() {
-		return webRequest('user/unpersonate').then(response => {
+		return userApi.unpersonate().then(response => {
 			window.location.reload();
 		});
 	}
@@ -53,17 +63,17 @@ export default function AdminTrigger(props) {
 				label={triggerLabelJsx} variant="dark" align="Right" position="Top">
 				<li className="admin-trigger__env admin-trigger__env--stage">
 					<h6 className="dropdown-header">
-						<Icon name="fa-exclamation-triangle" light /> {`STAGE`}
+						<Icon type="fa-exclamation-triangle" light /> {`STAGE`}
 					</h6>
 				</li>
 				<li className="admin-trigger__env admin-trigger__env--uat">
 					<h6 className="dropdown-header">
-						<Icon name="fa-exclamation-triangle" light /> {`UAT`}
+						<Icon type="fa-exclamation-triangle" light /> {`UAT`}
 					</h6>
 				</li>
 				<li className="admin-trigger__env admin-trigger__env--prod">
 					<h6 className="dropdown-header">
-						<Icon name="fa-exclamation-triangle" light /> {`PRODUCTION`}
+						<Icon type="fa-exclamation-triangle" light /> {`PRODUCTION`}
 					</h6>
 				</li>
 
@@ -80,7 +90,7 @@ export default function AdminTrigger(props) {
 				{editUrl && <>
 					<li>
 						<a href={editUrl} className="btn dropdown-item">
-							<Icon name="fa-edit" light /> {`Edit this page`}
+							<Icon type="fa-edit" light /> {`Edit this page`}
 						</a>
 					</li>
 					<li>
@@ -93,8 +103,10 @@ export default function AdminTrigger(props) {
 					</a>
 				</li>
 			</Dropdown>
-			{isImpersonating && <Icon name="fa-mask" light />}
+			{isImpersonating && <Icon type="fa-mask" light />}
 		</div>
 		{props.children}
 	</>;
 };
+
+export default AdminTrigger;

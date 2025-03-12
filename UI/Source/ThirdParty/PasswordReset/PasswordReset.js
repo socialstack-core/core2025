@@ -5,7 +5,8 @@ import Form from 'UI/Form';
 import Input from 'UI/Input';
 import Text from 'UI/Text';
 import { useState } from 'react';
-import {useSession, useRouter} from 'UI/Session';
+import {useSession} from 'UI/Session';
+import { useRouter } from 'UI/Router';
 import {useTokens} from 'UI/Token';
 
 export default function PasswordReset(props) {
