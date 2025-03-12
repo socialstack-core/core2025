@@ -263,9 +263,10 @@ namespace Api.EcmaScript
 
                 var type = field.FieldType;
 
-                if (Nullable.GetUnderlyingType(type) != null)
+                var nullableType = Nullable.GetUnderlyingType(type);
+                if (nullableType != null)
                 {
-                    type = Nullable.GetUnderlyingType(type);
+                    type = nullableType;
                 }
 
                 // Add only actual fields (not property backers)
@@ -319,16 +320,17 @@ namespace Api.EcmaScript
 
                     var typeDef = new TypeDefinition();
                     typeDef.SetName(entityType.Name);
+                    
+                    // needs to be done like this, VersionedContent is a generic class, it will always contain a `
+                    var baseName = entityType.BaseType.Name[..entityType.BaseType.Name.LastIndexOf('`')];
 
                     coreImports.Add(
-                        TrimGenericBacktick(
-                            GetTypeConversion(entityType.BaseType)
-                        )
+                        baseName
                     );
 
                     if (entityType.BaseType.GenericTypeArguments.Length != 0)
                     {
-                        typeDef.AddInheritence(TrimGenericBacktick(entityType.BaseType.Name) + "<" + GetTypeConversion(entityType.BaseType.GenericTypeArguments[0]) + ">");
+                        typeDef.AddInheritence(baseName + "<" + GetTypeConversion(entityType.BaseType.GenericTypeArguments[0]) + ">");
                     }
 
                     AddFieldsToType(fields, typeDef);
@@ -449,11 +451,6 @@ namespace Api.EcmaScript
                 return input;
 
             return char.ToLower(input[0]) + input.Substring(1);
-        }
-
-        private static string TrimGenericBacktick(string input)
-        {
-            return input.Contains('`') ? input[..input.IndexOf('`')] : input;
         }
     }
 }
