@@ -2,7 +2,7 @@ import Tile from 'Admin/Tile';
 import AutoList from 'Admin/AutoList';
 import Loop from 'UI/Loop';
 import Default from 'Admin/Layouts/Default';
-import {useRouter} from 'UI/Session';
+import { useRouter } from 'UI/Router';
 
 
 export default class List extends React.Component {

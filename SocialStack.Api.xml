@@ -1476,6 +1476,10 @@
             Events are instanced automatically. 
             You can however specify a custom type or instance them yourself if you'd like to do so.
             </summary>
+            <summary>
+            Events are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
         </member>
         <member name="F:Api.Eventing.Events._cronScheduler">
             <summary>
@@ -1609,6 +1613,11 @@
             <param name="type"></param>
             <param name="attribs"></param>
             <param name="collectInto">Optionally collects all handlers into the given list.</param>
+        </member>
+        <member name="F:Api.Eventing.Events.DevFileGeneration">
+            <summary>
+            Set of events for generation
+            </summary>
         </member>
         <member name="F:Api.Eventing.Events.NavMenu">
             <summary>
@@ -2347,6 +2356,21 @@
             It's not been specified.
             </summary>
         </member>
+        <member name="T:Api.Eventing.DevFileGenerationEventGroup">
+            <summary>
+            Custom user specific events.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.DevFileGenerationEventGroup.OnControllerFound">
+            <summary>
+            An AutoController has been found.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.DevFileGenerationEventGroup.OnEntityFound">
+            <summary>
+            An entity has been found.
+            </summary>
+        </member>
         <member name="T:Api.Eventing.PageEventGroup">
             <summary>
             Page entity specific extensions to events.
@@ -2541,6 +2565,12 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:Api.AvailableEndpoints.AvailableEndpointService.ListByModule">
+            <summary>
+            Obtains the set of all available endpoints, grouped by the module (controller) that they are from.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:Api.AvailableEndpoints.AvailableEndpointService.List">
             <summary>
             Obtains the set of all available endpoints in this API.
@@ -2618,6 +2648,40 @@
             <summary>
             The name of this event.
             </summary>
+        </member>
+        <member name="T:Api.AvailableEndpoints.ModuleEndpoints">
+            <summary>
+            The list of endpoints in a particular module (controller).
+            </summary>
+        </member>
+        <member name="F:Api.AvailableEndpoints.ModuleEndpoints.ControllerType">
+            <summary>
+            The module's controller that these endpoints belong to.
+            </summary>
+        </member>
+        <member name="F:Api.AvailableEndpoints.ModuleEndpoints.Endpoints">
+            <summary>
+            The endpoints themselves.
+            </summary>
+        </member>
+        <member name="M:Api.AvailableEndpoints.ModuleEndpoints.GetAutoControllerType">
+            <summary>
+            Gets the AutoController type, if there is one. Null if this module does not use AutoController.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.AvailableEndpoints.ModuleEndpoints.GetContentType">
+            <summary>
+            Gets the content type associated with this module, if there is one. It can be null.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.AvailableEndpoints.ModuleEndpoints.GetAutoService">
+            <summary>
+            Gets the autoService associated with this module if there is one. 
+            It can be null if it is not an autoService based controller.
+            </summary>
+            <returns></returns>
         </member>
         <member name="T:Api.AvailableEndpoints.XmlDoc">
             <summary>
@@ -13843,6 +13907,13 @@
             <param name="type"></param>
             <returns></returns>
         </member>
+        <member name="M:Api.Startup.Services.GetAutoControllerType(System.Type)">
+            <summary>
+            Attempts to find the AutoController type for the given type, or null if it isn't one.
+            </summary>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
         <member name="M:Api.Startup.Services.GetByContentType(System.Type)">
             <summary>
             Gets a service by the content type that it serves.
@@ -20007,6 +20078,305 @@
             The name of the cookie.
             </summary>
         </member>
+        <member name="T:Api.EcmaScript.EcmaService">
+            <summary>
+            Handles both JS &amp; TS generation.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.EcmaService.TypeConversions">
+            <summary>
+            Used for things like uint => number, int => number, 
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.EcmaService.EntityScriptMapping">
+            <summary>
+            Kinda ironic this generic huh?
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.EcmaService.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.EcmaService.AddCrudFunctionality(Api.EcmaScript.TypeScript.ClassDefinition)">
+            <summary>
+            Adds the CRUD Functionality to a class.
+            </summary>
+            <param name="baseControllerClass"></param>
+        </member>
+        <member name="M:Api.EcmaScript.EcmaService.AddTypeConversion(System.Type,System.String)">
+            <summary>
+            Add a type equivalent for JS for the output.
+            </summary>
+            <param name="t"></param>
+            <param name="jsEquivalent"></param>
+        </member>
+        <member name="M:Api.EcmaScript.EcmaService.GetTypeConversion(System.Type)">
+            <summary>
+            Returns the JS equivalent for a CS type, when not known returns unknown
+            which is an accepted TS keyword.
+            </summary>
+            <param name="t"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.EcmaScript.EcmaService.LcFirst(System.String)">
+            <summary>
+            Converts entity properties to have LCFirst names.
+            </summary>
+            <param name="input"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.EcmaScript.TypeScript.ClassDefinition">
+            <summary>
+            Represents a TypeScript class definition that can be generated dynamically.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.ClassDefinition.Name">
+            <summary>
+            The name of the TypeScript class.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.ClassDefinition.GenericTemplate">
+            <summary>
+            The generic type template if the class has generics.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.ClassDefinition.Extends">
+            <summary>
+            The name of the class that this class extends, if any.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.ClassDefinition.Implements">
+            <summary>
+            A list of interfaces that this class implements.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.ClassDefinition.Children">
+            <summary>
+            All properties &amp; methods
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.ClassDefinition.CreateSource">
+            <summary>
+            Generates the TypeScript class definition as a source code string.
+            </summary>
+            <returns>The TypeScript class definition as a string.</returns>
+        </member>
+        <member name="T:Api.EcmaScript.TypeScript.ClassMethod">
+            <summary>
+            Represents a method within a TypeScript class.
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassMethod.Modifier">
+            <summary>
+            Gets or sets the method's visibility modifier (e.g., public, private).
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassMethod.Name">
+            <summary>
+            Gets or sets the name of the method.
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassMethod.GenericTemplate">
+            <summary>
+            Gets or sets the generic template definition for the method, if applicable.
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassMethod.ReturnType">
+            <summary>
+            Gets or sets the return type of the method.
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassMethod.Arguments">
+            <summary>
+            Gets or sets the list of arguments for the method.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.ClassMethod.Injected">
+            <summary>
+            Code injected into the function
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.ClassMethod.CreateSource">
+            <summary>
+            Generates the TypeScript method definition as a source code string.
+            </summary>
+            <returns>The TypeScript method definition as a formatted string.</returns>
+        </member>
+        <member name="T:Api.EcmaScript.TypeScript.ClassProperty">
+            <summary>
+            Represents a property within a TypeScript class.
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassProperty.PropertyName">
+            <summary>
+            Gets or sets the name of the property.
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassProperty.PropertyType">
+            <summary>
+            Gets or sets the TypeScript type of the property.
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassProperty.DefaultValue">
+            <summary>
+            Gets or sets the default value of the property.
+            </summary>
+        </member>
+        <member name="P:Api.EcmaScript.TypeScript.ClassProperty.Visibility">
+            <summary>
+            Gets or sets the visibility of the property (e.g., public, private, protected).
+            Defaults to "public".
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.ClassProperty.CreateSource">
+            <summary>
+            Generates the TypeScript property definition as a source code string.
+            </summary>
+            <returns>The TypeScript property definition as a formatted string.</returns>
+        </member>
+        <member name="T:Api.EcmaScript.TypeScript.IGeneratable">
+            <summary>
+            The most primitive thing in the TypeScript module
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.IGeneratable.CreateSource">
+            <summary>
+            Takes relevant information and outputs TypeScript Source Code.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.EcmaScript.TypeScript.Import">
+            <summary>
+            Represents an import statement.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.Import.DefaultImport">
+            <summary>
+            This is the default import
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.Import.Symbols">
+            <summary>
+            A list of imported objects
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.Import.From">
+            <summary>
+            Where we importin' from?
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.Import.CreateSource">
+            <summary>
+            Outputs the data as an import in TS
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.EcmaScript.TypeScript.Script">
+            <summary>
+            Represents a script or module within typescript.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.Script.FileName">
+            <summary>
+            Where will this be saved to.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.Script.Imports">
+            <summary>
+            A list of imports for the current script/module
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.Script.Children">
+            <summary>
+            A list of all nodes inside the script.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.Script.Injected">
+            <summary>
+            Inject custom lines of code into the script
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.Script.AddImport(Api.EcmaScript.TypeScript.Import)">
+            <summary>
+            Adds an import to the script/module
+            </summary>
+            <param name="import"></param>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.Script.AddSLOC(System.String)">
+            <summary>
+            Add a single source line of code.
+            </summary>
+            <param name="sloc"></param>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.Script.AddChild(Api.EcmaScript.TypeScript.IGeneratable)">
+            <summary>
+            Adds a child source generator inside the script.
+            </summary>
+            <param name="child"></param>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.Script.CreateSource">
+            <summary>
+            Generate the TypeScript
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.EcmaScript.TypeScript.TypeDefinition">
+            <summary>
+            Represents a TypeScript type definition that can be generated dynamically.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.TypeDefinition.Name">
+            <summary>
+            The name of the TypeScript type.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.TypeDefinition.GenericTemplate">
+            <summary>
+            The generic type template if the type has generics.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.TypeDefinition.Inheritence">
+            <summary>
+            A list of inherited types or interfaces.
+            </summary>
+        </member>
+        <member name="F:Api.EcmaScript.TypeScript.TypeDefinition.Properties">
+            <summary>
+            A dictionary containing the properties of the TypeScript type, where the key is the property name and the value is the type.
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.TypeDefinition.SetName(System.String)">
+            <summary>
+            Sets the name of the type.
+            </summary>
+            <param name="name">The name to set.</param>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.TypeDefinition.SetGenericTemplate(System.String)">
+            <summary>
+            Sets the generic type template.
+            </summary>
+            <param name="template">The generic type template.</param>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.TypeDefinition.AddInheritence(System.String)">
+            <summary>
+            Adds an inherited type or interface.
+            </summary>
+            <param name="inherit">The name of the inherited type.</param>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.TypeDefinition.AddProperty(System.String,System.String)">
+            <summary>
+            Adds a property to the type definition.
+            </summary>
+            <param name="k">The property name.</param>
+            <param name="v">The property type.</param>
+        </member>
+        <member name="M:Api.EcmaScript.TypeScript.TypeDefinition.CreateSource">
+            <summary>
+            Generates the TypeScript type definition as a source code string.
+            </summary>
+            <returns>The TypeScript type definition as a string.</returns>
+        </member>
         <member name="T:Api.Emails.EmailConfig">
             <summary>
             The appsettings.json config block for email config.
@@ -20902,6 +21272,16 @@
         <member name="F:Api.ErrorLogging.ValidationState.Pending">
             <summary>
             This transaction is currently waiting for some additional information.
+            </summary>
+        </member>
+        <member name="T:Api.GenerateDevFiles.DevFileGenerationService">
+            <summary>
+            Generation service, adds support for generated files based off reflection.
+            </summary>
+        </member>
+        <member name="M:Api.GenerateDevFiles.DevFileGenerationService.#ctor">
+            <summary>
+            Constructor.
             </summary>
         </member>
         <member name="T:Api.NavMenus.AdminNavMenuItem">

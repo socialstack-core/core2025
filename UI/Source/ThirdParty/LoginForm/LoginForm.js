@@ -5,7 +5,8 @@ import Col from 'UI/Column';
 import Canvas from 'UI/Canvas';
 import Spacer from 'UI/Spacer';
 import Alert from 'UI/Alert';
-import { useSession, useRouter } from 'UI/Session';
+import { useSession } from 'UI/Session';
+import { useRouter } from 'UI/Router';
 import { useState, useEffect } from 'react';
 import webRequest from 'UI/Functions/WebRequest';
 

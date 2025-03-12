@@ -1,8 +1,19 @@
 import webRequest, { expandIncludes } from 'UI/Functions/WebRequest';
 import Canvas from 'UI/Canvas';
-import { Router } from 'UI/Session';
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import AdminTrigger from 'UI/AdminTrigger';
+
+interface RouterContext {
+}
+
+const routerCtx = createContext < RouterContext | null > (null);
+
+export { routerCtx };
+
+export function useRouter() {
+	// returns {page, setPage}
+	return useContext(routerCtx);
+};
 
 const { config, location } = global;
 const routerCfg = config && config.pageRouter || {};
@@ -276,7 +287,7 @@ export default (props) => {
 		}
 	});
 	
-	return <Router.Provider
+	return <routerCtx.Provider
 			value={{
 				canGoBack,
 				pageState,
@@ -289,5 +300,5 @@ export default (props) => {
 			</Canvas> : null
 		}
 		<AdminTrigger page={page}/>
-	</Router.Provider>;
+	</routerCtx.Provider>;
 }

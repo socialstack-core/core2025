@@ -1,6 +1,7 @@
 import Content from 'UI/Content';
 import Time from 'UI/Time';
-import { useSession, useRouter } from 'UI/Session';
+import { useSession } from 'UI/Session';
+import { useRouter } from 'UI/Router';
 import { useContent } from 'UI/Content';
 import { isoConvert } from 'UI/Functions/DateTools';
 import { useState, useEffect } from 'react';
