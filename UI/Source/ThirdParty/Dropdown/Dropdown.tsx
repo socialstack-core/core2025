@@ -1,56 +1,8 @@
-/* Bootstrap dropdown
+/* Bootstrap based dropdown
  * ref: https://getbootstrap.com/docs/5.0/components/dropdowns/
-  
-  params:
-  
-  align:            alignment of menu with respect to the button (left / right if vertical, top / bottom if horizontal)
-  position:         which side of the button the menu will appear on (top, bottom, left or right)
-  menuTag:          tag to use to wrap the dropdown contents (defaults to <ul>)
-  noMinWidth:		render compact menu width
-
-
-  example usage:
-
-	<Dropdown label="Dropdown test" variant="link">
-		{
-			groups.map(group => {
-				return (
-					<li key={group.id}>
-						{href && <>
-							<a href={href} className="dropdown-item">
-								{group.industryName}
-							</a>
-						</>}
-						{!href && <>
-							<button type="button" className="btn dropdown-item" onClick={() => switchCategory(group.id)}>
-								{group.industryName}
-							</button>
-						</>}
-					</li>
-				);
-			})
-				  
-		}
-	</Dropdown>
- 
-	to insert a heading in the dropdown, use:
-	<li>
-		<h6 class="dropdown-header">
-			Dropdown header
-		</h6>
-	</li>
- 
-	to insert a divider in the dropdown, use:
-	<li>
-		<hr class="dropdown-divider">
-	</li>
-
  */
 
 import { useState, useEffect, useRef } from "react";
-
-// TODO: popper support
-//import { Manager, Reference, Popper } from 'UI/Popper';
 
 let lastId = 0;
 
@@ -138,16 +90,62 @@ interface DropdownProps {
 	/**
 	 * True if the menu should be as compact as possible.
 	 */
-	noMinWidth?: boolean
+	noMinWidth?: boolean,
+
+	/**
+	 * Items inside the dropdown
+	 */
+	items: DropdownItem[]
+}
+
+/**
+ * Items inside the dropdown menu.
+ */
+export interface DropdownItem {
+	/**
+	 * The text on the dropdown entry.
+	 */
+	text?: string,
+	/**
+	 * Optional link target. This is only usable if you specify a href.
+	 */
+	target?: string,
+	/**
+	 * The button will be a link if this href is specified.
+	 */
+	href?: string,
+	/**
+	 * Optional icon to display. Must be an <Icon>
+	 */
+	icon?: React.ReactNode,
+	/**
+	 * Optional button click event.
+	 * @param event
+	 * @returns
+	 */
+	onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void,
+	/**
+	 * True if this button is disabled.
+	 */
+	disabled?: boolean,
+	/**
+	 * Set to true if you want a divider to display here. Note that all other options are ignored if this is set: only a divider will be rendered as this item.
+	 */
+	divider?: boolean,
+
+	/**
+	 * Set if you want a header to display here. Note that all other options are ignored if this is set: only a heading will be rendered as this item.
+	 */
+	heading?: React.ReactNode
 }
 
 /**
  * Dropdown component
  */
-const Dropdown: React.FC<React.PropsWithChildren<DropdownProps>> = (props) => {
+const Dropdown: React.FC<DropdownProps> = (props) => {
 	var { className, variant, title, label, arrow, isOutline, isLarge, isSmall,
-		splitCallback, children, initialState,
-		stayOpenOnSelection, align, position, disabled, menuTag, noMinWidth } = props;
+		splitCallback, initialState,
+		stayOpenOnSelection, align, position, disabled, menuTag, noMinWidth, items } = props;
 	var dropdownClasses = ['dropdown'];
 
 	if (className) {
@@ -391,7 +389,35 @@ const Dropdown: React.FC<React.PropsWithChildren<DropdownProps>> = (props) => {
 			{/* dropdown contents */}
 			{open && (
 				<MenuTag className={dropdownMenuClass.join(' ')} data-source={className} aria-labelledby={dropdownId} ref={dropdownRef}>
-					{children}
+					{
+						items.map(menuitem => {
+							if (menuitem.divider) {
+								return <li>
+									<hr className="dropdown-divider" />
+								</li>;
+							} else if (menuitem.heading) {
+								return <li>
+									<h6 className="dropdown-header">
+										{menuitem.heading}
+									</h6>
+								</li>;
+							}
+
+							if (!menuitem.href) {
+								return <li>
+									<button type="button" className="btn btn-sm dropdown-item" onClick={menuitem.onClick} title={menuitem.text} disabled={menuitem.disabled}>
+										{menuitem.icon} {menuitem.text}
+									</button>
+								</li>;
+							}
+
+							return <li>
+								<a href={menuitem.href} className="btn btn-sm dropdown-item" title={menuitem.text} target={menuitem.target}>
+									{menuitem.icon} {menuitem.text}
+								</a>
+							</li>;
+						})
+					}
 				</MenuTag>
 			)}
 			{/* TODO: popper support
