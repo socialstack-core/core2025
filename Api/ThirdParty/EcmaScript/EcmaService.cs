@@ -399,8 +399,9 @@ namespace Api.EcmaScript
                             includeClass.Children.Add(
                                 new ClassGetter() {
                                     Name = LcFirst(virtualField.FieldName), 
+                                    ReturnType = virtualField.Type.Name + "Includes",
                                     Source = [
-                                        $"return new {includeClass.Name}(this.text, '{virtualField.FieldName}')"
+                                        $"return new {virtualField.Type.Name}Includes(this.text, '{virtualField.FieldName}')"
                                     ]
                                 }
                             );
@@ -408,7 +409,7 @@ namespace Api.EcmaScript
                             if (virtualField.Type != entityType)
                             {
                                 script.AddImport(new () {
-                                    Symbols = [virtualField.Type.Name],
+                                    Symbols = [virtualField.Type.Name, virtualField.Type.Name + "Includes"],
                                     From = "./" + virtualField.Type.Name
                                 });
                             }

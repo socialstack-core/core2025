@@ -19,12 +19,24 @@ namespace Api.EcmaScript.TypeScript
         public List<string> Source = [];
 
         /// <summary>
+        /// What does the getter return
+        /// </summary>
+        public string ReturnType;
+
+        /// <summary>
         /// Generates the TypeScript source representation of the getter method.
         /// </summary>
         /// <returns>A string containing the TypeScript getter method definition.</returns>
         public string CreateSource()
         {
-            var src = "".PadLeft(4) + "get " + Name + "(){" + Environment.NewLine;
+            var src = "".PadLeft(4) + "get " + Name + "()";
+            
+            if (!string.IsNullOrEmpty(ReturnType))
+            {
+                src += ": " + ReturnType;
+            }
+
+            src += " {" + Environment.NewLine;
             foreach (var line in Source)
             {
                 src += "".PadLeft(8) + line + Environment.NewLine;
