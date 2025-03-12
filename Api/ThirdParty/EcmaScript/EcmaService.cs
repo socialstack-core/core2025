@@ -117,7 +117,7 @@ namespace Api.EcmaScript
             // ===== AutoAPI ===== \\
             var baseControllerClass = new ClassDefinition { 
                 Name = "AutoApi",
-                GenericTemplate = "EntityType extends VersionedContent<number>"
+                GenericTemplate = "EntityType extends VersionedContent<number>, IncludeSet extends ApiIncludes"
             };
             var apiUrl = new ClassProperty
             {
@@ -130,12 +130,47 @@ namespace Api.EcmaScript
             // add CRUD methods to controller.
 
             AddCrudFunctionality(baseControllerClass);
+            AddBaseIncludeFunctionality(apiScript);
 
             apiScript.AddChild(baseControllerClass);
 
             // === SAVING TS FILE === \\
 
             File.WriteAllText("TypeScript/Api/ApiEndpoints.tsx", apiScript.CreateSource());
+        }
+
+        private void AddBaseIncludeFunctionality(Script script)
+        {
+            var classDef = new ClassDefinition() {
+                Name = "ApiIncludes",
+            };
+
+            var property = new ClassProperty() {
+                PropertyName = "text",
+                PropertyType = "string"
+            };
+
+            var constructor = new ClassMethod() {
+                Name = "constructor",
+                Arguments = [
+                    new() {
+                        Name = "prev?",
+                        Type = "string"
+                    },
+                    new() {
+                        Name = "extra?",
+                        Type = "string"
+                    }
+                ],
+                Injected = [
+                    "this.text = (prev ? prev + '.' : '') + (extra || '');"
+                ]
+            };
+            
+            classDef.Children.Add(constructor);
+            classDef.Children.Add(property);
+
+            script.AddChild(classDef);
         }
 
         /// <summary>
@@ -156,12 +191,12 @@ namespace Api.EcmaScript
                     },
                     new ClassMethodArgument() {
                         Name = "includes",
-                        Type = "string[]",
+                        Type = "ApiIncludes[]",
                         DefaultValue = "[]"
                     }
                 ], 
                 Injected = [
-                    "return webRequest(this.apiUrl + '/list', { where }, { method: 'POST', includes })"
+                    "return webRequest(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes.map(include => include.text) })"
                 ]
             };
             var oneMethod = new ClassMethod() {
@@ -171,10 +206,15 @@ namespace Api.EcmaScript
                     new ClassMethodArgument() {
                         Name = "id",
                         Type = "number"
+                    },
+                    new ClassMethodArgument() {
+                        Name = "includes",
+                        Type = "ApiIncludes[]",
+                        DefaultValue = "[]"
                     }
                 ],
                 Injected = [
-                    "return webRequest(this.apiUrl + '/' + id)"
+                    "return webRequest(this.apiUrl + '/' + id, { includes: includes.map(include => include.text) })"
                 ]
             };
             var createMethod = new ClassMethod() {
@@ -211,10 +251,15 @@ namespace Api.EcmaScript
                     new ClassMethodArgument() {
                         Name = "entityId",
                         Type = "number" 
+                    },                    
+                    new ClassMethodArgument() {
+                        Name = "includes",
+                        Type = "ApiIncludes[]",
+                        DefaultValue = "[]"
                     }
                 ], 
                 Injected = [
-                    "return webRequest(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: [] })"
+                    "return webRequest(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes.map(include => include.text) })"
                 ]
             };
 
@@ -295,7 +340,8 @@ namespace Api.EcmaScript
 
                 var fields = module.GetAutoService()?.GetContentFields().List;
                 var coreImports = new List<string>() {
-                    "AutoApi"
+                    "AutoApi",
+                    "ApiIncludes"
                 };
 
                 Script script = new();
@@ -338,17 +384,41 @@ namespace Api.EcmaScript
 
                     var virtualFields = entityType.GetCustomAttributes<HasVirtualFieldAttribute>();
 
-                    foreach(var virtualField in virtualFields)
+
+                    if (virtualFields.Any())
                     {
-                        if (virtualField.Type != entityType)
+                        ClassDefinition includeClass;
+
+                        includeClass = new ClassDefinition() {
+                            Name = entityType.Name + "Includes",
+                            Extends = "ApiIncludes"
+                        };
+
+                        foreach(var virtualField in virtualFields)
                         {
-                            script.AddImport(new () {
-                                Symbols = [virtualField.Type.Name],
-                                From = "./" + virtualField.Type.Name
-                            });
+                            includeClass.Children.Add(
+                                new ClassGetter() {
+                                    Name = LcFirst(virtualField.FieldName), 
+                                    Source = [
+                                        $"return new {includeClass.Name}(this.text, '{virtualField.FieldName}')"
+                                    ]
+                                }
+                            );
+
+                            if (virtualField.Type != entityType)
+                            {
+                                script.AddImport(new () {
+                                    Symbols = [virtualField.Type.Name],
+                                    From = "./" + virtualField.Type.Name
+                                });
+                            }
+                            typeDef.AddProperty(virtualField.FieldName, GetTypeConversion(virtualField.Type));
                         }
-                        typeDef.AddProperty(virtualField.FieldName, GetTypeConversion(virtualField.Type));
+
+                        script.AddChild(includeClass);
                     }
+
+                    
 
                     script.AddChild(typeDef);
                 }
@@ -371,7 +441,7 @@ namespace Api.EcmaScript
 
                     var controllerDef = new ClassDefinition() {
                         Name = entityType.Name + "Api",
-                        Extends = "AutoApi<" + entityType.Name + ">"
+                        Extends = "AutoApi<" + entityType.Name + ", " + entityType.Name + "Includes>"
                     };
 
                     controllerDef.Children.Add(new ClassMethod() {
