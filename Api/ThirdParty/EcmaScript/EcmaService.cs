@@ -261,15 +261,15 @@ namespace Api.EcmaScript
 
                 fieldName = LcFirst(fieldName);
 
-                var type = TrimGenericBacktick(GetTypeConversion(field.FieldType));
+                var type = field.FieldType;
 
-                if (type == "Nullable")
+                if (Nullable.GetUnderlyingType(type) != null)
                 {
-                    continue;
+                    type = Nullable.GetUnderlyingType(type);
                 }
 
                 // Add only actual fields (not property backers)
-                target.AddProperty(fieldName, type);
+                target.AddProperty(fieldName, GetTypeConversion(type));
             }
         }
 
@@ -382,7 +382,7 @@ namespace Api.EcmaScript
             foreach(var field in fields)
             {
                 var targetType = field.FieldType;
-                if (targetType.Name.StartsWith("Nullable")) 
+                if (Nullable.GetUnderlyingType(targetType) != null)
                 {
                     targetType = Nullable.GetUnderlyingType(targetType);
                 }
