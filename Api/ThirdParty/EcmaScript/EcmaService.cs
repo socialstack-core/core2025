@@ -366,8 +366,10 @@ namespace Api.EcmaScript
                     });
 
                     script.AddChild(controllerDef);
+                    script.AddSLOC($"export default new {controllerDef.Name}();");
 
                 }
+
 
                 File.WriteAllText(script.FileName, script.CreateSource());
 
