@@ -299,7 +299,7 @@ namespace Api.EcmaScript
                 Script script = new();
                 script.AddImport(new() {
                     Symbols = coreImports,
-                    From = "TypeScript/Api/ApiEndpoints"
+                    From = "Api/ApiEndpoints"
                 });
 
                 if (fields == null)

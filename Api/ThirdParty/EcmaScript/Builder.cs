@@ -77,6 +77,8 @@ namespace Api.EcmaScript
 				}
 			}
 
+            output.Append(", \"Api/*\": [\"TypeScript/Api/*\"]");
+
 			output.Append("}}}");
 
 			// tsconfig.json:
