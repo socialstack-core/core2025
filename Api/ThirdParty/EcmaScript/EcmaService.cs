@@ -381,17 +381,20 @@ namespace Api.EcmaScript
         {
             foreach(var field in fields)
             {
-                if (field.FieldType.Name.StartsWith("Nullable")) 
+                var targetType = field.FieldType;
+                if (targetType.Name.StartsWith("Nullable")) 
                 {
-                    continue;
+                    targetType = Nullable.GetUnderlyingType(targetType);
                 }
                 var jsonIgnore = field.PropertyInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
+
+                jsonIgnore ??= field.FieldInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
 
                 if (jsonIgnore is not null)
                 {
                     continue;
                 }
-                typeDef.AddProperty(field.Name, GetTypeConversion(field.FieldType));
+                typeDef.AddProperty(field.Name, GetTypeConversion(targetType));
             }
         }
 
