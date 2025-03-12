@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Api.AvailableEndpoints;
@@ -335,6 +336,20 @@ namespace Api.EcmaScript
 
                     AddFieldsToType(fields, typeDef);
 
+                    var virtualFields = entityType.GetCustomAttributes<HasVirtualFieldAttribute>();
+
+                    foreach(var virtualField in virtualFields)
+                    {
+                        if (virtualField.Type != entityType)
+                        {
+                            script.AddImport(new () {
+                                Symbols = [virtualField.Type.Name],
+                                From = "./" + virtualField.Type.Name
+                            });
+                        }
+                        typeDef.AddProperty(virtualField.FieldName, GetTypeConversion(virtualField.Type));
+                    }
+
                     script.AddChild(typeDef);
                 }
 
@@ -342,7 +357,6 @@ namespace Api.EcmaScript
                 
                 if ( controller != null )
                 {
-                    
                     if (string.IsNullOrEmpty(script.FileName))
                     {
                         script.FileName = "TypeScript/Api/" + controller.Name[..controller.Name.LastIndexOf("Controller")] + ".tsx";
