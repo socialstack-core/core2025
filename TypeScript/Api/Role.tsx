@@ -1,21 +1,30 @@
-declare global {
+/* * * * * * * | Auto Generated Script, do not edit | * * * * * * * */
+// Imports
+import {AutoApi, VersionedContent} from 'TypeScript/Api/ApiEndpoints'
 
-    interface Role {
-        capabilities?: string[]
+// Module
+export type Role = VersionedContent<number> & {
+    name?: string,
+    key?: string,
+    canViewAdmin?: boolean,
+    isComposite?: boolean,
+    adminDashboardJson?: string,
+    grantRuleJson?: string,
+    inheritedRoleId?: number,
+    revision?: number,
+    userId?: number,
+    createdUtc?: Date,
+    editedUtc?: Date,
+    id?: number,
+    isDraft?: boolean,
+    type?: string,
+}
+
+export class RoleApi extends AutoApi<Role>{
+    public constructor(){
+        super('v1/role')
     }
 
 }
 
-interface RoleApi {
-    get: (roleId: int) => Promise<Role>;
-}
 
-const roleApi : RoleApi = {
-    get: (roleId: int) => {
-        return new Promise((s, r) => {
-            s({});
-        });
-    }
-};
-
-export default roleApi;

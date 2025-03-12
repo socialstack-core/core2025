@@ -322,7 +322,7 @@ namespace Api.CanvasRenderer
 					globalMap.Sort();
 
 					// Make ts aliases:
-					BuildTypescriptAliases();
+					await Events.Compiler.BeforeCompile.Dispatch(new Context(1,1,1), SourceBuilders);
 
 					// Happens in a separate loop to ensure all the global SCSS has loaded first.
 					foreach (var sb in SourceBuilders)
@@ -330,6 +330,7 @@ namespace Api.CanvasRenderer
 						// Compile everything:
 						await sb.BuildEverything();
 					}
+					await Events.Compiler.AfterCompile.Dispatch(new Context(1,1,1), SourceBuilders);
 				}
 
                 Log.Ok(LogTag, "Done handling UI load.");
@@ -443,98 +444,6 @@ namespace Api.CanvasRenderer
 		}
 
 		/// <summary>
-		/// Dev watcher mode only. Outputs a tsconfig.json file which lists all available JS/ JSX/ TS/ TSX files.
-		/// </summary>
-		private void BuildTypescriptAliases()
-		{
-			// Do any builders have typescript files in them?
-			var ts = false;
-			foreach (var builder in SourceBuilders)
-			{
-				if (builder.HasTypeScript)
-				{
-					ts = true;
-					break;
-				}
-			}
-
-			if (!ts)
-			{
-				return;
-			}
-
-			var output = new StringBuilder();
-			
-			output.Append("{\r\n\"compilerOptions\": {\"jsx\": \"react-jsx\", \"paths\": {");
-			var first = true;
-			
-			foreach (var builder in SourceBuilders)
-			{
-				var rootSegment = "\":[\"" + "./" + builder.RootName + "/Source/";
-
-				foreach (var kvp in builder.FileMap)
-				{
-					var file = kvp.Value;
-
-					if (file.FileType != SourceFileType.Javascript)
-					{
-						continue;
-					}
-
-					if (first)
-					{
-						first = false;
-					}
-					else
-					{
-						output.Append(',');
-					}
-
-					var firstDot = file.FileName.IndexOf('.');
-					var nameNoType = firstDot == -1 ? file.FileName : file.FileName.Substring(0, firstDot);
-					
-					var modPath = file.ModulePath;
-					var modPathDot = file.ModulePath.LastIndexOf('.');
-					
-					
-					if(modPathDot != -1){
-						// It has a filetype - strip it:
-						modPath = modPath.Substring(0, modPathDot);
-					}
-					
-					output.Append('"');
-					output.Append(modPath);
-					output.Append(rootSegment);
-					output.Append(file.RelativePath.Replace('\\', '/') + '/' + nameNoType);
-					output.Append("\"]");
-				}
-			}
-
-			output.Append("}}}");
-
-			// tsconfig.json:
-			var json = output.ToString();
-
-			var tsMeta = Path.GetFullPath("TypeScript");
-
-			// Create if doesn't exist:
-			Directory.CreateDirectory(tsMeta);
-			
-			// Write tsconfig file out:
-			File.WriteAllText(Path.Combine(tsMeta, "tsconfig.generated.json"), json);
-			
-			
-			/*
-			var globalsPath = Path.Combine(tsMeta, "typings.d.ts");
-
-			if (!File.Exists(globalsPath))
-			{
-				File.WriteAllText(globalsPath, "import * as react from \"react\";\r\n\r\ndeclare global {\r\n\ttype React = typeof react;\r\n\tvar global: any;\r\n}");
-			}
-			*/
-		}
-
-		/// <summary>
 		/// Gets the build errors from the last build of the CSS/ JS that happened. If the initial build run is happening, this waits for it to complete.
 		/// </summary>
 		/// <returns></returns>
@@ -644,8 +553,12 @@ namespace Api.CanvasRenderer
 			builder.OnMapChange = () => {
 
 				// Rebuild aliases:
-				BuildTypescriptAliases();
-
+				Task.Run(async () => {
+					await Events.Compiler.BeforeCompile.Dispatch(new Context(1, 1, 1), SourceBuilders);
+				});
+				Task.Run(async () => {
+					await Events.Compiler.AfterCompile.Dispatch(new Context(1, 1, 1), SourceBuilders);
+				});
 			};
 
 			SourceBuilders.Add(builder);

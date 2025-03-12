@@ -1,5 +1,5 @@
-using Api.Permissions;
 using System.Collections.Generic;
+using Api.CanvasRenderer;
 
 namespace Api.Eventing
 {
@@ -10,6 +10,10 @@ namespace Api.Eventing
 	/// </summary>
 	public partial class Events
 	{
+        /// <summary>
+		/// Set of events for the compilation.
+		/// </summary>
+		public static EcmaScriptEventGroup Compiler;
 		/// <summary>
 		/// Triggered after the underlying frontend JS has changed.
 		/// Triggers most often on development environments; often only once on startup for prod.
@@ -27,6 +31,22 @@ namespace Api.Eventing
 		/// </summary>
 		public static EventHandler<long> FrontendAfterUpdate;
 
+	}
+    /// <summary>
+	/// Custom user specific events.
+	/// </summary>
+	public class EcmaScriptEventGroup : EventGroup
+	{	
+		/// <summary>
+		/// Fires before compilation of typescript
+		/// </summary>
+		public EventHandler<List<UIBundle>> BeforeCompile;
+
+		
+		/// <summary>
+		/// Fires before compilation of typescript
+		/// </summary>
+		public EventHandler<List<UIBundle>> AfterCompile;
 	}
 
 }
