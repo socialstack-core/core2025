@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
 using Api.Database;
@@ -41,18 +42,18 @@ namespace Api.EcmaScript
         {
             this.endpointService = endpointService;
 
-            Events.Compiler.BeforeCompile.AddEventListener(async (ctx, sourceBuilders) => {
+            Events.Compiler.BeforeCompile.AddEventListener((ctx, sourceBuilders) => {
                 
                 // Create the typescript functionality before the JS is compiled.
                 CreateTSSchema();
 
-                return sourceBuilders;
+                return ValueTask.FromResult(sourceBuilders);
             });
-            Events.Compiler.AfterCompile.AddEventListener(async (ctx, sourceBuilders) => {
+            Events.Compiler.AfterCompile.AddEventListener((ctx, sourceBuilders) => {
 
                 // build everything 
                 BuildTypescriptAliases(sourceBuilders);
-                return sourceBuilders;
+                return ValueTask.FromResult(sourceBuilders);
             });
         }
 
