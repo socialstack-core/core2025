@@ -1,5 +1,4 @@
 import webRequest from 'UI/Functions/WebRequest';
-import Image from 'UI/Image';
 import Debounce from 'UI/Functions/Debounce';
 
 /**
@@ -126,14 +125,6 @@ export default class Search extends React.Component {
 				this.setState({loading: false, results});
 			});
 		}
-	}
-	
-	avatar(result) {
-		if(result.avatarRef === undefined){
-			return '';
-		}
-		
-		return <Image fileRef={result.avatarRef} />;
 	}
 	
 	display(result, isSuggestion){

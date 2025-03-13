@@ -1,6 +1,5 @@
 import {expand} from 'UI/Functions/CanvasExpand';
-import { RouterConsumer } from 'UI/Session';
-import {TokenResolver} from 'UI/Token';
+import { useRouter } from 'UI/Router';
 import Alert from 'UI/Alert';
 
 var uniqueKey = 1;
@@ -122,19 +121,10 @@ class Canvas extends React.Component {
 			});
 		}
 		
-		if(node.graph){
-			return <ErrorCatcher node={node}>{node.graph.render()}</ErrorCatcher>;
-		}
-		
 		var NodeType = node.type;
 		
 		if(NodeType == '#text'){
-			if(this.props.context !== undefined){
-				// Contextual token canvas.
-				return <TokenResolver content={this.props.context} value={node.text}>{resolvedText => resolvedText}</TokenResolver>;
-			}else{
-				return node.text;
-			}
+			return node.text;
 		}else if(typeof NodeType === 'string'){
 			if(!node.dom){
 				node.dom = React.createRef();

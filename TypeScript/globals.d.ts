@@ -55,9 +55,14 @@ declare global {
 	var contentSource: string;
 
 	/**
+	 * Optionally prefix all links with this.
+	 */
+	var urlPrefix?: string;
+
+	/**
 	 * Global Session Init data. Originates from the server serialising the user's context.
 	 */
-	var gsInit: Session | undefined;
+	var gsInit: SessionResponse | undefined;
 	
 	/**
 	 * True if this is executing on the serverside. Only use if absolutely necessary 
@@ -76,6 +81,12 @@ declare global {
 	 * Optional token which will be used as a Token header by webRequest.
 	 */
 	var storedToken: string | null;
+
+	/**
+	 * Require modules by their alias, available at runtime.
+	 * Returns the raw UMD module meaning e.g. a default export is available as .default
+	 */
+	var require: (moduleName: string) => any;
 }
 
 export {};

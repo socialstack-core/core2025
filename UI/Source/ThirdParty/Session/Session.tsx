@@ -2,31 +2,30 @@ import { expandIncludes } from "UI/Functions/WebRequest";
 import { createContext, useContext, useState } from 'react';
 import userApi from 'Api/User';
 
-let initState : Session | undefined = undefined;
-
-if(window.gsInit){
-	initState = window.gsInit;
-	
-	for(var k in initState){
-		// initState[k] = expandIncludes(initState[k]);
-	}
-	
-	initState.loadingUser = undefined;
-}
-
 interface SessionContext {
 	session: Session,
 	sessionReload?: () => Promise<Session>,
-	setSession: (s:Session) => void
+	setSession: (s:SessionResponse) => Session
 }
 
 const sessionCtx = createContext<SessionContext>({
 	session: {},
-	setSession: (s) => { }
+	setSession: (s) => ({ } as Session)
 });
 
 export function useSession(){
 	return useContext(sessionCtx);
+}
+
+export function toSession(sr: SessionResponse) : Session {
+	var s: any = {};
+	var sra: any = (sr as any);
+
+	for (var k in sra) {
+		s[k] = expandIncludes(sra[k]);
+	}
+
+	return s as Session;
 }
 
 interface SessionProviderProps {
@@ -35,42 +34,32 @@ interface SessionProviderProps {
 
 export const Provider: React.FC<React.PropsWithChildren<SessionProviderProps>> = (props) => {
 
-	let dispatchWithEvent = (updatedVal: any, diff?: boolean) => {
-		if (diff) {
-			updatedVal = { ...session, ...updatedVal };
-		}
+	let dispatchWithEvent = (updatedVal: SessionResponse, diff?: boolean) => {
 
-		for (var k in updatedVal) {
-			updatedVal[k] = expandIncludes(updatedVal[k]);
-		}
+		var ses = diff ? { ...session, ...toSession(updatedVal) } : toSession(updatedVal);
 
 		var e = new CustomEvent('xsession', {
 			detail: {
-				state: updatedVal,
+				state: ses,
 				setSession
 			}
 		});
 
 		document.dispatchEvent && document.dispatchEvent(e);
-		setSession(updatedVal);
-		return updatedVal;
+		setSession(ses);
+		return ses;
 	}
 	
 	let sessionReload = () => userApi.self()
-		.then((response) => {
-			var state: Session = (response?.json) ? {
-				...response.json, loadingUser: undefined
-			} as Session : {
-				loadingUser: undefined
-			};
-			dispatchWithEvent(state);
-			return state;
-		}).catch(() => dispatchWithEvent({
-			loadingUser: undefined
-		}));
+		.then((response: SessionResponse) => dispatchWithEvent(response))
+		.catch(() => dispatchWithEvent({}));
 	
 	const [session, setSession] = useState(() : Session => {
-		var newSession = props.initialState || initState;
+		var newSession = props.initialState;
+
+		if (!newSession && window.gsInit) {
+			newSession = toSession(window.gsInit);
+		}
 
 		if (!newSession) {
 			newSession = {

@@ -1,5 +1,5 @@
 import Dropdown, { DropdownItem } from 'UI/Dropdown';
-import { useRef, useState, useEffect } from 'react';
+import { useState } from 'react';
 
 /**
  * Props for the collapsible component.
