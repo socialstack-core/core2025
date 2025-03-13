@@ -574,6 +574,35 @@ namespace Api.EcmaScript
                             script.AddChild(def);
                         }
 
+                        foreach(var param in method.GetParameters())
+                        {
+                            // create missing types.
+                            var paramType = param.ParameterType;
+
+                            if (!paramType.Namespace.StartsWith("Api."))
+                            {
+                                continue;
+                            }
+
+                            if (paramType.BaseType == typeof(Content<>) || 
+                                paramType.BaseType == typeof(VersionedContent<>) || 
+                                paramType.BaseType == typeof(UserCreatedContent<>))
+                            {
+                                script.AddImport(new() {
+                                    From = "Api/" + paramType.Name,
+                                    Symbols = [paramType.Name]
+                                });
+                            } else {
+                                // generate a type for the type
+    
+                                if (!script.Children.Where(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == paramType.Name).Any())
+                                {
+                                    script.AddChild(CreateNonEntityType(paramType));
+                                }
+                            }
+
+                        }
+
                         controllerDef.Children.Add(
                             ConvertToTsMethod(
                                 method, 
@@ -602,7 +631,18 @@ namespace Api.EcmaScript
 
             foreach(var field in listEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
-                type.AddProperty(field.Name, GetTypeConversion(field.PropertyType));
+                if (field.PropertyType.Namespace.StartsWith("Api."))
+                {
+                    type.AddProperty(field.Name, GetTypeConversion(field.PropertyType));
+                }
+            }
+
+            foreach(var field in listEntityType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (field.FieldType.Namespace.StartsWith("Api."))
+                {
+                    type.AddProperty(field.Name, GetTypeConversion(field.FieldType));
+                }
             }
 
             return type;
@@ -626,7 +666,9 @@ namespace Api.EcmaScript
         private ClassMethod ConvertToTsMethod(MethodInfo method, Type type)
         {
             List<ClassMethodArgument> Arguments = [];
-            var details = GetEndpointUrl(method);
+
+            // make sure the variables are converted to JS variables
+            var details = GetEndpointUrl(method).Replace("{", "${");
 
             var returnType =  $"Promise<{GetTypeConversion(type)}>";
 
@@ -637,15 +679,70 @@ namespace Api.EcmaScript
 
                 returnType = $"Promise<ApiList<{GetTypeConversion(type)}>>";
             }
+            
+            bool foundBodyVarName = false;
+
+            foreach(var param in method.GetParameters())
+            {
+                var arg = new ClassMethodArgument() {
+                    Name = param.Name,
+                    Type = GetTypeConversion(param.ParameterType)
+                };
+
+                if (arg.Name == "body")
+                {
+                    foundBodyVarName = true;
+                }
+
+                if (param.GetCustomAttribute<FromQueryAttribute>() != null)
+                {
+                    if (!details.Contains('?'))
+                    {
+                        details += "?";
+                    }
+
+                    details += $"&{param.Name}=${{{param.Name}}}";
+                }
+
+                Arguments.Add(arg);
+            }
+
+            details = details.Replace("?&", "?");
 
             var tsMethod = new ClassMethod() {
                 Name = LcFirst(method.Name),
                 ReturnType = returnType,
                 Arguments = Arguments,
-                Injected = [
-                    "return getJson(this.apiUrl + '/" + details + "', { })"
-                ]
             };
+
+            if (foundBodyVarName)
+            {
+                tsMethod.Injected = ["return getJson(`${this.apiUrl}/" + details + "`, { body })"];
+            }
+            else
+            {
+                // composite body build
+
+                var targetParams = method.GetParameters().Where(param => param.GetCustomAttribute<FromBodyAttribute>() != null);
+
+                if (targetParams.Any())
+                {
+                    tsMethod.Injected = [
+                        "return getJson(`${this.apiUrl}/" + details + "`, { body: {" ,
+                    ];
+                    foreach(var param in targetParams)
+                    {
+                        tsMethod.Injected.Add($"{param.Name},");
+                    }
+
+                    tsMethod.Injected.Add("}})");
+                }
+                else
+                {
+                    tsMethod.Injected = ["return getJson(`${this.apiUrl}/" + details + "`)"];
+                }
+                
+            }
 
             return tsMethod;
         }

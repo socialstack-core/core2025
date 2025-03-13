@@ -42,17 +42,10 @@ export type Upload = VersionedContent & {
     creatorUser?: User,
 }
 
+export type FileUploadBody = {
+}
+
 export type MediaRef = {
-    type?: string,
-    id?: number,
-    name?: string,
-    description?: string,
-    field?: string,
-    url?: string,
-    existingRef?: string,
-    updatedRef?: string,
-    status?: string,
-    localeId?: number,
 }
 
 export class UploadApi extends AutoApi<Upload, UploadIncludes>{
@@ -60,40 +53,40 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
         super('v1/upload')
     }
 
-    public upload(): Promise<void> {
-        return getJson(this.apiUrl + '/create', { })
+    public upload(body: FileUploadBody): Promise<void> {
+        return getJson(`${this.apiUrl}/create`, { body })
     }
 
-    public transcodedTar(): Promise<void> {
-        return getJson(this.apiUrl + '/transcoded/{id}', { })
+    public transcodedTar(id: number, token: string): Promise<void> {
+        return getJson(`${this.apiUrl}/transcoded/${id}?token=${token}`)
     }
 
-    public active(): Promise<void> {
-        return getJson(this.apiUrl + '/active', { })
+    public active(includes: string): Promise<void> {
+        return getJson(`${this.apiUrl}/active?includes=${includes}`)
     }
 
-    public activePost(): Promise<void> {
-        return getJson(this.apiUrl + '/active', { })
+    public activePost(includes: string): Promise<void> {
+        return getJson(`${this.apiUrl}/active?includes=${includes}`)
     }
 
-    public fileConsistency(): Promise<void> {
-        return getJson(this.apiUrl + '/file-consistency', { })
+    public fileConsistency(regenBefore: string, idRange: string): Promise<void> {
+        return getJson(`${this.apiUrl}/file-consistency?regenBefore=${regenBefore}&idRange=${idRange}`)
     }
 
-    public replace(): Promise<ApiList<MediaRef>> {
-        return getJson(this.apiUrl + '/replace', { })
+    public replace(sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>> {
+        return getJson(`${this.apiUrl}/replace?sourceRef=${sourceRef}&targetRef=${targetRef}`)
     }
 
     public updateAlts(): Promise<void> {
-        return getJson(this.apiUrl + '/update-alts', { })
+        return getJson(`${this.apiUrl}/update-alts`)
     }
 
-    public updateRefs(): Promise<ApiList<MediaRef>> {
-        return getJson(this.apiUrl + '/update-refs', { })
+    public updateRefs(update: boolean): Promise<ApiList<MediaRef>> {
+        return getJson(`${this.apiUrl}/update-refs?update=${update}`)
     }
 
-    public preview(): Promise<ApiList<MediaRef>> {
-        return getJson(this.apiUrl + '/replace/preview', { })
+    public preview(uploadRef: string): Promise<ApiList<MediaRef>> {
+        return getJson(`${this.apiUrl}/replace/preview?uploadRef=${uploadRef}`)
     }
 
 }

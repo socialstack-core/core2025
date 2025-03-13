@@ -38,37 +38,48 @@ export type User = VersionedContent & {
     creatorUser?: User,
 }
 
+export type UserPasswordForgot = {
+}
+
+export type OptionalPassword = {
+}
+
+export type UserLogin = {
+}
+
 export class UserApi extends AutoApi<User, UserIncludes>{
     public constructor(){
         super('v1/user')
     }
 
-    public resendVerificationEmail(): Promise<void> {
-        return getJson(this.apiUrl + '/sendverifyemail', { })
+    public resendVerificationEmail(body: UserPasswordForgot): Promise<void> {
+        return getJson(`${this.apiUrl}/sendverifyemail`, { body })
     }
 
-    public verifyUser(): Promise<void> {
-        return getJson(this.apiUrl + '/verify/{userid}/{token}', { })
+    public verifyUser(userid: number, token: string, newPassword: OptionalPassword): Promise<void> {
+        return getJson(`${this.apiUrl}/verify/${userid}/${token}`, { body: {
+        newPassword,
+        }})
     }
 
     public self(): Promise<SessionResponse> {
-        return getJson(this.apiUrl + '/self', { })
+        return getJson(`${this.apiUrl}/self`)
     }
 
     public logout(): Promise<SessionResponse> {
-        return getJson(this.apiUrl + '/logout', { })
+        return getJson(`${this.apiUrl}/logout`)
     }
 
-    public login(): Promise<SessionResponse> {
-        return getJson(this.apiUrl + '/login', { })
+    public login(body: UserLogin): Promise<SessionResponse> {
+        return getJson(`${this.apiUrl}/login`, { body })
     }
 
-    public impersonate(): Promise<SessionResponse> {
-        return getJson(this.apiUrl + '/{id}/impersonate', { })
+    public impersonate(id: number): Promise<SessionResponse> {
+        return getJson(`${this.apiUrl}/${id}/impersonate`)
     }
 
     public unpersonate(): Promise<SessionResponse> {
-        return getJson(this.apiUrl + '/unpersonate', { })
+        return getJson(`${this.apiUrl}/unpersonate`)
     }
 
 }
