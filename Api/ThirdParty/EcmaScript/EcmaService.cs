@@ -7,12 +7,14 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
+using Api.Contexts;
 using Api.Database;
 using Api.EcmaScript.TypeScript;
 using Api.Eventing;
 using Api.Startup;
 using Api.Users;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Newtonsoft.Json;
 
 namespace Api.EcmaScript
@@ -59,7 +61,8 @@ namespace Api.EcmaScript
 
         private void CreateTSSchema()
         {
-            InitTypeConversions();
+            ContextGenerator.SaveToFile("TypeScript/Config/Session.tsx");
+			InitTypeConversions();
             CreateBaseApi();
             InitTsScripts();
         }
@@ -347,6 +350,7 @@ namespace Api.EcmaScript
         private void InitTsScripts()
         {
             var allEndpointsByModule = endpointService.ListByModule();
+            var crudOperations = new string[]{"List", "Load", "Create", "Update", "Delete"};
 
             foreach(var module in allEndpointsByModule){
 
@@ -467,6 +471,11 @@ namespace Api.EcmaScript
                         continue;
                     }
 
+                    script.AddImport(new() {
+                        Symbols = ["getJson", "ApiList"],
+                        From = "UI/Functions/WebRequest"
+                    });
+
                     var controllerDef = new ClassDefinition() {
                         Name = entityType.Name + "Api",
                         Extends = "AutoApi<" + entityType.Name + ", " + entityType.Name + "Includes>"
@@ -479,6 +488,67 @@ namespace Api.EcmaScript
                         ]
                     });
 
+                    foreach(var method in controller.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
+                    {
+                        if (crudOperations.Contains(method.Name))
+                        {
+                            continue;
+                        }
+                        if (!IsEndpoint(method))
+                        {
+                            continue;
+                        }
+                        if (
+                            controllerDef.Children.Find(
+                                child => child.GetType() == typeof(ClassMethod) && 
+                                        (child as ClassMethod).Name == method.Name) 
+                            != null
+                        )
+                        {
+                            continue;
+                        }
+
+                        // maybe a chance that some of the params have structures that need creating (i.e UserLogin)
+
+                        var returnType = GetTrueMethodReturnType(method);
+
+                        if (returnType == typeof(Context))
+                        {
+                            // noop
+                        }
+                        else if (
+                            returnType == entityType || 
+                            returnType == typeof(void)
+                        )
+                        {
+                            // do nothing
+                        }
+                        else if (returnType.BaseType == typeof(Content<>))
+                        {
+                            // references another entity. 
+                            script.AddImport(new() {
+                                From = "Api/" + returnType.Name,
+                                Symbols = [returnType.Name]
+                            });
+                        }
+                        else
+                        {
+                            // create entity type.
+                            var def = new TypeDefinition() {
+                                Name = returnType.Name
+                            };
+                            AddFieldsToType(returnType, def);
+                            script.AddChild(def);
+                        }
+
+                        controllerDef.Children.Add(
+                            ConvertToTsMethod(
+                                method, 
+                                returnType
+                            )
+                        );
+                    }
+
                     script.AddChild(controllerDef);
                     script.AddSLOC($"export default new {controllerDef.Name}();");
 
@@ -490,6 +560,118 @@ namespace Api.EcmaScript
             }
             
         }
+
+        private bool IsEndpoint(MethodInfo method)
+        {
+            // Check if any of the MVC HTTP attributes exist on the method
+            var httpAttributes = method.GetCustomAttributes(true)
+                                    .OfType<Attribute>()
+                                    .Any(attr => attr is HttpGetAttribute || 
+                                                    attr is HttpPostAttribute || 
+                                                    attr is HttpPutAttribute || 
+                                                    attr is HttpDeleteAttribute || 
+                                                    attr is HttpPatchAttribute ||
+                                                    attr is RouteAttribute);
+
+            return httpAttributes;
+        }
+
+        private ClassMethod ConvertToTsMethod(MethodInfo method, Type type)
+        {
+            List<ClassMethodArgument> Arguments = [];
+            var details = GetEndpointUrl(method);
+
+            var tsMethod = new ClassMethod() {
+                Name = LcFirst(method.Name),
+                ReturnType = $"Promise<{GetTypeConversion(type)}>",
+                Arguments = Arguments,
+                Injected = [
+                    "return getJson(this.apiUrl + '/" + details + "', { })"
+                ]
+            };
+
+            return tsMethod;
+        }
+
+        private string GetEndpointUrl(MethodInfo method)
+        {
+            // Check if the method has any of the relevant HTTP attributes
+            var httpAttributes = method.GetCustomAttributes(true)
+                                    .OfType<Attribute>()
+                                    .Where(attr => attr is RouteAttribute || 
+                                                    attr is HttpGetAttribute || 
+                                                    attr is HttpPostAttribute || 
+                                                    attr is HttpPutAttribute || 
+                                                    attr is HttpDeleteAttribute || 
+                                                    attr is HttpPatchAttribute)
+                                    .ToList();
+
+            // If no relevant attribute is found, return null or an appropriate default value
+            if (!httpAttributes.Any())
+            {
+                return null;
+            }
+
+            // Extract URL from RouteAttribute or the HTTP method attributes
+            foreach (var attr in httpAttributes)
+            {
+                // RouteAttribute has a property called 'Template' which contains the URL pattern
+                if (attr is RouteAttribute routeAttribute)
+                {
+                    return routeAttribute.Template;
+                }
+
+                // For HttpGet, HttpPost, etc., the URL is usually passed in the constructor
+                // If the attribute has a 'Template' property, we extract that
+                if (attr is HttpMethodAttribute httpMethodAttribute && !string.IsNullOrEmpty(httpMethodAttribute.Template))
+                {
+                    return httpMethodAttribute.Template;
+                }
+            }
+
+            // Return null or a default string if no URL is found
+            return null;
+        }
+
+        private static Type GetTrueMethodReturnType(MethodInfo method)
+        {
+            Type returnType;
+
+            // Check if the return type is a Task<T>
+            if (method.ReturnType.IsGenericType && method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                // If it's a Task<T>, get the generic argument (T)
+                returnType = method.ReturnType.GetGenericArguments()[0];
+            }
+            // Check if the return type is a ValueTask<T>
+            else if (method.ReturnType.IsGenericType && method.ReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+            {
+                // If it's a ValueTask<T>, get the generic argument (T)
+                returnType = method.ReturnType.GetGenericArguments()[0];
+            }
+            // Check if the return type is a non-generic Task
+            else if (method.ReturnType == typeof(Task))
+            {
+                returnType = typeof(void);
+            }
+            // Check if the return type is a non-generic ValueTask
+            else if (method.ReturnType == typeof(ValueTask))
+            {
+                returnType = typeof(void);
+            }
+            else
+            {
+                // For other types, just return the method's actual return type
+                returnType = method.ReturnType;
+            }
+
+            // Check for any custom ReturnsAttribute if applicable
+            var methodReturnType = method.GetCustomAttribute<ReturnsAttribute>();
+            return methodReturnType?.ReturnType ?? returnType;
+        }
+
+
+
 
         private void AddFieldsToType(List<ContentField> fields, TypeDefinition typeDef)
         {
@@ -523,6 +705,9 @@ namespace Api.EcmaScript
             AddTypeConversion(typeof(long), "number");
             AddTypeConversion(typeof(DateTime), "Date");
             AddTypeConversion(typeof(bool), "boolean");
+            AddTypeConversion(typeof(void), "void");
+            AddTypeConversion(typeof(object), "Record<string, any>");
+            AddTypeConversion(typeof(Context), "SessionResponse");
         }
 
        

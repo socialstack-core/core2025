@@ -3,6 +3,7 @@
 import {AutoApi, ApiIncludes} from 'Api/ApiEndpoints'
 import {VersionedContent, UserCreatedContent, Content} from 'Api/Content'
 import {Role, RoleIncludes} from './Role'
+import {getJson, ApiList} from 'UI/Functions/WebRequest'
 
 // Module
 export class UserIncludes extends ApiIncludes{
@@ -40,6 +41,34 @@ export type User = VersionedContent & {
 export class UserApi extends AutoApi<User, UserIncludes>{
     public constructor(){
         super('v1/user')
+    }
+
+    public resendVerificationEmail(): Promise<void> {
+        return getJson(this.apiUrl + '/sendverifyemail', { })
+    }
+
+    public verifyUser(): Promise<void> {
+        return getJson(this.apiUrl + '/verify/{userid}/{token}', { })
+    }
+
+    public self(): Promise<SessionResponse> {
+        return getJson(this.apiUrl + '/self', { })
+    }
+
+    public logout(): Promise<SessionResponse> {
+        return getJson(this.apiUrl + '/logout', { })
+    }
+
+    public login(): Promise<SessionResponse> {
+        return getJson(this.apiUrl + '/login', { })
+    }
+
+    public impersonate(): Promise<SessionResponse> {
+        return getJson(this.apiUrl + '/{id}/impersonate', { })
+    }
+
+    public unpersonate(): Promise<SessionResponse> {
+        return getJson(this.apiUrl + '/unpersonate', { })
     }
 
 }

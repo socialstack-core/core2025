@@ -35,6 +35,7 @@ namespace Api.Users
 		/// </summary>
 		/// <returns></returns>
 		[HttpGet("self")]
+		[Returns(typeof(Context))]
 		public async ValueTask Self()
 		{
 			var context = await Request.GetContext();
@@ -51,6 +52,7 @@ namespace Api.Users
 		/// </summary>
 		/// <returns></returns>
         [HttpGet("logout")]
+		[Returns(typeof(Context))]
         public async ValueTask Logout() {
 			var context = await Request.GetContext();
 
@@ -115,6 +117,7 @@ namespace Api.Users
 		/// Attempts to login. Returns either a Context or a LoginResult.
 		/// </summary>
 		[HttpPost("login")]
+		[Returns(typeof(Context))]
 		public async ValueTask Login([FromBody] UserLogin body)
 		{
 			var context = await Request.GetContext();
@@ -144,6 +147,7 @@ namespace Api.Users
 		/// Impersonate a user by their ID. This is a hard cookie switch. You will loose all admin functionality to make the impersonation as accurate as possible.
 		/// </summary>
 		[HttpGet("{id}/impersonate")]
+		[Returns(typeof(Context))]
 		public async ValueTask Impersonate([FromRoute] uint id)
 		{
 			// Firstly, are they an admin?
@@ -200,6 +204,7 @@ namespace Api.Users
 		/// Reverses an impersonation.
 		/// </summary>
 		[HttpGet("unpersonate")]
+		[Returns(typeof(Context))]
 		public async ValueTask Unpersonate()
 		{
 			var _loginTokens = Services.Get<ContextService>();
