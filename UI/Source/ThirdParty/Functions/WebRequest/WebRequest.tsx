@@ -368,25 +368,29 @@ export function getOne<T extends Content>(origUrl: string, data?: any, opts?: We
 			// then we'll fire off a contentchange event to tell the UI
 			// that content has updated.
 
-			if (result) {
-				// Trigger a contentchange event if it was a POST and it returned an entity:
-				var method = 'get';
-
-				if (opts && opts.method) {
-					method = opts.method.toLowerCase();
-				} else if (data) {
-					method = 'post';
-				}
-				
-				var cont = result as Content;
-
-				if (cont.id && cont.type && method != 'get') {
-
-					// If method was 'delete' then this entity was deleted.
-					// Otherwise, as it's not specified, contentchange will establish if it was added or deleted based on the given url.
-					contentChange(result, origUrl, { deleted: (method == 'delete'), updated: false, added: false, created: false });
-				}
+			if (!result) {
+				throw new PublicError('content/none', `Content was not found`);
 			}
+
+			// Trigger a contentchange event if it was a POST and it returned an entity:
+			var method = 'get';
+
+			if (opts && opts.method) {
+				method = opts.method.toLowerCase();
+			} else if (data) {
+				method = 'post';
+			}
+				
+			var cont = result as Content;
+
+			if (cont.id && cont.type && method != 'get') {
+
+				// If method was 'delete' then this entity was deleted.
+				// Otherwise, as it's not specified, contentchange will establish if it was added or deleted based on the given url.
+				contentChange(result, origUrl, { deleted: (method == 'delete'), updated: false, added: false, created: false });
+			}
+
+			return result;
 		});
 }
 
