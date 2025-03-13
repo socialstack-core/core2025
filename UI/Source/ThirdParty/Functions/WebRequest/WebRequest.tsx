@@ -2,21 +2,7 @@
 import store from 'UI/Functions/Store';
 import contentChange from 'UI/Functions/ContentChange';
 import { PublicError } from 'UI/Failed';
-
-/**
- * The base type of all API content.
- */
-export type Content = {
-	/**
-	 * The ID of this content.
-	 */
-	id: int // The IDs are always integers thus JS can generalise them to 'int'.
-
-	/**
-	 * The type of this content e.g. "User".
-	 */
-	type: string
-};
+import { Content } from 'Api/Content';
 
 /**
  * Underlying error type from the server. Use PublicError in the frontend instead.

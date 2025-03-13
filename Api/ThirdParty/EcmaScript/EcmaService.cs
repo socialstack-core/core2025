@@ -76,16 +76,20 @@ namespace Api.EcmaScript
             return sct;
         }
 
-        private void CreateBaseApi()
+        private void CreateBaseContentTsx()
         {
-            var apiScript = GetScriptByEntity(typeof(Content<>));
+            var content = new Script
+            {
+                FileName = "TypeScript/Api/Content.tsx"
+            };
 
-            apiScript.FileName = "TypeScript/Api/ApiEndpoints.tsx";
-
-            apiScript.AddImport(new() {
-                From = "UI/Functions/WebRequest",
-                Symbols = ["getOne", "getList", "Content", "ApiList"]
-            });
+            // ==== CONTENT.CS ==== \\
+            var contentType = new TypeDefinition() {
+                Name = "Content"
+            };
+            contentType.AddProperty("id", "number");
+            contentType.AddProperty("type", "string");
+            content.AddChild(contentType);
 
             // ===== VERSIONEDCONTENT.CS ===== \\
             var versionedContent = new TypeDefinition() {
@@ -94,7 +98,7 @@ namespace Api.EcmaScript
             };
             AddFieldsToType(typeof(VersionedContent<>), versionedContent);
             versionedContent.AddProperty("revisionId", "number");
-            apiScript.AddChild(versionedContent);
+            content.AddChild(versionedContent);
 
             // ===== USERCREATEDCONTENT.CS ===== \\
             var userGenContent = new TypeDefinition() {
@@ -102,7 +106,27 @@ namespace Api.EcmaScript
                 Inheritence = ["Content"]
             };
             AddFieldsToType(typeof(UserCreatedContent<>), userGenContent);
-            apiScript.AddChild(userGenContent);
+            content.AddChild(userGenContent);
+
+            File.WriteAllText(content.FileName, content.CreateSource());
+        }
+
+        private void CreateBaseApi()
+        {
+            CreateBaseContentTsx();
+
+            var apiScript = GetScriptByEntity(typeof(Content<>));
+
+            apiScript.FileName = "TypeScript/Api/ApiEndpoints.tsx";
+
+            apiScript.AddImport(new() {
+                From = "UI/Functions/WebRequest",
+                Symbols = ["getOne", "getList", "ApiList"]
+            });
+            apiScript.AddImport(new() {
+                From = "Api/Content",
+                Symbols = ["Content", "VersionedContent", "UserCreatedContent"]
+            });
 
             // ===== AutoAPI ===== \\
             var baseControllerClass = new ClassDefinition { 
@@ -359,15 +383,16 @@ namespace Api.EcmaScript
                         script.FileName = "TypeScript/Api/" + entityType.Name + ".tsx";
                     }
 
+                    script.AddImport(new () {
+                        Symbols = ["VersionedContent", "UserCreatedContent", "Content"],
+                        From = "Api/Content"
+                    });
+
                     var typeDef = new TypeDefinition();
                     typeDef.SetName(entityType.Name);
                     
                     // needs to be done like this, VersionedContent is a generic class, it will always contain a `
                     var baseName = entityType.BaseType.Name[..entityType.BaseType.Name.LastIndexOf('`')];
-
-                    coreImports.Add(
-                        baseName
-                    );
 
                     if (entityType.BaseType.GenericTypeArguments.Length != 0)
                     {

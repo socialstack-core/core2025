@@ -1,20 +1,9 @@
 /* * * * * * * | Auto Generated Script, do not edit | * * * * * * * */
 // Imports
-import {getOne, getList, Content, ApiList} from 'UI/Functions/WebRequest'
+import {getOne, getList, ApiList} from 'UI/Functions/WebRequest'
+import {Content, VersionedContent, UserCreatedContent} from 'Api/Content'
 
 // Module
-export type VersionedContent = UserCreatedContent & {
-    revision?: number,
-    revisionId?: number,
-    isDraft?: boolean,
-}
-
-export type UserCreatedContent = Content & {
-    userId?: number,
-    createdUtc?: Date,
-    editedUtc?: Date,
-}
-
 export class ApiIncludes{
     public constructor(prev?: string, extra?: string){
         this.text = (prev ? prev + '.' : '') + (extra || '');

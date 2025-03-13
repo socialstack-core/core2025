@@ -1,6 +1,7 @@
 /* * * * * * * | Auto Generated Script, do not edit | * * * * * * * */
 // Imports
-import {AutoApi, ApiIncludes, VersionedContent} from 'Api/ApiEndpoints'
+import {AutoApi, ApiIncludes} from 'Api/ApiEndpoints'
+import {VersionedContent, UserCreatedContent, Content} from 'Api/Content'
 import {Role, RoleIncludes} from './Role'
 
 // Module
