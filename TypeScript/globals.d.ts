@@ -66,6 +66,16 @@ declare global {
 	 * as a useEffect does not run on the server and is designed by react to be able to manipulate the DOM after rendering.
 	 */
 	var SERVER: boolean;
+
+	/**
+	 * A base URL for the API.
+	 */
+	var apiHost: string;
+
+	/**
+	 * Optional token which will be used as a Token header by webRequest.
+	 */
+	var storedToken: string | null;
 }
 
 export {};
