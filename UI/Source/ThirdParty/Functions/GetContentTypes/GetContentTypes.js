@@ -1,4 +1,4 @@
-import webRequest from 'UI/Functions/WebRequest';
+import autoformApi from 'Api/Autoform';
 
 /* cache */
 var cache = null;
@@ -11,7 +11,7 @@ export default () => {
 		return Promise.resolve(cache);
 	}
 	
-	return cache = webRequest("autoform").then(response => {
+	return cache = autoformApi.all().then(response => {
 		return cache = response.json.contentTypes;
 	});
 }

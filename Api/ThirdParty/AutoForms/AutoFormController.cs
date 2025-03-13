@@ -42,10 +42,10 @@ namespace Api.AutoForms
 		}
 
 		/// <summary>
-		/// GET /v1/autoform
+		/// GET /v1/autoform/all
 		/// Returns meta about all content autoforms in this API.
 		/// </summary>
-		[HttpGet]
+		[HttpGet("all")]
 		public async ValueTask<AutoFormStructure> AllContentForms()
         {
 			var context = await Request.GetContext();
