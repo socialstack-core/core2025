@@ -400,10 +400,10 @@ namespace Api.EcmaScript
 
                     if (entityType.BaseType.GenericTypeArguments.Length != 0)
                     {
-                        if (baseName == "VersionedContent")
+                        if (baseName == "VersionedContent" || baseName == "Content" || baseName == "UserCreatedContent")
                         {
                             // changed to align with WebRequest.tsx
-                            typeDef.AddInheritence("VersionedContent");
+                            typeDef.AddInheritence(baseName);
                         }
                         else
                         {
@@ -415,15 +415,16 @@ namespace Api.EcmaScript
 
                     var virtualFields = entityType.GetCustomAttributes<HasVirtualFieldAttribute>();
 
+                    ClassDefinition includeClass;
+
+                    includeClass = new ClassDefinition() {
+                        Name = entityType.Name + "Includes",
+                        Extends = "ApiIncludes"
+                    };
 
                     if (virtualFields.Any())
                     {
-                        ClassDefinition includeClass;
-
-                        includeClass = new ClassDefinition() {
-                            Name = entityType.Name + "Includes",
-                            Extends = "ApiIncludes"
-                        };
+                        
 
                         foreach(var virtualField in virtualFields)
                         {
@@ -447,11 +448,8 @@ namespace Api.EcmaScript
                             typeDef.AddProperty(virtualField.FieldName, GetTypeConversion(virtualField.Type));
                         }
 
-                        script.AddChild(includeClass);
                     }
-
-                    
-
+                    script.AddChild(includeClass);
                     script.AddChild(typeDef);
                 }
 
@@ -501,7 +499,7 @@ namespace Api.EcmaScript
                         if (
                             controllerDef.Children.Find(
                                 child => child.GetType() == typeof(ClassMethod) && 
-                                        (child as ClassMethod).Name == method.Name) 
+                                        (child as ClassMethod).Name == LcFirst(method.Name))
                             != null
                         )
                         {
@@ -512,7 +510,10 @@ namespace Api.EcmaScript
 
                         var returnType = GetTrueMethodReturnType(method);
 
-                        if (returnType == typeof(Context))
+                        if (
+                            returnType == typeof(Context) ||
+                            returnType == typeof(object)
+                        )
                         {
                             // noop
                         }
@@ -530,6 +531,23 @@ namespace Api.EcmaScript
                                 From = "Api/" + returnType.Name,
                                 Symbols = [returnType.Name]
                             });
+                        }
+                        else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(List<>))
+                        {  
+                            // This will trigger for any List<T>, like List<int>, List<string>, etc.
+                            var listEntityType = returnType.GetGenericArguments()[0];
+
+                            if (
+                                script.Imports.Find(
+                                    import => import.From == "Api/" + listEntityType.Name
+                                ) == null
+                            )
+                            {
+                                script.AddImport(new() {
+                                    From = "Api/" + listEntityType.Name,
+                                    Symbols = [listEntityType.Name]
+                                });
+                            }
                         }
                         else
                         {
@@ -581,9 +599,19 @@ namespace Api.EcmaScript
             List<ClassMethodArgument> Arguments = [];
             var details = GetEndpointUrl(method);
 
+            var returnType =  $"Promise<{GetTypeConversion(type)}>";
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            {  
+                // This will trigger for any List<T>, like List<int>, List<string>, etc.
+                type = type.GetGenericArguments()[0];
+
+                returnType = $"Promise<ApiList<{GetTypeConversion(type)}>>";
+            }
+
             var tsMethod = new ClassMethod() {
                 Name = LcFirst(method.Name),
-                ReturnType = $"Promise<{GetTypeConversion(type)}>",
+                ReturnType = returnType,
                 Arguments = Arguments,
                 Injected = [
                     "return getJson(this.apiUrl + '/" + details + "', { })"
