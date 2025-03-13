@@ -1,49 +1,58 @@
 /* * * * * * * | Auto Generated Script, do not edit | * * * * * * * */
 // Imports
-import webRequest, {ApiSuccess, ApiFailure} from 'UI/Functions/WebRequest'
+import {getOne, getList, Content, ApiList} from 'UI/Functions/WebRequest'
 
 // Module
-export type Content<ID> = {
-    id?: ID,
-}
-
-export type VersionedContent<T> = UserCreatedContent<T> & {
+export type VersionedContent = UserCreatedContent & {
     revision?: number,
+    revisionId?: number,
     isDraft?: boolean,
-    revisionId?: T,
 }
 
-export type UserCreatedContent<T> = Content<T> & {
+export type UserCreatedContent = Content & {
     userId?: number,
     createdUtc?: Date,
     editedUtc?: Date,
 }
 
-export class AutoApi<EntityType extends VersionedContent<number>>{
+export class ApiIncludes{
+    public constructor(prev?: string, extra?: string){
+        this.text = (prev ? prev + '.' : '') + (extra || '');
+    }
+
+    protected text: string;
+
+    public toString(): string {
+        return this.text;
+    }
+
+}
+
+export class AutoApi<EntityType extends VersionedContent, IncludeSet extends ApiIncludes>{
     protected apiUrl: string;
 
     public constructor(apiUrl: string){
         this.apiUrl = apiUrl;
     }
 
-    public list(where: Partial<Record<keyof(EntityType), string | number | boolean>> = {}, includes: string[] = []): Promise<ApiSuccess<EntityType[]> | ApiFailure> {
-        return webRequest(this.apiUrl + '/list', { where }, { method: 'POST', includes })
+    public list(where: Partial<Record<keyof(EntityType), string | number | boolean>> = {}, includes: IncludeSet[] = []): Promise<ApiList<EntityType>> {
+        return getList(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes.map(include => include.toString()) })
     }
 
-    public load(id: number): Promise<ApiSuccess<EntityType> | ApiFailure> {
-        return webRequest(this.apiUrl + '/' + id)
+    public load(id: number, includes: IncludeSet[] = []): Promise<EntityType> {
+        return getOne(this.apiUrl + '/' + id, { includes: includes.map(include => include.toString()) })
     }
 
-    public create(entity: EntityType): Promise<ApiSuccess<EntityType> | ApiFailure> {
-        return webRequest(this.apiUrl, entity)
+    public create(entity: EntityType): Promise<EntityType> {
+        return getOne(this.apiUrl, entity)
     }
 
-    public update(entity: EntityType): Promise<ApiSuccess<EntityType> | ApiFailure> {
-        return webRequest(this.apiUrl + '/' + entity.id, entity)
+    public update(entity: EntityType): Promise<EntityType> {
+        return getOne(this.apiUrl + '/' + entity.id, entity)
     }
 
-    public delete(entityId: number): Promise<ApiSuccess<EntityType> | ApiFailure> {
-        return webRequest(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: [] })
+    public delete(entityId: number, includes: IncludeSet[] = []): Promise<EntityType> {
+        return getOne(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes.map(include => include.toString()) })
     }
 
 }

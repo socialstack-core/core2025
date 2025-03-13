@@ -1,9 +1,17 @@
 /* * * * * * * | Auto Generated Script, do not edit | * * * * * * * */
 // Imports
-import {AutoApi, VersionedContent} from 'TypeScript/Api/ApiEndpoints'
+import {AutoApi, ApiIncludes, VersionedContent} from 'Api/ApiEndpoints'
+import {User, UserIncludes} from './User'
 
 // Module
-export type Role = VersionedContent<number> & {
+export class RoleIncludes extends ApiIncludes{
+    get creatorUser(): UserIncludes {
+        return new UserIncludes(this.text, 'CreatorUser')
+    }
+
+}
+
+export type Role = VersionedContent & {
     name?: string,
     key?: string,
     canViewAdmin?: boolean,
@@ -16,15 +24,17 @@ export type Role = VersionedContent<number> & {
     createdUtc?: Date,
     editedUtc?: Date,
     id?: number,
+    revisionId?: number,
     isDraft?: boolean,
     type?: string,
+    creatorUser?: User,
 }
 
-export class RoleApi extends AutoApi<Role>{
+export class RoleApi extends AutoApi<Role, RoleIncludes>{
     public constructor(){
         super('v1/role')
     }
 
 }
 
-
+export default new RoleApi();
