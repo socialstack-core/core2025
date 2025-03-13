@@ -83,34 +83,23 @@ namespace Api.EcmaScript
             apiScript.FileName = "TypeScript/Api/ApiEndpoints.tsx";
 
             apiScript.AddImport(new() {
-                DefaultImport = "webRequest",
                 From = "UI/Functions/WebRequest",
-                Symbols = ["ApiSuccess", "ApiFailure"]
+                Symbols = ["getOne", "getList", "Content", "ApiList"]
             });
-
-            // ======== CONTENT.CS =========== \\
-            var content = new TypeDefinition() {
-                Name = "Content",
-                GenericTemplate = "ID"
-            };
-            AddFieldsToType(typeof(Content<>), content);
-            apiScript.AddChild(content);
 
             // ===== VERSIONEDCONTENT.CS ===== \\
             var versionedContent = new TypeDefinition() {
                 Name = "VersionedContent",
-                GenericTemplate = "T",
-                Inheritence = ["UserCreatedContent<T>"]
+                Inheritence = ["UserCreatedContent"]
             };
             AddFieldsToType(typeof(VersionedContent<>), versionedContent);
-            versionedContent.AddProperty("revisionId", "T");
+            versionedContent.AddProperty("revisionId", "number");
             apiScript.AddChild(versionedContent);
 
             // ===== USERCREATEDCONTENT.CS ===== \\
             var userGenContent = new TypeDefinition() {
                 Name = "UserCreatedContent",
-                GenericTemplate = "T",
-                Inheritence = ["Content<T>"]
+                Inheritence = ["Content"]
             };
             AddFieldsToType(typeof(UserCreatedContent<>), userGenContent);
             apiScript.AddChild(userGenContent);
@@ -118,7 +107,7 @@ namespace Api.EcmaScript
             // ===== AutoAPI ===== \\
             var baseControllerClass = new ClassDefinition { 
                 Name = "AutoApi",
-                GenericTemplate = "EntityType extends VersionedContent<number>, IncludeSet extends ApiIncludes"
+                GenericTemplate = "EntityType extends VersionedContent, IncludeSet extends ApiIncludes"
             };
             var apiUrl = new ClassProperty
             {
@@ -148,7 +137,8 @@ namespace Api.EcmaScript
 
             var property = new ClassProperty() {
                 PropertyName = "text",
-                PropertyType = "string"
+                PropertyType = "string",
+                Visibility = "protected" // musn't be accessible outside of the class, but must be accessible to children classes
             };
 
             var constructor = new ClassMethod() {
@@ -167,9 +157,17 @@ namespace Api.EcmaScript
                     "this.text = (prev ? prev + '.' : '') + (extra || '');"
                 ]
             };
+            var toString = new ClassMethod() {
+                Name = "toString",
+                ReturnType = "string",
+                Injected = [
+                    "return this.text;"
+                ]
+            };
             
             classDef.Children.Add(constructor);
             classDef.Children.Add(property);
+            classDef.Children.Add(toString);
 
             script.AddChild(classDef);
         }
@@ -183,7 +181,7 @@ namespace Api.EcmaScript
             var listMethod = new ClassMethod
             {
                 Name = "list",
-                ReturnType = "Promise<ApiSuccess<EntityType[]> | ApiFailure>",
+                ReturnType = "Promise<ApiList<EntityType>>",
                 Arguments = [
                     new ClassMethodArgument() {
                         Name = "where",
@@ -192,17 +190,17 @@ namespace Api.EcmaScript
                     },
                     new ClassMethodArgument() {
                         Name = "includes",
-                        Type = "ApiIncludes[]",
+                        Type = "IncludeSet[]",
                         DefaultValue = "[]"
                     }
                 ], 
                 Injected = [
-                    "return webRequest(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes.map(include => include.text) })"
+                    "return getList(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes.map(include => include.toString()) })"
                 ]
             };
             var oneMethod = new ClassMethod() {
                 Name = "load", 
-                ReturnType = "Promise<ApiSuccess<EntityType> | ApiFailure>",
+                ReturnType = "Promise<EntityType>",
                 Arguments = [
                     new ClassMethodArgument() {
                         Name = "id",
@@ -210,17 +208,17 @@ namespace Api.EcmaScript
                     },
                     new ClassMethodArgument() {
                         Name = "includes",
-                        Type = "ApiIncludes[]",
+                        Type = "IncludeSet[]",
                         DefaultValue = "[]"
                     }
                 ],
                 Injected = [
-                    "return webRequest(this.apiUrl + '/' + id, { includes: includes.map(include => include.text) })"
+                    "return getOne(this.apiUrl + '/' + id, { includes: includes.map(include => include.toString()) })"
                 ]
             };
             var createMethod = new ClassMethod() {
                 Name = "create", 
-                ReturnType = "Promise<ApiSuccess<EntityType> | ApiFailure>",
+                ReturnType = "Promise<EntityType>",
                 Arguments = [
                     new ClassMethodArgument() {
                         Name = "entity",
@@ -228,12 +226,12 @@ namespace Api.EcmaScript
                     }
                 ],
                 Injected = [
-                    "return webRequest(this.apiUrl, entity)"
+                    "return getOne(this.apiUrl, entity)"
                 ]
             };
             var updateMethod = new ClassMethod() {
                 Name = "update", 
-                ReturnType = "Promise<ApiSuccess<EntityType> | ApiFailure>",
+                ReturnType = "Promise<EntityType>",
                 Arguments = [
                     new ClassMethodArgument() {
                         Name = "entity",
@@ -241,13 +239,13 @@ namespace Api.EcmaScript
                     }
                 ],
                 Injected = [
-                    "return webRequest(this.apiUrl + '/' + entity.id, entity)"
+                    "return getOne(this.apiUrl + '/' + entity.id, entity)"
                 ]
             };
 
             var deleteMethod = new ClassMethod() {
                 Name = "delete",
-                ReturnType = "Promise<ApiSuccess<EntityType> | ApiFailure>",
+                ReturnType = "Promise<EntityType>",
                 Arguments = [
                     new ClassMethodArgument() {
                         Name = "entityId",
@@ -255,12 +253,12 @@ namespace Api.EcmaScript
                     },                    
                     new ClassMethodArgument() {
                         Name = "includes",
-                        Type = "ApiIncludes[]",
+                        Type = "IncludeSet[]",
                         DefaultValue = "[]"
                     }
                 ], 
                 Injected = [
-                    "return webRequest(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes.map(include => include.text) })"
+                    "return getOne(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes.map(include => include.toString()) })"
                 ]
             };
 
@@ -351,11 +349,6 @@ namespace Api.EcmaScript
                     From = "Api/ApiEndpoints"
                 });
 
-                if (fields == null)
-                {
-                    Console.WriteLine(controller.Name);
-                }
-
                 // === Convert the entity to a TS type === \\
                 if (entityType is not null && fields != null)
                 {
@@ -378,7 +371,15 @@ namespace Api.EcmaScript
 
                     if (entityType.BaseType.GenericTypeArguments.Length != 0)
                     {
-                        typeDef.AddInheritence(baseName + "<" + GetTypeConversion(entityType.BaseType.GenericTypeArguments[0]) + ">");
+                        if (baseName == "VersionedContent")
+                        {
+                            // changed to align with WebRequest.tsx
+                            typeDef.AddInheritence("VersionedContent");
+                        }
+                        else
+                        {
+                            typeDef.AddInheritence(baseName + "<" + GetTypeConversion(entityType.BaseType.GenericTypeArguments[0]) + ">");
+                        }
                     }
 
                     AddFieldsToType(fields, typeDef);
