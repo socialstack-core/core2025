@@ -4,7 +4,6 @@ import {AutoApi, ApiIncludes} from 'Api/ApiEndpoints'
 import {VersionedContent, UserCreatedContent, Content} from 'Api/Content'
 import {User, UserIncludes} from './User'
 import {getJson, ApiList} from 'UI/Functions/WebRequest'
-import {MediaRef} from 'Api/MediaRef'
 
 // Module
 export class UploadIncludes extends ApiIncludes{
@@ -41,6 +40,19 @@ export type Upload = VersionedContent & {
     isDraft?: boolean,
     type?: string,
     creatorUser?: User,
+}
+
+export type MediaRef = {
+    type?: string,
+    id?: number,
+    name?: string,
+    description?: string,
+    field?: string,
+    url?: string,
+    existingRef?: string,
+    updatedRef?: string,
+    status?: string,
+    localeId?: number,
 }
 
 export class UploadApi extends AutoApi<Upload, UploadIncludes>{

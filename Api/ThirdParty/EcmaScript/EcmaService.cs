@@ -512,25 +512,28 @@ namespace Api.EcmaScript
 
                         if (
                             returnType == typeof(Context) ||
-                            returnType == typeof(object)
+                            returnType == typeof(object) || 
+                            returnType == entityType || 
+                            returnType == typeof(void)
                         )
                         {
                             // noop
                         }
                         else if (
-                            returnType == entityType || 
-                            returnType == typeof(void)
+                            returnType.BaseType == typeof(Content<>) || 
+                            returnType.BaseType == typeof(VersionedContent<>) || 
+                            returnType.BaseType == typeof(UserCreatedContent<>)
                         )
                         {
-                            // do nothing
-                        }
-                        else if (returnType.BaseType == typeof(Content<>))
-                        {
-                            // references another entity. 
-                            script.AddImport(new() {
-                                From = "Api/" + returnType.Name,
-                                Symbols = [returnType.Name]
-                            });
+
+                            if (!script.Imports.Where(import => import.From == "Api/" + returnType.Name).Any())
+                            {
+                                // references another entity. 
+                                script.AddImport(new() {
+                                    From = "Api/" + returnType.Name,
+                                    Symbols = [returnType.Name]
+                                });
+                            }
                         }
                         else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(List<>))
                         {  
@@ -543,10 +546,22 @@ namespace Api.EcmaScript
                                 ) == null
                             )
                             {
-                                script.AddImport(new() {
-                                    From = "Api/" + listEntityType.Name,
-                                    Symbols = [listEntityType.Name]
-                                });
+                                if (listEntityType.BaseType == typeof(Content<>) || 
+                                    listEntityType.BaseType == typeof(VersionedContent<>) || 
+                                    listEntityType.BaseType == typeof(UserCreatedContent<>))
+                                {
+                                    script.AddImport(new() {
+                                        From = "Api/" + listEntityType.Name,
+                                        Symbols = [listEntityType.Name]
+                                    });
+                                } else {
+                                    // generate a type for the type
+
+                                    if (!script.Children.Where(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == listEntityType.Name).Any())
+                                    {
+                                        script.AddChild(CreateNonEntityType(listEntityType));
+                                    }
+                                }
                             }
                         }
                         else
@@ -577,6 +592,20 @@ namespace Api.EcmaScript
 
             }
             
+        }
+
+        private TypeDefinition CreateNonEntityType(Type listEntityType)
+        {
+            var type = new TypeDefinition() {
+                Name = listEntityType.Name
+            };
+
+            foreach(var field in listEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                type.AddProperty(field.Name, GetTypeConversion(field.PropertyType));
+            }
+
+            return type;
         }
 
         private bool IsEndpoint(MethodInfo method)
