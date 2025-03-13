@@ -39,12 +39,19 @@ namespace Api.EcmaScript.TypeScript
         public List<string> Injected = [];
 
         /// <summary>
+        /// Documentation for the TS Output
+        /// </summary>
+        public List<string> Documentation = [];
+
+        /// <summary>
         /// Generates the TypeScript method definition as a source code string.
         /// </summary>
         /// <returns>The TypeScript method definition as a formatted string.</returns>
         public string CreateSource()
         {
-            var src = "".PadLeft(4) + $"{Modifier} {Name}(";
+            var src = GetTsDocumentation(); 
+            
+            src += "".PadLeft(4) + $"{Modifier} {Name}(";
 
             for (int i = 0; i < Arguments.Count; i++)
             {
@@ -70,6 +77,29 @@ namespace Api.EcmaScript.TypeScript
             src += "".PadLeft(4) + "}" + Environment.NewLine;
 
             return src;
+        }
+
+        /// <summary>
+        /// Adds a line to documentation
+        /// </summary>
+        /// <param name="line"></param>
+        public void AddTsDocLine(string line)
+        {
+            Documentation.Add(line);
+        }
+
+        /// <summary>
+        /// Outputs the documentation for the current method.
+        /// </summary>
+        /// <returns></returns>
+        public string GetTsDocumentation()
+        {
+            var src = "".PadLeft(4) + "/**" + Environment.NewLine;
+            foreach(var doc in Documentation)
+            {
+                src += "".PadLeft(6) + doc + Environment.NewLine;
+            }
+            return src + Environment.NewLine + "".PadLeft(4) + "*/" + Environment.NewLine;
         }
     }
 }

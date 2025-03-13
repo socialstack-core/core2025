@@ -51,5 +51,20 @@ namespace Api.EcmaScript.TypeScript
             src += $" from '{From}'" + Environment.NewLine;
             return src;
         }
+        /// <summary>
+        /// No documentation for this entity type.
+        /// </summary>
+        public string GetTsDocumentation()
+        {
+            return null;
+        }
+        /// <summary>
+        /// Adds a line to documentation
+        /// </summary>
+        /// <param name="line"></param>
+        public void AddTsDocLine(string line)
+        {
+            return;
+        }
     }
 }

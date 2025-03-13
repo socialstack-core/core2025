@@ -31,6 +31,25 @@ namespace Api.EcmaScript.TypeScript
         public Dictionary<string, string> Properties = [];
 
         /// <summary>
+        /// Documentation for the TS Output
+        /// </summary>
+        public List<string> Documentation = [];
+        
+        /// <summary>
+        /// Outputs the documentation for the current method.
+        /// </summary>
+        /// <returns></returns>
+        public string GetTsDocumentation()
+        {
+            var src = "/*" + Environment.NewLine;
+            foreach(var doc in Documentation)
+            {
+                src += "".PadLeft(2) + doc + Environment.NewLine;
+            }
+            return src + "*/" + Environment.NewLine;
+        }
+
+        /// <summary>
         /// Sets the name of the type.
         /// </summary>
         /// <param name="name">The name to set.</param>
@@ -39,6 +58,15 @@ namespace Api.EcmaScript.TypeScript
             Name = name;
         }
 
+        /// <summary>
+        /// Adds a line to documentation
+        /// </summary>
+        /// <param name="line"></param>
+        public void AddTsDocLine(string line)
+        {
+            Documentation.Add(line);
+        }
+        
         /// <summary>
         /// Sets the generic type template.
         /// </summary>
@@ -73,7 +101,7 @@ namespace Api.EcmaScript.TypeScript
         /// <returns>The TypeScript type definition as a string.</returns>
         public string CreateSource()
         {
-            var source = "export type " + Name;
+            var source = GetTsDocumentation() + "export type " + Name;
 
             if (!string.IsNullOrEmpty(GenericTemplate))
             {

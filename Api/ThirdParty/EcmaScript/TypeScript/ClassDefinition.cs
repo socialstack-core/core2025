@@ -35,12 +35,40 @@ namespace Api.EcmaScript.TypeScript
         public List<IGeneratable> Children = [];
 
         /// <summary>
+        /// Documentation for the TS Output
+        /// </summary>
+        public List<string> Documentation = [];
+
+        /// <summary>
+        /// Outputs the documentation for the current method.
+        /// </summary>
+        /// <returns></returns>
+        public string GetTsDocumentation()
+        {
+            var src = "/**" + Environment.NewLine;
+            foreach(var doc in Documentation)
+            {
+                src += "".PadLeft(4) + doc + Environment.NewLine;
+            }
+            return src + "*/" + Environment.NewLine;
+        }
+
+        /// <summary>
+        /// Adds a line to documentation
+        /// </summary>
+        /// <param name="line"></param>
+        public void AddTsDocLine(string line)
+        {
+            Documentation.Add(line);
+        }
+
+        /// <summary>
         /// Generates the TypeScript class definition as a source code string.
         /// </summary>
         /// <returns>The TypeScript class definition as a string.</returns>
         public string CreateSource()
         {
-            var src = "export class " + Name;
+            var src = GetTsDocumentation() + "export class " + Name;
 
             if (!string.IsNullOrEmpty(GenericTemplate))
             {

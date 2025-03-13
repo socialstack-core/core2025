@@ -12,5 +12,17 @@ namespace Api.EcmaScript.TypeScript
         /// </summary>
         /// <returns></returns>
         public string CreateSource();
+        
+        /// <summary>
+        /// Returns the TSDocumentation for each entity type.
+        /// </summary>
+        /// <returns></returns>
+        public string GetTsDocumentation();
+
+        /// <summary>
+        /// Allows a line to be entered.
+        /// </summary>
+        /// <param name="line"></param>
+        public void AddTsDocLine(string line);
     }
 }

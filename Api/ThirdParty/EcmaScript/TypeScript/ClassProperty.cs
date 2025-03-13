@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Api.ContentSync;
 
 namespace Api.EcmaScript.TypeScript
@@ -28,6 +29,34 @@ namespace Api.EcmaScript.TypeScript
         /// Defaults to "public".
         /// </summary>
         public string Visibility { get; set; } = "public";
+
+        /// <summary>
+        /// Documentation for the TS Output
+        /// </summary>
+        public List<string> Documentation = [];
+        
+        /// <summary>
+        /// Outputs the documentation for the current method.
+        /// </summary>
+        /// <returns></returns>
+        public string GetTsDocumentation()
+        {
+            var src = "/**" + Environment.NewLine;
+            foreach(var doc in Documentation)
+            {
+                src += "".PadLeft(4) + doc + Environment.NewLine;
+            }
+            return src + "*/" + Environment.NewLine;
+        }
+
+        /// <summary>
+        /// Adds a line to documentation
+        /// </summary>
+        /// <param name="line"></param>
+        public void AddTsDocLine(string line)
+        {
+            Documentation.Add(line);
+        }
 
         /// <summary>
         /// Generates the TypeScript property definition as a source code string.

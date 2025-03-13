@@ -90,6 +90,7 @@ namespace Api.EcmaScript
             var contentType = new TypeDefinition() {
                 Name = "Content"
             };
+            contentType.AddTsDocLine("* The base content type for all content.");
             contentType.AddProperty("id", "number");
             contentType.AddProperty("type", "string");
             content.AddChild(contentType);
@@ -99,6 +100,7 @@ namespace Api.EcmaScript
                 Name = "VersionedContent",
                 Inheritence = ["UserCreatedContent"]
             };
+            versionedContent.AddTsDocLine("* The base content type for all content.");
             AddFieldsToType(typeof(VersionedContent<>), versionedContent);
             versionedContent.AddProperty("revisionId", "number");
             content.AddChild(versionedContent);
@@ -108,6 +110,7 @@ namespace Api.EcmaScript
                 Name = "UserCreatedContent",
                 Inheritence = ["Content"]
             };
+            userGenContent.AddTsDocLine("* The base content type for all entities users can create");
             AddFieldsToType(typeof(UserCreatedContent<>), userGenContent);
             content.AddChild(userGenContent);
 
@@ -395,6 +398,13 @@ namespace Api.EcmaScript
                     var typeDef = new TypeDefinition();
                     typeDef.SetName(entityType.Name);
                     
+                    var entityDocumentation = GetTypeDocumentation(entityType);
+
+                    if (entityDocumentation != null)
+                    {
+                        typeDef.AddTsDocLine(entityDocumentation.Summary.Trim());
+                    }
+                    
                     // needs to be done like this, VersionedContent is a generic class, it will always contain a `
                     var baseName = entityType.BaseType.Name[..entityType.BaseType.Name.LastIndexOf('`')];
 
@@ -422,10 +432,10 @@ namespace Api.EcmaScript
                         Extends = "ApiIncludes"
                     };
 
+                    includeClass.AddTsDocLine("Allows custom chained includes inside the list & load methods.");
+
                     if (virtualFields.Any())
                     {
-                        
-
                         foreach(var virtualField in virtualFields)
                         {
                             includeClass.Children.Add(
@@ -479,11 +489,21 @@ namespace Api.EcmaScript
                         Extends = "AutoApi<" + entityType.Name + ", " + entityType.Name + "Includes>"
                     };
 
+                    controllerDef.AddTsDocLine("Auto generated API for " + entityType.Name);
+
+                    var controllerDocumentation = GetTypeDocumentation(controller);
+
+                    if (controllerDocumentation is not null)
+                    {
+                        controllerDef.AddTsDocLine(controllerDocumentation.Summary.Trim());
+                    }
+
                     controllerDef.Children.Add(new ClassMethod() {
                         Name = "constructor", 
                         Injected = [
                             $"super('{baseUrl.Template}')"
-                        ]
+                        ],
+                        Documentation = ["This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller"]
                     });
 
                     foreach(var method in controller.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
@@ -570,6 +590,14 @@ namespace Api.EcmaScript
                             var def = new TypeDefinition() {
                                 Name = returnType.Name
                             };
+                            
+                            var defDocs = GetTypeDocumentation(returnType);
+
+                            if (defDocs is not null)
+                            {
+                                def.AddTsDocLine(defDocs.Summary.Trim());
+                            }
+
                             AddFieldsToType(returnType, def);
                             script.AddChild(def);
                         }
@@ -628,6 +656,13 @@ namespace Api.EcmaScript
             var type = new TypeDefinition() {
                 Name = listEntityType.Name
             };
+
+            var typeDocs = GetTypeDocumentation(listEntityType);
+
+            if (typeDocs is not null)
+            {
+                type.AddTsDocLine(typeDocs.Summary.Trim());
+            }
 
             foreach(var field in listEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
@@ -742,6 +777,21 @@ namespace Api.EcmaScript
                     tsMethod.Injected = ["return getJson(`${this.apiUrl}/" + details + "`)"];
                 }
                 
+            }
+
+            var methodDocumentation = GetMethodDocumentation(method);
+
+            if (methodDocumentation != null)
+            {
+                tsMethod.AddTsDocLine(string.IsNullOrEmpty(methodDocumentation?.Summary) ? "No summary available" :  methodDocumentation.Summary?.Trim());
+                
+                if (methodDocumentation.Parameters is not null)
+                {
+                    foreach(var prop in methodDocumentation.Parameters)
+                    {
+                        tsMethod.AddTsDocLine("@param {" + prop.Key + "} - " + prop.Value);
+                    }
+                }
             }
 
             return tsMethod;

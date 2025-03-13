@@ -67,6 +67,25 @@ namespace Api.AvailableEndpoints
 			return await Events.AvailableEndpoints.AfterLoad.Dispatch(context, structure);
 		}
 
+		private XmlDoc _doc;
+
+		public XmlDoc Documentation {
+			get {
+				if (_doc == null)
+				{
+					_doc = new XmlDoc();
+
+					if (System.IO.File.Exists("SocialStack.Api.xml"))
+					{
+						_doc.LoadFrom("SocialStack.Api.xml");
+					}
+					
+				}
+
+				return _doc;
+			}
+		}
+
 		/// <summary>
 		/// Obtains the set of all available endpoints, grouped by the module (controller) that they are from.
 		/// </summary>
@@ -74,15 +93,7 @@ namespace Api.AvailableEndpoints
 		public List<ModuleEndpoints> ListByModule()
 		{
 
-			// Got the Api.xml file?
-			var xmlDocFile = "Api.xml";
-			XmlDoc docs = null;
-
-			if (System.IO.File.Exists(xmlDocFile))
-			{
-				docs = new XmlDoc();
-				docs.LoadFrom(xmlDocFile);
-			}
+			XmlDoc docs = Documentation;
 
 			var result = new List<ModuleEndpoints>();
 			_cachedList = result;
