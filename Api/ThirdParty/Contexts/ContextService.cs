@@ -82,8 +82,12 @@ namespace Api.Contexts
 					);
 				}
 
+				// E.g. UserId, LocaleId to User
+				var contentName = field.Name[0..^2];
+
 				var fld = new ContextFieldInfo()
 				{
+					ContentName = contentName,
 					PrivateFieldInfo = privateField,
 					Property = field,
 					Name = field.Name,
@@ -113,9 +117,7 @@ namespace Api.Contexts
 
 				FieldsByShortcode[shortIndex] = fld;
 
-				// E.g. UserId, LocaleId.
 				// Get content type ID:
-				var contentName = field.Name[0..^2];
 				AutoService svc = null;
 
 				//Hack for currencyLocale
@@ -141,7 +143,7 @@ namespace Api.Contexts
 					fld.ViewCapability = svc.GetEventGroup().GetLoadCapability();
 				}
 
-				var jsonHeader = "\"" + contentName.ToLower() + "\":";
+				var jsonHeader = "\"" + fld.JsonFieldName + "\":";
 
 				fld.JsonFieldHeader = Encoding.UTF8.GetBytes(jsonHeader);
 

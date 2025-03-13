@@ -1,4 +1,4 @@
-import webRequest, {expandIncludes} from "UI/Functions/WebRequest";
+import { expandIncludes } from "UI/Functions/WebRequest";
 import { createContext, useContext, useState } from 'react';
 import userApi from 'Api/User';
 
@@ -35,7 +35,7 @@ interface SessionProviderProps {
 
 export const Provider: React.FC<React.PropsWithChildren<SessionProviderProps>> = (props) => {
 
-	let dispatchWithEvent = (updatedVal: Session, diff?: boolean) => {
+	let dispatchWithEvent = (updatedVal: any, diff?: boolean) => {
 		if (diff) {
 			updatedVal = { ...session, ...updatedVal };
 		}

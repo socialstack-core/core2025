@@ -27,6 +27,17 @@ namespace Api.Contexts
 		/// Full name.
 		/// </summary>
 		public string Name;
+		
+		/// <summary>
+		/// The name with 'Id' truncated from the end, e.g. "User".
+		/// This is the uppercased name of the field as it appears in the JSON.
+		/// </summary>
+		public string ContentName;
+
+		/// <summary>
+		/// The name as it appears in the JSON. It is the ContentName but lowercased.
+		/// </summary>
+		public string JsonFieldName => ContentName.ToLower();
 
 		/// <summary>
 		/// Shortcode of this field.
