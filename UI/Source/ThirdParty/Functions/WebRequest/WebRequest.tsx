@@ -350,7 +350,13 @@ export function getJson<T>(origUrl: string, data?: any, opts?: WebRequestOptions
 export function getList<T extends Content>(origUrl: string, data?: any, opts?: WebRequestOptions) {
 	return getJson<ApiList<T>>(origUrl, data, opts)
 		.then(apiList => {
-			return expandIncludes<ApiList<T>>(apiList);
+			var result = expandIncludes<ApiList<T>>(apiList);
+
+			if (!result) {
+				throw new PublicError('content/none', `Content was not found`);
+			}
+
+			return result;
 		});
 }
 
