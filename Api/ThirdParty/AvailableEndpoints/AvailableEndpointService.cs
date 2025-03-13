@@ -92,9 +92,6 @@ namespace Api.AvailableEndpoints
 		/// <returns></returns>
 		public List<ModuleEndpoints> ListByModule()
 		{
-
-			XmlDoc docs = Documentation;
-
 			var result = new List<ModuleEndpoints>();
 			_cachedList = result;
 
@@ -141,7 +138,7 @@ namespace Api.AvailableEndpoints
 						}
 
 						// httpMethod is e.g. "GET" or "POST". Uppercase it just in case.
-						var ep = CreateEndpointInfo(url, httpMethod.ToUpper(), methodInfo, docs);
+						var ep = CreateEndpointInfo(url, httpMethod.ToUpper(), methodInfo);
 						module.Endpoints.Add(ep);
 					}
 				}
@@ -167,7 +164,7 @@ namespace Api.AvailableEndpoints
 			return allEndpoints;
 		}
 
-		private Endpoint CreateEndpointInfo(string url, string httpMethod, MethodInfo methodInfo, XmlDoc docs = null)
+		private Endpoint CreateEndpointInfo(string url, string httpMethod, MethodInfo methodInfo)
 		{
 			var endpoint = new Endpoint()
 			{
@@ -178,10 +175,10 @@ namespace Api.AvailableEndpoints
 			// Method info from the xmldoc document (if it's found).
 			XmlDocMember member = null;
 
-			if (docs != null)
+			if (Documentation != null)
 			{
 				var fullTypeName = methodInfo.DeclaringType.FullName;
-				var documentedType = docs.GetType(fullTypeName, false);
+				var documentedType = Documentation.GetType(fullTypeName, false);
 
 				if (documentedType != null)
 				{
