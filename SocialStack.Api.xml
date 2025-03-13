@@ -13084,6 +13084,22 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="T:Api.Startup.ReturnsAttribute">
+            <summary>
+            An attribute to specify the return type of a method.
+            </summary>
+        </member>
+        <member name="F:Api.Startup.ReturnsAttribute.ReturnType">
+            <summary>
+            Gets the return type specified by the attribute.
+            </summary>
+        </member>
+        <member name="M:Api.Startup.ReturnsAttribute.#ctor(System.Type)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Api.Startup.ReturnsAttribute"/> class.
+            </summary>
+            <param name="type">The return type of the method.</param>
+        </member>
         <member name="T:Api.Startup.IncludeSet">
             <summary>
             Represents a set of inclusions. Assumes that most include strings will very rarely vary.
@@ -18091,6 +18107,17 @@
             Full name.
             </summary>
         </member>
+        <member name="F:Api.Contexts.ContextFieldInfo.ContentName">
+            <summary>
+            The name with 'Id' truncated from the end, e.g. "User".
+            This is the uppercased name of the field as it appears in the JSON.
+            </summary>
+        </member>
+        <member name="P:Api.Contexts.ContextFieldInfo.JsonFieldName">
+            <summary>
+            The name as it appears in the JSON. It is the ContentName but lowercased.
+            </summary>
+        </member>
         <member name="F:Api.Contexts.ContextFieldInfo.Shortcode">
             <summary>
             Shortcode of this field.
@@ -20215,6 +20242,23 @@
             </summary>
             <param name="input"></param>
             <returns></returns>
+        </member>
+        <member name="T:Api.EcmaScript.ContextGenerator">
+            <summary>
+            Generates Session.tsx from the C# Context metadata.
+            </summary>
+        </member>
+        <member name="M:Api.EcmaScript.ContextGenerator.Generate">
+            <summary>
+            Generates the typescript file.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.EcmaScript.ContextGenerator.SaveToFile(System.String)">
+            <summary>
+            Writes the session info to the given file.
+            </summary>
+            <param name="filename"></param>
         </member>
         <member name="T:Api.EcmaScript.TypeScript.ClassDefinition">
             <summary>

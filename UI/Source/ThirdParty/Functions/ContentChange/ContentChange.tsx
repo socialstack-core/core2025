@@ -1,5 +1,5 @@
 import getEndpointType from 'UI/Functions/GetEndpointType';
-import { Content } from 'UI/Functions/WebRequest';
+import { Content } from 'Api/Content';
 
 interface ContentChangeOptions {
 	deleted: boolean;

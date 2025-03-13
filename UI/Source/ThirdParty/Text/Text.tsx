@@ -71,6 +71,8 @@ const Text: React.FC<React.PropsWithChildren<TextProps>> = ({ children, paragrap
 	/>;
 }
 
+export default Text;
+
 /*
 Text.propTypes = {
 	text: 'canvas',

@@ -41,7 +41,7 @@ interface ColumnProps extends React.HTMLAttributes<HTMLDivElement> {
  * A 12 segment responsive column. Usually used within a <Row>.
  */
 
-const Column: React.FC<ColumnProps> = ({ className, noGutters, customClass, ...props }) => {
+const Column: React.FC<ColumnProps> = ({ className, noGutters, ...props }) => {
 	var colClass = '';
 
 	// only define a default col-md- width if we don't have a col-xs- / col-sm- value which overrides it

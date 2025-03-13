@@ -1,5 +1,5 @@
 import { useSession } from 'UI/Session';
-import Dropdown from 'UI/Dropdown';
+import Dropdown, { DropdownItem } from 'UI/Dropdown';
 import Icon from 'UI/Icon';
 import userApi from 'Api/User';
 import { Page } from 'Api/Page';
@@ -51,58 +51,42 @@ const AdminTrigger: React.FC<React.PropsWithChildren<AdminTriggerProps>> = props
 		<Icon type="fa-cog" light />
 	</>;
 
-	function endImpersonation() {
-		return userApi.unpersonate().then(response => {
+	function endImpersonation(e: React.MouseEvent<HTMLButtonElement>) {
+		userApi.unpersonate().then(response => {
 			window.location.reload();
 		});
 	}
-	
+
+	var ddItems: DropdownItem[] = [];
+
+	if (isImpersonating) {
+		ddItems.push({
+			onClick: endImpersonation,
+			text: `End impersonation`
+		}, {
+			divider: true
+		});
+	}
+
+	if (editUrl) {
+		ddItems.push({
+			href: editUrl,
+			text: `Edit this page`,
+			icon: <Icon type="fa-edit" light />
+		}, {
+			divider: true
+		});
+	}
+
+	ddItems.push({
+		href: '/en-admin',
+		text: `Return to admin`
+	});
+
 	return <>
 		<div id="admin-trigger">
 			<Dropdown isSmall title={`Administration`}
-				label={triggerLabelJsx} variant="dark" align="Right" position="Top">
-				<li className="admin-trigger__env admin-trigger__env--stage">
-					<h6 className="dropdown-header">
-						<Icon type="fa-exclamation-triangle" light /> {`STAGE`}
-					</h6>
-				</li>
-				<li className="admin-trigger__env admin-trigger__env--uat">
-					<h6 className="dropdown-header">
-						<Icon type="fa-exclamation-triangle" light /> {`UAT`}
-					</h6>
-				</li>
-				<li className="admin-trigger__env admin-trigger__env--prod">
-					<h6 className="dropdown-header">
-						<Icon type="fa-exclamation-triangle" light /> {`PRODUCTION`}
-					</h6>
-				</li>
-
-				{isImpersonating && <>
-					<li>
-						<button type="button" className="btn dropdown-item" onClick={() => endImpersonation()}>
-							{`End impersonation`}
-						</button>
-					</li>
-					<li>
-						<hr className="dropdown-divider" />
-					</li>
-				</>}
-				{editUrl && <>
-					<li>
-						<a href={editUrl} className="btn dropdown-item">
-							<Icon type="fa-edit" light /> {`Edit this page`}
-						</a>
-					</li>
-					<li>
-						<hr className="dropdown-divider" />
-					</li>
-				</>}
-				<li>
-					<a href="/en-admin" className="btn dropdown-item">
-						{`Return to admin`}
-					</a>
-				</li>
-			</Dropdown>
+				label={triggerLabelJsx} variant="dark" align="Right" position="Top" items={ddItems} />
 			{isImpersonating && <Icon type="fa-mask" light />}
 		</div>
 		{props.children}
