@@ -631,7 +631,7 @@ namespace Api.EcmaScript
 
             foreach(var field in listEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
-                if (field.PropertyType.Namespace.StartsWith("Api."))
+                if (field.PropertyType.Namespace.StartsWith("Api.") || TypeConversions.ContainsKey(field.PropertyType))
                 {
                     type.AddProperty(field.Name, GetTypeConversion(field.PropertyType));
                 }
@@ -639,7 +639,7 @@ namespace Api.EcmaScript
 
             foreach(var field in listEntityType.GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
-                if (field.FieldType.Namespace.StartsWith("Api."))
+                if (field.FieldType.Namespace.StartsWith("Api.") || TypeConversions.ContainsKey(field.FieldType))
                 {
                     type.AddProperty(field.Name, GetTypeConversion(field.FieldType));
                 }

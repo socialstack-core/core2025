@@ -43,9 +43,20 @@ export type Upload = VersionedContent & {
 }
 
 export type FileUploadBody = {
+    isPrivate?: boolean,
 }
 
 export type MediaRef = {
+    type?: string,
+    id?: number,
+    name?: string,
+    description?: string,
+    field?: string,
+    url?: string,
+    existingRef?: string,
+    updatedRef?: string,
+    status?: string,
+    localeId?: number,
 }
 
 export class UploadApi extends AutoApi<Upload, UploadIncludes>{

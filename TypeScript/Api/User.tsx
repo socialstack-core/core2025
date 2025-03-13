@@ -39,12 +39,16 @@ export type User = VersionedContent & {
 }
 
 export type UserPasswordForgot = {
+    email?: string,
 }
 
 export type OptionalPassword = {
+    password?: string,
 }
 
 export type UserLogin = {
+    emailOrUsername?: string,
+    password?: string,
 }
 
 export class UserApi extends AutoApi<User, UserIncludes>{
