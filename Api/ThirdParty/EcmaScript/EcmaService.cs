@@ -860,7 +860,7 @@ namespace Api.EcmaScript
             AddTypeConversion(typeof(DateTime), "Date");
             AddTypeConversion(typeof(bool), "boolean");
             AddTypeConversion(typeof(void), "void");
-            AddTypeConversion(typeof(object), "Record<string, any>");
+            AddTypeConversion(typeof(object), "Record<string, string | number | boolean>");
             AddTypeConversion(typeof(Context), "SessionResponse");
         }
 
