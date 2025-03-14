@@ -37,9 +37,9 @@ export interface ApiContent<T> extends HasIncludes {
 
 export interface ApiList<T> extends HasIncludes {
 	/**
-	 * The list of results.
+	 * The list of results. Will be at least an empty array if there were none.
 	 */
-	results?: T[],
+	results: T[],
 
 	/**
 	 * If you asked for a paginated fragment this 
@@ -340,6 +340,11 @@ export function getList<T extends Content>(origUrl: string, data?: any, opts?: W
 
 			if (!result) {
 				throw new PublicError('content/none', `Content was not found`);
+			}
+
+			// Ensure the array exists:
+			if (!result.results) {
+				result.results = [];
 			}
 
 			return result;

@@ -16,7 +16,7 @@ inlineTypes.forEach(type => {
 /**
  * An expanded node within a canvas tree.
  */
-interface CanvasNode {
+export interface CanvasNode {
 	/**
 	 * The original type name on the node, used to serialise this node if necessary.
 	 */
@@ -25,7 +25,7 @@ interface CanvasNode {
 	/**
 	 * The host element which is usually a functional component.
 	 */
-	type?: React.ElementType,
+	type?: any,
 
 	/**
 	 * The props to pass to the host element.
@@ -66,7 +66,17 @@ interface CanvasNode {
 	/**
 	 * Used as an identifier to spot already expanded canvas nodes.
 	 */
-	expanded?: boolean
+	expanded?: boolean,
+
+	/**
+	 * Internally used key for React when it is rendering this node.
+	 */
+	__key?: string,
+
+	/**
+	 * Optionally used to force a canvas node to display without fake newlines.
+	 */
+	isInline?:boolean
 }
 
 function readMap(dataMap : any[], ptr : number){
@@ -84,7 +94,7 @@ function readMap(dataMap : any[], ptr : number){
  * @param dataMap
  * @returns
  */
-function convertToNodesFromCanvas(node : any, onContentNode : (node : CanvasNode) => void, dataMap? : any[]) : CanvasNode | null {
+function convertToNodesFromCanvas(node : any, onContentNode? : (node : CanvasNode) => void, dataMap? : any[]) : CanvasNode | null {
 	if(!node){
 		return null;
 	}
@@ -198,17 +208,15 @@ function convertToNodesFromCanvas(node : any, onContentNode : (node : CanvasNode
 	
 	node.isInline = typeof node.type != 'string' || !!inlines[node.type];
 	
-	if(onContentNode){
-		if(onContentNode(result) === null){
-			return null;
-		}
+	if (onContentNode && onContentNode(result) === null){
+		return null;
 	}
 	
 	return result;
 }
 	
 
-function loadCanvasChildren(node: any, result : CanvasNode, onContentNode: (node: CanvasNode) => void, dataMap? : any[]){
+function loadCanvasChildren(node: any, result : CanvasNode, onContentNode?: (node: CanvasNode) => void, dataMap? : any[]){
 	var c = node.c;
 	if(typeof c == 'string'){
 		// It has one child which is a text node (no ID or templateID on this).
@@ -249,7 +257,7 @@ function loadCanvasChildren(node: any, result : CanvasNode, onContentNode: (node
 * Canvas JSON has multiple conveniences. 
 * Expanding it will, for example, resolve the module references.
 */
-export function expand(contentNode : any, onContentNode: (node: CanvasNode) => void){
+export function expand(contentNode : any, onContentNode?: (node: CanvasNode) => void){
 	if (!contentNode) {
 		return null;
 	}

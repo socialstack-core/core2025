@@ -29,7 +29,12 @@ declare global {
 		/**
 		 * Error type.
 		 */
-		type: string
+		type: string,
+
+		/**
+		 * Any other detail if available.
+		 */
+		detail?: any
 	}
 	
 	/**
@@ -57,7 +62,7 @@ declare global {
 	/**
 	 * Optionally prefix all links with this.
 	 */
-	var urlPrefix?: string;
+	var urlPrefix: string | undefined;
 
 	/**
 	 * Global Session Init data. Originates from the server serialising the user's context.

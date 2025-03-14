@@ -1,4 +1,5 @@
-import { useState , useEffect } from "react";
+import { useState, useEffect } from "react";
+import Icon from 'UI/Icon';
 
 const MAX_PAGES = 5;
 const MAX_PAGES_MOBILE = 3;
@@ -10,9 +11,65 @@ function newId() {
 	return `paginator_${lastId}`;
 }
 
-export default function Paginator(props) {
+/**
+ * Props for the Paginator component.
+ */
+interface PaginatorProps {
+	id?: string,
+	pageIndex?: number,
+	totalResults?: number,
+	pageSize: number,
+
+	/**
+	 * By default the paginator hides if it is not needed. This makes it always show.
+	 */
+	always?: boolean,
+
+	/**
+	 * Optional custom icon for getting to the first page, usually an <Icon/>
+	 */
+	firstIcon?: React.ReactNode,
+
+	/**
+	 * Optional custom icon for getting to the previous page, usually an <Icon/>
+	 */
+	previousIcon?: React.ReactNode,
+
+	/**
+	 * Optional custom icon for getting to the next page, usually an <Icon/>
+	 */
+	nextIcon?: React.ReactNode,
+
+	/**
+	 * Optional custom icon for getting to the last page, usually an <Icon/>
+	 */
+	lastIcon?: React.ReactNode,
+
+	/**
+	 * Optional result description.
+	 */
+	description?: string
+
+	showInput?: boolean,
+	showSummary?: boolean,
+	maxLinksMobile?: number,
+	maxLinks?: number,
+
+	/**
+	 * Event which runs when the page number is changed.
+	 * @param toPage
+	 * @param currentPage
+	 * @returns
+	 */
+	onChange?: (toPage:number, currentPage:number) => void
+}
+
+/**
+ * Standalone component which displays a paginator.
+*/
+const Paginator: React.FC<PaginatorProps> = (props) => {
 	var { pageIndex, totalResults, pageSize } = props;
-	const dropdownId = props.id ? props.id : useState(newId())[0];
+	const dropdownId = props.id ? props.id : useState(() => newId())[0];
 
 	const [currentPage, setCurrentPage] = useState(pageIndex || 1);
 
@@ -32,23 +89,11 @@ export default function Paginator(props) {
 	}
 
 	var description = props.description || `Results`;
-	var firstIcon = props.firstIcon || "fas fa-fast-backward";
-	var prevIcon = props.prevIcon || "fas fa-play fa-xs fa-flip-horizontal";
-	var nextIcon = props.nextIcon || "fas fa-play fa-xs";
-	var lastIcon = props.lastIcon || "fas fa-fast-forward";
+	var firstIcon = props.firstIcon || <Icon type="fa-fast-backward" solid />;
+	var prevIcon = props.previousIcon || <Icon type="fa-play" solid horizontalFlip/>;
+	var nextIcon = props.nextIcon || <Icon type="fa-play" solid />;
+	var lastIcon = props.lastIcon || <Icon type="fa-fast-forward" solid />;
 
-	/*
-	// as a workaround for having to potentially send rebranded icons for each instance of <Paginator>
-	// (or, more than likely, each instance of a paged <Loop>), check for overrides defined in a global context
-	var globalSettings = useContext(PaginatorContext); // var PaginatorContext = React.createContext(); above
-
-	if (typeof globalSettings == "object") {
-		firstIcon = globalSettings.firstIcon || firstIcon;
-		prevIcon = globalSettings.prevIcon || prevIcon;
-		nextIcon = globalSettings.nextIcon || nextIcon;
-		lastIcon = globalSettings.lastIcon || lastIcon;
-	}
-	*/
 
 	var showInput = props.showInput !== undefined ? props.showInput : true;
 	var showSummary = props.showSummary !== undefined ? props.showSummary : !showInput;
@@ -67,34 +112,35 @@ export default function Paginator(props) {
 		return 0;
 	}
 
-	function changePage(newPageId) {
-
+	function changePageStr(newPageId: string) {
 		try {
 			var nextPage = parseInt(newPageId, 10);
-
-			if (!nextPage || nextPage <= 0) {
-				nextPage = 1;
-			}
-
-			//var totalPages = getTotalPages();
-
-			if (totalPages && nextPage > totalPages) {
-				nextPage = totalPages;
-			}
-
-			if (typeof props.onChange == 'function') {
-				props.onChange(nextPage, props.pageIndex);
-			}
-
-			setCurrentPage(nextPage);
+			changePage(nextPage);
 		} catch {
 			// E.g. user typed in something that isn't a number
 			return;
 		}
-
 	}
 
-	function renderPaginator(description, maxLinks, mobile) {
+	function changePage(nextPage: number) {
+		if (!nextPage || nextPage <= 0) {
+			nextPage = 1;
+		}
+
+		//var totalPages = getTotalPages();
+
+		if (totalPages && nextPage > totalPages) {
+			nextPage = totalPages;
+		}
+
+		if (props.onChange) {
+			props.onChange(nextPage, currentPage);
+		}
+
+		setCurrentPage(nextPage);
+	}
+
+	function renderPaginator(description : string, maxLinks : number, mobile : boolean) {
 		let paginatorClass = ['paginator'];
 
 		if (mobile) {
@@ -124,7 +170,7 @@ export default function Paginator(props) {
 			fromPage--;
 		}
 
-		var pageRange = [];
+		var pageRange : number[] = [];
 
 		for (var i = fromPage; i <= toPage; i++) {
 			pageRange.push(i);
@@ -137,7 +183,7 @@ export default function Paginator(props) {
 					{showFirstLastNav &&
 						<li className="page-item first-page">
 							<button type="button" className="page-link" onClick={() => changePage(1)} disabled={currentPage <= 1} title={`First page`}>
-								<i className={firstIcon}></i>
+								{firstIcon}
 								<span className="sr-only">
 									{`First page`}
 								</span>
@@ -148,7 +194,7 @@ export default function Paginator(props) {
 					{showPrevNextNav &&
 						<li className="page-item prev-page">
 							<button type="button" className="page-link" onClick={() => changePage(currentPage - 1)} disabled={currentPage <= 1} title={`Previous page`}>
-								<i className={prevIcon}></i>
+								{prevIcon}
 								<span className="sr-only">
 									{`Previous page`}
 								</span>
@@ -163,7 +209,7 @@ export default function Paginator(props) {
 					{showPrevNextNav &&
 						<li className="page-item next-page">
 							<button type="button" className="page-link" onClick={() => changePage(currentPage + 1)} disabled={currentPage == totalPages} title={`Next page`}>
-								<i className={nextIcon}></i>
+								{nextIcon}
 								<span className="sr-only">
 									{`Next page`}
 								</span>
@@ -174,7 +220,7 @@ export default function Paginator(props) {
 					{showFirstLastNav &&
 						<li className="page-item last-page">
 							<button type="button" className="page-link" onClick={() => changePage(totalPages)} disabled={currentPage == totalPages} title={`Last page`}>
-								<i className={lastIcon}></i>
+								{lastIcon}
 								<span className="sr-only">
 									{`Last page`}
 								</span>
@@ -185,13 +231,13 @@ export default function Paginator(props) {
 
 				<div className="pagination-overview">
 					{showInput && <>
-						<label className="page-label" for={dropdownId}>
+						<label className="page-label" htmlFor={dropdownId}>
 							{`Viewing page`}
 						</label>
 						<input className="form-control" type="text" id={dropdownId} value={pageIndex || '1'}
-							onkeyUp={e => {
+							onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
 								if (e.keyCode == 13) {
-									changePage(e.target.value);
+									changePageStr((e.target as HTMLInputElement).value);
 								}
 							}} />
 
@@ -215,11 +261,11 @@ export default function Paginator(props) {
 
 	}
 
-	function renderPageLinks(pageRange) {
-		return pageRange.map((page) => renderPage(page));
+	function renderPageLinks(pageRange : number[]) {
+		return pageRange.map((page : number) => renderPage(page));
 	}
 
-	function renderPage(page) {
+	function renderPage(page : number) {
 		var isCurrentPage = page == currentPage;
 		var pageClass = isCurrentPage ? "page-item active" : "page-item";
 		var isEmpty = page < 1 || page > totalPages;
@@ -245,7 +291,7 @@ export default function Paginator(props) {
 
     useEffect(() => {
 		// something external has changed the results 
-		if (currentPage && currentPage != pageIndex) {
+		if (currentPage && pageIndex && currentPage != pageIndex) {
 			changePage(pageIndex);
 		}
 
@@ -257,6 +303,4 @@ export default function Paginator(props) {
 	</>;
 }
 
-Paginator.propTypes = {
-	always: 'bool'
-};
+export default Paginator;

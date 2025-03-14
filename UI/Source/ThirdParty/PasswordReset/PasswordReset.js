@@ -3,16 +3,15 @@ import Alert from 'UI/Alert';
 import Loading from 'UI/Loading';
 import Form from 'UI/Form';
 import Input from 'UI/Input';
-import Text from 'UI/Text';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {useSession} from 'UI/Session';
 import { useRouter } from 'UI/Router';
 import {useTokens} from 'UI/Token';
 
-export default function PasswordReset(props) {
+function PasswordReset(props) {
 	
 	var {setPage} = useRouter();
-	var {session, setSession} = useSession();
+	var {setSession} = useSession();
 	var [loading, setLoading] = useState();
 	var [failed, setFailed] = useState();
 	var [policy, setPolicy] = useState();
@@ -20,16 +19,16 @@ export default function PasswordReset(props) {
 
 	var token = useTokens('${url.token}');
 	
-	function validatePasswordMatch(value) {
+	const validatePasswordMatch = (value : string): PublicError | undefined => {
 		if (password != value) {
 			return {
-				error: 'FORMAT',
-				ui: <Text>{`The chosen passwords do not match`}</Text>
+				type: 'password/no-match',
+				message: `The chosen passwords do not match`
 			};
 		}
 	}
 
-    React.useEffect(() => {
+    useEffect(() => {
 		if(!token){
 			return;
 		}
@@ -49,7 +48,7 @@ export default function PasswordReset(props) {
 	return <div className="password-reset">
 		{
 			failed ? (
-				<Alert type="error">
+				<Alert variant="danger">
 					{`Invalid or expired token. You'll need to request another one if this token is too old or was already used.`}
 				</Alert>
 			) : (
@@ -103,11 +102,11 @@ export default function PasswordReset(props) {
 								name='newPasswordConfirm'
 								label={`Confirm Password`}
 								placeholder={`Confirm password your new password`}
-								validate={['Required', function (value) { return validatePasswordMatch(value) }]} />
+								validate={['Required', validatePasswordMatch]} />
 						</fieldset>
 
 						{policy && (
-							<Alert type="error">
+							<Alert variant="danger">
 								{policy.message || `Unable to set your password - the request may have expired`}
 							</Alert>
 						)}
@@ -118,7 +117,4 @@ export default function PasswordReset(props) {
 	</div>;
 }
 
-PasswordReset.propTypes = {
-	token: 'string',
-	target: 'string'
-};
+export default PasswordReset;

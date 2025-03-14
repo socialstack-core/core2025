@@ -42,11 +42,16 @@ interface IconProps {
 	/**
 	 * True if the icon should spin.
 	 */
-	spin?: boolean
+	spin?: boolean,
+
+	/**
+	 * Flip horizontally
+	 */
+	horizontalFlip?: boolean
 }
 
 const Icon: React.FC<IconProps> = (props) => {
-	const { type, light, solid, duotone, regular, brand, fixedWidth, spin } = props;
+	const { type, light, solid, duotone, regular, brand, fixedWidth, spin, horizontalFlip } = props;
 	
 	var variant = 'fa';
 	
@@ -70,6 +75,10 @@ const Icon: React.FC<IconProps> = (props) => {
 
 	if (spin) {
 		className += " fa-spin";
+	}
+
+	if (horizontalFlip) {
+		className += " fa-flip-horizontal";
 	}
 
 	// NB: count removal: if you need it, use a wrapping component instead 

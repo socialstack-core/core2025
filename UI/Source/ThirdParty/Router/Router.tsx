@@ -2,6 +2,7 @@ import webRequest, { expandIncludes } from 'UI/Functions/WebRequest';
 import Canvas from 'UI/Canvas';
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import AdminTrigger from 'UI/AdminTrigger';
+import { createContext, useContext, useRef, useState, useEffect } from 'react';
 
 interface RouterContext {
 }
@@ -15,7 +16,7 @@ export function useRouter() {
 	return useContext(routerCtx);
 };
 
-const { config, location } = global;
+const { config, location } = window;
 const routerCfg = config && config.pageRouter || {};
 const { hash, localRouter } = routerCfg;
 
@@ -44,7 +45,7 @@ function triggerEvent(pgInfo) {
 			e.initEvent('xpagechange', true, true);
 		}
 		e.pageInfo = pgInfo;
-		global.dispatchEvent(e);
+		window.dispatchEvent(e);
 	}
 }
 
@@ -59,9 +60,9 @@ function canGoBack(){
 }
 
 export default (props) => {
-	var [pageState, setPage] = React.useState({url: initialUrl, ...initState});
-	var [scrollTarget, setScrollTarget] = React.useState();
-	const scrollTimer = React.useRef(null);
+	var [pageState, setPage] = useState({url: initialUrl, ...initState});
+	var [scrollTarget, setScrollTarget] = useState();
+	const scrollTimer = useRef(null);
 	
 	if(pageState.loading && !pageState.handled){
 		pageState.loading.then(pgState => {
@@ -89,14 +90,14 @@ export default (props) => {
 		}
 		
 		// Store the scroll position:
-		var html = document.body.parentNode;
-		global.history.replaceState({
+		var html = document.body.parentNode as HTMLHtmlElement;
+		window.history.replaceState({
 			scrollTop: html.scrollTop,
 			scrollLeft: html.scrollLeft
 		}, '');
 		
 		// Push nav event:
-		global.history.pushState({
+		window.history.pushState({
 			scrollTop: 0
 		}, '', hash ? '#' + url : url);
 		
@@ -116,7 +117,7 @@ export default (props) => {
 		return isOnExternPage != targetIsExternPage;
 	}
 	 
-	function setPageState(url) {
+	function setPageState(url : string) {
 		if(localRouter){
 			var pgState = localRouter(url, webRequest);
 			pgState.url = url;
@@ -152,7 +153,7 @@ export default (props) => {
 				
 				if(config){
 					delete res.json.config;
-					global.__cfg = config;
+					window.__cfg = config;
 				}
 				
 				var pgState = {url, ...res.json};
@@ -222,11 +223,12 @@ export default (props) => {
 
 	const scroll = () => {
 		if (scrollTarget) {
-			document.body.parentNode.scrollTo({top: scrollTarget.y, left: scrollTarget.x, behavior: 'instant'});
+			var html = document.body.parentNode as HTMLHtmlElement;
+			html.scrollTo({ top: scrollTarget.y, left: scrollTarget.x, behavior: 'instant' });
 		}
 	}
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (scrollTimer.current) {
 			clearInterval(scrollTimer.current);
 			scrollTimer.current = null;
@@ -237,7 +239,7 @@ export default (props) => {
 		}
 	}, [scrollTarget]);
 	
-	React.useEffect(() => {
+	useEffect(() => {
 		
 		const onContentChange = (e : CustomEvent) => {
 			var {po} = pageState;
@@ -275,7 +277,7 @@ export default (props) => {
 	
 	var { page } = pageState;
 	
-	React.useEffect(() => {
+	useEffect(() => {
 		if (pageState && pageState.title) {
 			// The page state title includes resolved tokens
 			document.title = pageState.title;
@@ -283,7 +285,7 @@ export default (props) => {
 
 		if (pageState && pageState.description) {
 			// The page state description includes resolved tokens
-			document.querySelector('meta[name="description"]').setAttribute("content", pageState.description);
+			document.querySelector('meta[name="description"]')?.setAttribute("content", pageState.description);
 		}
 	});
 	
