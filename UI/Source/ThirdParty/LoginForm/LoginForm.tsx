@@ -5,22 +5,39 @@ import Col from 'UI/Column';
 import Canvas from 'UI/Canvas';
 import Spacer from 'UI/Spacer';
 import Alert from 'UI/Alert';
+import Icon from 'UI/Icon';
 import { useSession } from 'UI/Session';
 import { useRouter } from 'UI/Router';
 import { useState, useEffect } from 'react';
-import webRequest from 'UI/Functions/WebRequest';
+import userApi from 'Api/User';
+
+interface LoginFormProps {
+	passwordRequired?: boolean,
+	emailOnly?: boolean,
+	flipButtons?: boolean,
+	noRemember?: boolean,
+	noForgot?: boolean,
+	noLabels?: boolean,
+	noRedirect?: boolean,
+	noRegister?: boolean,
+	forgotPasswordText?: string,
+	loginCta?: string,
+	registerUrl?: string,
+	redirectTo?: string,
+	onLogin?: (r: SessionResponse, setPage: (url: string) => void, setSession: (s: SessionResponse) => void, args: LoginFormProps) => void
+}
 
 /**
  * Frontend login form.
  */
 
-export default props => {
+export default (props : LoginFormProps) => {
 	const { session, setSession } = useSession();
 	const { setPage } = useRouter();
-	const [ failed, setFailed ] = useState(false);
-	const [ moreRequired, setMoreRequired ] = useState(null);
-	const [ emailVerificationRequired, setEmailVerificationRequired ] = useState(null);
-	const [ emailVerificationSent, setEmailVerificationSent ] = useState(null);
+	const [ failed, setFailed ] = useState<PublicError | null>(null);
+	const [ moreRequired, setMoreRequired ] = useState<string | null>(null);
+	const [ emailVerificationRequired, setEmailVerificationRequired ] = useState(false);
+	const [emailVerificationSent, setEmailVerificationSent] = useState(false);
 	const {emailOnly, passwordRequired} = props;
 	const user = session.user;
 
@@ -30,25 +47,27 @@ export default props => {
 		validate.push("EmailAddress")
 	}
 
-	var validatePassword = [];
+	var validatePassword : string[] = [];
 	if (passwordRequired) {
 		validatePassword.push('Required');
 	}
 
-	onClickResendVerificationEmail = () => {
-		webRequest('user/sendverifyemail', { email: user.email }).then(resp => {
+	var onClickResendVerificationEmail = () => {
+		userApi.resendVerificationEmail({
+			email: user?.email
+		}).then(resp => {
 			setEmailVerificationSent(true);
 		});
 	}
 
-	renderFormFields = () => {
+	var renderFormFields = () => {
 		var loginBtnStyle = props.flipButtons ? "float: right" : "";
 		var loginBtn = <Input type="submit" style={loginBtnStyle} label={props.loginCta || `Login`}/>;
 
 		var rememberChkBoxStyle = props.flipButtons ? "float: right" : "";
 		var rememberChkBox = <Input type="checkbox" style={rememberChkBoxStyle} label={`Remember me`} name="remember" />;
 
-		var forgotLinkStyle = props.flipButtons ? "text-align: left" : "";
+		var forgotLinkStyle: React.CSSProperties = props.flipButtons ? { textAlign: 'left' } : {};
 		var forgotLink = <a href="/forgot" style={forgotLinkStyle} className="forgot-password-link">{props.forgotPasswordText || `I forgot my password`}</a>;
 
 		var col1Comp = (props.noRemember) ? loginBtn : rememberChkBox;
@@ -80,13 +99,13 @@ export default props => {
 				<Input label = {props.noLabels ? null : `Password`} name="password" placeholder={`Password`} type="password" validate = {validatePassword} />
 				{row}
 			</div>
-			<Spacer height="20" />
+			<Spacer height={ 20 } />
 			{afterRow}
 		</>)
 	}
 
 	useEffect(() => {
-		if (user && user.Role == 3) {
+		if (user && user.role == 3) {
 			setEmailVerificationRequired(true);
 		}
 	});
@@ -107,7 +126,7 @@ export default props => {
 
 	return (
 		<Form className="login-form"
-			action = "user/login" 
+			action={ userApi.login } 
 			onSuccess={response => {
 				if(response.moreDetailRequired){
 					// More required - e.g. a 2FA screen.
@@ -118,23 +137,19 @@ export default props => {
 				
 				setSession(response);
 
-				if (response && response.role && response.role.id == 3 || response.role.key == "guest")
+				if (response.role?.id == 3)
 				{
 					setEmailVerificationRequired(true);
 				}
 				else if(!props.noRedirect){
 					// If there is a then arg in the url, redirect to that.
 					if(location.search){
-						var args = {};
-						var pieces = location.search.substring(1).split('&');
-						for(var i=0;i<pieces.length;i++){
-							var queryPart = pieces[i].split('=', 2);
-							args[queryPart[0]] = queryPart.length == 2 ? decodeURIComponent(queryPart[1]) : true;
-						}
-						
+						var args = new URLSearchParams(location.search);
+						var targetUrl = args.get('then');
+
 						// The provided URL must be relative to site root only.
-						if(args.then && args.then.length>1 && args.then[0] == '/' && args.then[1] != '/'){
-							setPage(args.then);
+						if (targetUrl && targetUrl.length > 1 && targetUrl[0] == '/' && targetUrl[1] != '/'){
+							setPage(targetUrl);
 							return;
 						}
 					}
@@ -144,7 +159,7 @@ export default props => {
 				props.onLogin && props.onLogin(response, setPage, setSession, props);
 			}}
 			onValues={v => {
-				setFailed(false);
+				setFailed(null);
 				return v;
 			}}
 			onFailed={e=>setFailed(e)}
@@ -154,12 +169,12 @@ export default props => {
 			)}
 			{renderFormFields()}
 			{failed && (
-				<Alert type="fail">
+				<Alert variant="danger">
 					{failed.message || `Those login details weren't right - please try again.`}
 				</Alert>
 			)}
 			{props.noRegister ? null : <div className="form-group">
-				<span className="fa fa-info-circle"></span> {`Don't have an account?`} <a href={props.registerUrl || "/register"}>{`Register here`}</a>
+				<Icon type="fa-info-circle" /> {`Don't have an account?`} <a href={props.registerUrl || "/register"}>{`Register here`}</a>
 			</div>}
 		</Form>
 	);

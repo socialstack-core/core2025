@@ -5,7 +5,7 @@ interface SpacerProps {
 	/**
 	 * Height in pixels.
 	 */
-	height?: int,
+	height?: number,
 
 	/**
 	 * True if this spacer should be hidden.
@@ -24,7 +24,7 @@ const Spacer: React.FC<SpacerProps> = props => {
 	}
 
 	if (!height) {
-		height = 20 as int;
+		height = 20;
 	}
 
 	return <div className="spacer-container">
