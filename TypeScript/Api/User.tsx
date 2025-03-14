@@ -30,6 +30,9 @@ export class UserIncludes extends ApiIncludes{
 export type User = VersionedContent & {
     email?: string,
     emailOptOutFlags?: number,
+    firstName?: string,
+    lastName?: string,
+    fullName?: string,
     role?: number,
     featureRef?: string,
     avatarRef?: string,

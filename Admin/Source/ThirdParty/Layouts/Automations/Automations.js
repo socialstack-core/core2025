@@ -64,7 +64,7 @@ export default function Automations (props) {
 	
 	var renderEntry = (entry) => {
 		return [
-			<td>{entry.name}</td>,
+			<td>{entry.name}{entry.description && entry.description.length > 0 && <><br /><small>{entry.description}</small></>}</td>,
 			<td>{entry.cronDescription} ({entry.cron})</td>,
 			<td>{entry.lastTrigger ? <Time date={entry.lastTrigger}/> : `None since startup`}</td>,
 			<td>

@@ -6,17 +6,13 @@ using Api.Eventing;
 using Api.Pages;
 using Api.CanvasRenderer;
 using Api.NavMenus;
-using Api.Startup;
 namespace Api.Automations
 {
-
     /// <summary>
     /// Indicates the set of available automations.
     /// </summary>
-    [HostType("task")]
     public partial class AutomationService : AutoService<AutomationStructure, uint>
 	{
-
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
@@ -93,6 +89,7 @@ namespace Api.Automations
 				structure.Results.Add(
 					new Automation(automation) {
 						Name = automation.Name,
+						Description = automation.Description,
 						CronDescription = ExpressionDescriptor.GetDescription(automation.Cron),
 						Cron = automation.Cron,
 					}

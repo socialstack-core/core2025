@@ -22,6 +22,8 @@ namespace Api.CloudHosts;
 /// Handles domainCertificates.
 /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 /// </summary>
+
+[HostType("web")]
 public partial class DomainCertificateService : AutoService<DomainCertificate>
     {
 	private ContentSyncService _contentSync;
