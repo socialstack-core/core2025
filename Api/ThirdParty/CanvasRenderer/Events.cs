@@ -13,7 +13,7 @@ namespace Api.Eventing
         /// <summary>
 		/// Set of events for the compilation.
 		/// </summary>
-		public static EcmaScriptEventGroup Compiler;
+		public static CompilerEventGroup Compiler;
 		/// <summary>
 		/// Triggered after the underlying frontend JS has changed.
 		/// Triggers most often on development environments; often only once on startup for prod.
@@ -32,21 +32,26 @@ namespace Api.Eventing
 		public static EventHandler<long> FrontendAfterUpdate;
 
 	}
+
     /// <summary>
 	/// Custom user specific events.
 	/// </summary>
-	public class EcmaScriptEventGroup : EventGroup
+	public class CompilerEventGroup : EventGroup
 	{	
 		/// <summary>
-		/// Fires before compilation of typescript
+		/// Fires before compilation of the UI
 		/// </summary>
-		public EventHandler<List<UIBundle>> BeforeCompile;
-
+		public EventHandler<SourceFileContainerSet> BeforeCompile;
 		
 		/// <summary>
-		/// Fires before compilation of typescript
+		/// Fires when the file map changed.
 		/// </summary>
-		public EventHandler<List<UIBundle>> AfterCompile;
+		public EventHandler<List<UIBundle>> OnMapChange;
+
+		/// <summary>
+		/// Fires after compilation of the UI
+		/// </summary>
+		public EventHandler<SourceFileContainerSet> AfterCompile;
 	}
 
 }

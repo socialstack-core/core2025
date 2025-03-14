@@ -71,6 +71,7 @@ namespace Api.PasswordResetRequests
 		/// Attempts to login with a submitted new password.
 		/// </summary>
 		[HttpPost("login/{token}")]
+		[Returns(typeof(Context))]
 		public async ValueTask LoginWithToken(string token, [FromBody] NewPassword newPassword)
 		{
 			var svc = (_service as PasswordResetRequestService);

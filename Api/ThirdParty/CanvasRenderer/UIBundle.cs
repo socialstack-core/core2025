@@ -244,39 +244,6 @@ namespace Api.CanvasRenderer
         }
 
         /// <summary>
-        /// Determines the given file name + type as a particular useful source file type. "None" if it didn't.
-        /// </summary>
-        /// <param name="fileType"></param>
-        /// <param name="fileName"></param>
-        /// <returns></returns>
-        public SourceFileType DetermineFileType(string fileType, string fileName)
-        {
-            if (fileType == "js" || fileType == "jsx")
-            {
-                return SourceFileType.Javascript;
-            }
-            else if ((fileType == "ts" || fileType == "tsx") && !fileName.EndsWith(".d.ts") && !fileName.EndsWith(".d.tsx"))
-            {
-                HasTypeScript = true;
-                return SourceFileType.Javascript;
-            }
-            else if (fileType == "css" || fileType == "scss")
-            {
-                return SourceFileType.Scss;
-            }
-            else if (fileName == "module.json")
-            {
-                return SourceFileType.ModuleMeta;
-            }
-            else if (fileType == "json" && Regex.Match(fileName, "locale\\.[a-z]+\\.json").Success)
-            {
-                return SourceFileType.Locale;
-            }
-
-            return SourceFileType.None;
-        }
-
-        /// <summary>
         /// True if this bundle contains UI/Start.
         /// </summary>
         public bool ContainsStarterModule;
@@ -750,144 +717,42 @@ namespace Api.CanvasRenderer
         }
 
         /// <summary>
-        /// Get filetype meta for the given path.
+        /// Directly adds all of the files in a given container into this bundle.
         /// </summary>
-        /// <param name="filePath"></param>
-        /// <param name="fileName"></param>
-        /// <param name="fileNameNoType"></param>
-        /// <param name="fileType"></param>
-        /// <param name="relativePath"></param>
-        /// <returns></returns>
-        public SourceFileType GetTypeMeta(string filePath, out string fileName, out string fileNameNoType, out string fileType, out string relativePath)
+        /// <param name="container"></param>
+        public void AddContainer(SourceFileContainer container)
         {
-            var lastSlash = filePath.LastIndexOf(Path.DirectorySeparatorChar);
-            fileName = filePath.Substring(lastSlash + 1);
-            var relLength = lastSlash - SourcePath.Length - 1;
-            fileNameNoType = null;
-            fileType = null;
-            relativePath = null;
-
-            if (relLength <= 0)
+            foreach (var file in container.Files)
             {
-                // Directory
-                return SourceFileType.Directory;
+                FileMap[file.Path] = file;
             }
-
-            relativePath = filePath.Substring(SourcePath.Length + 1, relLength);
-            var typeDot = fileName.LastIndexOf('.');
-
-            if (typeDot == -1)
-            {
-                // Directory
-                return SourceFileType.Directory;
-            }
-
-            fileType = fileName.Substring(typeDot + 1).ToLower();
-            fileNameNoType = fileName.Substring(0, typeDot);
-
-            // Check if the file name matters to us. If the path contains /static/ it never does:
-
-            var tidyFileType = filePath.IndexOf(Path.DirectorySeparatorChar + "static" + Path.DirectorySeparatorChar) == -1 ?
-                    DetermineFileType(fileType, fileName) :
-                    SourceFileType.None;
-
-            return tidyFileType;
         }
 
-        /// <summary>
-        /// Adds the file at the given source-relative path to the map.
-        /// </summary>
-        /// <param name="filePath"></param>
-        private SourceFile AddToMap(string filePath)
+		/// <summary>
+		/// Adds the file at the given source-relative path to the map.
+		/// </summary>
+		/// <param name="filePath"></param>
+		private SourceFile AddToMap(string filePath)
         {
-            var tidyFileType = GetTypeMeta(filePath, out string fileName, out string fileNameNoType, out string fileType, out string relativePath);
+            var file = new SourceFile(filePath, RootName, SourcePath);
 
-            if (tidyFileType == SourceFileType.None || tidyFileType == SourceFileType.Directory)
+            if (file.Invalid)
             {
                 // Nope
                 return null;
             }
 
-            // Yes - start tracking it.
-
-            var isGlobal = false;
-            var priority = 100;
-
-            if (tidyFileType == SourceFileType.Scss)
+            if (file.IsStarterModule())
             {
-                // Is it a global SCSS file?
-                isGlobal = fileName.Contains(".global.") || fileName.StartsWith("global.");
+			    ContainsStarterModule = true;
+			}
 
-                // 2nd last part of the file can be a number - the priority order of the scss.
-                var parts = fileName.Split('.');
-
-                if (parts.Length > 2)
-                {
-                    int.TryParse(parts[parts.Length - 2], out priority);
-                }
+            if (file.IsTypeScript())
+            {
+                HasTypeScript = true;
             }
 
-            // Is it a thirdparty module?
-            var thirdParty = false;
-            string modulePath = RootName + '/' + relativePath.Replace('\\', '/');
-
-
-            if (modulePath.IndexOf("/ThirdParty/") != -1)
-            {
-                thirdParty = true;
-                // Remove /ThirdParty/ and build module path that it represents:
-                modulePath = modulePath.Replace("/ThirdParty/", "/");
-            }
-
-            if (modulePath.IndexOf(".Bundle/") != -1)
-            {
-                // Remove *.Bundle/ and build module path that it represents:
-                var pieces = modulePath.Split('/');
-                var newPath = "";
-                for (var i = 0; i < pieces.Length; i++)
-                {
-                    if (pieces[i].EndsWith(".Bundle"))
-                    {
-                        continue;
-                    }
-
-                    if (newPath != "")
-                    {
-                        newPath += "/";
-                    }
-
-                    newPath += pieces[i];
-                }
-
-                modulePath = newPath;
-            }
-
-            // Use shortform module name if the last directory of the modulePath matches the filename.
-            if (!modulePath.EndsWith("/" + fileNameNoType))
-            {
-                modulePath += "/" + fileName;
-            }
-
-            if (modulePath == "UI/Start")
-            {
-                ContainsStarterModule = true;
-            }
-
-            var file = new SourceFile()
-            {
-                Path = filePath,
-                FileName = fileName,
-                IsGlobal = isGlobal,
-                Priority = priority,
-                FileType = tidyFileType,
-                RawFileType = fileType,
-                ThirdParty = thirdParty,
-                ModulePath = modulePath,
-                FullModulePath = RootName + '/' + relativePath.Replace('\\', '/'),
-                RelativePath = relativePath
-            };
-
-            if (isGlobal)
+			if (file.IsGlobal)
             {
                 GlobalFileMap.FileMap[filePath] = file;
             }
@@ -1690,7 +1555,7 @@ namespace Api.CanvasRenderer
                 // Transform it now (developers only here - we only care about ES8, i.e. minimal changes to source/ react only):
                 var es8JavascriptResult = BuildEngine.Invoke(
                     "transformES8",
-                    File.ReadAllText(file.Path),
+                    file.RawSource != null ? file.RawSource : File.ReadAllText(file.Path),
                     file.ModulePath, // Module path
                     file.FullModulePath,
                     TransformOptions
@@ -2319,13 +2184,17 @@ namespace Api.CanvasRenderer
         /// </summary>
         public bool ThirdParty;
         /// <summary>
-        /// Raw file content, set once loaded.
+        /// Transpiled file content, set once loaded.
         /// </summary>
         public string Content;
         /// <summary>
-        /// The contents of this file, transpiled. If it's a format that doesn't require transpiling, then this is null.
+        /// Raw file content, set once loaded. Different from content as this is the original and Content is after any transpiler runs.
         /// </summary>
-        public string TranspiledContent;
+        public string RawSource;
+		/// <summary>
+		/// The contents of this file, transpiled. If it's a format that doesn't require transpiling, then this is null.
+		/// </summary>
+		public string TranspiledContent;
         /// <summary>
         /// Set if this file failed to build.
         /// </summary>
@@ -2334,12 +2203,211 @@ namespace Api.CanvasRenderer
         /// Any template literals in this JS file.
         /// </summary>
         public List<TemplateLiteral> Templates;
-    }
+        /// <summary>
+        /// True if this is an unrecognised or otherwise invalid file, such as it's actually a directory.
+        /// </summary>
+        public bool Invalid;
 
-    /// <summary>
-    /// A change to the filesystem.
-    /// </summary>
-    public class FilesystemChange
+		/// <summary>
+		/// Creates a new source file using the given absolute file path.
+		/// </summary>
+		/// <param name="filePath">Absolute file path</param>
+		/// <param name="rootName">The bundle root name, such as "UI".</param>
+		/// <param name="sourcePath">Absolute source path, representing the root directory of the bundle.</param>
+		public SourceFile(string filePath, string rootName, string sourcePath)
+        {
+			var tidyFileType = GetTypeMeta(
+				sourcePath,
+
+				filePath, 
+                out string fileName, 
+                out string fileNameNoType, 
+                out string fileType, 
+                out string relativePath
+            );
+
+			if (tidyFileType == SourceFileType.None || tidyFileType == SourceFileType.Directory)
+			{
+                // Nope
+                Invalid = true;
+				return;
+			}
+
+			// Yes - start tracking it.
+
+			var isGlobal = false;
+			var priority = 100;
+
+			if (tidyFileType == SourceFileType.Scss)
+			{
+				// Is it a global SCSS file?
+				isGlobal = fileName.Contains(".global.") || fileName.StartsWith("global.");
+
+				// 2nd last part of the file can be a number - the priority order of the scss.
+				var parts = fileName.Split('.');
+
+				if (parts.Length > 2)
+				{
+					int.TryParse(parts[parts.Length - 2], out priority);
+				}
+			}
+
+			// Is it a thirdparty module?
+			var thirdParty = false;
+			string modulePath = rootName + '/' + relativePath.Replace('\\', '/');
+
+
+			if (modulePath.IndexOf("/ThirdParty/") != -1)
+			{
+				thirdParty = true;
+				// Remove /ThirdParty/ and build module path that it represents:
+				modulePath = modulePath.Replace("/ThirdParty/", "/");
+			}
+
+			if (modulePath.IndexOf(".Bundle/") != -1)
+			{
+				// Remove *.Bundle/ and build module path that it represents:
+				var pieces = modulePath.Split('/');
+				var newPath = "";
+				for (var i = 0; i < pieces.Length; i++)
+				{
+					if (pieces[i].EndsWith(".Bundle"))
+					{
+						continue;
+					}
+
+					if (newPath != "")
+					{
+						newPath += "/";
+					}
+
+					newPath += pieces[i];
+				}
+
+				modulePath = newPath;
+			}
+
+			// Use shortform module name if the last directory of the modulePath matches the filename.
+			if (!modulePath.EndsWith("/" + fileNameNoType))
+			{
+                if (modulePath.EndsWith("/"))
+                {
+                    modulePath += fileName;
+                }
+                else
+                {
+                    modulePath += "/" + fileName;
+                }
+			}
+
+            Path = filePath;
+            FileName = fileName;
+            IsGlobal = isGlobal;
+			Priority = priority;
+            FileType = tidyFileType;
+            RawFileType = fileType;
+            ThirdParty = thirdParty;
+            ModulePath = modulePath;
+            FullModulePath = rootName + '/' + (relativePath == "" ? fileNameNoType : relativePath.Replace('\\', '/'));
+			RelativePath = relativePath;
+		}
+
+        /// <summary>
+        /// True if this file is .ts or .tsx (.d.ts files are outright excluded).
+        /// </summary>
+        /// <returns></returns>
+        public bool IsTypeScript()
+        {
+            return FileType == SourceFileType.Javascript && (RawFileType == "ts" || RawFileType == "tsx");
+        }
+        
+        /// <summary>
+        /// True if this is the starter file.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsStarterModule()
+        {
+            return ModulePath == "UI/Start";
+        }
+
+		/// <summary>
+		/// Get filetype meta for the given path.
+		/// </summary>
+		/// <param name="sourcePath"></param>
+		/// <param name="filePath"></param>
+		/// <param name="fileName"></param>
+		/// <param name="fileNameNoType"></param>
+		/// <param name="fileType"></param>
+		/// <param name="relativePath"></param>
+		/// <returns></returns>
+		public static SourceFileType GetTypeMeta(string sourcePath, string filePath, out string fileName, out string fileNameNoType, out string fileType, out string relativePath)
+		{
+			var lastSlash = filePath.LastIndexOf(System.IO.Path.DirectorySeparatorChar);
+			fileName = filePath.Substring(lastSlash + 1);
+			var relLength = lastSlash - sourcePath.Length - 1;
+			fileNameNoType = null;
+			fileType = null;
+			relativePath = null;
+
+			relativePath = relLength > 0 ? filePath.Substring(sourcePath.Length + 1, relLength) : "";
+			var typeDot = fileName.LastIndexOf('.');
+
+			if (typeDot == -1)
+			{
+				// Directory
+				return SourceFileType.Directory;
+			}
+
+			fileType = fileName.Substring(typeDot + 1).ToLower();
+			fileNameNoType = fileName.Substring(0, typeDot);
+
+			// Check if the file name matters to us. If the path contains /static/ it never does:
+
+			var tidyFileType = filePath.IndexOf(System.IO.Path.DirectorySeparatorChar + "static" + System.IO.Path.DirectorySeparatorChar) == -1 ?
+					DetermineFileType(fileType, fileName) :
+					SourceFileType.None;
+
+			return tidyFileType;
+		}
+
+		/// <summary>
+		/// Determines the given file name + type as a particular useful source file type. "None" if it didn't.
+		/// </summary>
+		/// <param name="fileType"></param>
+		/// <param name="fileName"></param>
+		/// <returns></returns>
+		public static SourceFileType DetermineFileType(string fileType, string fileName)
+		{
+			if (fileType == "js" || fileType == "jsx")
+			{
+				return SourceFileType.Javascript;
+			}
+			else if ((fileType == "ts" || fileType == "tsx") && !fileName.EndsWith(".d.ts") && !fileName.EndsWith(".d.tsx"))
+			{
+				return SourceFileType.Javascript;
+			}
+			else if (fileType == "css" || fileType == "scss")
+			{
+				return SourceFileType.Scss;
+			}
+			else if (fileName == "module.json")
+			{
+				return SourceFileType.ModuleMeta;
+			}
+			else if (fileType == "json" && Regex.Match(fileName, "locale\\.[a-z]+\\.json").Success)
+			{
+				return SourceFileType.Locale;
+			}
+
+			return SourceFileType.None;
+		}
+
+	}
+
+	/// <summary>
+	/// A change to the filesystem.
+	/// </summary>
+	public class FilesystemChange
     {
         /// <summary>
         /// The file path.

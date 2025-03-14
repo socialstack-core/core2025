@@ -313,16 +313,20 @@ namespace Api.CanvasRenderer
 					// Todo: make this into a config variable. If true, the build from the watcher will be minified.
 					var minify = _config.Minified;
 
+					var ctx = new Context(1, 1, 1);
+
 					// Create a group of build/watchers for each bundle of files (all in parallel):
 					AddBuilder(UIBuilder = new UIBundle("UI", "/pack/", translations, locales, this, engine, globalMap, minify) { CssPrepend = cssVariables });
 					AddBuilder(EmailBuilder = new UIBundle("Email", "/pack/email-static/", translations, locales, this, engine, globalMap, minify));
 					AddBuilder(AdminBuilder = new UIBundle("Admin", "/en-admin/pack/", translations, locales, this, engine, globalMap, minify));
 
+					var container = new SourceFileContainerSet();
+					container.Bundles = SourceBuilders;
+
+					await Events.Compiler.BeforeCompile.Dispatch(ctx, container);
+
 					// Sort global map:
 					globalMap.Sort();
-
-					// Make ts aliases:
-					await Events.Compiler.BeforeCompile.Dispatch(new Context(1,1,1), SourceBuilders);
 
 					// Happens in a separate loop to ensure all the global SCSS has loaded first.
 					foreach (var sb in SourceBuilders)
@@ -330,7 +334,8 @@ namespace Api.CanvasRenderer
 						// Compile everything:
 						await sb.BuildEverything();
 					}
-					await Events.Compiler.AfterCompile.Dispatch(new Context(1,1,1), SourceBuilders);
+
+					await Events.Compiler.AfterCompile.Dispatch(ctx, container);
 				}
 
                 Log.Ok(LogTag, "Done handling UI load.");
@@ -415,7 +420,7 @@ namespace Api.CanvasRenderer
 				// What sort of file are we looking at?
 				// We're only interested in static files.
 				
-				var type = UIBuilder.GetTypeMeta(filePath, out string fileName, out string _, out string _, out string relativePath);
+				var type = SourceFile.GetTypeMeta(UIBuilder.SourcePath, filePath, out string fileName, out string _, out string _, out string relativePath);
 
 				if (type != SourceFileType.None || filePath.EndsWith(".d.ts"))
 				{
@@ -554,11 +559,9 @@ namespace Api.CanvasRenderer
 
 				// Rebuild aliases:
 				Task.Run(async () => {
-					await Events.Compiler.BeforeCompile.Dispatch(new Context(1, 1, 1), SourceBuilders);
+					await Events.Compiler.OnMapChange.Dispatch(new Context(1, 1, 1), SourceBuilders);
 				});
-				Task.Run(async () => {
-					await Events.Compiler.AfterCompile.Dispatch(new Context(1, 1, 1), SourceBuilders);
-				});
+
 			};
 
 			SourceBuilders.Add(builder);

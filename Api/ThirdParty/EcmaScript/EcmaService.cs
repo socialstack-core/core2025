@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Amazon.Auth.AccessControlPolicy;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
 using Api.Contexts;
@@ -44,27 +46,45 @@ namespace Api.EcmaScript
         {
             this.endpointService = endpointService;
 
-            Events.Compiler.BeforeCompile.AddEventListener((ctx, sourceBuilders) => {
-                
+            Events.Compiler.BeforeCompile.AddEventListener((ctx, source) => {
+
                 // Create the typescript functionality before the JS is compiled.
-                CreateTSSchema();
 
-                return ValueTask.FromResult(sourceBuilders);
+                // Create a container to hold the API/*.tsx files.
+                // It exists such that ultimately the UI bundle compiles files present here as well.
+                var container = new SourceFileContainer(Path.GetFullPath("TypeScript/Api"), "Api");
+                
+				CreateTSSchema(container);
+				BuildTypescriptAliases(source.Bundles);
+
+                // Add the container to the UI bundle:
+                var uiBundle = source.GetBundle("UI");
+
+                if (uiBundle != null)
+                {
+                    uiBundle.AddContainer(container);
+                }
+
+				return ValueTask.FromResult(source);
+			});
+
+            Events.Compiler.OnMapChange.AddEventListener((ctx, sourceBuilders) =>
+            {
+				// Called when 1 file has changed.
+				// Need to make sure the global.ts file is correct
+                // (the C# api won't have changed whilst the api is running, so no other files must regenerate).
+				BuildTypescriptAliases(sourceBuilders);
+
+				return ValueTask.FromResult(sourceBuilders);
             });
-            Events.Compiler.AfterCompile.AddEventListener((ctx, sourceBuilders) => {
+		}
 
-                // build everything 
-                BuildTypescriptAliases(sourceBuilders);
-                return ValueTask.FromResult(sourceBuilders);
-            });
-        }
-
-        private void CreateTSSchema()
+        private void CreateTSSchema(SourceFileContainer container)
         {
             ContextGenerator.SaveToFile("TypeScript/Config/Session.tsx");
 			InitTypeConversions();
-            CreateBaseApi();
-            InitTsScripts();
+            CreateBaseApi(container);
+            InitTsScripts(container);
         }
 
         private Script GetScriptByEntity(Type entityType)
@@ -79,7 +99,7 @@ namespace Api.EcmaScript
             return sct;
         }
 
-        private void CreateBaseContentTsx()
+        private void CreateBaseContentTsx(SourceFileContainer container)
         {
             var content = new Script
             {
@@ -114,12 +134,14 @@ namespace Api.EcmaScript
             AddFieldsToType(typeof(UserCreatedContent<>), userGenContent);
             content.AddChild(userGenContent);
 
-            File.WriteAllText(content.FileName, content.CreateSource());
+            var generatedSource = content.CreateSource();
+            container.Add(content.FileName, generatedSource);
+			File.WriteAllText(content.FileName, generatedSource);
         }
 
-        private void CreateBaseApi()
+        private void CreateBaseApi(SourceFileContainer container)
         {
-            CreateBaseContentTsx();
+            CreateBaseContentTsx(container);
 
             var apiScript = GetScriptByEntity(typeof(Content<>));
 
@@ -156,7 +178,10 @@ namespace Api.EcmaScript
 
             // === SAVING TS FILE === \\
 
-            File.WriteAllText("TypeScript/Api/ApiEndpoints.tsx", apiScript.CreateSource());
+            var filePath = "TypeScript/Api/ApiEndpoints.tsx";
+			var generatedSource = apiScript.CreateSource();
+            container.Add(filePath, generatedSource);
+            File.WriteAllText(filePath, generatedSource);
         }
 
         private void AddBaseIncludeFunctionality(Script script)
@@ -350,7 +375,7 @@ namespace Api.EcmaScript
         }
 
 
-        private void InitTsScripts()
+        private void InitTsScripts(SourceFileContainer sourceContainer)
         {
             var allEndpointsByModule = endpointService.ListByModule();
             var crudOperations = new string[]{"List", "Load", "Create", "Update", "Delete"};
@@ -644,10 +669,10 @@ namespace Api.EcmaScript
 
                 }
 
-
-                File.WriteAllText(script.FileName, script.CreateSource());
-
-            }
+                var generatedSource = script.CreateSource();
+				sourceContainer.Add(script.FileName, generatedSource);
+				File.WriteAllText(script.FileName, generatedSource);
+			}
             
         }
 
