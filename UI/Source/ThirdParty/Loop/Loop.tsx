@@ -24,7 +24,7 @@ interface LoopPageConfig {
  */
 interface LoopProps<T extends VersionedContent, I extends ApiIncludes> {
 	over: AutoApi<T, I>;
-	includes: I[],
+	includes?: I[],
 	filter?: any;
 	paged?: LoopPageConfig | boolean;
 
