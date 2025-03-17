@@ -2,22 +2,12 @@
 // Imports
 import {AutoApi, ApiIncludes} from 'Api/ApiEndpoints'
 import {VersionedContent, UserCreatedContent, Content} from 'Api/Content'
-import {User, UserIncludes} from './User'
+import {RedirectIncludes} from './Includes'
+import {User} from 'Api/User'
+import {UserIncludes} from './Includes'
 import {getJson, ApiList} from 'UI/Functions/WebRequest'
 
 // Module
-/**
-    Allows custom chained includes inside the list & load methods.
-*/
-export class RedirectIncludes extends ApiIncludes{
-    /*
-    */
-    get creatorUser(): UserIncludes {
-        return new UserIncludes(this.text, 'CreatorUser')
-    }
-
-}
-
 /*
   A Redirect
 */
@@ -47,6 +37,7 @@ export class RedirectApi extends AutoApi<Redirect, RedirectIncludes>{
     */
     public constructor(){
         super('v1/redirect')
+        this.includes = new RedirectIncludes();
     }
 
 }

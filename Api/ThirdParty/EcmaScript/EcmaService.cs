@@ -38,6 +38,8 @@ namespace Api.EcmaScript
 
         private readonly AvailableEndpointService endpointService;
 
+        private Script IncludesScript;
+
 
         /// <summary>
         /// Constructor
@@ -54,6 +56,15 @@ namespace Api.EcmaScript
                 // It exists such that ultimately the UI bundle compiles files present here as well.
                 var container = new SourceFileContainer(Path.GetFullPath("TypeScript/Api"), "Api");
                 
+                IncludesScript = new Script() {
+                    FileName = "TypeScript/Api/Includes.tsx"
+                };
+
+                IncludesScript.AddImport(new() {
+                    Symbols = ["ApiIncludes"],
+                    From = "./ApiEndpoints"                    
+                });
+
 				CreateTSSchema(container);
 				BuildTypescriptAliases(source.Bundles);
 
@@ -329,6 +340,12 @@ namespace Api.EcmaScript
                     "this.apiUrl = apiUrl;"
                 ]
             };
+
+            baseControllerClass.Children.Add(new ClassProperty() {
+                PropertyName = "includes",
+                PropertyType = "IncludeSet | null",
+                DefaultValue = "null"
+            });
             
             baseControllerClass.Children.Add(constructorMethod);
             baseControllerClass.Children.Add(listMethod);
@@ -420,6 +437,11 @@ namespace Api.EcmaScript
                         From = "Api/Content"
                     });
 
+                    script.AddImport(new() {
+                        Symbols = [entityType.Name + "Includes"],
+                        From = "./Includes"
+                    });
+
                     var typeDef = new TypeDefinition();
                     typeDef.SetName(entityType.Name);
                     
@@ -457,6 +479,7 @@ namespace Api.EcmaScript
                         Extends = "ApiIncludes"
                     };
 
+
                     includeClass.AddTsDocLine("Allows custom chained includes inside the list & load methods.");
 
                     if (virtualFields.Any())
@@ -475,16 +498,21 @@ namespace Api.EcmaScript
 
                             if (virtualField.Type != entityType)
                             {
+                                script.AddImport(new() {
+                                    Symbols = [virtualField.Type.Name],
+                                    From = "Api/" + virtualField.Type.Name
+                                });
                                 script.AddImport(new () {
-                                    Symbols = [virtualField.Type.Name, virtualField.Type.Name + "Includes"],
-                                    From = "./" + virtualField.Type.Name
+                                    Symbols = [virtualField.Type.Name + "Includes"],
+                                    From = "./Includes"
                                 });
                             }
                             typeDef.AddProperty(virtualField.FieldName, GetTypeConversion(virtualField.Type));
                         }
 
                     }
-                    script.AddChild(includeClass);
+                    
+                    IncludesScript.AddChild(includeClass);
                     script.AddChild(typeDef);
                 }
 
@@ -526,7 +554,8 @@ namespace Api.EcmaScript
                     controllerDef.Children.Add(new ClassMethod() {
                         Name = "constructor", 
                         Injected = [
-                            $"super('{baseUrl.Template}')"
+                            $"super('{baseUrl.Template}')",
+                            "this.includes = new " + entityType.Name + "Includes();"
                         ],
                         Documentation = ["This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller"]
                     });
@@ -672,6 +701,7 @@ namespace Api.EcmaScript
                 var generatedSource = script.CreateSource();
 				sourceContainer.Add(script.FileName, generatedSource);
 				File.WriteAllText(script.FileName, generatedSource);
+                File.WriteAllText(IncludesScript.FileName, IncludesScript.CreateSource());
 			}
             
         }

@@ -30,6 +30,8 @@ export class ApiIncludes{
 export class AutoApi<EntityType extends VersionedContent, IncludeSet extends ApiIncludes>{
     protected apiUrl: string;
 
+    public includes: IncludeSet | null = null;
+
     /**
 
     */

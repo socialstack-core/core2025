@@ -2,28 +2,12 @@
 // Imports
 import {AutoApi, ApiIncludes} from 'Api/ApiEndpoints'
 import {VersionedContent, UserCreatedContent, Content} from 'Api/Content'
-import {Role, RoleIncludes} from './Role'
+import {UserIncludes} from './Includes'
+import {Role} from 'Api/Role'
+import {RoleIncludes} from './Includes'
 import {getJson, ApiList} from 'UI/Functions/WebRequest'
 
 // Module
-/**
-    Allows custom chained includes inside the list & load methods.
-*/
-export class UserIncludes extends ApiIncludes{
-    /*
-    */
-    get userRole(): RoleIncludes {
-        return new RoleIncludes(this.text, 'userRole')
-    }
-
-    /*
-    */
-    get creatorUser(): UserIncludes {
-        return new UserIncludes(this.text, 'CreatorUser')
-    }
-
-}
-
 /*
   A particular user account.
 */
@@ -82,6 +66,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
     */
     public constructor(){
         super('v1/user')
+        this.includes = new UserIncludes();
     }
 
     /**
