@@ -1,6 +1,4 @@
-import { FC, PropsWithChildren, ReactNode } from "react";
-
-const Landing: FC<PropsWithChildren<void>> = (props: PropsWithChildren<void>): ReactNode => {
+const Landing: React.FC<React.PropsWithChildren<{}>> = (props: React.PropsWithChildren<{}>): React.ReactNode => {
     return (
         <div id="content-root" className="body landing">
             <div className="main_container fullsize">

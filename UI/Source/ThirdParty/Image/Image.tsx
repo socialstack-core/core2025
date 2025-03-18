@@ -1,12 +1,11 @@
 import { MediaRef } from 'Api/Upload'
-import { FC, MouseEventHandler, ReactNode } from "react"
 import Link from 'UI/Link';
 
 export type ImageSize      = "original"; // add more as necessary
 export type ImageAlignment = "None" | "Left" | "Right" | "Center";
 
 export type ImageProps = {
-    onClick?: MouseEventHandler<HTMLImageElement>, 
+    onClick?: React.MouseEventHandler<HTMLImageElement>, 
     fileRef: MediaRef, 
     linkUrl?: string, 
     size?: ImageSize, 
@@ -22,7 +21,7 @@ export type ImageProps = {
 }
 
 
-const Image: FC<ImageProps> = (props: ImageProps): ReactNode => {
+const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
     
     const {
         fileRef,
