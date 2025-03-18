@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Api.EcmaScript.TypeScript
 {
@@ -37,6 +38,26 @@ namespace Api.EcmaScript.TypeScript
         /// <param name="import"></param>
         public void AddImport(Import import)
         {
+            var existing = Imports.Where(i => i.From == import.From);
+
+            if (existing.Any())
+            {
+                var existingImport = existing.First();
+
+                if (string.IsNullOrEmpty(existingImport.DefaultImport))
+                {
+                    existingImport.DefaultImport = import.DefaultImport;
+                }
+
+                foreach(var newSymbol in import.Symbols)
+                {
+                    if (!existingImport.Symbols.Contains(newSymbol))
+                    {
+                        existingImport.Symbols.Add(newSymbol);
+                    }
+                }
+                return;
+            }
             Imports.Add(import);
         }
 
