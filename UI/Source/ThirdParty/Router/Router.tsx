@@ -298,9 +298,7 @@ export default (props) => {
 			}}
 		>
 		{
-			page ? <Canvas>
-				{page.bodyJson}
-			</Canvas> : null
+			page ? (typeof page.bodyJson == 'string' ? <Canvas>{page.bodyJson}</Canvas> : <Canvas bodyJson={ page.bodyJson } />) : null
 		}
 		<AdminTrigger page={page}/>
 	</routerCtx.Provider>;
