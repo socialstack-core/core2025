@@ -33,9 +33,17 @@ interface LoginFormProps {
 
 export default (props : LoginFormProps) => {
 	const { session, setSession } = useSession();
-	const { setPage } = useRouter();
+
+	const router = useRouter();
+
+	if (!router) {
+		return;
+	}
+
+	const { setPage } = router;
+
 	const [ failed, setFailed ] = useState<PublicError | null>(null);
-	const [ moreRequired, setMoreRequired ] = useState<string | null>(null);
+	const [ moreRequired, setMoreRequired ] = useState<string|null>(null);
 	const [ emailVerificationRequired, setEmailVerificationRequired ] = useState(false);
 	const [emailVerificationSent, setEmailVerificationSent] = useState(false);
 	const {emailOnly, passwordRequired} = props;
@@ -55,7 +63,7 @@ export default (props : LoginFormProps) => {
 	var onClickResendVerificationEmail = () => {
 		userApi.resendVerificationEmail({
 			email: user?.email
-		}).then(resp => {
+		}).then(() => {
 			setEmailVerificationSent(true);
 		});
 	}
@@ -137,7 +145,7 @@ export default (props : LoginFormProps) => {
 				
 				setSession(response);
 
-				if (response.role?.id == 3)
+				if (response.role?.result?.id == 3)
 				{
 					setEmailVerificationRequired(true);
 				}

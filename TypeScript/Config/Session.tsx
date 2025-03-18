@@ -1,5 +1,7 @@
 import { ApiContent } from 'UI/Functions/WebRequest';
+import { CurrencyLocale } from 'Api/CurrencyLocale';
 import { Role } from 'Api/Role';
+import { SiteDomain } from 'Api/SiteDomain';
 import { Locale } from 'Api/Locale';
 import { User } from 'Api/User';
 // File generated from the C# definition
@@ -20,9 +22,19 @@ declare global {
         realUser?: User
 
 		/**
+         * The current session CurrencyLocale
+         */
+        currencylocale?: CurrencyLocale
+
+		/**
          * The current session Role
          */
         role?: Role
+
+		/**
+         * The current session SiteDomain
+         */
+        sitedomain?: SiteDomain
 
 		/**
          * The current session Locale
@@ -38,9 +50,19 @@ declare global {
     interface SessionResponse {
 
 		/**
+         * The pre-expanded CurrencyLocale
+         */
+        currencylocale?: ApiContent<CurrencyLocale>
+
+		/**
          * The pre-expanded Role
          */
         role?: ApiContent<Role>
+
+		/**
+         * The pre-expanded SiteDomain
+         */
+        sitedomain?: ApiContent<SiteDomain>
 
 		/**
          * The pre-expanded Locale
@@ -51,6 +73,11 @@ declare global {
          * The pre-expanded User
          */
         user?: ApiContent<User>
+        
+        /**
+         * Is more detail required (usually in the context of MFA)
+         */
+        moreDetailRequired?: string
 
 	}
 }

@@ -5,6 +5,7 @@ import AdminTrigger from 'UI/AdminTrigger';
 import { createContext, useContext, useRef, useState, useEffect } from 'react';
 
 interface RouterContext {
+	setPage: (url: string) => void;
 }
 
 const routerCtx = createContext < RouterContext | null > (null);
