@@ -9,7 +9,7 @@ if(opts.reconnectOnUserChange){
 	var waitMode = 0;
 
 	document.addEventListener('xsession', (e) => {
-		var {user, loadingUser} = e.state;
+		var {user, loadingUser} = e.detail.state;
 		
 		if(!waitMode){
 			if(loadingUser){
