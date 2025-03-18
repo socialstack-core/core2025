@@ -48,12 +48,12 @@
 
 // convert given HEX value to RGBA (with optional opacity)
 @function hex_to_rgba($hex, $opacity: 1) {
-    //$red: color.channel($hex, "red", $space: rgb);
-    //$green: color.channel($hex, "green", $space: rgb);
-    //$blue: color.channel($hex, "blue", $space: rgb);
-    $red: color.red($hex);
-    $green: color.green($hex);
-    $blue: color.blue($hex);
+    $red: color.channel($hex, "red", $space: rgb);
+    $green: color.channel($hex, "green", $space: rgb);
+    $blue: color.channel($hex, "blue", $space: rgb);
+    // $red: color.red($hex);
+    // $green: color.green($hex);
+    // $blue: color.blue($hex);
 
     @if ($opacity == 1) {
         @return rgb($red, $green, $blue);
