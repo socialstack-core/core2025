@@ -73,11 +73,6 @@ declare global {
          * The pre-expanded User
          */
         user?: ApiContent<User>
-        
-        /**
-         * Is more detail required (usually in the context of MFA)
-         */
-        moreDetailRequired?: string
 
 	}
 }
