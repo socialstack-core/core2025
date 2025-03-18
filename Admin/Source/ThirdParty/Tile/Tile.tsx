@@ -6,7 +6,7 @@ interface TileProps {
     /**
      * Optional column width for this tile.
      */
-    row?: int;
+    row?: number;
 
     /**
      * Optional title to display on the header.

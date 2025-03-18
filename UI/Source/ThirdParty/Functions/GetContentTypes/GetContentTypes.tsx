@@ -1,4 +1,4 @@
-import autoformApi, { ContentType } from 'Api/Autoform';
+import autoformApi, { ContentType } from 'Api/AutoForm';
 
 /* cache */
 var cache: ContentType[] | null = null;
