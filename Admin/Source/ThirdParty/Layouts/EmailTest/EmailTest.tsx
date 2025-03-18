@@ -2,15 +2,19 @@ import Tile from 'Admin/Tile';
 import Form from 'UI/Form';
 import Input from 'UI/Input';
 import Default from 'Admin/Layouts/Default';
+import emailTemplateApi, { EmailTestRequest } from 'Api/EmailTemplate';
 
-
-export default function EmailTest(props){
+/**
+ * A component used to send a test email.
+ * @returns
+ */
+const EmailTest: React.FC<{}> = () =>{
 	return  <Default>
 		<Tile className="email-test" title={'Email Test'}>
 			<Form 
-				action='emailtemplate/test'
+				action={emailTemplateApi.testEmail}
 				submitLabel='Send test to yourself'
-				onValues={(values) => {
+				onValues={(values: EmailTestRequest) => {
 					if(values.customData){
 						try{
 							var cd = JSON.parse(values.customData);
@@ -32,3 +36,5 @@ export default function EmailTest(props){
 		</Tile>
 	</Default>;
 }
+
+export default EmailTest;
