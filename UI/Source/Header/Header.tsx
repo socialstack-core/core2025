@@ -1,4 +1,4 @@
-import getRef from 'UI/Functions/GetRef';
+import Image from 'UI/Image';
 
 /**
  * Props for the Header component.
@@ -18,7 +18,7 @@ const Header: React.FC<HeaderProps> = (props) => {
 	return (
 		<div className="header">
 			Hello, header world! 
-			{props.logoRef && getRef(props.logoRef)}
+			<Image fileRef={props.logoRef} />
 		</div>
 	);
 }
