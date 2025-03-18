@@ -29462,6 +29462,30 @@
             The default title for this template.
             </summary>
         </member>
+        <member name="F:Api.Templates.Template.Description">
+            <summary>
+            The template description
+            </summary>
+        </member>
+        <member name="F:Api.Templates.Template.TemplateParent">
+            <summary>
+            The parent template.
+            </summary>
+        </member>
+        <member name="F:Api.Templates.Template.BaseTemplate">
+            <summary>
+            Ex. UI/Templates/TemplateName, if this is a child template, leave blank
+            and use the parent template's BaseTemplate value.
+            </summary>
+        </member>
+        <member name="F:Api.Templates.Template.TemplateType">
+            <summary>
+            The template type, defaults to web
+            1 = web
+            2 = email
+            3 = pdf (add as necessary)
+            </summary>
+        </member>
         <member name="F:Api.Templates.Template.ModuleGroups">
             <summary>
             The module groups that this is available for. "formatting" is the default. * is "all of them".

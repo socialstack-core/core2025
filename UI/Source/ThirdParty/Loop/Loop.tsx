@@ -6,7 +6,7 @@ import { VersionedContent } from 'Api/Content';
 import { useEffect, useState } from 'react';
 const DEFAULT_PAGE_SIZE = 50;
 
-interface LoopPageConfig {
+export interface LoopPageConfig {
 	top?: boolean,
 
 	bottom?:boolean,
@@ -22,7 +22,7 @@ interface LoopPageConfig {
 /**
  * Props for the Loop component.
  */
-interface LoopProps<T extends VersionedContent, I extends ApiIncludes> {
+export interface LoopProps<T extends VersionedContent, I extends ApiIncludes> {
 	over: AutoApi<T, I>;
 	includes?: I[],
 	filter?: any;

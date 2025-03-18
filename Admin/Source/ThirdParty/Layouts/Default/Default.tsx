@@ -3,32 +3,38 @@ import Landing from 'Admin/Layouts/Landing';
 import LoginForm from 'Admin/LoginForm';
 import Tile from 'Admin/Tile';
 import logout from 'UI/Functions/Logout';
-import { useSession, useTheme } from 'UI/Session';
+import { useSession } from 'UI/Session';
 import { useRouter } from 'UI/Router';
-import Dropdown from 'UI/Dropdown';
+import Dropdown, { DropdownItem } from 'UI/Dropdown';
 import { useState } from 'react';
 import store from 'UI/Functions/Store';
 import Modal from 'UI/Modal';
+import Icon from 'UI/Icon';
+import Table from 'UI/Table';
 import Image from 'UI/Image';
 import Alert from 'UI/Alert';
-import webRequest from 'UI/Functions/WebRequest';
+import userApi, { User } from 'Api/User';
+import adminNavMenuApi from 'Api/AdminNavMenuItem';
 
-export default props => {
+/**
+ * The default layout used by the admin panel pages.
+ * @returns
+ */
+const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
 
     const { session, setSession } = useSession();
     const { pageState, setPage } = useRouter();
     const [menuOpen, setMenuOpen] = useState(false);
     const [showImpersonationOpen, setShowImpersonationOpen] = useState(false);
     const [colourScheme, setColourScheme] = useState(() => {
-        var scheme = store.get('colour_scheme') || 'auto';
+        var scheme : string = store.get('colour_scheme') || 'auto';
         updateSchemeVars(scheme);
 
         return scheme;
     });
-    const { adminLogoRef } = useTheme();
     var url = pageState ? pageState.url : '';
 
-    function updateSchemeVars(scheme) {
+    function updateSchemeVars(scheme : string) {
         var html = window.SERVER ? undefined : document.querySelector("html");
 
         if (!html) {
@@ -38,7 +44,7 @@ export default props => {
         html.setAttribute("data-theme-variant", scheme)
     }
 
-    function updateScheme(scheme) {
+    function updateScheme(scheme : string) {
         updateSchemeVars(scheme);
         store.set('colour_scheme', scheme);
         setColourScheme(scheme);
@@ -80,20 +86,20 @@ export default props => {
         {user.fullname || user.username || user.email} <span className="avatar">{user.avatarRef ? <Image fileRef={user.avatarRef} size={32} /> : null}</span>
     </>;
 
-    function impersonateUser(userId) {
-        return webRequest('user/' + userId + '/impersonate').then(response => {
-            setSession(response.json);
-            window.location = '/';
+    function impersonateUser(userId : int) {
+        return userApi.impersonate(userId).then(response => {
+            setSession(response);
+            window.location.href = '/';
         });
     }
 
     function endImpersonation() {
-        return webRequest('user/unpersonate').then(response => {
+        return userApi.unpersonate().then(response => {
             window.location.reload();
         });
     }
 
-    function renderHeader(allContent) {
+    function renderHeader() {
         return <>
             <th>{`ID`}</th>
             <th>{`User name`}</th>
@@ -103,7 +109,7 @@ export default props => {
         </>;
     }
 
-    function renderEntry(entry) {
+    function renderEntry(entry : User) {
 
         // don't include current user account
         if (user.id == entry.id) {
@@ -115,7 +121,7 @@ export default props => {
             return;
         }
 
-        return <>
+        return <tr>
             <td>
                 {entry.id}
             </td>
@@ -134,8 +140,36 @@ export default props => {
                     {`Select`}
                 </button>
             </td>
-        </>;
+        </tr>;
     }
+
+    var adminMenuItems : DropdownItem[] = [];
+
+    if (!isImpersonating) {
+        adminMenuItems.push({
+            onClick: () => setShowImpersonationOpen(true),
+            text: `Impersonate ...`
+        });
+    } else {
+        adminMenuItems.push({
+            onClick: () => endImpersonation(),
+            text: `End impersonation`
+        });
+    }
+
+    adminMenuItems.push(
+        {
+            href: '/',
+            text: `Return to site`
+        },
+        {
+            divider: true
+        },
+        {
+            onClick: () => logout('/en-admin/', setSession, setPage),
+            text: `Logout`
+        }
+    );
 
     return (
         <>
@@ -153,16 +187,16 @@ export default props => {
                             </g>
                         </svg>
                     </a>
-                    <span class="admin-page__badge admin-page__badge--stage badge bg-warning">
-                        <i class="fal fa-fw fa-exclamation-triangle"></i>
+                    <span className="admin-page__badge admin-page__badge--stage badge bg-warning">
+                        <Icon type="fa-exclamation-triangle" light />
                         {`STAGE`}
                     </span>
-                    <span class="admin-page__badge admin-page__badge--uat badge bg-warning">
-                        <i class="fal fa-fw fa-exclamation-triangle"></i>
+                    <span className="admin-page__badge admin-page__badge--uat badge bg-warning">
+                        <Icon type="fa-exclamation-triangle" light />
                         {`UAT`}
                     </span>
-                    <span class="admin-page__badge admin-page__badge--prod badge bg-danger">
-                        <i class="fal fa-fw fa-exclamation-triangle"></i>
+                    <span className="admin-page__badge admin-page__badge--prod badge bg-danger">
+                        <Icon type="fa-exclamation-triangle" light />
                         {`PRODUCTION`}
                     </span>
                 </div>
@@ -170,20 +204,20 @@ export default props => {
                 <div className="admin-page-user">
                     {/* colour scheme */}
                     <div className="btn-group btn-group-sm" role="group" aria-label={`Colour scheme options`}>
-                        <input type="radio" className="btn-check" name="colour_scheme" id="colour_scheme_light" autocomplete="off"
-                            checked={colourScheme == 'light' ? 'checked' : undefined} onChange={() => updateScheme('light')} />
+                        <input type="radio" className="btn-check" name="colour_scheme" id="colour_scheme_light" autoComplete="off"
+                            checked={colourScheme == 'light' ? true : undefined} onChange={() => updateScheme('light')} />
                         <label className="btn btn-outline-primary" htmlFor="colour_scheme_light">
                             <i className="fa fa-fw fa-sun"></i>
                         </label>
 
-                        <input type="radio" className="btn-check" name="colour_scheme" id="colour_scheme_dark" autocomplete="off"
-                            checked={colourScheme == 'dark' ? 'checked' : undefined} onChange={() => updateScheme('dark')} />
+                        <input type="radio" className="btn-check" name="colour_scheme" id="colour_scheme_dark" autoComplete="off"
+                            checked={colourScheme == 'dark' ? true : undefined} onChange={() => updateScheme('dark')} />
                         <label className="btn btn-outline-primary" htmlFor="colour_scheme_dark">
                             <i className="fa fa-fw fa-moon"></i>
                         </label>
 
-                        <input type="radio" className="btn-check" name="colour_scheme" id="colour_scheme_auto" autocomplete="off"
-                            checked={colourScheme == 'auto' ? 'checked' : undefined} onChange={() => updateScheme('auto')} />
+                        <input type="radio" className="btn-check" name="colour_scheme" id="colour_scheme_auto" autoComplete="off"
+                            checked={colourScheme == 'auto' ? true : undefined} onChange={() => updateScheme('auto')} />
                         <label className="btn btn-outline-primary" htmlFor="colour_scheme_auto">
                             <i className="fa fa-fw fa-adjust"></i>
                         </label>
@@ -192,70 +226,55 @@ export default props => {
                     <label htmlFor="user_dropdown" className="user-label">
                         {`Logged in as`}
                     </label>
-                    <Dropdown isSmall className="admin-page-logged-user" id="user_dropdown" label={dropdownLabelJsx} variant="link" align="Right">
-                        <li>
-                            {!isImpersonating && <>
-                                <button type="button" className="btn dropdown-item" onClick={() => setShowImpersonationOpen(true)}>
-                                    {`Impersonate ...`}
-                                </button>
-                            </>}
-                            {isImpersonating && <>
-                                <button type="button" className="btn dropdown-item" onClick={() => endImpersonation()}>
-                                    {`End impersonation`}
-                                </button>
-                            </>}
-                        </li>
-                        <li>
-                            <a href="/" className="btn dropdown-item">
-                                {`Return to site`}
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider" />
-                        </li>
-                        <li>
-                            <button type="button" className="btn dropdown-item" onClick={() => logout('/en-admin/', setSession, setPage)}>
-                                {`Logout`}
-                            </button>
-                        </li>
-                    </Dropdown>
+                    <Dropdown
+                        isSmall
+                        className="admin-page-logged-user"
+                        label={dropdownLabelJsx}
+                        variant="link"
+                        align="Right"
+                        items={adminMenuItems}
+                    />
+                      
                 </div>
             </div>
             {props.children}
             {menuOpen &&
                 <div className="admin-page__menu-open" onClick={() => setMenuOpen(false)}>
                     <div className="admin-drawer">
-                        <Loop over='adminnavmenuitem/list' filter={{ sort: { field: 'Title' } }} asUl>
+                        <ul>
+                        <Loop over={adminNavMenuApi} filter={{ sort: { field: 'Title' } }}>
                             {item =>
-                                <a href={item.target} className={
+                                <li>
+                                    <a href={item.target} className={
                                     item.target == '/en-admin/' ?
                                         (url == item.target ? 'active' : '') :
                                         (url.startsWith(item.target) ? 'active' : '')}>
                                     <Image fileRef={item.iconRef} className='fa-fw' />
                                     {item.title}
-                                </a>
+                                    </a>
+                                </li>
                             }
-                        </Loop>
+                            </Loop>
+                        </ul>
                     </div>
                 </div>
             }
             {showImpersonationOpen &&
                 <Modal visible isLarge title={`Select a User to Impersonate`} className={"admin-page__impersonation-modal"}
                     onClose={() => setShowImpersonationOpen(false)}>
-                <Alert variant="warning">
-                    <h3 className={"admin-page__impersonation-title"}>
-                        {`Please note`}
-                    </h3>
-                    {`Selecting a user without administrative privileges will cause admin views to become inaccessible. To return to admin view, click the cog icon and select "End impersonation".`}
-                </Alert>
-                <Loop asTable over={'user/list'} paged className="table-sm admin-page__impersonation-userlist">
-                    {[
-                        renderHeader,
-                        renderEntry
-                    ]}
-                </Loop>
+                    <Alert variant="warning">
+                        <h3 className={"admin-page__impersonation-title"}>
+                            {`Please note`}
+                        </h3>
+                        {`Selecting a user without administrative privileges will cause admin views to become inaccessible. To return to admin view, click the cog icon and select "End impersonation".`}
+                    </Alert>
+                    <Table over={userApi} paged className="table-sm admin-page__impersonation-userlist" onHeader={ renderHeader }>
+                        {renderEntry}
+                    </Table>
                 </Modal>
             }
         </>
     );
 }
+
+export default Default;
