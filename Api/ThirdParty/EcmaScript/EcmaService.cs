@@ -705,12 +705,14 @@ namespace Api.EcmaScript
                 controllerDef.AddTsDocLine(controllerDocumentation.Summary.Trim());
             }
 
+            var url = baseUrl.Template.StartsWith("v1/") ? baseUrl.Template[3..] : baseUrl.Template;
+
             if (entityType != controller)
             {
                 controllerDef.Children.Add(new ClassMethod() {
                     Name = "constructor", 
                     Injected = [
-                        $"super('{baseUrl.Template}')",
+                        $"super('{url}')",
                         "this.includes = new " + entityType.Name + "Includes();"
                     ],
                     Documentation = ["This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller"]
@@ -722,7 +724,7 @@ namespace Api.EcmaScript
                     PropertyName = "apiUrl",
                     PropertyType = "string",
                     Visibility = "protected",
-                    DefaultValue = $"{baseUrl.Template}"
+                    DefaultValue = $"{url}"
                 });
             }
 

@@ -35,7 +35,7 @@ export class RedirectApi extends AutoApi<Redirect, RedirectIncludes>{
 
     */
     public constructor(){
-        super('v1/redirect')
+        super('redirect')
         this.includes = new RedirectIncludes();
     }
 

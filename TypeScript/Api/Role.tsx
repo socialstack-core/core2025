@@ -39,7 +39,7 @@ export class RoleApi extends AutoApi<Role, RoleIncludes>{
 
     */
     public constructor(){
-        super('v1/role')
+        super('role')
         this.includes = new RoleIncludes();
     }
 

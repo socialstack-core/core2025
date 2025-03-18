@@ -40,7 +40,7 @@ export class DomainCertificateApi extends AutoApi<DomainCertificate, DomainCerti
 
     */
     public constructor(){
-        super('v1/domainCertificate')
+        super('domainCertificate')
         this.includes = new DomainCertificateIncludes();
     }
 

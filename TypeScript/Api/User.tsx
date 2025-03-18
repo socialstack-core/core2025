@@ -67,7 +67,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
 
     */
     public constructor(){
-        super('v1/user')
+        super('user')
         this.includes = new UserIncludes();
     }
 

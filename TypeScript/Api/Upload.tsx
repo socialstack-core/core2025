@@ -72,7 +72,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public constructor(){
-        super('v1/upload')
+        super('upload')
         this.includes = new UploadIncludes();
     }
 
