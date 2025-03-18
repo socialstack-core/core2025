@@ -1224,7 +1224,7 @@ svg {
 			doc.Title = page.Title; // Todo: permit {token} values in the title which refer to the primary object.
 			doc.SourcePage = page;
 			doc.Html
-				.With("class", isAdmin ? "admin web" : "ui web")
+				.With("class", isAdmin ? "admin web no-js" : "ui web no-js")
 				.With("lang", localeCode)
 				.With("data-theme", isAdmin ? themeConfig.DefaultAdminThemeId : themeConfig.DefaultThemeId);
 
