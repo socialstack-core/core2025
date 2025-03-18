@@ -34,7 +34,7 @@ export class RedirectApi extends AutoApi<Redirect, RedirectIncludes>{
       This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller
 
     */
-    public constructor(){
+    public constructor (){
         super('redirect')
         this.includes = new RedirectIncludes();
     }

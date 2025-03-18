@@ -11,7 +11,7 @@ import { useRouter } from 'UI/Router';
 import { useState, useEffect } from 'react';
 import userApi from 'Api/User';
 
-interface LoginFormProps {
+export interface LoginFormProps {
 	passwordRequired?: boolean,
 	emailOnly?: boolean,
 	flipButtons?: boolean,

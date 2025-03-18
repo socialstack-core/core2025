@@ -66,7 +66,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
       This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller
 
     */
-    public constructor(){
+    public constructor (){
         super('user')
         this.includes = new UserIncludes();
     }
@@ -76,8 +76,8 @@ export class UserApi extends AutoApi<User, UserIncludes>{
             Sends the user a new token to verify their email.
 
     */
-    public resendVerificationEmail(body: UserPasswordForgot): Promise<void> {
-        return getJson(`${this.apiUrl}/sendverifyemail`, { body })
+    public resendVerificationEmail = (body: UserPasswordForgot): Promise<void>  => {
+        return getJson(`${this.apiUrl}/sendverifyemail`, body )
     }
 
     /**
@@ -85,17 +85,17 @@ export class UserApi extends AutoApi<User, UserIncludes>{
             Attempts to verify the users email. If a password is supplied, the users password is also set.
 
     */
-    public verifyUser(userid: number, token: string, newPassword: OptionalPassword): Promise<void> {
-        return getJson(`${this.apiUrl}/verify/${userid}/${token}`, { body: {
+    public verifyUser = (userid: number, token: string, newPassword: OptionalPassword): Promise<void>  => {
+        return getJson(`${this.apiUrl}/verify/${userid}/${token}`, {
         newPassword,
-        }})
+        })
     }
 
     /**
       Gets the current context.
 
     */
-    public self(): Promise<SessionResponse> {
+    public self = (): Promise<SessionResponse>  => {
         return getJson(`${this.apiUrl}/self`)
     }
 
@@ -103,7 +103,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
       Logs out this user account.
 
     */
-    public logout(): Promise<SessionResponse> {
+    public logout = (): Promise<SessionResponse>  => {
         return getJson(`${this.apiUrl}/logout`)
     }
 
@@ -112,15 +112,15 @@ export class UserApi extends AutoApi<User, UserIncludes>{
             Attempts to login. Returns either a Context or a LoginResult.
 
     */
-    public login(body: UserLogin): Promise<SessionResponse> {
-        return getJson(`${this.apiUrl}/login`, { body })
+    public login = (body: UserLogin): Promise<SessionResponse>  => {
+        return getJson(`${this.apiUrl}/login`, body )
     }
 
     /**
       Impersonate a user by their ID. This is a hard cookie switch. You will loose all admin functionality to make the impersonation as accurate as possible.
 
     */
-    public impersonate(id: number): Promise<SessionResponse> {
+    public impersonate = (id: number): Promise<SessionResponse>  => {
         return getJson(`${this.apiUrl}/${id}/impersonate`)
     }
 
@@ -128,7 +128,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
       Reverses an impersonation.
 
     */
-    public unpersonate(): Promise<SessionResponse> {
+    public unpersonate = (): Promise<SessionResponse>  => {
         return getJson(`${this.apiUrl}/unpersonate`)
     }
 

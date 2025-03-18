@@ -10,7 +10,7 @@ export class ApiIncludes{
     /**
 
     */
-    public constructor(prev?: string, extra?: string){
+    public constructor (prev?: string, extra?: string){
         this.text = (prev ? prev + '.' : '') + (extra || '');
     }
 
@@ -19,7 +19,7 @@ export class ApiIncludes{
     /**
 
     */
-    public toString(): string {
+    public toString = (): string  => {
         return this.text;
     }
 
@@ -35,42 +35,42 @@ export class AutoApi<EntityType extends VersionedContent, IncludeSet extends Api
     /**
 
     */
-    public constructor(apiUrl: string){
+    public constructor (apiUrl: string){
         this.apiUrl = apiUrl;
     }
 
     /**
 
     */
-    public list(where: Partial<Record<keyof(EntityType), string | number | boolean>> = {}, includes: IncludeSet[] = []): Promise<ApiList<EntityType>> {
+    public list = (where: Partial<Record<keyof(EntityType), string | number | boolean>> = {}, includes: IncludeSet[] = []): Promise<ApiList<EntityType>>  => {
         return getList(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes.map(include => include.toString()) })
     }
 
     /**
 
     */
-    public load(id: number, includes: IncludeSet[] = []): Promise<EntityType> {
+    public load = (id: number, includes: IncludeSet[] = []): Promise<EntityType>  => {
         return getOne(this.apiUrl + '/' + id, { includes: includes.map(include => include.toString()) })
     }
 
     /**
 
     */
-    public create(entity: EntityType): Promise<EntityType> {
+    public create = (entity: EntityType): Promise<EntityType>  => {
         return getOne(this.apiUrl, entity)
     }
 
     /**
 
     */
-    public update(entity: EntityType): Promise<EntityType> {
+    public update = (entity: EntityType): Promise<EntityType>  => {
         return getOne(this.apiUrl + '/' + entity.id, entity)
     }
 
     /**
 
     */
-    public delete(entityId: number, includes: IncludeSet[] = []): Promise<EntityType> {
+    public delete = (entityId: number, includes: IncludeSet[] = []): Promise<EntityType>  => {
         return getOne(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes.map(include => include.toString()) })
     }
 

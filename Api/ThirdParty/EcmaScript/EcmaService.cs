@@ -973,7 +973,7 @@ namespace Api.EcmaScript
 
             if (foundBodyVarName)
             {
-                tsMethod.Injected = ["return getJson(`${this.apiUrl}/" + details + "`, { body })"];
+                tsMethod.Injected = ["return getJson(`${this.apiUrl}/" + details + "`, body )"];
             }
             else
             {
@@ -984,14 +984,14 @@ namespace Api.EcmaScript
                 if (targetParams.Any())
                 {
                     tsMethod.Injected = [
-                        "return getJson(`${this.apiUrl}/" + details + "`, { body: {" ,
+                        "return getJson(`${this.apiUrl}/" + details + "`, {" ,
                     ];
                     foreach(var param in targetParams)
                     {
                         tsMethod.Injected.Add($"{param.Name},");
                     }
 
-                    tsMethod.Injected.Add("}})");
+                    tsMethod.Injected.Add("})");
                 }
                 else
                 {

@@ -49,9 +49,20 @@ namespace Api.EcmaScript.TypeScript
         /// <returns>The TypeScript method definition as a formatted string.</returns>
         public string CreateSource()
         {
-            var src = GetTsDocumentation(); 
-            
-            src += "".PadLeft(4) + $"{Modifier} {Name}(";
+            var src = GetTsDocumentation();
+
+            src += "".PadLeft(4) + $"{Modifier} {Name}";
+
+            var isConstructor = Name == "constructor";
+
+			if (isConstructor)
+            {
+				src += " (";
+			}
+            else
+            {
+                src += " = (";
+            }
 
             for (int i = 0; i < Arguments.Count; i++)
             {
@@ -61,16 +72,23 @@ namespace Api.EcmaScript.TypeScript
                 }
                 src += Arguments[i].CreateSource();
             }
-            if (string.IsNullOrEmpty(ReturnType))
+
+            src += ")";
+
+            if (!string.IsNullOrEmpty(ReturnType))
             {
-                // Usually constructor.
-                src += "){" + Environment.NewLine;
+                src += $": {ReturnType} ";
             }
-            else
-            {
-                src += $"): {ReturnType} {{" + Environment.NewLine;
-            }
-            foreach(var sloc in Injected)
+
+			if (!isConstructor)
+			{
+                // Using arrow syntax for this binding such that <Form> can just be given the func
+				src += " => ";
+			}
+
+			src += "{" + Environment.NewLine;
+
+			foreach (var sloc in Injected)
             {
                 src += "".PadLeft(8) + sloc + Environment.NewLine;
             }

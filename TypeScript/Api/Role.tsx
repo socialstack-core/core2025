@@ -38,7 +38,7 @@ export class RoleApi extends AutoApi<Role, RoleIncludes>{
       This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller
 
     */
-    public constructor(){
+    public constructor (){
         super('role')
         this.includes = new RoleIncludes();
     }

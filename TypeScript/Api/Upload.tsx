@@ -71,7 +71,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller
 
     */
-    public constructor(){
+    public constructor (){
         super('upload')
         this.includes = new UploadIncludes();
     }
@@ -80,15 +80,15 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Upload a file with efficient support for huge ones.
 
     */
-    public upload(body: FileUploadBody): Promise<void> {
-        return getJson(`${this.apiUrl}/create`, { body })
+    public upload = (body: FileUploadBody): Promise<void>  => {
+        return getJson(`${this.apiUrl}/create`, body )
     }
 
     /**
       Uploads a transcoded file. The body of the client request is expected to be a tar of the files, using a directory called "output" at its root.
 
     */
-    public transcodedTar(id: number, token: string): Promise<void> {
+    public transcodedTar = (id: number, token: string): Promise<void>  => {
         return getJson(`${this.apiUrl}/transcoded/${id}?token=${token}`)
     }
 
@@ -96,7 +96,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       List any active media items
 
     */
-    public active(includes: string): Promise<void> {
+    public active = (includes: string): Promise<void>  => {
         return getJson(`${this.apiUrl}/active?includes=${includes}`)
     }
 
@@ -104,7 +104,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       List any active media refs
 
     */
-    public activePost(includes: string): Promise<void> {
+    public activePost = (includes: string): Promise<void>  => {
         return getJson(`${this.apiUrl}/active?includes=${includes}`)
     }
 
@@ -115,7 +115,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       @param {idRange} - Api.AvailableEndpoints.XmlDocMember
 
     */
-    public fileConsistency(regenBefore: string, idRange: string): Promise<void> {
+    public fileConsistency = (regenBefore: string, idRange: string): Promise<void>  => {
         return getJson(`${this.apiUrl}/file-consistency?regenBefore=${regenBefore}&idRange=${idRange}`)
     }
 
@@ -123,7 +123,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Replace any existing refs with new ones
 
     */
-    public replace(sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>> {
+    public replace = (sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>>  => {
         return getJson(`${this.apiUrl}/replace?sourceRef=${sourceRef}&targetRef=${targetRef}`)
     }
 
@@ -131,7 +131,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Update alt names based on image data
 
     */
-    public updateAlts(): Promise<void> {
+    public updateAlts = (): Promise<void>  => {
         return getJson(`${this.apiUrl}/update-alts`)
     }
 
@@ -139,7 +139,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Upgrade refs such that any ref fields hold the latest version of a specified ref.
 
     */
-    public updateRefs(update: boolean): Promise<ApiList<MediaRef>> {
+    public updateRefs = (update: boolean): Promise<ApiList<MediaRef>>  => {
         return getJson(`${this.apiUrl}/update-refs?update=${update}`)
     }
 
@@ -147,7 +147,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Preview any media refs changes
 
     */
-    public preview(uploadRef: string): Promise<ApiList<MediaRef>> {
+    public preview = (uploadRef: string): Promise<ApiList<MediaRef>>  => {
         return getJson(`${this.apiUrl}/replace/preview?uploadRef=${uploadRef}`)
     }
 
