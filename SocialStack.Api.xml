@@ -1442,8 +1442,28 @@
             You can however specify a custom type or instance them yourself if you'd like to do so.
             </summary>
             <summary>
+            Events are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
+            <summary>
             
             Event handlers are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
+            <summary>
+            Events are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
+            <summary>
+            Events are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
+            <summary>
+            Events are instanced automatically. 
+            You can however specify a custom type or instance them yourself if you'd like to do so.
+            </summary>
+            <summary>
+            Events are instanced automatically. 
             You can however specify a custom type or instance them yourself if you'd like to do so.
             </summary>
             <summary>
@@ -1594,6 +1614,11 @@
             Set of events for a context.
             </summary>
         </member>
+        <member name="F:Api.Eventing.Events.ExchangeRate">
+            <summary>
+            Set of events for an exchangeRate.
+            </summary>
+        </member>
         <member name="F:Api.Eventing.Events.DatabaseDiffBeforeAdd">
             <summary>
             This is invoked just before database diff adds the given type to the schema.
@@ -1689,6 +1714,26 @@
         <member name="F:Api.Eventing.Events.Role">
             <summary>
             Events on the Role type.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.Events.Crawler">
+            <summary>
+            Event group for the search crawler.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.Events.Elastic">
+            <summary>
+            Event group for the search elastic indexer.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.Events.SearchEntity">
+            <summary>
+            Set of events for a searchEntity.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.Events.SiteDomain">
+            <summary>
+            Set of events for a siteDomain.
             </summary>
         </member>
         <member name="F:Api.Eventing.Events.Service">
@@ -2032,6 +2077,23 @@
             Gets the capability for loading something of this type.
             </summary>
             <returns></returns>
+        </member>
+        <member name="F:Api.Eventing.EventGroupCore`2.PageCrawled">
+            <summary>
+            Called when a page of the given primary object is crawled.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.EventGroupCore`2.BeforeIndexingMetaData">
+            <summary>
+            Called before a page is indexed which has a primary object
+            to allow for the processing of related data/includes etc
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.EventGroupCore`2.BeforeIndexGetKeys">
+            <summary>
+            Called when a document is being indexed which has a primary object
+            to allow for extra indexes to be defined based on the content
+            </summary>
         </member>
         <member name="T:Api.Eventing.EventGroup">
             <summary>
@@ -12084,6 +12146,11 @@
         <member name="M:Api.Startup.IpDiscovery.Discover(System.Boolean)">
             <summary>Gets the IP set.</summary>
         </member>
+        <member name="T:Api.Startup.IsNotSearchableAttribute">
+            <summary>
+            Use this attribute to exclude data types for content indexing (used in admin search)
+            </summary>
+        </member>
         <member name="T:Api.Startup.JsonFieldGroup">
             <summary>
             Used when searching for a field.
@@ -18100,6 +18167,32 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="F:Api.Contexts.Context._currencylocaleId">
+            <summary>
+            Underlying currency locale ID.
+            </summary>
+        </member>
+        <member name="P:Api.Contexts.Context.CurrencyLocaleId">
+            <summary>
+            The current locale or the site default.
+            </summary>
+        </member>
+        <member name="F:Api.Contexts.Context._currencylocale">
+            <summary>
+            The full locale object, if it has been requested.
+            </summary>
+        </member>
+        <member name="M:Api.Contexts.Context.GetCurrencyLocale">
+            <summary>
+            Gets the locale for this context.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="F:Api.Contexts.Context.DoNotConvertPrice">
+            <summary>
+            Set this to true to prevent conversion of prices when loading or listing an entity
+            </summary>
+        </member>
         <member name="M:Api.Contexts.Context.#ctor(Api.Permissions.Role)">
             <summary>
             Create a context for no particular user but with the given role.
@@ -18141,6 +18234,27 @@
             Sends a token as both a header and a cookie for the given response.
             </summary>
             <param name="response"></param>
+        </member>
+        <member name="F:Api.Contexts.Context._siteDomainId">
+            <summary>
+            Underlying site domain id
+            </summary>
+        </member>
+        <member name="P:Api.Contexts.Context.SiteDomainId">
+            <summary>
+            The current site domain id
+            </summary>
+        </member>
+        <member name="F:Api.Contexts.Context._siteDomain">
+            <summary>
+            The full domain object, if it has been requested.
+            </summary>
+        </member>
+        <member name="M:Api.Contexts.Context.GetSiteDomain">
+            <summary>
+            Gets the domain for this context.
+            </summary>
+            <returns></returns>
         </member>
         <member name="F:Api.Contexts.Context._localeId">
             <summary>
@@ -18408,6 +18522,435 @@
         <member name="F:Api.Contexts.ContextShortcodeAttribute.Shortcode">
             <summary>
             a-z or A-Z shortcode of this ctx field.
+            </summary>
+        </member>
+        <member name="T:Api.Currency.CurrencyConfig">
+            <summary>
+            Configuration for the currency mechanism
+            </summary>
+        </member>
+        <member name="P:Api.Currency.CurrencyConfig.RoundTo">
+            <summary>
+            Currency config to round to
+            </summary>
+        </member>
+        <member name="T:Api.Currency.CurrencyService">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Currency.CurrencyService.#ctor(Api.Currency.ExchangeRateService,Api.Translate.LocaleService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Currency.CurrencyService.SetupForType``2(AutoService{``0,``1},System.Collections.Generic.List{System.Reflection.FieldInfo})">
+            <summary>
+            Setup list and load events for entities that have price fields so that price can be calculated using exchange rates
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="ID"></typeparam>
+            <param name="service"></param>
+            <param name="priceFields"></param>
+        </member>
+        <member name="T:Api.Currency.ExchangeRate">
+            <summary>
+            An ExchangeRate
+            </summary>
+        </member>
+        <member name="F:Api.Currency.ExchangeRate.Name">
+            <summary>
+            The name of this exchange rate
+            </summary>
+        </member>
+        <member name="F:Api.Currency.ExchangeRate.FromLocaleId">
+            <summary>
+            The currency to be converted from
+            </summary>
+        </member>
+        <member name="F:Api.Currency.ExchangeRate.ToLocaleId">
+            <summary>
+            The currency to be converted to
+            </summary>
+        </member>
+        <member name="F:Api.Currency.ExchangeRate.Rate">
+            <summary>
+            The exchange rate
+            </summary>
+        </member>
+        <member name="T:Api.Currency.ExchangeRateController">
+            <summary>Handles exchangeRate endpoints.</summary>
+        </member>
+        <member name="T:Api.Currency.ExchangeRateService">
+            <summary>
+            Handles exchangeRates.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Currency.ExchangeRateService.#ctor">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="T:Api.Currency.Permissions">
+            <summary>
+            Instances capabilities during the very earliest phases of startup.
+            </summary>
+        </member>
+        <member name="M:Api.Currency.Permissions.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.Currency.PriceAttribute">
+            <summary>
+            Use this to declare a database field as a price
+            When a price field is also localized, it will not fall back to the default locale if null, instead it will be converted using an exchange rate or returned as null if converison is not possible.
+            </summary>
+        </member>
+        <member name="T:Api.Translate.Locale">
+            <summary>
+            </summary>
+            <summary>
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.CurrencySymbol">
+            <summary>
+            Usually a 1 character symbol e.g. "£" or "$"
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.Name">
+            <summary>
+            The name.
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.Code">
+            <summary>
+            Usually a 5 letter locale code e.g. "en_GB". May also be just 2 e.g. "fr".
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.FlagIconRef">
+            <summary>
+            Associated flag image representing the locale.
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.Aliases">
+            <summary>
+            List of comma seperated aliases for mapping request headers or custom client codes
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.isDisabled">
+            <summary>
+            Indicates if the locale is not currently available
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.isRedirected">
+            <summary>
+            Indicates if the locale should be redirected to root (e.g. /en-us/abc > /abc)
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.PermanentRedirect">
+            <summary>
+            True if this redirect should be considered permanent (i.e. a 301);
+            Will default to a temporary 302 redirect if not set
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.RightToLeft">
+            <summary>
+            Indicates this locale goes primarily right to left, such as Hebrew or Arabic.
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.PagePath">
+            <summary>
+            If this locale is in use, the page URL to lookup will be prefixed with this value, except on the admin panel.
+            Should not contain any /. For example, can be "jersey". The frontend will never actually see this path; it is purely for creating different page sets per locale.
+            Different page sets is generally tidier than translating pages.
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Locale.Domains">
+            <summary>
+            Used by sites with localised domains. A comma separated list of domain names with optional ports.
+            </summary>
+        </member>
+        <member name="P:Api.Translate.Locale.ShortCode">
+            <summary>
+            If the code is e.g. en-GB, this is just en. It is internally cached for speed as well.
+            </summary>
+        </member>
+        <member name="T:Api.Translate.LocaleController">
+            <summary>
+            Handles locale endpoints.
+            </summary>
+            <summary>
+            Handles locale endpoints.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.LocaleController.SetCurrency(System.UInt32,System.UInt32)">
+            <summary>
+            GET /v1/locale/set/currency/2/
+            Sets currency locale by its ID.
+            </summary>
+        </member>
+        <member name="F:Api.Translate.LocaleController.ThePast">
+            <summary>
+            A date in the past used to set expiry on cookies.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.LocaleController.ResetLocale(System.UInt32)">
+            <summary>
+            GET /v1/locale/set/currency/2/
+            Sets currency locale by its ID.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.LocaleController.Set(System.UInt32)">
+            <summary>
+            GET /v1/locale/set/2/
+            Sets locale by its ID.
+            </summary>
+        </member>
+        <member name="T:Api.Translate.LocaleService">
+            <summary>
+            Handles locales - the core of the translation (localisation) system.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+            <summary>
+            Handles locales - the core of the translation (localisation) system.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="P:Api.Translate.LocaleService.CurrencyLocaleCookieName">
+            <summary>
+            The name of the cookie when locale is stored.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.LocaleService.#ctor">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.LocaleService.OnCacheLoaded">
+            <summary>
+            Runs when the cache has loaded.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.Translate.LocaleService.GetByDomain(System.String)">
+            <summary>
+            Gets locale ID by its case insensitive domain and optional port. "www.mysite.co.uk" or "localhost:5050"
+            </summary>
+            <param name="domain"></param>
+            <returns>null if not found.</returns>
+        </member>
+        <member name="M:Api.Translate.LocaleService.GetId(System.String)">
+            <summary>
+            Gets locale ID by its case insensitive code. Can contain hyphens, such as "en-gb".
+            </summary>
+            <param name="localeCode"></param>
+            <returns>null if not found.</returns>
+        </member>
+        <member name="F:Api.Translate.LocaleService.countryToLanguageMap">
+            <summary>
+            A mapping of alpha-2 country code (e.g. "us") -> full country code (e.g. "en-US").
+            </summary>
+        </member>
+        <member name="M:Api.Translate.LocaleService.UpdateContextLocale(Api.Contexts.Context,System.String)">
+            <summary>
+            Updates the given context LocaleId if the alpha-2 country code supplied relates to an available locale.
+            </summary>
+            <param name="context"></param>
+            <param name="countryCode"></param>
+        </member>
+        <member name="F:Api.Translate.LocaleService._codeMap">
+            <summary>
+            A mapping of locale code -> ID. Uses IDs such that it does not need locale specific variations.
+            </summary>
+        </member>
+        <member name="F:Api.Translate.LocaleService._domainMap">
+            <summary>
+            A mapping of domain -> ID. Uses IDs such that it does not need locale specific variations.
+            </summary>
+        </member>
+        <member name="F:Api.Translate.LocaleService._multiDomain">
+            <summary>
+            True if the domains field is used on locales.
+            </summary>
+        </member>
+        <member name="P:Api.Translate.LocaleService.CookieName">
+            <summary>
+            The name of the cookie when locale is stored.
+            </summary>
+        </member>
+        <member name="T:Api.Translate.EventListener">
+            <summary>
+            Listens out for the DatabaseDiff run to add additional columns.
+            It finds any [Localized] fields and adds copies of the field for each locale, except they're always nullable.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.EventListener.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.Translate.LocaleServiceConfig">
+            <summary>
+            Config for locale service.
+            </summary>
+        </member>
+        <member name="P:Api.Translate.LocaleServiceConfig.HandleAcceptLanguageHeader">
+            <summary>
+            True (default) if the accept-lang header will be used to 
+            establish default language when a user is seen for the first time.
+            </summary>
+        </member>
+        <member name="P:Api.Translate.LocaleServiceConfig.HandleCloudFlareHeader">
+            <summary>
+            True (default) if the CF-IPCountry header will be used to 
+            establish default language.
+            </summary>
+        </member>
+        <member name="T:Api.Translate.LocalizedAttribute">
+            <summary>
+            Use this to declare a database field as localized - either translatable or containing different values per locale.
+            Fields marked with this will result in another table being generated.
+            </summary>
+        </member>
+        <member name="T:Api.Translate.Permissions">
+            <summary>
+            Instances capabilities during the very earliest phases of startup.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.Permissions.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.Translate.PoTranslation">
+            <summary>
+            Wrapper class for po data translations
+            </summary>
+        </member>
+        <member name="P:Api.Translate.PoTranslation.ContentType">
+            <summary>
+            Content type
+            </summary>
+        </member>
+        <member name="P:Api.Translate.PoTranslation.ContentId">
+            <summary>
+            Content ID
+            </summary>
+        </member>
+        <member name="P:Api.Translate.PoTranslation.Id">
+            <summary>
+            Entry ID
+            </summary>
+        </member>
+        <member name="P:Api.Translate.PoTranslation.FieldName">
+            <summary>
+            Field name
+            </summary>
+        </member>
+        <member name="P:Api.Translate.PoTranslation.Original">
+            <summary>
+            Original text
+            </summary>
+        </member>
+        <member name="P:Api.Translate.PoTranslation.Translated">
+            <summary>
+            Translated text
+            </summary>
+        </member>
+        <member name="T:Api.Translate.Translation">
+            <summary>
+            A Translation
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Translation.Module">
+            <summary>
+            E.g. "UI/AboutUs" - the exact JS module name that this translation is for.
+            </summary>
+        </member>
+        <member name="F:Api.Translate.Translation.Original">
+            <summary>The original text string.</summary>
+        </member>
+        <member name="F:Api.Translate.Translation.Translated">
+            <summary>The translation.</summary>
+        </member>
+        <member name="T:Api.Translate.TranslationController">
+            <summary>Handles translation endpoints.</summary>
+        </member>
+        <member name="M:Api.Translate.TranslationController.#ctor(Api.Translate.TranslationService)">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.TranslationController.PrePopulate">
+            <summary>
+            Requests pre-populate the translations table 
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.Translate.TranslationController.LoadPotFiles">
+            <summary>
+            Process any pot files into the translations table 
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.Translate.TranslationService">
+            <summary>
+            Handles translations.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.TranslationService.#ctor">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Translate.TranslationService.LoadDefaultTranslations">
+            <summary>
+            Extract any default translations from the modules and locale.xx.json files 
+            </summary>
+        </member>
+        <member name="M:Api.Translate.TranslationService.LoadPotFiles(Api.Contexts.Context)">
+            <summary>
+            Loads .po files from a directory called "Translations"
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.Translate.TranslationService.ParsePOData(Api.Contexts.Context,System.IO.Stream,System.Type)">
+            <summary>
+            Parse and load PO language file data
+            </summary>
+            <param name="context"></param>
+            <param name="stream"></param>
+            <param name="serviceType"></param>
+            <returns></returns>
+            <exception cref="T:Api.Startup.PublicException"></exception>
+        </member>
+        <member name="T:Api.Translate.TranslationServiceConfig">
+            <summary>
+            Config for translation service.
+            </summary>
+        </member>
+        <member name="P:Api.Translate.TranslationServiceConfig.ReformatCanvasElements">
+            <summary>
+            When exporting/importing translations via port files should we reformat the canvas elements to simplify the format 
+            </summary>
+        </member>
+        <member name="P:Api.Translate.TranslationServiceConfig.AutoAddTranslationElements">
+            <summary>
+            Automatically add any new translation elements when parsing content (DEV ONLY)
+            </summary>
+        </member>
+        <member name="P:Api.Translate.TranslationServiceConfig.AutoAddExcludeModules">
+            <summary>
+            List of modules to exclude from translation auto add 
+            </summary>		
+        </member>
+        <member name="P:Api.Translate.TranslationServiceConfig.AutoAddBaseLineTranslations">
+            <summary>
+            Automatically add any baseline translations (locale.xx.json) files into the backend 
             </summary>
         </member>
         <member name="T:Api.Database.DatabaseTableDefinition">
@@ -19817,6 +20360,9 @@
             <summary>
             A particular user account.
             </summary>
+            <summary>
+            A particular user account.
+            </summary>
         </member>
         <member name="F:Api.Users.User.Email">
             <summary>
@@ -19853,6 +20399,21 @@
             <summary>
             The token provided in the password reset email. Useful for checking whether
             a user update event was triggered by a password reset request.
+            </summary>
+        </member>
+        <member name="F:Api.Users.User.FirstName">
+            <summary>
+            The first name of the user. 
+            </summary>
+        </member>
+        <member name="F:Api.Users.User.LastName">
+            <summary>
+            The last name(s) of the user. 
+            </summary>
+        </member>
+        <member name="F:Api.Users.User.FullName">
+            <summary>
+            First + last concatted with a space.
             </summary>
         </member>
         <member name="F:Api.Users.User.LoginRevokeCount">
@@ -20079,6 +20640,16 @@
         <member name="F:Api.Users.UserLogin.Password">
             <summary>
             The password to use.
+            </summary>
+        </member>
+        <member name="T:Api.Users.NameEventHandler">
+            <summary>
+            Sets fullname
+            </summary>
+        </member>
+        <member name="M:Api.Users.NameEventHandler.#ctor">
+            <summary>
+            Sets fullname
             </summary>
         </member>
         <member name="T:Api.Users.EmailVerifyCustomData">
@@ -20309,6 +20880,268 @@
         <member name="P:Api.Users.UserServiceConfig.CookieName">
             <summary>
             The name of the cookie.
+            </summary>
+        </member>
+        <member name="T:Api.DynamicSiteMap.DomainSiteMapController">
+            <summary>
+            Handles dynamic sitemap based on domain/locale
+            </summary>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DomainSiteMapController.SiteMapXML">
+            <summary>
+            Exposes the dynamic site map file
+            </summary>
+        </member>
+        <member name="T:Api.DynamicSiteMap.DynamicSiteMapService">
+            <summary>
+            Service to extract dynamic sitemaps based on site search crawler data 
+            </summary>
+        </member>
+        <member name="F:Api.DynamicSiteMap.DynamicSiteMapService._isConfigured">
+            <summary>
+            True if the service is active.
+            </summary>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.#ctor(Api.Pages.PageService,Api.CanvasRenderer.FrontendCodeService,Api.Translate.LocaleService,Api.SiteDomains.SiteDomainService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.GetConfiguration">
+            <summary>
+            Gets the service config (readonly).
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.SetupForType``2(AutoService{``0,``1})">
+            <summary>
+            Handler for content types to expose content related data
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="ID"></typeparam>
+            <param name="service"></param>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.ProcessPage``1(Api.Contexts.Context,Api.SearchCrawler.CrawledPageMeta,System.String,``0)">
+            <summary>
+            Extract and create sitermpa entry from the current page
+            </summary>
+            <param name="ctx"></param>
+            <param name="pageDocument"></param>
+            <param name="contentType"></param>
+            <param name="po"></param>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.IsConfigured">
+            <summary>
+            True if this service is configured and active.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.UpdateIsConfigured">
+            <summary>
+            Sets _isConfigured
+            </summary>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.GetAllLocales(Api.Contexts.Context)">
+            <summary>
+            Get all the active locales 
+            </summary>
+            <param name="ctx"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.HasClass(HtmlAgilityPack.HtmlNode,System.String)">
+            <summary>
+            Check if a node has a specific class 
+            </summary>
+            <param name="node"></param>
+            <param name="className"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.DynamicSiteMap.DynamicSiteMapService.UrlCombine(System.String[])">
+            <summary>
+            Combine segments of a URL, ensuring no double slashes.
+            </summary>
+            <param name="items"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.DynamicSiteMap.DynamicSiteMapServiceConfig">
+            <summary>
+            Config for dynamic site mapping service.
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.MaxSiteMapPages">
+            <summary>
+            The maximum number of pages per sitemap file
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.ImageTitleAttributes">
+            <summary>
+             Image title attributes 
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.ExcludedPaths">
+            <summary>
+            Excluded paths (a list of path prefixes to be ignored)
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.Disabled">
+            <summary>
+            Flag to optionally disable service.
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.UseLocaleDomains">
+            <summary>
+            Flag to determine if we are mapping pages based on locales 
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.UseSiteDomains">
+            <summary>
+            Flag to determine if we are mapping pages based on site domains 
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.IncludeImages">
+            <summary>
+            /// Flag to determine if should expose images into the sitemap
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.IncludeStaticImages">
+            <summary>
+            /// Flag to determine if should expose static images into the sitemap
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.IncludeHrefLangs">
+            <summary>
+            Flag to optionally expose href lang entries for multi locale sites
+            </summary>
+        </member>
+        <member name="P:Api.DynamicSiteMap.DynamicSiteMapServiceConfig.DebugToConsole">
+            <summary>
+            Should debug info be written to the console?
+            </summary>
+        </member>
+        <member name="T:Api.SiteDomains.SiteDomain">
+            <summary>
+            A SiteDomain
+            </summary>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomain.ExcludeFromSiteMap">
+            <summary>
+            Indicates if the domain is excluded from the dynamic sitemaps
+            </summary>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomain.Name">
+            <summary>
+            The name.
+            </summary>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomain.Code">
+            <summary>
+            Short code to identify the domain and prefix internal page urls (may be duplicates so also need to consider IsPrimary)
+            </summary>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomain.IsDisabled">
+            <summary>
+            Indicates if the domain is not currently available
+            </summary>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomain.IsPrimary">
+            <summary>
+            Indicates if this is the primary entry for the domain
+            </summary>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomain.IsRoot">
+            <summary>
+            Indicates if this is the core/root domain for the site
+            </summary>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomain.Domain">
+            <summary>
+            Used by sites with localised domains. A comma separated list of domain names with optional ports.
+            </summary>
+        </member>
+        <member name="T:Api.SiteDomains.Permissions">
+            <summary>
+            Instances capabilities during the very earliest phases of startup.
+            </summary>
+        </member>
+        <member name="M:Api.SiteDomains.Permissions.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.SiteDomains.SiteDomainController">
+            <summary>Handles siteDomain endpoints.</summary>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainController.#ctor(Api.SiteDomains.SiteDomainService)">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainController.GetByCode(System.String)">
+            <summary>
+            GET /v1/domain/code/abc/
+            Gets the primary site domain mapping via it's code
+            </summary>
+        </member>
+        <member name="T:Api.SiteDomains.SiteDomainService">
+            <summary>
+            Handles websites with more than one domain name. 
+            Each user is associated with a domain when the user is created and a context extension informs 
+            the API which domain is effectively in use.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainService.#ctor">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainService.OnCacheLoaded">
+            <summary>
+            Runs when the cache has loaded.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainService.GetSiteDomains">
+            <summary>
+            Expose prrformatted json string of domains for use in page rendering
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainService.GetByUrl(System.String)">
+            <summary>
+            Gets domain by its case insensitive url
+            </summary>
+            <param name="url"></param>
+            <returns>null if not found.</returns>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainService.GetByDomain(System.String)">
+            <summary>
+            Gets domain by its case insensitive domain and optional port. "www.mysite.co.uk" or "localhost:5050"
+            </summary>
+            <param name="domain"></param>
+            <returns>null if not found.</returns>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainService.GetByCode(System.String)">
+            <summary>
+            Gets the primary domain by it's short code
+            </summary>
+            <param name="code"></param>
+            <returns>null if not found.</returns>
+        </member>
+        <member name="M:Api.SiteDomains.SiteDomainService.GetDomainMappings">
+            <summary>
+            Gets the current domain mappings
+            </summary>
+            <returns>null if not found.</returns>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomainService._siteDomainMap">
+            <summary>
+            A mapping of domain -> prefix.
+            </summary>
+        </member>
+        <member name="F:Api.SiteDomains.SiteDomainService._multiDomain">
+            <summary>
+            True if the domain mappings are active
             </summary>
         </member>
         <member name="T:Api.EcmaScript.EcmaService">
@@ -22868,6 +23701,11 @@
             Typically happens on the homepage.
             </summary>
         </member>
+        <member name="F:Api.Pages.Page.ExcludeFromSearch">
+            <summary>
+            Exclude this page from search indexing
+            </summary>
+        </member>
         <member name="T:Api.Pages.PageCacheSet">
             <summary>
             The set of caches in the page system.
@@ -23866,6 +24704,1124 @@
             </summary>
             <param name="maxSize">The length of the token you'd like.</param>
             <returns></returns>
+        </member>
+        <member name="T:Api.SearchCrawler.CrawledPageMeta">
+            <summary>
+            Metadata for a page that just got crawled (and rendered in to HTML).
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.CrawledPageMeta.Page">
+            <summary>
+            The page that got crawled. This gives you the BodyJson amongst other things.
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.CrawledPageMeta.BodyCompressedBytes">
+            <summary>
+            The complete html body, compressed with gzip.
+            </summary>
+        </member>
+        <member name="M:Api.SearchCrawler.CrawledPageMeta.GetDecompressedBody">
+            <summary>
+            Decompresses the compressed bytes and returns it in a memorystream.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchCrawler.CrawledPageMeta.GetBodyStream">
+            <summary>
+            Decompresses the bytes and returns it as a stream.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="F:Api.SearchCrawler.CrawledPageMeta.Url">
+            <summary>
+            The URL that was used when rendering the page. 
+            Will always be a resolved URL (Url does not necessarily equal Page.Url) meaning any tokens have been given values here.
+            Use Page.Url if you want the original with ${tokens} still in it.
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.CrawledPageMeta.Title">
+            <summary>
+            The Title that was used when rendering the page. 
+            Use Page.Title if you want the original with ${tokens} still in it.
+            </summary>
+        </member>
+        <member name="T:Api.SearchCrawler.SearchCrawlEventGroup">
+            <summary>
+            The group of events for services. See also Events.Service
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.SearchCrawlEventGroup.PageCrawledNoPrimaryContent">
+            <summary>
+            Called when the crawled has just rendered a non-primary content page and is telling you about it.
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.SearchCrawlEventGroup.CrawlerStatus">
+            <summary>
+            Raised when the crawler changes status
+            </summary>
+        </member>
+        <member name="T:Api.SearchCrawler.SearchCrawlerMode">
+            <summary>
+            Used to track the search crawlers mode
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.SearchCrawlerMode.Unknown">
+            <summary>
+            Not specified
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.SearchCrawlerMode.Indexing">
+            <summary>
+            Search Indexing
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.SearchCrawlerMode.Sitemap">
+            <summary>
+            Sitemap creation
+            </summary>
+        </member>
+        <member name="T:Api.SearchCrawler.SearchCrawlerConfig">
+            <summary>
+            Config for elastic search service.
+            </summary>
+        </member>
+        <member name="P:Api.SearchCrawler.SearchCrawlerConfig.DebugToConsole">
+            <summary>
+            Should debug info be written to the console?
+            </summary>
+        </member>
+        <member name="P:Api.SearchCrawler.SearchCrawlerConfig.IncludePageContent">
+            <summary>
+            Should the page content be rendered 
+            </summary>
+        </member>
+        <member name="P:Api.SearchCrawler.SearchCrawlerConfig.Disabled">
+            <summary>
+            Flag to optionally disable service.
+            </summary>
+        </member>
+        <member name="T:Api.SearchCrawler.SearchCrawlerService">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.SearchCrawler.SearchCrawlerService.#ctor(Api.Pages.PageService,Api.Translate.LocaleService,Api.CanvasRenderer.CanvasRendererService,Api.Pages.HtmlService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.SearchCrawler.SearchCrawlerService.CrawlEverything(Api.SearchCrawler.SearchCrawlerMode)">
+            <summary>
+            Tells the crawler to crawl every page in the sitemap now. Does nothing if there is nothing to receive the output of the crawler.
+            This means you turn the crawler on by simply adding an event handler to it.
+            As it runs, it invokes both the Events.Crawler.PageCrawled event and also the given handler.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchCrawler.SearchCrawlerService.Crawl(Api.Contexts.Context,Api.SearchCrawler.SearchCrawlerMode,Api.Pages.Page,System.Func{Api.Contexts.Context,Api.SearchCrawler.CrawledPageMeta,System.Threading.Tasks.ValueTask})">
+            <summary>
+            Crawls a single page. This expects its URL to be static with no tokens in it.
+            </summary>
+            <param name="context"></param>
+            <param name="mode"></param>
+            <param name="page"></param>
+            <param name="onCrawledPage"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchCrawler.SearchCrawlerService.CrawlPermutations(Api.Contexts.Context,Api.SearchCrawler.SearchCrawlerMode,Api.Pages.Page,Api.Pages.UrlLookupTerminal)">
+            <summary>
+            Crawls a specific page. The optional lookupNode provides metadata about the parsed URL.
+            If tokenData is provided and the parsed URL contains 1 type of token then crawling the 
+            page will result in iterating through all permutations of the tokens.
+            </summary>
+            <param name="context"></param>
+            <param name="mode"></param>
+            <param name="page"></param>
+            <param name="tokenData"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchCrawler.SearchCrawlerService.CrawlService``2(Api.Contexts.Context,Api.SearchCrawler.SearchCrawlerMode,AutoService{``0,``1},Api.Pages.UrlLookupTerminal,Api.Pages.Page)">
+            <summary>
+            Crawls a particular service.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="ID"></typeparam>
+            <param name="context"></param>
+            <param name="mode"></param>
+            <param name="service"></param>
+            <param name="tokenData"></param>
+            <param name="page"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.SearchCrawler.SearchCrawlerStatus">
+            <summary>
+            Used to track the search crawlers status
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.SearchCrawlerStatus.Unknown">
+            <summary>
+            Not specified
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.SearchCrawlerStatus.Started">
+            <summary>
+            Crawling started
+            </summary>
+        </member>
+        <member name="F:Api.SearchCrawler.SearchCrawlerStatus.Completed">
+            <summary>
+            Crawling completed
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.AggregationStructure">
+            <summary>
+            Set of aggregation/taxonomy ovverides to allow the structure/order to be set based on categories and tags
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.AggregationStructure.AggregationOverrides">
+            <summary>
+            Set of aggregation/taxonomy ovverides 
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.AggregationOverride">
+            <summary>
+            The baseline/default taxonomy structure, this will be extracted from categories/tags
+            If no values are defined then the values will be extracted dynamically from the search results
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.AggregationOverride.Name">
+            <summary>
+            The name of the aggregation, for example "taxonomy.destination"
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.AggregationOverride.Label">
+            <summary>
+            The label to display to the user, for example "Destination"
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.AggregationOverride.Groups">
+            <summary>
+            Taxonomy grouping, a way to structuyre/group values such as region/destinations
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.AggregationOverride.Buckets">
+            <summary>
+            The actual taxonomy buckets/values, these store the possible values (and counts if passed back from Elastic)
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.Group">
+            <summary>
+            A container for multiple buckets grouped, so like a sub set of destinations for a region 
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Group.Name">
+            <summary>
+            The name of the sub group
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Group.Buckets">
+            <summary>
+            The actual taxonomy buckets/values, these store the possible values (and counts if passed back from Elastic)
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.Document">
+            <summary>
+            The definition of an indedxed document within elastic
+            </summary>
+            
+        </member>
+        <member name="P:Api.SearchElastic.Document.Id">
+            <summary>
+            An ID for this document.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Author">
+            <summary>
+            The author/creator for the document content
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Hash">
+            <summary>
+            The hash of a pages content.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Title">
+            <summary>
+            The title of a page
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Content">
+            <summary>
+            The content of the page
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.MetaDataText">
+            <summary>
+            The extracted text from any associated metadata (includes)
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Keywords">
+            <summary>
+            Page keywords
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Headings">
+            <summary>
+            Headings on a page
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Url">
+            <summary>
+            The URL of a page
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.CheckSum">
+            <summary>
+            Page checksum
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.ContentType">
+            <summary>
+            The content type of the page.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Image">
+            <summary>
+            The icon/image to associate with the document, usually a Ref value to icon or image
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Tags">
+            <summary>
+            The tags of the page
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Taxonomy">
+            <summary>
+            The taxonomy of the page.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.TimeStamp">
+            <summary>
+            The timestamp of the last index on this document.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.EditedUtc">
+            <summary>
+            The timestamp of the last change on this document.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Highlights">
+            <summary>
+            Highlights on the page.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.Score">
+            <summary>
+            Search score
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.PrimaryObject">
+            <summary>
+            The primary object of the page.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Document.MetaData">
+            <summary>
+            metadata/includes added by the current application
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.AddKeyWordSubField">
+            <summary>
+            No longer used but good example of synamically extending auto mapping
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.DocumentPropertyVisitor">
+            <summary>
+            No longer used but good example of synamically extending auto mapping
+            </summary>
+        </member>
+        <member name="M:Api.SearchElastic.DocumentPropertyVisitor.Visit(Nest.ITextProperty,System.Reflection.PropertyInfo,Nest.ElasticsearchPropertyAttributeBase)">
+            <summary>
+            
+            </summary>
+            <param name="type"></param>
+            <param name="propertyInfo"></param>
+            <param name="attribute"></param>
+        </member>
+        <member name="T:Api.SearchElastic.DocumentsResult">
+            <summary>
+            Search results with aggregations (facets)
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.DocumentsResult.PageIndex">
+            <summary>
+            Used to specify which page to get results for.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.DocumentsResult.PageSize">
+            <summary>
+            The number of results per page.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.DocumentsResult.TotalResults">
+            <summary>
+            Total results count. This is different from Results.Count.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.DocumentsResult.Results">
+            <summary>
+            The results set
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.DocumentsResult.Aggregations">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.Aggregation">
+            <summary>
+            Summary of available aggregations/facets
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Aggregation.Name">
+            <summary>
+            The name for this aggregation
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Aggregation.Label">
+            <summary>
+            The label for this aggregation
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Aggregation.Buckets">
+            <summary>
+            The buckets in this aggregation
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.Bucket">
+            <summary>
+            Single aggregation/facet entity
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Bucket.Key">
+            <summary>
+            The key of the bucket
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Bucket.Label">
+            <summary>
+            Label to use for this bucket
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.Bucket.Count">
+            <summary>
+            Number of entries in the bucket
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.SearchElasticEventGroup">
+            <summary>
+            The group of events for services. See also Events.Service
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.BeforeUpdate">
+            <summary>
+            Called after the core index document is created just prior to saving
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.IndexDocument">
+            <summary>
+            Called to request a new document is indexed
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.DeleteDocument">
+            <summary>
+            Called to request a new document is removed by id
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.DeleteContentType">
+            <summary>
+            Called to request that any documents are removed by content type
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.IndexDocuments">
+            <summary>
+            Called to request a new documents are indexed
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.CreateIndex">
+            <summary>
+            Called to request a new index is created
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.IsConnected">
+            <summary>
+            Called to request that the client is created/connected
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.AfterConnected">
+            <summary>
+            Called after a new connection to elastic is established 
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.AfterReset">
+            <summary>
+            Called after a reset request to elastic is has been completed
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.BeforeIndexingMeta">
+            <summary>
+            Called when before a page is indexed which has NO primary object
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.AfterUrl">
+            <summary>
+            Called after the index document url has been determined
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.AfterGetAllIndexes">
+            <summary>
+            Called after the list of indexes is created
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.AfterIndexKey">
+            <summary>
+            Called after the key of the current retrieval index is determined
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.AfterStorageIndexKeys">
+            <summary>
+            Called after the keys of the storage index is determined
+            </summary>
+        </member>
+        <member name="F:Api.SearchElastic.SearchElasticEventGroup.AfterPage">
+            <summary>
+            Called after the page body has been loaded into a html document for parsing
+            Great time to remove any unwanted footers etc
+            </summary>
+        </member>
+        <member name="T:Api.SearchElastic.SearchElasticController">
+            <summary>Handles site search endpoints.</summary>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticController.Query(Newtonsoft.Json.Linq.JObject)">
+            <summary>
+            Exposes the site search
+            </summary>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticController.Taxonomy(Newtonsoft.Json.Linq.JObject)">
+            <summary>
+            Exposes the taxonomy values based on categories
+            </summary>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticController.Reset">
+            <summary>
+            Reset the indexer
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticController.ResetIndex(System.String)">
+            <summary>
+            Reset a single index (delete all documents)
+            </summary>
+            <returns></returns>
+            
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticController.DeleteIndex(System.String)">
+            <summary>
+            Reset a single index (delete all documents)
+            </summary>
+            <returns></returns>
+            
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticController.Health">
+            <summary>
+            Exposes the current status of the elastic store
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticController.Shards">
+            <summary>
+            Exposes details of the current shards in the elastic store
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.SearchElastic.SearchElasticService">
+            <summary>
+            https://wiki.socialstack.dev/index.php?title=Search_Elastic
+            
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            https://www.elastic.co/guide/en/elasticsearch/client/net-api/current/introduction.html
+            
+            Using elastic search v8 with 7.17 client (v8 client is still wip)
+            https://www.elastic.co/guide/en/elasticsearch/client/net-api/7.17/connecting-to-elasticsearch-v8.html
+            
+            How to get the client fingerprint 
+            https://www.elastic.co/guide/en/elasticsearch/reference/8.1/configuring-stack-security.html#_connect_clients_to_elasticsearch_5
+            
+            
+            </summary>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.#ctor(Api.Translate.LocaleService,Api.Pages.PageService,Api.Tags.TagService,Api.Categories.CategoryService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.SetupForType``2(AutoService{``0,``1})">
+            <summary>
+            Handler for content types to expose content related data such as tags
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="ID"></typeparam>
+            <param name="service"></param>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.GetIndexedDocuments(Api.Contexts.Context)">
+            <summary>
+            Remove any orphaned docs from the search index
+            </summary>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.GetAllLocales(Api.Contexts.Context)">
+            <summary>
+            Get all the active locales 
+            </summary>
+            <param name="ctx"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.Purge">
+            <summary>
+            Remove any orphaned docs from the search index
+            </summary>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.ProcessPage``1(Api.Contexts.Context,Api.SearchCrawler.CrawledPageMeta,System.Collections.Generic.IEnumerable{Api.Tags.Tag},System.Collections.Generic.List{System.String},System.String,``0,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.Object}})">
+            <summary>
+            Extract and index content from the current page
+            </summary>
+            <param name="ctx"></param>
+            <param name="pageDocument"></param>
+            <param name="tags"></param>
+            <param name="indexKeys"></param>
+            <param name="contentType"></param>
+            <param name="content"></param>
+            <param name="metaData"></param>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.IndexDocuments(Api.Contexts.Context,System.Collections.Generic.List{Api.SearchElastic.Document},System.Collections.Generic.List{System.String})">
+            <summary>
+            Add document(s) to the index 
+            </summary>
+            <param name="ctx"></param>
+            <param name="documents"></param>
+            <param name="indexKeys"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.IndexDocument(Api.Contexts.Context,Api.SearchElastic.Document,System.Collections.Generic.List{System.String})">
+            <summary>
+            Add document to the index 
+            </summary>
+            <param name="ctx"></param>
+            <param name="document"></param>
+            <param name="indexKeys"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.DeleteDocument(Api.Contexts.Context,System.String,System.Collections.Generic.List{System.String})">
+            <summary>
+            Remove a document from the index 
+            </summary>
+            <param name="ctx"></param>
+            <param name="id"></param>
+            <param name="indexKeys"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.DeleteDocumentsByType(Api.Contexts.Context,System.String,System.Collections.Generic.List{System.String})">
+            <summary>
+            Remove documents from the index based on content type
+            </summary>
+            <param name="ctx"></param>
+            <param name="type"></param>
+            <param name="indexKeys"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.ExtractTaxonomy(Api.Contexts.Context,System.String)">
+            <summary>
+            Get all the possible taxonomy values forom categories/tags
+            </summary>
+            <param name="ctx"></param>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.ExtractSubTags(Api.Contexts.Context,System.Collections.Generic.IEnumerable{Api.Tags.Tag})">
+            <summary>
+            Extract any sub tags so for example destinations within a region
+            </summary>
+            <param name="ctx"></param>
+            <param name="tags"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.ExtractContentTaxonomy(Api.Contexts.Context,System.String,System.String)">
+            <summary>
+            Get all the possible taxonomy values from content for a field 
+            </summary>
+            <param name="ctx"></param>
+            <param name="type"></param>
+            <param name="field"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.GetHash(System.String)">
+            <summary>
+            Gets an md5 lowercase hash for the given content.
+            </summary>
+            <param name="input"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.GetAllIndexes">
+            <summary>
+            Get the active list of indexes
+            </summary>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.GetIndexName(Api.Contexts.Context,System.String)">
+            <summary>
+            Get the retrieval index for the page/url
+            </summary>
+            <param name="ctx"></param>
+            <param name="url"></param>
+            <returns></returns>        
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.GetStorageIndexKeys(Api.Contexts.Context,System.String)">
+            <summary>
+            Get the storage index keys for the page/url
+            </summary>
+            <param name="ctx"></param>
+            <param name="url"></param>
+            <returns></returns>        
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.CreateIndex(System.String)">
+            <summary>
+            create a new index 
+            </summary>
+            <param name="indexName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.DeleteIndex(Api.Contexts.Context,System.String)">
+            <summary>
+            Delete a single index
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.Reset(Api.Contexts.Context,System.String)">
+            <summary>
+            Delete the contents of a single index
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.Reset(Api.Contexts.Context)">
+            <summary>
+            Delete all the indexes
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.Health(Api.Contexts.Context)">
+            <summary>
+            Show the elastic instance health
+            </summary>
+            <param name="ctx"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.Query(Api.Contexts.Context,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Perform a basic search with highlighted results for title/content
+            </summary>
+            <param name="ctx"></param>
+            <param name="indexName"></param>
+            <param name="query"></param>
+            <param name="tags"></param>
+            <param name="contentTypes"></param>
+            <param name="aggregations"></param>
+            <param name="sortField"></param>
+            <param name="sortOrder"></param>
+            <param name="pageIndex"></param>
+            <param name="pageSize"></param>
+            <param name="allFields"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchElastic.SearchElasticService.Taxonomy(Api.Contexts.Context,System.String)">
+            <summary>
+            Get the baseline taxonomy values from categories and tags
+            </summary>
+            <param name="ctx"></param>
+            <param name="fields"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.SearchElastic.SearchElasticServiceConfig">
+            <summary>
+            Config for elastic search service.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.UserName">
+            <summary>
+            The elastic search instance user name
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.Password">
+            <summary>
+            The elastic search instance user password
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.FingerPrint">
+            <summary>
+            The elastic search instance fingerprint
+            
+            How to get the client fingerprint 
+            https://www.elastic.co/guide/en/elasticsearch/reference/8.1/configuring-stack-security.html#_connect_clients_to_elasticsearch_5
+            
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.InstanceUrl">
+            <summary>
+            The url for connecting to the elastic search instance
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.IndexName">
+            <summary>
+            The index name 
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.HeaderTags">
+            <summary>
+            List of tags to be treated as headers
+            </summary>		
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.DebugToConsole">
+            <summary>
+            Should debug info be written to the console?
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.ProgressToConsole">
+            <summary>
+            Should progress info be written to the console?
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.DebugQueries">
+            <summary>
+            Should debug info be written for each query to the console?
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.AlwaysUpdateIndex">
+            <summary>
+            Should we always update the index or only if the checksum has changed
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.Disabled">
+            <summary>
+            Flag to optionally disable service.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.Shards">
+            <summary>
+            The number of shards per index.
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.Replicas">
+            <summary>
+            The number of replicas per index
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.FacetLimit">
+            <summary>
+            The max number of facet results
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.BulkIndexLimit">
+            <summary>
+            The max number of documents to index at at time
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.UseBulkIndexing">
+            <summary>
+            Flag to determine if bulk indexing is active
+            </summary>
+        </member>
+        <member name="P:Api.SearchElastic.SearchElasticServiceConfig.MappingFieldsLimit">
+            <summary>
+            The maximum number of mapping fields per index (index.mapping.total_fields.limit)
+            </summary>
+        </member>
+        <member name="T:Api.Tags.Tag">
+            <summary>
+            A tag.
+            These are the primary taxonomy mechanism; any site content can be grouped up in multiple tags.
+            </summary>
+        </member>
+        <member name="F:Api.Tags.Tag.Order">
+            <summary>
+            The sequence in which to list/display the tag
+            </summary>
+        </member>
+        <member name="F:Api.Tags.Tag.IsPrice">
+            <summary>
+            Should this tag be retrieved via currency locale?
+            </summary>
+        </member>
+        <member name="F:Api.Tags.Tag.Name">
+            <summary>
+            The name of the tag in the site default language.
+            </summary>
+        </member>
+        <member name="F:Api.Tags.Tag.Description">
+            <summary>
+            Description of this tag.
+            </summary>
+        </member>
+        <member name="F:Api.Tags.Tag.FeatureRef">
+            <summary>
+            The feature image ref. See also: "Upload.Ref" in the Uploads module.
+            </summary>
+        </member>
+        <member name="F:Api.Tags.Tag.IconRef">
+            <summary>
+            The icon ref. See also: "Upload.Ref" in the Uploads module.
+            </summary>
+        </member>
+        <member name="F:Api.Tags.Tag.HexColor">
+            <summary>
+            The Hex color we want the tag to be.
+            </summary>
+        </member>
+        <member name="T:Api.Tags.TagController">
+            <summary>
+            Handles tag endpoints.
+            </summary>
+        </member>
+        <member name="T:Api.Tags.TagService">
+            <summary>
+            Handles tags - usually seen in e.g. knowledge bases or help guides.
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.Tags.TagService.#ctor">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="T:Api.SearchEntities.Permissions">
+            <summary>
+            Instances capabilities during the very earliest phases of startup.
+            </summary>
+        </member>
+        <member name="M:Api.SearchEntities.Permissions.#ctor">
+            <summary>
+            Instanced automatically.
+            </summary>
+        </member>
+        <member name="T:Api.SearchEntities.SearchEntity">
+            <summary>
+            A SearchEntity
+            </summary>
+        </member>
+        <member name="F:Api.SearchEntities.SearchEntity.ContentType">
+            <summary>
+            The entity name/service of entity to be indexed
+            </summary>
+        </member>
+        <member name="F:Api.SearchEntities.SearchEntity.ContentId">
+            <summary>
+            The id of entity to be indexed
+            </summary>
+        </member>
+        <member name="F:Api.SearchEntities.SearchEntity.Action">
+            <summary>
+            The action being performed
+            </summary>
+        </member>
+        <member name="T:Api.SearchEntities.SearchEntityConfig">
+            <summary>
+            Config for entity search indexing service.
+            </summary>
+        </member>
+        <member name="P:Api.SearchEntities.SearchEntityConfig.Disabled">
+            <summary>
+            Flag to optionally disable service.
+            </summary>
+        </member>
+        <member name="P:Api.SearchEntities.SearchEntityConfig.IndexName">
+            <summary>
+            The index name 
+            </summary>
+        </member>
+        <member name="P:Api.SearchEntities.SearchEntityConfig.BulkIndexLimit">
+            <summary>
+            The max number of documents to index at at time
+            </summary>
+        </member>
+        <member name="P:Api.SearchEntities.SearchEntityConfig.UseDynamicIndexing">
+            <summary>
+            Flag to determine if content updates are tracked for index sync
+            </summary>
+        </member>
+        <member name="P:Api.SearchEntities.SearchEntityConfig.DebugToConsole">
+            <summary>
+            Should debug info be written to the console?
+            </summary>
+        </member>
+        <member name="T:Api.SearchEntities.SearchEntityController">
+            <summary>Handles searchEntity endpoints.</summary>
+        </member>
+        <member name="M:Api.SearchEntities.SearchEntityController.Query(Newtonsoft.Json.Linq.JObject)">
+            <summary>
+            Exposes the site search
+            </summary>
+        </member>
+        <member name="M:Api.SearchEntities.SearchEntityController.Reset">
+            <summary>
+            Reset the index
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchEntities.SearchEntityController.Index">
+            <summary>
+            Reindex the content
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Api.SearchEntities.SearchEntityService">
+            <summary>
+            Index content for admin panel search
+            </summary>
+        </member>
+        <member name="M:Api.SearchEntities.SearchEntityService.#ctor(Api.CanvasRenderer.FrontendCodeService)">
+            <summary>
+            Service to locate newly added entities and index them 
+            </summary>
+            
+        </member>
+        <member name="M:Api.SearchEntities.SearchEntityService.Index(Api.Contexts.Context,System.String)">
+            <summary>
+            Index all content data 
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchEntities.SearchEntityService.IndexEntityMethod``2(AutoService{``0,``1})">
+            <summary>
+            Generic method to check the 'service' fields and if ok adds the create handler
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="ID"></typeparam>
+            <param name="service"></param>
+        </member>
+        <member name="M:Api.SearchEntities.SearchEntityService.GetItemstoIndex``2(AutoService{``0,``1},System.String)">
+            <summary>
+            Find and process items to index
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="ID"></typeparam>
+            <param name="service"></param>
+            <param name="mode"></param>
+        </member>
+        <member name="M:Api.SearchEntities.SearchEntityService.IsValidJson(System.String)">
+            <summary>
+            check if an element is json/canvas
+            </summary>
+            <param name="strInput"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.SearchIndexing.MappingIncludes">
+            <summary>
+            Config item to store the mapping between a content type and the includes which should be indexed
+            </summary>
+        </member>
+        <member name="P:Api.SearchIndexing.MappingIncludes.Type">
+            <summary>
+            The name of the content type e.g. User/Event etc
+            </summary>
+        </member>
+        <member name="P:Api.SearchIndexing.MappingIncludes.Includes">
+            <summary>
+            The includes string 
+            </summary>
+        </member>
+        <member name="T:Api.SearchIndexing.SearchIndexingService">
+            <summary>
+            Add additional meta data to the document indexing
+            </summary>
+        </member>
+        <member name="M:Api.SearchIndexing.SearchIndexingService.#ctor(Api.CanvasRenderer.CanvasRendererService)">
+            <summary>
+            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+            </summary>
+        </member>
+        <member name="M:Api.SearchIndexing.SearchIndexingService.SetupForType``2(AutoService{``0,``1})">
+            <summary>
+            Handler for content types to allow for custom meta data to be extracted
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="ID"></typeparam>
+            <param name="service"></param>
+        </member>
+        <member name="M:Api.SearchIndexing.SearchIndexingService.ExtractCanvasText(Api.Contexts.Context,System.String,System.String)">
+            <summary>
+            Extract the plain text from a canvas object
+            </summary>
+            <param name="ctx"></param>
+            <param name="state"></param>
+            <param name="canvasText"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchIndexing.SearchIndexingService.GetStringProperties``1(``0)">
+            <summary>
+            Locate any string properties in an object
+            </summary>
+            <typeparam name="TEntity"></typeparam>
+            <param name="entity"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchIndexing.SearchIndexingService.GetStringFields``1(``0)">
+            <summary>
+            Locate any string field elements in an object
+            </summary>
+            <typeparam name="TEntity"></typeparam>
+            <param name="entity"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchIndexing.SearchIndexingService.ExtractAllStringValues``1(Api.Contexts.Context,System.String,``0)">
+            <summary>
+            Extract any strings from an object
+            used to extract indexable content from primaryObjects and metadata (includes)
+            also parses and updates the values in the passed in object 
+            </summary>
+            <param name="ctx"></param>
+            <param name="state"></param>
+            <param name="instance"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.SearchIndexing.SearchIndexingService.IsValidJson(System.String)">
+            <summary>
+            check if an element is json/canvas
+            </summary>
+            <param name="strInput"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Api.SearchIndexing.SearchIndexingServiceConfig">
+            <summary>
+            Config for search indexing service.
+            </summary>
+        </member>
+        <member name="P:Api.SearchIndexing.SearchIndexingServiceConfig.IncludePrimary">
+            <summary>
+            Include the primary object in the meta data 
+            </summary>
+        </member>
+        <member name="P:Api.SearchIndexing.SearchIndexingServiceConfig.Mappings">
+            <summary>
+            List include mappings for content types
+            </summary>		
+        </member>
+        <member name="P:Api.SearchIndexing.SearchIndexingServiceConfig.NodeSelectors">
+            <summary>
+            List of html document selectors for removing page nodes prior to indexing
+            e.g.
+            //*[contains(concat(' ', @class, ' '), ' donotsearch ')]
+            </summary>		
+        </member>
+        <member name="P:Api.SearchIndexing.SearchIndexingServiceConfig.DebugToConsole">
+            <summary>
+            Should debug info be written to the console?
+            </summary>
         </member>
         <member name="T:Api.Signatures.KeyPair">
             <summary>
@@ -27490,53 +29446,6 @@
             Sets _isConfigured
             </summary>
         </member>
-        <member name="T:Api.Tags.Tag">
-            <summary>
-            A tag.
-            These are the primary taxonomy mechanism; any site content can be grouped up in multiple tags.
-            </summary>
-        </member>
-        <member name="F:Api.Tags.Tag.Name">
-            <summary>
-            The name of the tag in the site default language.
-            </summary>
-        </member>
-        <member name="F:Api.Tags.Tag.Description">
-            <summary>
-            Description of this tag.
-            </summary>
-        </member>
-        <member name="F:Api.Tags.Tag.FeatureRef">
-            <summary>
-            The feature image ref. See also: "Upload.Ref" in the Uploads module.
-            </summary>
-        </member>
-        <member name="F:Api.Tags.Tag.IconRef">
-            <summary>
-            The icon ref. See also: "Upload.Ref" in the Uploads module.
-            </summary>
-        </member>
-        <member name="F:Api.Tags.Tag.HexColor">
-            <summary>
-            The Hex color we want the tag to be.
-            </summary>
-        </member>
-        <member name="T:Api.Tags.TagController">
-            <summary>
-            Handles tag endpoints.
-            </summary>
-        </member>
-        <member name="T:Api.Tags.TagService">
-            <summary>
-            Handles tags - usually seen in e.g. knowledge bases or help guides.
-            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-            </summary>
-        </member>
-        <member name="M:Api.Tags.TagService.#ctor">
-            <summary>
-            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-            </summary>
-        </member>
         <member name="T:Api.Templates.Template">
             <summary>
             A template.
@@ -27577,315 +29486,6 @@
         <member name="M:Api.Templates.TemplateService.#ctor">
             <summary>
             Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-            </summary>
-        </member>
-        <member name="T:Api.Translate.EventListener">
-            <summary>
-            Listens out for the DatabaseDiff run to add additional columns.
-            It finds any [Localized] fields and adds copies of the field for each locale, except they're always nullable.
-            </summary>
-        </member>
-        <member name="M:Api.Translate.EventListener.#ctor">
-            <summary>
-            Instanced automatically.
-            </summary>
-        </member>
-        <member name="T:Api.Translate.Locale">
-            <summary>
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.Name">
-            <summary>
-            The name.
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.Code">
-            <summary>
-            Usually a 5 letter locale code e.g. "en_GB". May also be just 2 e.g. "fr".
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.FlagIconRef">
-            <summary>
-            Associated flag image representing the locale.
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.Aliases">
-            <summary>
-            List of comma seperated aliases for mapping request headers or custom client codes
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.isDisabled">
-            <summary>
-            Indicates if the locale is not currently available
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.isRedirected">
-            <summary>
-            Indicates if the locale should be redirected to root (e.g. /en-us/abc > /abc)
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.PermanentRedirect">
-            <summary>
-            True if this redirect should be considered permanent (i.e. a 301);
-            Will default to a temporary 302 redirect if not set
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.RightToLeft">
-            <summary>
-            Indicates this locale goes primarily right to left, such as Hebrew or Arabic.
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.PagePath">
-            <summary>
-            If this locale is in use, the page URL to lookup will be prefixed with this value, except on the admin panel.
-            Should not contain any /. For example, can be "jersey". The frontend will never actually see this path; it is purely for creating different page sets per locale.
-            Different page sets is generally tidier than translating pages.
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Locale.Domains">
-            <summary>
-            Used by sites with localised domains. A comma separated list of domain names with optional ports.
-            </summary>
-        </member>
-        <member name="P:Api.Translate.Locale.ShortCode">
-            <summary>
-            If the code is e.g. en-GB, this is just en. It is internally cached for speed as well.
-            </summary>
-        </member>
-        <member name="T:Api.Translate.LocaleController">
-            <summary>
-            Handles locale endpoints.
-            </summary>
-        </member>
-        <member name="M:Api.Translate.LocaleController.Set(System.UInt32)">
-            <summary>
-            GET /v1/locale/set/2/
-            Sets locale by its ID.
-            </summary>
-        </member>
-        <member name="T:Api.Translate.LocaleService">
-            <summary>
-            Handles locales - the core of the translation (localisation) system.
-            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-            </summary>
-        </member>
-        <member name="M:Api.Translate.LocaleService.#ctor">
-            <summary>
-            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-            </summary>
-        </member>
-        <member name="M:Api.Translate.LocaleService.OnCacheLoaded">
-            <summary>
-            Runs when the cache has loaded.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:Api.Translate.LocaleService.GetByDomain(System.String)">
-            <summary>
-            Gets locale ID by its case insensitive domain and optional port. "www.mysite.co.uk" or "localhost:5050"
-            </summary>
-            <param name="domain"></param>
-            <returns>null if not found.</returns>
-        </member>
-        <member name="M:Api.Translate.LocaleService.GetId(System.String)">
-            <summary>
-            Gets locale ID by its case insensitive code. Can contain hyphens, such as "en-gb".
-            </summary>
-            <param name="localeCode"></param>
-            <returns>null if not found.</returns>
-        </member>
-        <member name="F:Api.Translate.LocaleService.countryToLanguageMap">
-            <summary>
-            A mapping of alpha-2 country code (e.g. "us") -> full country code (e.g. "en-US").
-            </summary>
-        </member>
-        <member name="M:Api.Translate.LocaleService.UpdateContextLocale(Api.Contexts.Context,System.String)">
-            <summary>
-            Updates the given context LocaleId if the alpha-2 country code supplied relates to an available locale.
-            </summary>
-            <param name="context"></param>
-            <param name="countryCode"></param>
-        </member>
-        <member name="F:Api.Translate.LocaleService._codeMap">
-            <summary>
-            A mapping of locale code -> ID. Uses IDs such that it does not need locale specific variations.
-            </summary>
-        </member>
-        <member name="F:Api.Translate.LocaleService._domainMap">
-            <summary>
-            A mapping of domain -> ID. Uses IDs such that it does not need locale specific variations.
-            </summary>
-        </member>
-        <member name="F:Api.Translate.LocaleService._multiDomain">
-            <summary>
-            True if the domains field is used on locales.
-            </summary>
-        </member>
-        <member name="P:Api.Translate.LocaleService.CookieName">
-            <summary>
-            The name of the cookie when locale is stored.
-            </summary>
-        </member>
-        <member name="T:Api.Translate.LocaleServiceConfig">
-            <summary>
-            Config for locale service.
-            </summary>
-        </member>
-        <member name="P:Api.Translate.LocaleServiceConfig.HandleAcceptLanguageHeader">
-            <summary>
-            True (default) if the accept-lang header will be used to 
-            establish default language when a user is seen for the first time.
-            </summary>
-        </member>
-        <member name="P:Api.Translate.LocaleServiceConfig.HandleCloudFlareHeader">
-            <summary>
-            True (default) if the CF-IPCountry header will be used to 
-            establish default language.
-            </summary>
-        </member>
-        <member name="T:Api.Translate.LocalizedAttribute">
-            <summary>
-            Use this to declare a database field as localized - either translatable or containing different values per locale.
-            Fields marked with this will result in another table being generated.
-            </summary>
-        </member>
-        <member name="T:Api.Translate.Permissions">
-            <summary>
-            Instances capabilities during the very earliest phases of startup.
-            </summary>
-        </member>
-        <member name="M:Api.Translate.Permissions.#ctor">
-            <summary>
-            Instanced automatically.
-            </summary>
-        </member>
-        <member name="T:Api.Translate.PoTranslation">
-            <summary>
-            Wrapper class for po data translations
-            </summary>
-        </member>
-        <member name="P:Api.Translate.PoTranslation.ContentType">
-            <summary>
-            Content type
-            </summary>
-        </member>
-        <member name="P:Api.Translate.PoTranslation.ContentId">
-            <summary>
-            Content ID
-            </summary>
-        </member>
-        <member name="P:Api.Translate.PoTranslation.Id">
-            <summary>
-            Entry ID
-            </summary>
-        </member>
-        <member name="P:Api.Translate.PoTranslation.FieldName">
-            <summary>
-            Field name
-            </summary>
-        </member>
-        <member name="P:Api.Translate.PoTranslation.Original">
-            <summary>
-            Original text
-            </summary>
-        </member>
-        <member name="P:Api.Translate.PoTranslation.Translated">
-            <summary>
-            Translated text
-            </summary>
-        </member>
-        <member name="T:Api.Translate.Translation">
-            <summary>
-            A Translation
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Translation.Module">
-            <summary>
-            E.g. "UI/AboutUs" - the exact JS module name that this translation is for.
-            </summary>
-        </member>
-        <member name="F:Api.Translate.Translation.Original">
-            <summary>The original text string.</summary>
-        </member>
-        <member name="F:Api.Translate.Translation.Translated">
-            <summary>The translation.</summary>
-        </member>
-        <member name="T:Api.Translate.TranslationController">
-            <summary>Handles translation endpoints.</summary>
-        </member>
-        <member name="M:Api.Translate.TranslationController.#ctor(Api.Translate.TranslationService)">
-            <summary>
-            Instanced automatically.
-            </summary>
-        </member>
-        <member name="M:Api.Translate.TranslationController.PrePopulate">
-            <summary>
-            Requests pre-populate the translations table 
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:Api.Translate.TranslationController.LoadPotFiles">
-            <summary>
-            Process any pot files into the translations table 
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="T:Api.Translate.TranslationService">
-            <summary>
-            Handles translations.
-            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-            </summary>
-        </member>
-        <member name="M:Api.Translate.TranslationService.#ctor">
-            <summary>
-            Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-            </summary>
-        </member>
-        <member name="M:Api.Translate.TranslationService.LoadDefaultTranslations">
-            <summary>
-            Extract any default translations from the modules and locale.xx.json files 
-            </summary>
-        </member>
-        <member name="M:Api.Translate.TranslationService.LoadPotFiles(Api.Contexts.Context)">
-            <summary>
-            Loads .po files from a directory called "Translations"
-            </summary>
-            <param name="context"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Api.Translate.TranslationService.ParsePOData(Api.Contexts.Context,System.IO.Stream,System.Type)">
-            <summary>
-            Parse and load PO language file data
-            </summary>
-            <param name="context"></param>
-            <param name="stream"></param>
-            <param name="serviceType"></param>
-            <returns></returns>
-            <exception cref="T:Api.Startup.PublicException"></exception>
-        </member>
-        <member name="T:Api.Translate.TranslationServiceConfig">
-            <summary>
-            Config for translation service.
-            </summary>
-        </member>
-        <member name="P:Api.Translate.TranslationServiceConfig.ReformatCanvasElements">
-            <summary>
-            When exporting/importing translations via port files should we reformat the canvas elements to simplify the format 
-            </summary>
-        </member>
-        <member name="P:Api.Translate.TranslationServiceConfig.AutoAddTranslationElements">
-            <summary>
-            Automatically add any new translation elements when parsing content (DEV ONLY)
-            </summary>
-        </member>
-        <member name="P:Api.Translate.TranslationServiceConfig.AutoAddExcludeModules">
-            <summary>
-            List of modules to exclude from translation auto add 
-            </summary>		
-        </member>
-        <member name="P:Api.Translate.TranslationServiceConfig.AutoAddBaseLineTranslations">
-            <summary>
-            Automatically add any baseline translations (locale.xx.json) files into the backend 
             </summary>
         </member>
         <member name="T:AutoService`2">
@@ -27951,6 +29551,40 @@
             <param name="id"></param>
             <param name="includes"></param>
             <param name="so"></param>
+        </member>
+        <member name="M:AutoService`2.ExtractTaxonomy(Api.Contexts.Context,System.String)">
+            <summary>
+            Extract any taxonomy items
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:AutoService`2.HasBooleanValue(Api.Contexts.Context,System.String,System.Object)">
+            <summary>
+            Check the data object for a boolean value and pass back the value 
+            </summary>
+            <param name="context"></param>
+            <param name="fieldName"></param>
+            <param name="data"></param>
+            <returns></returns>
+        </member>
+        <member name="M:AutoService`2.HasMatchingValue(Api.Contexts.Context,System.String,System.String,System.Object)">
+            <summary>
+            Check the data object for a matching field and value
+            </summary>
+            <param name="context"></param>
+            <param name="fieldName"></param>
+            <param name="fieldValue"></param>
+            <param name="data"></param>
+            <returns></returns>
+        </member>
+        <member name="M:AutoService`2.GetFieldValue(Api.Contexts.Context,System.String,System.Object)">
+            <summary>
+            Check the data object for a value and pass back the value 
+            </summary>
+            <param name="context"></param>
+            <param name="fieldName"></param>
+            <param name="data"></param>
+            <returns></returns>
         </member>
         <member name="F:AutoService`2.EventGroup">
             <summary>
@@ -28710,6 +30344,16 @@
             Schedules the install to happen either immediately if services have not yet started (async) or after services have started.
             </summary>
             <param name="templates"></param>
+        </member>
+        <member name="M:AutoService.ExtractTaxonomy(Api.Contexts.Context,System.String)">
+            <summary>
+            Find unique values within content for filtering etc
+            </summary>
+            <returns></returns>
+            <summary>
+            Find unique values within content for filtering etc
+            </summary>
+            <returns></returns>
         </member>
         <member name="F:AutoService.ServicedType">
             <summary>

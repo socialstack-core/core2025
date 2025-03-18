@@ -3,6 +3,7 @@ using Api.Eventing;
 using Api.Translate;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -1554,17 +1555,19 @@ namespace Api.CanvasRenderer
             {
                 // Transform it now (developers only here - we only care about ES8, i.e. minimal changes to source/ react only):
                 var es8JavascriptResult = BuildEngine.Invoke(
-                    "transformES8",
+                    "transformES8Json",
                     file.RawSource != null ? file.RawSource : File.ReadAllText(file.Path),
                     file.ModulePath, // Module path
                     file.FullModulePath,
                     TransformOptions
-                ) as ScriptObject;
+                ) as string;
 
-                // Get the src:
-                var es8Javascript = es8JavascriptResult["src"] as string;
+                // Specifically treat it as a JSON string:
+                var result = Newtonsoft.Json.JsonConvert.DeserializeObject(es8JavascriptResult) as JObject;
 
-                var literals = es8JavascriptResult["templateLiterals"] as System.Collections.IList;
+				// Get the src:
+				var es8Javascript = result["src"].Value<string>();
+                var literals = result["templateLiterals"] as JArray;
 
                 if (literals != null)
                 {
@@ -1572,12 +1575,12 @@ namespace Api.CanvasRenderer
 
                     foreach (var literalRaw in literals)
                     {
-                        var literal = literalRaw as ScriptObject;
-                        var original = literal["original"] as string;
-                        var target = literal["target"] as string;
-                        var start = (int)literal["start"];
-                        var end = (int)literal["end"];
-                        var expressions = literal["expressions"] as System.Collections.IList;
+                        var literal = literalRaw as JObject;
+                        var original = literal["original"].Value<string>();
+                        var target = literal["target"].Value<string>();
+                        var start = literal["start"].Value<int>();
+                        var end = literal["end"].Value<int>();
+                        var expressions = literal["expressions"] as JArray;
 
                         if (templates == null)
                         {
@@ -1594,11 +1597,11 @@ namespace Api.CanvasRenderer
 
                             foreach (var exprRaw in expressions)
                             {
-                                var expr = exprRaw as ScriptObject;
-                                var from = expr["from"] as string;
-                                var to = expr["to"] as string;
+                                var expr = exprRaw as JObject;
+                                var from = expr["from"].Value<string>();
+								var to = expr["to"].Value<string>();
 
-                                if (from != null && to != null)
+								if (from != null && to != null)
                                 {
                                     varMap[from] = to;
                                 }
