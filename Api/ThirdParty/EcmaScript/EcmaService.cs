@@ -18,6 +18,7 @@ using Api.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Api.EcmaScript
 {
@@ -640,20 +641,23 @@ namespace Api.EcmaScript
                         }
                         else
                         {
-                            // create entity type.
-                            var def = new TypeDefinition() {
-                                Name = returnType.Name
-                            };
-                            
-                            var defDocs = GetTypeDocumentation(returnType);
-
-                            if (defDocs is not null)
+                            if (!TypeConversions.ContainsKey(returnType))
                             {
-                                def.AddTsDocLine(defDocs.Summary.Trim());
-                            }
+                                // create entity type.
+                                var def = new TypeDefinition() {
+                                    Name = returnType.Name
+                                };
+                                
+                                var defDocs = GetTypeDocumentation(returnType);
 
-                            AddFieldsToType(returnType, def);
-                            script.AddChild(def);
+                                if (defDocs is not null)
+                                {
+                                    def.AddTsDocLine(defDocs.Summary.Trim());
+                                }
+
+                                AddFieldsToType(returnType, def);
+                                script.AddChild(def);   
+                            }
                         }
 
                         foreach(var param in method.GetParameters())
@@ -967,6 +971,7 @@ namespace Api.EcmaScript
             AddTypeConversion(typeof(void), "void");
             AddTypeConversion(typeof(object), "Record<string, string | number | boolean>");
             AddTypeConversion(typeof(Context), "SessionResponse");
+            AddTypeConversion(typeof(JObject), "Record<string, string | number | boolean>");
         }
 
        
