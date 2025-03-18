@@ -97,6 +97,8 @@ namespace Api.EcmaScript
 			InitTypeConversions();
             CreateBaseApi(container);
             InitTsScripts(container);
+
+            container.Add(IncludesScript.FileName, IncludesScript.CreateSource());
         }
 
         private Script GetScriptByEntity(Type entityType)
