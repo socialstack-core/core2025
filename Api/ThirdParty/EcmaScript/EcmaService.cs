@@ -1,12 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Amazon.Auth.AccessControlPolicy;
+using Api.AutoForms;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
 using Api.Contexts;
@@ -99,6 +99,7 @@ namespace Api.EcmaScript
             InitTsScripts(container);
 
             container.Add(IncludesScript.FileName, IncludesScript.CreateSource());
+            CreateAutoControllerApi(container);
         }
 
         private Script GetScriptByEntity(Type entityType)
@@ -111,6 +112,23 @@ namespace Api.EcmaScript
 
             EntityScriptMapping[entityType] = sct;
             return sct;
+        }
+
+        private void CreateAutoControllerApi(SourceFileContainer container)
+        {
+            var controller = typeof(AutoFormController);
+            var script = GetScriptByEntity(controller);
+
+            script.FileName = "TypeScript/Api/AutoForm.tsx";
+
+            script.AddImport(new() {
+                From = "UI/Functions/WebRequest",
+                Symbols = ["getJson"]
+            });
+
+            FromController(controller, script, null);
+            container.Add(script.FileName, script.CreateSource());
+            File.WriteAllText(script.FileName, script.CreateSource());
         }
 
         private void CreateBaseContentTsx(SourceFileContainer container)
@@ -135,7 +153,7 @@ namespace Api.EcmaScript
                 Inheritence = ["UserCreatedContent"]
             };
             versionedContent.AddTsDocLine("* The base content type for all content.");
-            AddFieldsToType(typeof(VersionedContent<>), versionedContent);
+            AddFieldsToType(typeof(VersionedContent<>), versionedContent, content);
             versionedContent.AddProperty("revisionId", "number");
             content.AddChild(versionedContent);
 
@@ -145,7 +163,7 @@ namespace Api.EcmaScript
                 Inheritence = ["Content"]
             };
             userGenContent.AddTsDocLine("* The base content type for all entities users can create");
-            AddFieldsToType(typeof(UserCreatedContent<>), userGenContent);
+            AddFieldsToType(typeof(UserCreatedContent<>), userGenContent, content);
             content.AddChild(userGenContent);
 
             var generatedSource = content.CreateSource();
@@ -359,21 +377,24 @@ namespace Api.EcmaScript
 
         }
 
-        private void AddFieldsToType(Type source, TypeDefinition target)
+        private void AddFieldsToType(Type source, TypeDefinition target, Script script)
         {
-            foreach (var field in source.GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly))
+            foreach (var field in source.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly))
             {
                 // Skip compiler-generated backing fields (e.g., auto-properties)
                 if (Attribute.IsDefined(field, typeof(CompilerGeneratedAttribute)))
                 {
                     continue;
                 }
+
                 if (field.IsStatic)
                 {
                     continue;
                 }
+
                 var fieldName = field.Name;
 
+                // Remove leading underscore and lowercase first letter
                 if (fieldName[0] == '_')
                 {
                     fieldName = fieldName[1..];
@@ -383,22 +404,126 @@ namespace Api.EcmaScript
 
                 var type = field.FieldType;
 
+                // Handle nullable types
                 var nullableType = Nullable.GetUnderlyingType(type);
                 if (nullableType != null)
                 {
                     type = nullableType;
                 }
 
-                // Add only actual fields (not property backers)
-                target.AddProperty(fieldName, GetTypeConversion(type));
+                // Skip types already converted (to prevent duplicates or circular references)
+                if (TypeConversions.TryGetValue(type, out string value))
+                {
+                    if (IsCollection(field)) 
+                    {
+                        target.AddProperty(fieldName, value + "[]");
+                    }
+                    else
+                    {
+                        target.AddProperty(fieldName, value);
+                    }
+                    continue;
+                }
+
+                // If it's a collection (array or generic collection), handle its item type
+                if (IsCollection(field))
+                {
+                    var objectType = GetCollectionItemType(field);
+
+                    if (TypeConversions.TryGetValue(objectType, out string collValue))
+                    {
+                        target.AddProperty(
+                            fieldName,
+                            collValue + "[]"
+                        );
+                    }
+                    else
+                    {
+                        // If the object type is not yet in TypeConversions, generate it
+                        if (script != null)
+                        {
+                            // Avoid processing duplicate or circular references
+                            if (script.Children.Any(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == objectType.Name))
+                            {
+                                continue;
+                            }
+
+                            // Generate the type definition recursively
+                            var generatedType = new TypeDefinition() { Name = objectType.Name };
+                            AddFieldsToType(objectType, generatedType, script);
+
+                            TypeConversions[objectType] = generatedType.Name + "[]";
+                            script.AddChild(generatedType);
+                            target.AddProperty(fieldName, generatedType.Name + "[]");
+                        }
+                    }
+                }
+                else
+                {
+                    // If the field is not a collection, check if it's a known type
+                    if (TypeConversions.TryGetValue(type, out string nonCollType))
+                    {
+                        target.AddProperty(fieldName, nonCollType);
+                    }
+                    else
+                    {
+                        // If the type is not yet processed, generate it
+                        if (script != null)
+                        {
+                            // Avoid circular references by checking the script's existing types
+                            if (script.Children.Any(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == type.Name))
+                            {
+                                continue;
+                            }
+
+                            var generatedType = new TypeDefinition() { Name = type.Name };
+                            AddFieldsToType(type, generatedType, script);
+
+                            TypeConversions[type] = generatedType.Name + "[]";
+                            script.AddChild(generatedType);
+                            target.AddProperty(fieldName, generatedType.Name);
+                        }
+                    }
+                }
             }
         }
 
 
+        private static Type GetCollectionItemType(FieldInfo field)
+        {
+            // Check for arrays (e.g., int[] or string[])
+            if (field.FieldType.IsArray)
+            {
+                return field.FieldType.GetElementType();
+            }
+
+            // Check for generic collections like List<T>, Dictionary<TKey, TValue>, etc.
+            if (field.FieldType.IsGenericType)
+            {
+                var genericType = field.FieldType.GetGenericTypeDefinition();
+                if (genericType == typeof(List<>) || genericType == typeof(IEnumerable<>))
+                {
+                    return field.FieldType.GetGenericArguments()[0];
+                }
+                if (genericType == typeof(Dictionary<,>))
+                {
+                    var valueType = field.FieldType.GetGenericArguments()[1];
+                    return valueType;
+                }
+            }
+
+            return null;  // In case we can't determine the type
+        }
+
+        private static bool IsCollection(FieldInfo field)
+        {
+            // Check if the field type is a collection (implements IEnumerable)
+            return typeof(IEnumerable).IsAssignableFrom(field.FieldType) && field.FieldType != typeof(string);
+        }
+
         private void InitTsScripts(SourceFileContainer sourceContainer)
         {
             var allEndpointsByModule = endpointService.ListByModule();
-            var crudOperations = new string[]{"List", "Load", "Create", "Update", "Delete"};
 
             foreach(var module in allEndpointsByModule){
 
@@ -523,183 +648,14 @@ namespace Api.EcmaScript
                 
                 if ( controller != null )
                 {
-                    if (string.IsNullOrEmpty(script.FileName))
-                    {
-                        script.FileName = "TypeScript/Api/" + controller.Name[..controller.Name.LastIndexOf("Controller")] + ".tsx";
-                    }
-
-                    var baseUrl = controller.GetCustomAttribute<RouteAttribute>();
-
-                    if (baseUrl is null)
-                    {
-                        continue;
-                    }
+                    
 
                     script.AddImport(new() {
                         Symbols = ["getJson", "ApiList"],
                         From = "UI/Functions/WebRequest"
                     });
 
-                    var controllerDef = new ClassDefinition() {
-                        Name = entityType.Name + "Api",
-                        Extends = "AutoApi<" + entityType.Name + ", " + entityType.Name + "Includes>"
-                    };
-
-                    controllerDef.AddTsDocLine("Auto generated API for " + entityType.Name);
-
-                    var controllerDocumentation = GetTypeDocumentation(controller);
-
-                    if (controllerDocumentation is not null)
-                    {
-                        controllerDef.AddTsDocLine(controllerDocumentation.Summary.Trim());
-                    }
-
-                    controllerDef.Children.Add(new ClassMethod() {
-                        Name = "constructor", 
-                        Injected = [
-                            $"super('{baseUrl.Template}')",
-                            "this.includes = new " + entityType.Name + "Includes();"
-                        ],
-                        Documentation = ["This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller"]
-                    });
-
-                    foreach(var method in controller.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
-                    {
-                        if (crudOperations.Contains(method.Name))
-                        {
-                            continue;
-                        }
-                        if (!IsEndpoint(method))
-                        {
-                            continue;
-                        }
-                        if (
-                            controllerDef.Children.Find(
-                                child => child.GetType() == typeof(ClassMethod) && 
-                                        (child as ClassMethod).Name == LcFirst(method.Name))
-                            != null
-                        )
-                        {
-                            continue;
-                        }
-
-                        // maybe a chance that some of the params have structures that need creating (i.e UserLogin)
-
-                        var returnType = GetTrueMethodReturnType(method);
-
-                        if (
-                            returnType == typeof(Context) ||
-                            returnType == typeof(object) || 
-                            returnType == entityType || 
-                            returnType == typeof(void)
-                        )
-                        {
-                            // noop
-                        }
-                        else if (
-                            returnType.BaseType == typeof(Content<>) || 
-                            returnType.BaseType == typeof(VersionedContent<>) || 
-                            returnType.BaseType == typeof(UserCreatedContent<>)
-                        )
-                        {
-
-                            if (!script.Imports.Where(import => import.From == "Api/" + returnType.Name).Any())
-                            {
-                                // references another entity. 
-                                script.AddImport(new() {
-                                    From = "Api/" + returnType.Name,
-                                    Symbols = [returnType.Name]
-                                });
-                            }
-                        }
-                        else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(List<>))
-                        {  
-                            // This will trigger for any List<T>, like List<int>, List<string>, etc.
-                            var listEntityType = returnType.GetGenericArguments()[0];
-
-                            if (
-                                script.Imports.Find(
-                                    import => import.From == "Api/" + listEntityType.Name
-                                ) == null
-                            )
-                            {
-                                if (listEntityType.BaseType == typeof(Content<>) || 
-                                    listEntityType.BaseType == typeof(VersionedContent<>) || 
-                                    listEntityType.BaseType == typeof(UserCreatedContent<>))
-                                {
-                                    script.AddImport(new() {
-                                        From = "Api/" + listEntityType.Name,
-                                        Symbols = [listEntityType.Name]
-                                    });
-                                } else {
-                                    // generate a type for the type
-
-                                    if (!script.Children.Where(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == listEntityType.Name).Any())
-                                    {
-                                        script.AddChild(CreateNonEntityType(listEntityType));
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (!TypeConversions.ContainsKey(returnType))
-                            {
-                                // create entity type.
-                                var def = new TypeDefinition() {
-                                    Name = returnType.Name
-                                };
-                                
-                                var defDocs = GetTypeDocumentation(returnType);
-
-                                if (defDocs is not null)
-                                {
-                                    def.AddTsDocLine(defDocs.Summary.Trim());
-                                }
-
-                                AddFieldsToType(returnType, def);
-                                script.AddChild(def);   
-                            }
-                        }
-
-                        foreach(var param in method.GetParameters())
-                        {
-                            // create missing types.
-                            var paramType = param.ParameterType;
-
-                            if (!paramType.Namespace.StartsWith("Api."))
-                            {
-                                continue;
-                            }
-
-                            if (paramType.BaseType == typeof(Content<>) || 
-                                paramType.BaseType == typeof(VersionedContent<>) || 
-                                paramType.BaseType == typeof(UserCreatedContent<>))
-                            {
-                                script.AddImport(new() {
-                                    From = "Api/" + paramType.Name,
-                                    Symbols = [paramType.Name]
-                                });
-                            } else {
-                                // generate a type for the type
-    
-                                if (!script.Children.Where(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == paramType.Name).Any())
-                                {
-                                    script.AddChild(CreateNonEntityType(paramType));
-                                }
-                            }
-
-                        }
-
-                        controllerDef.Children.Add(
-                            ConvertToTsMethod(
-                                method, 
-                                returnType
-                            )
-                        );
-                    }
-
-                    script.AddChild(controllerDef);
+                    var controllerDef = FromController(controller, script, entityType);
                     script.AddSLOC($"export default new {controllerDef.Name}();");
 
                 }
@@ -711,6 +667,205 @@ namespace Api.EcmaScript
 			}
             
         }
+
+        private ClassDefinition FromController(Type controller, Script script, Type entityType)
+        {
+            if (entityType is null)
+            {
+                entityType = controller;
+            }
+            if (string.IsNullOrEmpty(script.FileName))
+            {
+                script.FileName = "TypeScript/Api/" + controller.Name[..controller.Name.LastIndexOf("Controller")] + ".tsx";
+            }
+
+            var baseUrl = controller.GetCustomAttribute<RouteAttribute>();
+
+            if (baseUrl is null)
+            {
+                return null;
+            }
+            
+            var crudOperations = new string[]{"List", "Load", "Create", "Update", "Delete"};
+            
+            var controllerDef = new ClassDefinition() {
+                Name = entityType.Name + "Api",
+                Extends = 
+                    entityType != controller ? 
+                    "AutoApi<" + entityType.Name + ", " + entityType.Name + "Includes>" :
+                    null
+            };
+
+            controllerDef.AddTsDocLine("Auto generated API for " + entityType.Name);
+
+            var controllerDocumentation = GetTypeDocumentation(controller);
+
+            if (controllerDocumentation is not null)
+            {
+                controllerDef.AddTsDocLine(controllerDocumentation.Summary.Trim());
+            }
+
+            if (entityType != controller)
+            {
+                controllerDef.Children.Add(new ClassMethod() {
+                    Name = "constructor", 
+                    Injected = [
+                        $"super('{baseUrl.Template}')",
+                        "this.includes = new " + entityType.Name + "Includes();"
+                    ],
+                    Documentation = ["This extends the AutoApi class, which provides CRUD functionality, any methods seen in are from custom endpoints in the controller"]
+                });
+            }
+            else
+            {
+                controllerDef.Children.Add(new ClassProperty() {
+                    PropertyName = "apiUrl",
+                    PropertyType = "string",
+                    Visibility = "protected",
+                    DefaultValue = $"{baseUrl.Template}"
+                });
+            }
+
+            foreach(var method in controller.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (crudOperations.Contains(method.Name))
+                {
+                    continue;
+                }
+                if (!IsEndpoint(method))
+                {
+                    continue;
+                }
+                if (
+                    controllerDef.Children.Find(
+                        child => child.GetType() == typeof(ClassMethod) && 
+                                (child as ClassMethod).Name == LcFirst(method.Name))
+                    != null
+                )
+                {
+                    continue;
+                }
+
+                // maybe a chance that some of the params have structures that need creating (i.e UserLogin)
+
+                var returnType = GetTrueMethodReturnType(method);
+
+                if (
+                    returnType == typeof(Context) ||
+                    returnType == typeof(object) || 
+                    returnType == entityType || 
+                    returnType == typeof(void)
+                )
+                {
+                    // noop
+                }
+                else if (
+                    returnType.BaseType == typeof(Content<>) || 
+                    returnType.BaseType == typeof(VersionedContent<>) || 
+                    returnType.BaseType == typeof(UserCreatedContent<>)
+                )
+                {
+
+                    if (!script.Imports.Where(import => import.From == "Api/" + returnType.Name).Any())
+                    {
+                        // references another entity. 
+                        script.AddImport(new() {
+                            From = "Api/" + returnType.Name,
+                            Symbols = [returnType.Name]
+                        });
+                    }
+                }
+                else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(List<>))
+                {  
+                    // This will trigger for any List<T>, like List<int>, List<string>, etc.
+                    var listEntityType = returnType.GetGenericArguments()[0];
+
+                    if (
+                        script.Imports.Find(
+                            import => import.From == "Api/" + listEntityType.Name
+                        ) == null
+                    )
+                    {
+                        if (listEntityType.BaseType == typeof(Content<>) || 
+                            listEntityType.BaseType == typeof(VersionedContent<>) || 
+                            listEntityType.BaseType == typeof(UserCreatedContent<>))
+                        {
+                            script.AddImport(new() {
+                                From = "Api/" + listEntityType.Name,
+                                Symbols = [listEntityType.Name]
+                            });
+                        } else {
+                            // generate a type for the type
+
+                            if (!script.Children.Where(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == listEntityType.Name).Any())
+                            {
+                                script.AddChild(CreateNonEntityType(listEntityType));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (!TypeConversions.ContainsKey(returnType))
+                    {
+                        // create entity type.
+                        var def = new TypeDefinition() {
+                            Name = returnType.Name
+                        };
+                        
+                        var defDocs = GetTypeDocumentation(returnType);
+
+                        if (defDocs is not null)
+                        {
+                            def.AddTsDocLine(defDocs.Summary.Trim());
+                        }
+
+                        AddFieldsToType(returnType, def, script);
+                        script.AddChild(def);
+                    }
+                }
+
+                foreach(var param in method.GetParameters())
+                {
+                    // create missing types.
+                    var paramType = param.ParameterType;
+
+                    if (!paramType.Namespace.StartsWith("Api."))
+                    {
+                        continue;
+                    }
+
+                    if (paramType.BaseType == typeof(Content<>) || 
+                        paramType.BaseType == typeof(VersionedContent<>) || 
+                        paramType.BaseType == typeof(UserCreatedContent<>))
+                    {
+                        script.AddImport(new() {
+                            From = "Api/" + paramType.Name,
+                            Symbols = [paramType.Name]
+                        });
+                    } else {
+                        // generate a type for the type
+
+                        if (!script.Children.Where(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == paramType.Name).Any())
+                        {
+                            script.AddChild(CreateNonEntityType(paramType));
+                        }
+                    }
+
+                }
+
+                controllerDef.Children.Add(
+                    ConvertToTsMethod(
+                        method, 
+                        returnType
+                    )
+                );
+            }
+
+            script.AddChild(controllerDef);
+            return controllerDef;
+        }
+
 
         private TypeDefinition CreateNonEntityType(Type listEntityType)
         {
