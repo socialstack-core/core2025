@@ -53,6 +53,9 @@ namespace Api.EcmaScript
 
                 // Create the typescript functionality before the JS is compiled.
 
+                // Create if needed (noop otherwise)
+                Directory.CreateDirectory("TypeScript/Api");
+
                 // Create a container to hold the API/*.tsx files.
                 // It exists such that ultimately the UI bundle compiles files present here as well.
                 var container = new SourceFileContainer(Path.GetFullPath("TypeScript/Api"), "Api");
