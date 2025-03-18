@@ -2,9 +2,8 @@
 // Imports
 import {AutoApi, ApiIncludes} from 'Api/ApiEndpoints'
 import {VersionedContent, UserCreatedContent, Content} from 'Api/Content'
-import {UserIncludes} from './Includes'
+import {UserIncludes, RoleIncludes} from './Includes'
 import {Role} from 'Api/Role'
-import {RoleIncludes} from './Includes'
 import {getJson, ApiList} from 'UI/Functions/WebRequest'
 
 // Module
@@ -14,6 +13,9 @@ import {getJson, ApiList} from 'UI/Functions/WebRequest'
 export type User = VersionedContent & {
     email?: string,
     emailOptOutFlags?: number,
+    firstName?: string,
+    lastName?: string,
+    fullName?: string,
     role?: number,
     featureRef?: string,
     avatarRef?: string,

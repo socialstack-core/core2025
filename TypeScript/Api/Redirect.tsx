@@ -2,9 +2,8 @@
 // Imports
 import {AutoApi, ApiIncludes} from 'Api/ApiEndpoints'
 import {VersionedContent, UserCreatedContent, Content} from 'Api/Content'
-import {RedirectIncludes} from './Includes'
+import {RedirectIncludes, UserIncludes} from './Includes'
 import {User} from 'Api/User'
-import {UserIncludes} from './Includes'
 import {getJson, ApiList} from 'UI/Functions/WebRequest'
 
 // Module
