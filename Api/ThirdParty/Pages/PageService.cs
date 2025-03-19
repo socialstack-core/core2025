@@ -552,21 +552,22 @@ namespace Api.Pages
 		/// </param>
 		public async ValueTask InstallAdminPages(Type type, string[] fields, ChildAdminPageOptions childAdminPage)
 		{
-			var typeName = type.Name.ToLower();
+			var typeName = type.Name;
+			var typeNameLowercase = type.Name.ToLower();
 
 			// "BlogPost" -> "Blog Post".
 			var tidySingularName = Api.Startup.Pluralise.NiceName(type.Name);
 			var tidyPluralName = Api.Startup.Pluralise.Apply(tidySingularName);
 			
 			var listPageCanvas = new CanvasNode("Admin/Layouts/List")
-				.With("endpoint", typeName)
+				.With("contentType", typeName)
 				.With("fields", fields)
 				.With("singular", tidySingularName)
 				.With("plural", tidyPluralName);
 			
 			var listPage = new Page
 			{
-				Url = "/en-admin/" + typeName,
+				Url = "/en-admin/" + typeNameLowercase,
 				BodyJson = TemporaryBodyJson,
 				Title = "Edit or create " + tidyPluralName
 			};
@@ -577,16 +578,17 @@ namespace Api.Pages
 			listPage.BodyJson = listPageCanvas.ToJson();
 
 			var singlePageCanvas = new CanvasNode("Admin/Layouts/AutoEdit")
-					.With("endpoint", typeName)
+					.With("contentType", typeName)
 					.With("singular", tidySingularName)
 					.With("id", "${primary.id}")
 					.With("plural", tidyPluralName);
 
 			if (childAdminPage != null && childAdminPage.ChildType != null)
 			{
+				// This is likely obsoleted: favour more customised pages instead.
 				singlePageCanvas.AppendChild(
 					new CanvasNode("Admin/AutoList")
-					.With("endpoint", childAdminPage.ChildType.ToLower())
+					.With("contentType", childAdminPage.ChildType)
 					.With("filterField", type.Name + "Id")
 					.With("create", childAdminPage.CreateButton)
 					.With("searchFields", childAdminPage.SearchFields)
@@ -597,7 +599,7 @@ namespace Api.Pages
 
 			var singlePage = new Page
 			{
-				Url = "/en-admin/" + typeName + "/{" + typeName + ".id}",
+				Url = "/en-admin/" + typeNameLowercase + "/{" + typeNameLowercase + ".id}",
 				BodyJson = TemporaryBodyJson,
 				Title = "Editing " + tidySingularName.ToLower()
 			};
@@ -615,7 +617,7 @@ namespace Api.Pages
 				singlePage
 			);
 
-			await DeleteOldInternal(typeName);
+			await DeleteOldInternal(typeNameLowercase);
 		}
 
 		/// <summary>

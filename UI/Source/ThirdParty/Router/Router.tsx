@@ -7,13 +7,13 @@ import AdminTrigger from 'UI/AdminTrigger';
 import { createContext, useContext, useRef, useState, useEffect } from 'react';
 
 
-interface RouterContext {
+export interface RouterContext {
 	setPage: (url: string) => void;
 	pageState: PageState;
 	canGoBack: () => boolean;
 }
 
-interface PageState extends PageStateResult {
+export interface PageState extends PageStateResult {
 	url: string;
 }
 

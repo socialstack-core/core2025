@@ -1,17 +1,22 @@
-import Time from 'UI/Time';
 import { useSession } from 'UI/Session';
-import { useRouter } from 'UI/Router';
-import { isoConvert } from 'UI/Functions/DateTools';
+import { useRouter, PageState } from 'UI/Router';
 
-var modes = {
-	'content': 1,
-	'context': 1,
-	'session': 1,
-	'url': 1,
-	'customdata': 1,
-	'primary': 1,
-	'theme': 1
+var modes : Record<string, boolean> = {
+	'content': true,
+	'context': true,
+	'session': true,
+	'url': true,
+	'customdata': true,
+	'primary': true,
+	'theme': true
 };
+
+interface TokenOptions {
+	/**
+	 * Optional content object (can be anything).
+	 */
+	content?: any;
+}
 
 /**
  * Replaces any ${tokens} in the given token string, returning the resolved string.
@@ -19,13 +24,13 @@ var modes = {
  * @param {any} opts
  * @returns
  */
-export function useTokens(str, opts) {
+export function useTokens(str : string, opts? : TokenOptions) {
 	var { session } = useSession();
 	var { pageState } = useRouter();
-	return handleString(str, session, opts.content, pageState, opts);
+	return handleString(str, session, opts?.content, pageState, opts);
 }
 
-export function handleString(str, session, localContent, pageState, opts) {
+export function handleString(str: string, session : Session, localContent? : any, pageState? : PageState, opts? : TokenOptions) {
 	return (str || '').toString().replace(/\$\{(\w|\.)+\}/g, function (textToken) {
 		var fields = textToken.substring(2, textToken.length - 1).split('.');
 
@@ -40,24 +45,14 @@ export function handleString(str, session, localContent, pageState, opts) {
 	});
 }
 
-export function resolveValue(mode, fields, session, localContent, pageState, opts) {
-	var value = resolveRawValue(mode, fields, session, localContent, pageState);
-
-	// Post-processing:
-	if (opts && opts.date) {
-		// treat it as a date.
-		value = isoConvert(value);
-
-		if (typeof opts.date == 'object') {
-			// it would like a react element.
-			return <Time date={value} absolute {...opts.date} />;
-		}
-	}
-
-	return value;
-}
-
-function resolveRawValue(mode, fields, session, localContent, pageState) {
+export function resolveValue(
+	mode: string,
+	fields: string[],
+	session: Session,
+	localContent?: any,
+	pageState?: PageState,
+	opts?: TokenOptions
+): string {
 	var token;
 
 	if (mode) {
@@ -71,7 +66,7 @@ function resolveRawValue(mode, fields, session, localContent, pageState) {
 			return '';
 		}
 		var index = pageState.tokenNames.indexOf(fields.join('.'));
-		return (index == null || index == -1) ? '' : pageState.tokens[index];
+		return (index == null || index == -1) ? '' : (pageState.tokens ? pageState.tokens[index] : '');
 	} else if (mode == "theme") {
 		return 'var(--' + fields.join('-') + ')';
 	} else if (mode == "customdata" || mode == "primary") {
@@ -107,26 +102,28 @@ function resolveRawValue(mode, fields, session, localContent, pageState) {
 	} else if (typeof fields == 'string') {
 		return token[fields];
 	}
+
+	return '';
+}
+
+export interface TokenProps extends TokenOptions {
+	mode?: string;
+	s?: string;
+	fields: string[];
 }
 
 /**
 * Contextual token. 
-* Available values either come from the primary type on the page, or the global state. The RTE establishes the options though.
+* Available values either come from the primary type on the page, or the global state.
 */
-function Token(props) {
+const Token : React.FC<React.PropsWithChildren<TokenProps>> = (props) => {
 	// If editor, display the thing and its children:
 	var { session } = useSession();
 	var { pageState } = useRouter();
 
-	if (props._rte) {
-		return <span className="context-token" ref={props.rootRef}>
-			{props.children}
-		</span>;
-	}
-	
 	if (!props.mode) {
 		// Resolve from child string if there is one.
-		var str = props.s || props.children;
+		var str = props.s || (props.children as string);
 	
 		if(Array.isArray(str)){
 			str = str.length ? str[0] : null;

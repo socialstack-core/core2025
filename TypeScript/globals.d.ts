@@ -122,6 +122,11 @@ declare global {
 	 * Returns the raw UMD module meaning e.g. a default export is available as .default
 	 */
 	var require: (moduleName: string) => any;
+
+	/**
+	 * Called before pages are loaded.
+	 */
+	var beforePageLoad: ((url: string) => Promise<void>) | null;
 }
 
 export {};

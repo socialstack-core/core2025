@@ -1,40 +1,16 @@
 import Tile from 'Admin/Tile';
-import AutoList from 'Admin/AutoList';
-import Loop from 'UI/Loop';
+import AutoList, { AutoListProps } from 'Admin/AutoList';
 import Default from 'Admin/Layouts/Default';
-import { useRouter } from 'UI/Router';
 
-export type ListProps = {
-    endpoint?: string;
-    singular?: string;
-      plural?: string;
-      fields?: string[];
-    children:  (React.ReactNode | string | number | boolean)[]; 
-    searchFields?: string[];
+export interface ListProps extends AutoListProps {
     noCreate?: boolean;
 }
 
-const List: React.FC<ListProps> = (props: ListProps): React.ReactNode => {
+const List: React.FC<React.PropsWithChildren<ListProps>> = (props): React.ReactNode => {
 
-    var router = useRouter();
+    let { contentType, singular, plural, children, ...listProps } = props;
 
-    if (!router) {
-        return null;
-    }
-
-    const { pageState } = router;
-    let { endpoint, singular, plural } = props;
-
-    if (!endpoint && Array.isArray(pageState.tokenNames)) {
-        for(let i = 0;i < pageState.tokenNames.length;i++) {
-            if (pageState.tokenNames[i] === 'entity' && pageState.tokens) {
-                endpoint = pageState.tokens[i];
-                singular = endpoint.replace(/([A-Z])/g, ' $1').trim();
-                plural = singular + "s";
-                break;
-            }
-        }
-    }
+    let textPlural = plural;
 
     if (!props.fields || !Array.isArray(props.fields)) {
         return null;
@@ -53,14 +29,18 @@ const List: React.FC<ListProps> = (props: ListProps): React.ReactNode => {
     return (
         <Default>
             <AutoList 
-                endpoint={endpoint} 
-                singular={singular} 
-                title={`Edit or create ${singular}`}
+                contentType={contentType} 
+                singular={singular}
+                plural={plural}
+                {...listProps}
+                title={`Edit or create ${textPlural}`}
                 create={!props.noCreate}
                 searchFields={props.searchFields || defSearchFields} 
             />
-            {props.children}
+            {children}
         </Default>	
     )
 
 }
+
+export default List;
