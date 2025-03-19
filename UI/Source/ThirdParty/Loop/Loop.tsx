@@ -2,7 +2,7 @@ import { ApiList } from 'UI/Functions/WebRequest';
 import Failure from 'UI/Failed';
 import Paginator from 'UI/Paginator';
 import { AutoApi, ApiIncludes } from 'Api/ApiEndpoints';
-import { VersionedContent } from 'Api/Content';
+import { Content } from 'Api/Content';
 import { useEffect, useState } from 'react';
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -22,7 +22,7 @@ export interface LoopPageConfig {
 /**
  * Props for the Loop component.
  */
-export interface LoopProps<T extends VersionedContent, I extends ApiIncludes> {
+export interface LoopProps<T extends Content, I extends ApiIncludes> {
 	over: AutoApi<T, I>;
 	includes?: I[],
 	filter?: any;
@@ -85,7 +85,7 @@ export interface LoopProps<T extends VersionedContent, I extends ApiIncludes> {
 /**
  * This component repeatedly renders its child using either an explicit array of data or an endpoint.
  */
-const Loop = <T extends VersionedContent, I extends ApiIncludes>(props: LoopProps<T, I>) => {
+const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) => {
 
 	const [pageIndex, setPageIndex] = useState(props.defaultPage || 1);
 	const [totalResults, setTotalResults] = useState(0);
