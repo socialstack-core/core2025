@@ -23,7 +23,12 @@ interface AlertProps {
 	/**
 	 * set true to display close button
 	 */
-	isDismissable?: boolean
+	isDismissable?: boolean,
+	
+	/**
+	 * The alert type
+	 */
+	type?: string
 }
 
 /**

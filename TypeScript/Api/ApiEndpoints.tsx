@@ -27,7 +27,7 @@ export class ApiIncludes{
 
 /**
 */
-export class AutoApi<EntityType extends VersionedContent, IncludeSet extends ApiIncludes>{
+export class AutoApi<EntityType extends Content, IncludeSet extends ApiIncludes>{
     protected apiUrl: string;
 
     public includes: IncludeSet | null = null;

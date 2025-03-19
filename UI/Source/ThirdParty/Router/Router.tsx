@@ -6,6 +6,12 @@ import { createContext, useContext, useRef, useState, useEffect } from 'react';
 
 interface RouterContext {
 	setPage: (url: string) => void;
+	pageState: PageState;
+}
+
+interface PageState {
+	tokenNames?: string[],
+	tokens?: string[]
 }
 
 const routerCtx = createContext < RouterContext | null > (null);

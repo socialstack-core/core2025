@@ -14,6 +14,7 @@ using Api.Database;
 using Api.EcmaScript.TypeScript;
 using Api.Eventing;
 using Api.Startup;
+using Api.Uploader;
 using Api.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -146,8 +147,8 @@ namespace Api.EcmaScript
                 Name = "Content"
             };
             contentType.AddTsDocLine("* The base content type for all content.");
-            contentType.AddProperty("id", "number");
-            contentType.AddProperty("type", "string");
+            contentType.AddProperty("id", "int");
+            contentType.AddProperty("type?", "string | null");
             content.AddChild(contentType);
 
             // ===== VERSIONEDCONTENT.CS ===== \\
@@ -156,8 +157,7 @@ namespace Api.EcmaScript
                 Inheritence = ["UserCreatedContent"]
             };
             versionedContent.AddTsDocLine("* The base content type for all content.");
-            AddFieldsToType(typeof(VersionedContent<>), versionedContent, content);
-            versionedContent.AddProperty("revisionId", "number");
+            versionedContent.AddProperty("revisionId?", "int");
             content.AddChild(versionedContent);
 
             // ===== USERCREATEDCONTENT.CS ===== \\
@@ -194,7 +194,7 @@ namespace Api.EcmaScript
             // ===== AutoAPI ===== \\
             var baseControllerClass = new ClassDefinition { 
                 Name = "AutoApi",
-                GenericTemplate = "EntityType extends VersionedContent, IncludeSet extends ApiIncludes"
+                GenericTemplate = "EntityType extends Content, IncludeSet extends ApiIncludes"
             };
             var apiUrl = new ClassProperty
             {
@@ -412,6 +412,15 @@ namespace Api.EcmaScript
                 if (nullableType != null)
                 {
                     type = nullableType;
+                }
+
+                if (IsNullableType(type))
+                {
+                    fieldName += "?"; // optional
+                }
+
+                if (type == typeof(string) && fieldName.EndsWith("Ref")){
+                    type = typeof(FileRef);
                 }
 
                 // Skip types already converted (to prevent duplicates or circular references)
@@ -889,7 +898,12 @@ namespace Api.EcmaScript
             {
                 if (field.PropertyType.Namespace.StartsWith("Api.") || TypeConversions.ContainsKey(field.PropertyType))
                 {
-                    type.AddProperty(field.Name, GetTypeConversion(field.PropertyType));
+                    var fieldName = field.Name;
+                    if (IsNullableType(field.PropertyType))
+                    {
+                        fieldName += "?";
+                    }
+                    type.AddProperty(fieldName, GetTypeConversion(field.PropertyType));
                 }
             }
 
@@ -897,7 +911,12 @@ namespace Api.EcmaScript
             {
                 if (field.FieldType.Namespace.StartsWith("Api.") || TypeConversions.ContainsKey(field.FieldType))
                 {
-                    type.AddProperty(field.Name, GetTypeConversion(field.FieldType));
+                    var fieldName = field.Name;
+                    if (IsNullableType(field.FieldType))
+                    {
+                        fieldName += "?";                        
+                    }
+                    type.AddProperty(fieldName, GetTypeConversion(field.FieldType));
                 }
             }
 
@@ -1119,19 +1138,28 @@ namespace Api.EcmaScript
                 {
                     continue;
                 }
-                typeDef.AddProperty(field.Name, GetTypeConversion(targetType));
+                var fieldName = field.Name;
+                if (IsNullableType(field.FieldType))
+                {
+                    fieldName += "?";
+                }
+                typeDef.AddProperty(fieldName, GetTypeConversion(targetType));
             }
         }
 
         private void InitTypeConversions()
         {
             AddTypeConversion(typeof(string), "string");
-            AddTypeConversion(typeof(uint), "number");
-            AddTypeConversion(typeof(int), "number");
-            AddTypeConversion(typeof(double), "number");
-            AddTypeConversion(typeof(float), "number");
-            AddTypeConversion(typeof(ulong), "number");
-            AddTypeConversion(typeof(long), "number");
+            AddTypeConversion(typeof(uint), "int");
+            AddTypeConversion(typeof(int), "int");
+            AddTypeConversion(typeof(double), "double");
+            AddTypeConversion(typeof(float), "float");
+            AddTypeConversion(typeof(ulong), "ulong");
+            AddTypeConversion(typeof(long), "long");
+            AddTypeConversion(typeof(short), "short");
+            AddTypeConversion(typeof(ushort), "ushort");
+            AddTypeConversion(typeof(byte), "byte");
+            AddTypeConversion(typeof(sbyte), "sbyte");
             AddTypeConversion(typeof(DateTime), "Date");
             AddTypeConversion(typeof(bool), "boolean");
             AddTypeConversion(typeof(void), "void");
@@ -1178,6 +1206,18 @@ namespace Api.EcmaScript
                 return input;
 
             return char.ToLower(input[0]) + input.Substring(1);
+        }
+
+        private static bool IsNullableType(Type type)
+        {
+            // Reference types (e.g., string, object) are always nullable
+            if (!type.IsValueType)
+            {
+                return true;
+            }
+
+            // For value types, check if it's a nullable value type (e.g., int?)
+            return Nullable.GetUnderlyingType(type) != null;
         }
     }
 }

@@ -15,35 +15,35 @@ export type Upload = VersionedContent & {
     fileType?: string,
     variants?: string,
     blurhash?: string,
-    width?: number,
-    height?: number,
-    focalX?: number,
-    focalY?: number,
+    width?: int,
+    height?: int,
+    focalX?: int,
+    focalY?: int,
     alt?: string,
     author?: string,
-    usageCount?: number,
-    isImage?: boolean,
-    isPrivate?: boolean,
-    isVideo?: boolean,
-    isAudio?: boolean,
-    transcodeState?: number,
-    revision?: number,
-    userId?: number,
-    createdUtc?: Date,
-    editedUtc?: Date,
-    id?: number,
+    usageCount?: int,
+    isImage: boolean,
+    isPrivate: boolean,
+    isVideo: boolean,
+    isAudio: boolean,
+    transcodeState: int,
+    revision: int,
+    userId: int,
+    createdUtc: Date,
+    editedUtc: Date,
+    id: int,
     ref?: string,
-    revisionId?: number,
-    isDraft?: boolean,
+    revisionId?: int,
+    isDraft: boolean,
     type?: string,
-    creatorUser?: User,
+    creatorUser: User,
 }
 
 /*
   The post body when uploading a file.
 */
 export type FileUploadBody = {
-    isPrivate?: boolean,
+    isPrivate: boolean,
 }
 
 /*
@@ -51,7 +51,7 @@ export type FileUploadBody = {
 */
 export type MediaRef = {
     type?: string,
-    id?: number,
+    id: int,
     name?: string,
     description?: string,
     field?: string,
@@ -59,7 +59,7 @@ export type MediaRef = {
     existingRef?: string,
     updatedRef?: string,
     status?: string,
-    localeId?: number,
+    localeId: int,
 }
 
 /**
@@ -81,15 +81,15 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public upload = (body: FileUploadBody): Promise<void>  => {
-        return getJson(`${this.apiUrl}/create`, body )
+        return getJson(this.apiUrl + '/create', body )
     }
 
     /**
       Uploads a transcoded file. The body of the client request is expected to be a tar of the files, using a directory called "output" at its root.
 
     */
-    public transcodedTar = (id: number, token: string): Promise<void>  => {
-        return getJson(`${this.apiUrl}/transcoded/${id}?token=${token}`)
+    public transcodedTar = (id: int, token: string): Promise<void>  => {
+        return getJson(this.apiUrl + '/transcoded/' + id + '?token=' + token + '')
     }
 
     /**
@@ -97,7 +97,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public active = (includes: string): Promise<void>  => {
-        return getJson(`${this.apiUrl}/active?includes=${includes}`)
+        return getJson(this.apiUrl + '/active?includes=' + includes + '')
     }
 
     /**
@@ -105,7 +105,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public activePost = (includes: string): Promise<void>  => {
-        return getJson(`${this.apiUrl}/active?includes=${includes}`)
+        return getJson(this.apiUrl + '/active?includes=' + includes + '')
     }
 
     /**
@@ -116,7 +116,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public fileConsistency = (regenBefore: string, idRange: string): Promise<void>  => {
-        return getJson(`${this.apiUrl}/file-consistency?regenBefore=${regenBefore}&idRange=${idRange}`)
+        return getJson(this.apiUrl + '/file-consistency?regenBefore=' + regenBefore + '&idRange=' + idRange + '')
     }
 
     /**
@@ -124,7 +124,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public replace = (sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>>  => {
-        return getJson(`${this.apiUrl}/replace?sourceRef=${sourceRef}&targetRef=${targetRef}`)
+        return getJson(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
     }
 
     /**
@@ -132,7 +132,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public updateAlts = (): Promise<void>  => {
-        return getJson(`${this.apiUrl}/update-alts`)
+        return getJson(this.apiUrl + '/update-alts')
     }
 
     /**
@@ -140,7 +140,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public updateRefs = (update: boolean): Promise<ApiList<MediaRef>>  => {
-        return getJson(`${this.apiUrl}/update-refs?update=${update}`)
+        return getJson(this.apiUrl + '/update-refs?update=' + update + '')
     }
 
     /**
@@ -148,7 +148,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
 
     */
     public preview = (uploadRef: string): Promise<ApiList<MediaRef>>  => {
-        return getJson(`${this.apiUrl}/replace/preview?uploadRef=${uploadRef}`)
+        return getJson(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
     }
 
 }

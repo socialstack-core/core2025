@@ -119,7 +119,7 @@ namespace Api.EcmaScript.TypeScript
 
             foreach (var record in Properties)
             {
-                source += "".PadLeft(4) + $"{EcmaService.LcFirst(record.Key)}?: {record.Value}," + Environment.NewLine;
+                source += "".PadLeft(4) + $"{EcmaService.LcFirst(record.Key)}: {record.Value}," + Environment.NewLine;
             }
 
             source += "}" + Environment.NewLine;

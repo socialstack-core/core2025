@@ -13,16 +13,16 @@ import {getJson, ApiList} from 'UI/Functions/WebRequest'
 export type Redirect = VersionedContent & {
     from?: string,
     to?: string,
-    permanentRedirect?: boolean,
-    revision?: number,
-    userId?: number,
-    createdUtc?: Date,
-    editedUtc?: Date,
-    id?: number,
-    revisionId?: number,
-    isDraft?: boolean,
+    permanentRedirect: boolean,
+    revision: int,
+    userId: int,
+    createdUtc: Date,
+    editedUtc: Date,
+    id: int,
+    revisionId?: int,
+    isDraft: boolean,
     type?: string,
-    creatorUser?: User,
+    creatorUser: User,
 }
 
 /**

@@ -12,26 +12,26 @@ import {getJson, ApiList} from 'UI/Functions/WebRequest'
 */
 export type User = VersionedContent & {
     email?: string,
-    emailOptOutFlags?: number,
+    emailOptOutFlags: int,
     firstName?: string,
     lastName?: string,
     fullName?: string,
-    role?: number,
+    role: int,
     featureRef?: string,
     avatarRef?: string,
     username?: string,
-    localeId?: number,
-    revision?: number,
-    userId?: number,
-    createdUtc?: Date,
-    editedUtc?: Date,
-    id?: number,
-    joinedUtc?: Date,
-    revisionId?: number,
-    isDraft?: boolean,
+    localeId?: int,
+    revision: int,
+    userId: int,
+    createdUtc: Date,
+    editedUtc: Date,
+    id: int,
+    joinedUtc: Date,
+    revisionId?: int,
+    isDraft: boolean,
     type?: string,
-    userRole?: Role,
-    creatorUser?: User,
+    userRole: Role,
+    creatorUser: User,
 }
 
 /*
@@ -77,7 +77,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
 
     */
     public resendVerificationEmail = (body: UserPasswordForgot): Promise<void>  => {
-        return getJson(`${this.apiUrl}/sendverifyemail`, body )
+        return getJson(this.apiUrl + '/sendverifyemail', body )
     }
 
     /**
@@ -85,8 +85,8 @@ export class UserApi extends AutoApi<User, UserIncludes>{
             Attempts to verify the users email. If a password is supplied, the users password is also set.
 
     */
-    public verifyUser = (userid: number, token: string, newPassword: OptionalPassword): Promise<void>  => {
-        return getJson(`${this.apiUrl}/verify/${userid}/${token}`, {
+    public verifyUser = (userid: int, token: string, newPassword: OptionalPassword): Promise<void>  => {
+        return getJson(this.apiUrl + '/verify/' + userid + '/' + token + '', {
         newPassword,
         })
     }
@@ -96,7 +96,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
 
     */
     public self = (): Promise<SessionResponse>  => {
-        return getJson(`${this.apiUrl}/self`)
+        return getJson(this.apiUrl + '/self')
     }
 
     /**
@@ -104,7 +104,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
 
     */
     public logout = (): Promise<SessionResponse>  => {
-        return getJson(`${this.apiUrl}/logout`)
+        return getJson(this.apiUrl + '/logout')
     }
 
     /**
@@ -113,15 +113,15 @@ export class UserApi extends AutoApi<User, UserIncludes>{
 
     */
     public login = (body: UserLogin): Promise<SessionResponse>  => {
-        return getJson(`${this.apiUrl}/login`, body )
+        return getJson(this.apiUrl + '/login', body )
     }
 
     /**
       Impersonate a user by their ID. This is a hard cookie switch. You will loose all admin functionality to make the impersonation as accurate as possible.
 
     */
-    public impersonate = (id: number): Promise<SessionResponse>  => {
-        return getJson(`${this.apiUrl}/${id}/impersonate`)
+    public impersonate = (id: int): Promise<SessionResponse>  => {
+        return getJson(this.apiUrl + '/' + id + '/impersonate')
     }
 
     /**
@@ -129,7 +129,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
 
     */
     public unpersonate = (): Promise<SessionResponse>  => {
-        return getJson(`${this.apiUrl}/unpersonate`)
+        return getJson(this.apiUrl + '/unpersonate')
     }
 
 }
