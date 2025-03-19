@@ -6,9 +6,39 @@ declare global {
 	type FileRef = string;
 
 	/**
-	 * An integer
+	 * Unsigned byte. 
+	 */
+	type byte = int;
+
+	/**
+	 * Signed byte
+	 */
+	type sbyte = int;
+
+	/**
+	 * Unsigned integer (4 bytes).
+	 */
+	type uint = int;
+
+	/**
+	 * Signed integer (4 bytes).
 	 */
 	type int = number & { __type: "int" };
+
+	/**
+	 * Unsigned integer (8 bytes).
+	 */
+	type ulong = int;
+
+	/**
+	 * Signed integer (8 bytes).
+	 */
+	type long = int;
+
+	/**
+	 * A floating point number
+	 */
+	type double = number;
 
 	/**
 	 * A floating point number (double)
