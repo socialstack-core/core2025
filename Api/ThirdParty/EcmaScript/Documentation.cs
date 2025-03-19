@@ -30,7 +30,7 @@ namespace Api.EcmaScript
         {
             var result = GetTypeDocumentation(methodInfo.DeclaringType);
 
-            if (result.Members.TryGetValue(methodInfo.Name, out XmlDocMember member))
+            if (result != null && result.Members.TryGetValue(methodInfo.Name, out XmlDocMember member))
             {
                 if (member.Type == XmlDocMemberType.Method)
                 {

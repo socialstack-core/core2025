@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,6 +14,7 @@ using Api.Contexts;
 using Api.Database;
 using Api.EcmaScript.TypeScript;
 using Api.Eventing;
+using Api.Pages;
 using Api.Startup;
 using Api.Uploader;
 using Api.Users;
@@ -103,7 +105,6 @@ namespace Api.EcmaScript
             InitTsScripts(container);
 
             container.Add(IncludesScript.FileName, IncludesScript.CreateSource());
-            CreateAutoControllerApi(container);
         }
 
         private Script GetScriptByEntity(Type entityType)
@@ -116,23 +117,6 @@ namespace Api.EcmaScript
 
             EntityScriptMapping[entityType] = sct;
             return sct;
-        }
-
-        private void CreateAutoControllerApi(SourceFileContainer container)
-        {
-            var controller = typeof(AutoFormController);
-            var script = GetScriptByEntity(controller);
-
-            script.FileName = "TypeScript/Api/AutoForm.tsx";
-
-            script.AddImport(new() {
-                From = "UI/Functions/WebRequest",
-                Symbols = ["getJson"]
-            });
-
-            FromController(controller, script, null);
-            container.Add(script.FileName, script.CreateSource());
-            File.WriteAllText(script.FileName, script.CreateSource());
         }
 
         private void CreateBaseContentTsx(SourceFileContainer container)
@@ -594,6 +578,31 @@ namespace Api.EcmaScript
             return typeof(IEnumerable).IsAssignableFrom(field.FieldType) && field.FieldType != typeof(string);
         }
 
+        private void GenerateTypelessController(Type controller, SourceFileContainer sourceContainer)
+        {
+			var typelessScript = GetScriptByEntity(controller);
+
+			typelessScript.AddImport(new()
+			{
+				From = "UI/Functions/WebRequest",
+				Symbols = ["getJson"]
+			});
+
+			var typelessControllerDef = FromController(controller, typelessScript, null);
+
+            if (typelessControllerDef == null)
+            {
+                // Controller represents a non-api part of the site, thus can do nothing.
+                // (one of them is HtmlController for example, which defines the actual frontend page endpoints).
+                return;
+            }
+
+			typelessScript.AddSLOC($"export default new {typelessControllerDef.Name}();");
+			var source = typelessScript.CreateSource();
+			sourceContainer.Add(typelessScript.FileName, source);
+			File.WriteAllText(typelessScript.FileName, source);
+		}
+
         private void InitTsScripts(SourceFileContainer sourceContainer)
         {
             var allEndpointsByModule = endpointService.ListByModule();
@@ -608,8 +617,9 @@ namespace Api.EcmaScript
 
                 if (controllerType is null && entityType is null)
                 {
+                    GenerateTypelessController(controller, sourceContainer);
                     continue;
-                }
+				}
 
                 var fields = module.GetAutoService()?.GetContentFields().List;
                 var coreImports = new List<string>() {
@@ -929,12 +939,18 @@ namespace Api.EcmaScript
 
                 }
 
-                controllerDef.Children.Add(
-                    ConvertToTsMethod(
-                        method, 
-                        returnType
-                    )
+                // Attempt to add this method:
+                var convertedMethod = ConvertToTsMethod(
+                    method,
+                    returnType
                 );
+
+                if (convertedMethod != null)
+                {
+                    controllerDef.Children.Add(
+                        convertedMethod
+                    );
+                }
             }
 
             script.AddChild(controllerDef);
@@ -1014,6 +1030,12 @@ namespace Api.EcmaScript
 
             // make sure the variables are converted to JS variables
             var details = GetEndpointUrl(method);
+
+            if (details == null)
+            {
+                // not an endpoint.
+                return null;
+            }
 
             var returnType =  $"Promise<{GetTypeConversion(type)}>";
 
