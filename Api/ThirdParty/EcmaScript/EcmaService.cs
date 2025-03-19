@@ -924,7 +924,7 @@ namespace Api.EcmaScript
             List<ClassMethodArgument> Arguments = [];
 
             // make sure the variables are converted to JS variables
-            var details = GetEndpointUrl(method).Replace("{", "${");
+            var details = GetEndpointUrl(method);
 
             var returnType =  $"Promise<{GetTypeConversion(type)}>";
 
@@ -940,6 +940,10 @@ namespace Api.EcmaScript
 
             foreach(var param in method.GetParameters())
             {
+                if (details.Contains($"{{{param.Name}}}"))
+                {
+                    details = details.Replace($"{{{param.Name}}}", "' + " + param.Name + " + '");
+                }
                 var arg = new ClassMethodArgument() {
                     Name = param.Name,
                     Type = GetTypeConversion(param.ParameterType)
@@ -973,7 +977,7 @@ namespace Api.EcmaScript
 
             if (foundBodyVarName)
             {
-                tsMethod.Injected = ["return getJson(`${this.apiUrl}/" + details + "`, body )"];
+                tsMethod.Injected = ["return getJson(this.apiUrl + '/" + details + "', body )"];
             }
             else
             {
@@ -984,7 +988,7 @@ namespace Api.EcmaScript
                 if (targetParams.Any())
                 {
                     tsMethod.Injected = [
-                        "return getJson(`${this.apiUrl}/" + details + "`, {" ,
+                        "return getJson(this.apiUrl + '/" + details + "', {" ,
                     ];
                     foreach(var param in targetParams)
                     {
@@ -995,7 +999,7 @@ namespace Api.EcmaScript
                 }
                 else
                 {
-                    tsMethod.Injected = ["return getJson(`${this.apiUrl}/" + details + "`)"];
+                    tsMethod.Injected = ["return getJson(this.apiUrl + '/" + details + "')"];
                 }
                 
             }
