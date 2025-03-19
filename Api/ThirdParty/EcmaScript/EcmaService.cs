@@ -380,6 +380,51 @@ namespace Api.EcmaScript
 
         }
 
+        private void AddFieldsToType(List<ContentField> fields, TypeDefinition typeDef, Type source)
+        {
+            foreach(var field in fields)
+            {
+                var targetType = field.FieldType;
+                if (Nullable.GetUnderlyingType(targetType) != null)
+                {
+                    targetType = Nullable.GetUnderlyingType(targetType);
+                }
+
+                if (!field.IsVirtual)
+                {
+                    if (field.FieldInfo is not null)
+                    {
+                        if (field.FieldInfo.DeclaringType != source)
+                        {
+                            continue;
+                        }
+                    }
+                    else if (field.PropertyInfo is not null)
+                    {
+                        if (field.PropertyInfo.DeclaringType != source)
+                        {
+                            continue;
+                        }
+                    }
+                }
+
+                var jsonIgnore = field.PropertyInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
+
+                jsonIgnore ??= field.FieldInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
+
+                if (jsonIgnore is not null)
+                {
+                    continue;
+                }
+                var fieldName = field.Name;
+                if (IsNullableType(field.FieldType))
+                {
+                    fieldName += "?";
+                }
+                typeDef.AddProperty(fieldName, GetTypeConversion(targetType));
+            }
+        }
+
         private void AddFieldsToType(Type source, TypeDefinition target, Script script)
         {
             foreach (var field in source.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly))
@@ -394,11 +439,6 @@ namespace Api.EcmaScript
                 {
                     continue;
                 }
-
-                // if (field.DeclaringType != source)
-                // {
-                //     continue;
-                // }
 
                 var fieldName = field.Name;
 
@@ -1130,39 +1170,6 @@ namespace Api.EcmaScript
             // Check for any custom ReturnsAttribute if applicable
             var methodReturnType = method.GetCustomAttribute<ReturnsAttribute>();
             return methodReturnType?.ReturnType ?? returnType;
-        }
-
-
-        private void AddFieldsToType(List<ContentField> fields, TypeDefinition typeDef, Type source)
-        {
-            foreach(var field in fields)
-            {
-                var targetType = field.FieldType;
-                if (Nullable.GetUnderlyingType(targetType) != null)
-                {
-                    targetType = Nullable.GetUnderlyingType(targetType);
-                }
-
-                // if (field.FieldInfo.DeclaringType != source)
-                // {
-                //     continue;
-                // }
-
-                var jsonIgnore = field.PropertyInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
-
-                jsonIgnore ??= field.FieldInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
-
-                if (jsonIgnore is not null)
-                {
-                    continue;
-                }
-                var fieldName = field.Name;
-                if (IsNullableType(field.FieldType))
-                {
-                    fieldName += "?";
-                }
-                typeDef.AddProperty(fieldName, GetTypeConversion(targetType));
-            }
         }
 
         private void InitTypeConversions()
