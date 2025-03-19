@@ -961,7 +961,7 @@ namespace Api.EcmaScript
                         details += "?";
                     }
 
-                    details += $"&{param.Name}=${{{param.Name}}}";
+                    details += $"&{param.Name}=' + {param.Name} + '";
                 }
 
                 Arguments.Add(arg);
