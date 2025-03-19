@@ -6,12 +6,13 @@ import Modal from 'UI/Modal';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import isNumeric from 'UI/Functions/IsNumeric';
 import getAutoForm from 'Admin/Functions/GetAutoForm';
-import webRequest from 'UI/Functions/WebRequest';
 import formatTime from "Admin/Functions/FormatTime";
 import CanvasEditor from "Admin/CanvasEditor";
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import { useSession } from 'UI/Session';
 import { useRouter, routerCtx } from 'UI/Router';
+import pageApi from 'Api/Page';
+import localeApi from 'Api/Locale';
 
 var locales = null;
 var defaultLocale = 1;
@@ -26,7 +27,12 @@ var defaultLocale = 1;
 export default function AutoForm(props) {
 	var { session, setSession } = useSession();
 	var { setPage, pageState } = useRouter();
-	return <AutoFormInternal {...props} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
+	var endpoint = props.contentType.toLowerCase();
+
+	// Get the API handler for this content type:
+	var api = require('Api/' + props.contentType).default;
+
+	return <AutoFormInternal {...props} endpoint={endpoint} api={api} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
 }
 
 class AutoFormInternal extends React.Component {
@@ -153,7 +159,7 @@ class AutoFormInternal extends React.Component {
 		}
 
 		if (this.state.context) {
-			webRequest("page/state", {
+			pageApi.pageState({
 				url: this.state.context,
 				version: getBuildDate().timestamp
 			}).then(res => {
@@ -194,11 +200,11 @@ class AutoFormInternal extends React.Component {
 				}
 
 				locales = [];
-				webRequest('locale/list').then(resp => {
+				localeApi.list().then(resp => {
 					if (userLocaleIds.length == 0) {
-						locales = resp.json.results;
+						locales = resp.results;
 					} else {
-						resp.json.results.map(function (locale, i) {
+						resp.results.map(function (locale, i) {
 							if (userLocaleIds.includes(locale.id)) {
 								locales.push(locale);
 							}
@@ -281,10 +287,15 @@ class AutoFormInternal extends React.Component {
 			// We always force locale:
 			var opts = { locale, includes: '*,primaryUrl' };
 
-			// Get the values we're editing:
-			var url = revisionId ? props.endpoint + '/revision/' + revisionId : props.endpoint + '/' + props.id;
-			webRequest(url, null, opts).then(response => {
-				var content = response.json;
+			var pending; // Promise<Content>
+
+			if (revisionId) {
+				throw new Error('Revisions not supported here yet.');
+			} else {
+				pending = this.props.api.load(props.id); // , opts);
+			}
+
+			pending.then(content => {
 				var hasPrimaryUrl = false;
 
 				this.tryPopulateMainCanvas(content, this.state.mainCanvas);
@@ -294,7 +305,6 @@ class AutoFormInternal extends React.Component {
 				}
 
 				this.setState({ fieldData: content, createSuccess, hasPrimaryUrl });
-
 			});
 		} else if (query) {
 
@@ -409,6 +419,15 @@ class AutoFormInternal extends React.Component {
 			confirmDelete: false,
 			deleting: true
 		});
+
+		var prom; // :Promise<WhateverTheContentTypeIs>
+
+		if (this.state.revisionId) {
+			// prom = api.deleteRevision() <-- but needs to only be present if revisions module is 
+			// installed, meaning we need to be able to extend AutoForm.
+		} else {
+			// prom = api.delete()
+		}
 
 		webRequest(
 			this.state.revisionId ? (this.props.endpoint + '/revision/' + this.state.revisionId) : (this.props.endpoint + '/' + this.props.id),
@@ -604,7 +623,7 @@ class AutoFormInternal extends React.Component {
 			value={{
 				canGoBack: () => false,
 				pageState: this.state.pageState || {url: ''},
-				setPage
+				setPage: this.props.setPage
 			}}
 		>
 			{this.renderIntl(this.props.pageState, this.props.setPage)}
@@ -613,6 +632,8 @@ class AutoFormInternal extends React.Component {
 
 	renderFormFields() {
 		const { locale, mainCanvas } = this.state;
+
+		console.log(this.state.fields, ' - is generated in the now obsolete canvas style, so this won\'t render (todo!)');
 
 		return <Canvas key={this.state.updateCount} onContentNode={contentNode => {
 			var content = this.state.value || this.state.fieldData;
@@ -682,12 +703,12 @@ class AutoFormInternal extends React.Component {
 
 				newFields.forEach(field => {
 					if (field) {
-						field.data.currentContent = {...content};
+						field.data.currentContent = { ...content };
 						field.data.canvasContext = this.getCanvasContext(content)
 					}
 				});
 
-				this.setState({fields: { ...this.state.fields, content: newFields }});
+				this.setState({ fields: { ...this.state.fields, content: newFields } });
 			};
 
 			var value = content[data.name];
@@ -699,9 +720,7 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
-		}}>
-			{this.state.fields}
-		</Canvas>
+		}} bodyJson={this.state.fields} />
 	}
 
 	renderIntl(pageState, setPage) {
@@ -1058,8 +1077,10 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
+			const api = this.props.api;
+
 			return <>
-				<Form formRef={r => this.form = r} autoComplete="off" locale={locale} action={endpoint}
+				<Form formRef={r => this.form = r} autoComplete="off" locale={locale} action={isEdit ? api.update : api.create}
 					onValues={onValues} onFailed={onFailed} onSuccess={onSuccess}>
 					<CanvasEditor
 						fullscreen

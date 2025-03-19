@@ -269,7 +269,7 @@ namespace Api.EcmaScript
                     }
                 ], 
                 Injected = [
-                    "return getList(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes.map(include => include.toString()) })"
+                    "return getList(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes?.map(include => include.toString()) })"
                 ]
             };
             var oneMethod = new ClassMethod() {
@@ -287,7 +287,7 @@ namespace Api.EcmaScript
                     }
                 ],
                 Injected = [
-                    "return getOne(this.apiUrl + '/' + id, { includes: includes.map(include => include.toString()) })"
+                    "return getOne(this.apiUrl + '/' + id, { includes: includes?.map(include => include.toString()) })"
                 ]
             };
             var createMethod = new ClassMethod() {
@@ -332,7 +332,7 @@ namespace Api.EcmaScript
                     }
                 ], 
                 Injected = [
-                    "return getOne(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes.map(include => include.toString()) })"
+                    "return getOne(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes?.map(include => include.toString()) })"
                 ]
             };
 

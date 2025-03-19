@@ -6,9 +6,9 @@ interface AutoFormProps {
 	// parent
 
 	/**
-	 * The entity type name as it appears in the API endpoint such as "user"
+	 * The entity type name as it appears in the API endpoint such as "User"
 	 */
-	endpoint: string,
+	contentType: string,
 
 	/**
 	 * The singular name of the content type such as "User".
