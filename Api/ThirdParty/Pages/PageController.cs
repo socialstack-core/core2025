@@ -34,6 +34,7 @@ namespace Api.Pages
 		/// <param name="pageDetails"></param>
 		/// <returns></returns>
 		[HttpPost("state")]
+        [Returns(typeof(PageStateResult))]
 		public async ValueTask PageState([FromBody] PageDetails pageDetails)
         {
             if (_htmlService == null)

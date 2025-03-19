@@ -8,16 +8,16 @@ interface ContentChangeOptions {
 	created: boolean;
 }
 
-interface ContentChangeDetail<T> {
-    deleted: boolean;
-    updated: boolean;
-    created: boolean;
-    added: boolean;
-    updatingId: int | undefined;
-    change: any;
-    endpoint: string;
-    entity: T;
-	endpointType: string
+export interface ContentChangeDetail {
+	deleted: boolean;
+	updated: boolean;
+	created: boolean;
+	added: boolean;
+	updatingId: int | undefined;
+	change: any;
+	endpoint: string;
+	endpointType: string;
+	entity: Content;
 }
 
 /*
@@ -26,7 +26,7 @@ interface ContentChangeDetail<T> {
 */
 export default function contentChange<T extends Content>(entity: T, endpoint: string, changeDetail: ContentChangeOptions) {
 
-	var detail = {} as ContentChangeDetail<T>;
+	var detail = {} as ContentChangeDetail;
 
 	var endpointInfo = getEndpointType(endpoint);
 	

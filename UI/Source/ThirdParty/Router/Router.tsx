@@ -1,12 +1,16 @@
-import webRequest, { expandIncludes } from 'UI/Functions/WebRequest';
+import pageApi, { PageStateResult } from 'Api/Page';
 import Canvas from 'UI/Canvas';
+import { ContentChangeDetail } from 'UI/Functions/ContentChange';
+import { WebSocketMessageDetail } from 'UI/Functions/WebSocket';
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import AdminTrigger from 'UI/AdminTrigger';
 import { createContext, useContext, useRef, useState, useEffect } from 'react';
 
+
 interface RouterContext {
 	setPage: (url: string) => void;
 	pageState: PageState;
+	canGoBack: () => boolean;
 }
 
 interface PageState {
@@ -25,7 +29,7 @@ export function useRouter() {
 
 const { config, location } = window;
 const routerCfg = config && config.pageRouter || {};
-const { hash, localRouter } = routerCfg;
+const { hash } = routerCfg;
 
 function currentUrl(){
 	return hash ? location.hash?.substring(1) ?? "/" : `${location.pathname}${location.search}`;
@@ -36,23 +40,18 @@ const initialUrl = currentUrl();
 // Initial event:
 
 var pgStateHold = document.getElementById('pgState');
-const initState = localRouter ? localRouter(initialUrl, webRequest) : (pgStateHold ? JSON.parse(pgStateHold.innerHTML) : {});
+const initState = pgStateHold ? JSON.parse(pgStateHold.innerHTML) : {};
 
 if(!initState.loading){
 	triggerEvent(initState.page);
 }
 
-function triggerEvent(pgInfo) {
+function triggerEvent(pgInfo : PageStateResult) {
 	if(pgInfo){
-		var e;
-		if(typeof(Event) === 'function') {
-			e = new Event('xpagechange');
-		}else{
-			e = document.createEvent('Event');
-			e.initEvent('xpagechange', true, true);
-		}
-		e.pageInfo = pgInfo;
-		window.dispatchEvent(e);
+		var e = new CustomEvent('xpagechange', {
+			detail: pgInfo
+		});
+		document.dispatchEvent && document.dispatchEvent(e);
 	}
 }
 
@@ -66,7 +65,7 @@ function canGoBack(){
 	return historyLength() > initLength;
 }
 
-export default (props) => {
+const Router: React.FC<{}> = () => {
 	var [pageState, setPage] = useState({url: initialUrl, ...initState});
 	var [scrollTarget, setScrollTarget] = useState();
 	const scrollTimer = useRef(null);
@@ -79,7 +78,7 @@ export default (props) => {
 		pageState.handled = true;
 	}
 	
-	function go(url) {
+	function go(url : string) {
 		if(window.beforePageLoad){
 			window.beforePageLoad(url).then(() => {
 				window.beforePageLoad = null;
@@ -90,7 +89,7 @@ export default (props) => {
 		}
 	}
 	
-	function goNow(url) {
+	function goNow(url : string) {
 		if(useDefaultNav(hash ? '' : document.location.pathname, url)){
 			document.location = url;
 			return;
@@ -113,7 +112,7 @@ export default (props) => {
 		});
 	}
 	
-	function useDefaultNav(a,b){
+	function useDefaultNav(a : string,b : string){
 		if(b.indexOf(':') != -1 || b[0]=='#' || (b[0] == '/' && (b.length>1 && b[1] == '/'))){
 			return true;
 		}
@@ -124,50 +123,33 @@ export default (props) => {
 		return isOnExternPage != targetIsExternPage;
 	}
 	 
-	function setPageState(url : string) {
-		if(localRouter){
-			var pgState = localRouter(url, webRequest);
-			pgState.url = url;
-			
-			if(pgState.loading){
-				pgState.loading.then(pgState => {
-					setPage(pgState);
-					triggerEvent(pgState);
-				});
-			}else{
-				setPage(pgState);
-				triggerEvent(pgState);
+	function setPageState(url: string) {
+
+		return pageApi.pageState({
+			url,
+			version: getBuildDate().timestamp
+		}).then(res => {
+			if (res.oldVersion) {
+				console.log("UI updated - forced reload");
+				document.location = url;
+				return;
+			} else if (res.redirect) {
+				// Bounce:
+				console.log("Redirect");
+				document.location = res.redirect;
+				return;
 			}
 			
-			return Promise.resolve(true);
-		}else{
-			return webRequest("page/state", {
-				url,
-				version: getBuildDate().timestamp
-			}).then(res => {
-				if (res.json.oldVersion) {
-					console.log("UI updated - forced reload");
-					document.location = url;
-					return;
-				} else if (res.json.redirect) {
-					// Bounce:
-					console.log("Redirect");
-					document.location = res.json.redirect;
-					return;
-				}
-				
-				var {config} = res.json;
-				
-				if(config){
-					delete res.json.config;
-					window.__cfg = config;
-				}
-				
-				var pgState = {url, ...res.json};
-				setPage(pgState);
-				triggerEvent(res.json);
-			});
-		}
+			var {config} = res;
+			
+			if(config){
+				window.__cfg = config;
+			}
+			
+			var pgState = {url, ...res};
+			setPage(pgState);
+			triggerEvent(res);
+		});
 	}
 	
 	const onPopState = (e) => {
@@ -248,19 +230,22 @@ export default (props) => {
 	
 	useEffect(() => {
 		
-		const onContentChange = (e : CustomEvent) => {
-			var {po} = pageState;
-			var detail = e.detail as ContentChangeDetail;
-			if(po && po.type == detail.type && po.id == detail.entity.id){
+		const onContentChange = (e: Event) => {
+			var { po } = pageState;
+			var ce = e as CustomEvent<ContentChangeDetail>;
+			var detail = ce.detail;
+			if (po && po.type == detail.endpointType && po.id == detail.entity.id){
 				var pgState = {...pageState, po: detail.entity};
 				setPage(pgState);
 			}
 		};
 		
-		const onWsMessage = (e) => {
-			var {po} = pageState;
-			if(po && po.type == e.message.type && po.id == e.message.entity.id){
-				var pgState = {...pageState, po: e.message.entity};
+		const onWsMessage = (e : Event) => {
+			var { po } = pageState;
+			var ce = e as CustomEvent<WebSocketMessageDetail>;
+			var message = ce.detail;
+			if(po && po.type == message.type && po.id == message.entity.id){
+				var pgState = {...pageState, po: message.entity};
 				setPage(pgState);
 			}
 		};
@@ -309,3 +294,5 @@ export default (props) => {
 		<AdminTrigger page={page}/>
 	</routerCtx.Provider>;
 }
+
+export default Router;
