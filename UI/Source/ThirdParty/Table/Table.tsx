@@ -25,7 +25,7 @@ const Table = <T extends VersionedContent, I extends ApiIncludes>(props: TablePr
 	} = props;
 
 	return (
-		<table>
+		<table className="table">
 			{onHeader && <thead>
 				{onHeader()}
 			</thead>}
