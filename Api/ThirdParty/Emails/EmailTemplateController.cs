@@ -34,7 +34,7 @@ namespace Api.Emails
 
 			recipients.Add(new Recipient(context)
 			{
-				CustomData = mailTest.CustomData
+				CustomData = mailTest.CustomData == null ? null : Newtonsoft.Json.JsonConvert.DeserializeObject(mailTest.CustomData)
 			});
 
 			var state = await emailService.SendAsync(recipients, mailTest.TemplateKey);
@@ -65,7 +65,7 @@ namespace Api.Emails
 		/// <summary>
 		/// Custom scope.
 		/// </summary>
-		public object CustomData;
+		public string CustomData;
 		
 	}
 }
