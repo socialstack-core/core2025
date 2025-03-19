@@ -148,7 +148,7 @@ namespace Api.EcmaScript
             };
             contentType.AddTsDocLine("* The base content type for all content.");
             contentType.AddProperty("id", "int");
-            contentType.AddProperty("type?", "string | null");
+            contentType.AddProperty("type", "string | null");
             content.AddChild(contentType);
 
             // ===== VERSIONEDCONTENT.CS ===== \\
@@ -395,6 +395,11 @@ namespace Api.EcmaScript
                     continue;
                 }
 
+                if (field.DeclaringType != source)
+                {
+                    continue;
+                }
+
                 var fieldName = field.Name;
 
                 // Remove leading underscore and lowercase first letter
@@ -608,7 +613,7 @@ namespace Api.EcmaScript
                         }
                     }
 
-                    AddFieldsToType(fields, typeDef);
+                    AddFieldsToType(fields, typeDef, entityType);
 
                     var virtualFields = entityType.GetCustomAttributes<HasVirtualFieldAttribute>();
 
@@ -896,6 +901,10 @@ namespace Api.EcmaScript
 
             foreach(var field in listEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
+                if (field.DeclaringType != listEntityType)
+                {
+                    continue;
+                }
                 if (field.PropertyType.Namespace.StartsWith("Api.") || TypeConversions.ContainsKey(field.PropertyType))
                 {
                     var fieldName = field.Name;
@@ -911,6 +920,11 @@ namespace Api.EcmaScript
             {
                 if (field.FieldType.Namespace.StartsWith("Api.") || TypeConversions.ContainsKey(field.FieldType))
                 {
+                    if (field.DeclaringType != listEntityType)
+                    {
+                        continue;
+                    }
+
                     var fieldName = field.Name;
                     if (IsNullableType(field.FieldType))
                     {
@@ -1119,9 +1133,7 @@ namespace Api.EcmaScript
         }
 
 
-
-
-        private void AddFieldsToType(List<ContentField> fields, TypeDefinition typeDef)
+        private void AddFieldsToType(List<ContentField> fields, TypeDefinition typeDef, Type source)
         {
             foreach(var field in fields)
             {
@@ -1130,6 +1142,12 @@ namespace Api.EcmaScript
                 {
                     targetType = Nullable.GetUnderlyingType(targetType);
                 }
+
+                if (field.FieldInfo.DeclaringType != source)
+                {
+                    continue;
+                }
+
                 var jsonIgnore = field.PropertyInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
 
                 jsonIgnore ??= field.FieldInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
