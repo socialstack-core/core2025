@@ -1,4 +1,3 @@
-import { MediaRef } from 'Api/Upload'
 import Link from 'UI/Link';
 
 export type ImageSize      = "original" | number | string; // add more as necessary
@@ -6,7 +5,7 @@ export type ImageAlignment = "None" | "Left" | "Right" | "Center";
 
 export type ImageProps = {
     onClick?: React.MouseEventHandler<HTMLImageElement>, 
-    fileRef: MediaRef, 
+    fileRef: FileRef, 
     linkUrl?: string, 
     size?: ImageSize, 
     fullWidth?: boolean, 
