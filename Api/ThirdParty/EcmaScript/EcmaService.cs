@@ -395,10 +395,10 @@ namespace Api.EcmaScript
                     continue;
                 }
 
-                if (field.DeclaringType != source)
-                {
-                    continue;
-                }
+                // if (field.DeclaringType != source)
+                // {
+                //     continue;
+                // }
 
                 var fieldName = field.Name;
 
@@ -901,10 +901,10 @@ namespace Api.EcmaScript
 
             foreach(var field in listEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
-                if (field.DeclaringType != listEntityType)
-                {
-                    continue;
-                }
+                // if (field.DeclaringType != listEntityType)
+                // {
+                //     continue;
+                // }
                 if (field.PropertyType.Namespace.StartsWith("Api.") || TypeConversions.ContainsKey(field.PropertyType))
                 {
                     var fieldName = field.Name;
@@ -920,10 +920,10 @@ namespace Api.EcmaScript
             {
                 if (field.FieldType.Namespace.StartsWith("Api.") || TypeConversions.ContainsKey(field.FieldType))
                 {
-                    if (field.DeclaringType != listEntityType)
-                    {
-                        continue;
-                    }
+                    // if (field.DeclaringType != listEntityType)
+                    // {
+                    //     continue;
+                    // }
 
                     var fieldName = field.Name;
                     if (IsNullableType(field.FieldType))
@@ -1143,10 +1143,10 @@ namespace Api.EcmaScript
                     targetType = Nullable.GetUnderlyingType(targetType);
                 }
 
-                if (field.FieldInfo.DeclaringType != source)
-                {
-                    continue;
-                }
+                // if (field.FieldInfo.DeclaringType != source)
+                // {
+                //     continue;
+                // }
 
                 var jsonIgnore = field.PropertyInfo?.GetCustomAttribute<JsonIgnoreAttribute>();
 
