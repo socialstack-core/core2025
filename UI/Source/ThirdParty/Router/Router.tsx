@@ -13,12 +13,15 @@ interface RouterContext {
 	canGoBack: () => boolean;
 }
 
-interface PageState {
-	tokenNames?: string[],
-	tokens?: string[]
+interface PageState extends PageStateResult {
+	url: string;
 }
 
-const routerCtx = createContext < RouterContext | null > (null);
+const routerCtx = createContext<RouterContext>({
+	setPage: (url: string) => { },
+	canGoBack: () => false,
+	pageState: {}
+} as RouterContext);
 
 export { routerCtx };
 
@@ -27,23 +30,11 @@ export function useRouter() {
 	return useContext(routerCtx);
 };
 
-const { config, location } = window;
-const routerCfg = config && config.pageRouter || {};
-const { hash } = routerCfg;
+var pgRouterConfig: any = __cfg.pageRouter;
+var hashMode = pgRouterConfig?.hash;
 
-function currentUrl(){
-	return hash ? location.hash?.substring(1) ?? "/" : `${location.pathname}${location.search}`;
-}
-
-const initialUrl = currentUrl();
-
-// Initial event:
-
-var pgStateHold = document.getElementById('pgState');
-const initState = pgStateHold ? JSON.parse(pgStateHold.innerHTML) : {};
-
-if(!initState.loading){
-	triggerEvent(initState.page);
+function currentUrl() {
+	return hashMode ? location.hash?.substring(1) ?? "/" : `${location.pathname}${location.search}`;
 }
 
 function triggerEvent(pgInfo : PageStateResult) {
@@ -65,18 +56,27 @@ function canGoBack(){
 	return historyLength() > initLength;
 }
 
+interface ScrollTarget {
+	x: number,
+	y: number
+}
+
 const Router: React.FC<{}> = () => {
-	var [pageState, setPage] = useState({url: initialUrl, ...initState});
-	var [scrollTarget, setScrollTarget] = useState();
-	const scrollTimer = useRef(null);
-	
-	if(pageState.loading && !pageState.handled){
-		pageState.loading.then(pgState => {
-			triggerEvent(pgState.page);
-			setPage(pgState);
-		});
-		pageState.handled = true;
-	}
+	var [pageState, setPage] = useState<PageState>(() => {
+		const initialUrl = currentUrl();
+
+		// Initial event:
+
+		var pgStateHold = document.getElementById('pgState');
+		const initState = pgStateHold ? JSON.parse(pgStateHold.innerHTML) : {};
+
+		triggerEvent(initState.page);
+
+		return { url: initialUrl, ...initState };
+	});
+
+	var [scrollTarget, setScrollTarget] = useState<ScrollTarget | null>(null);
+	const scrollTimer = useRef<number | null>(null);
 	
 	function go(url : string) {
 		if(window.beforePageLoad){
@@ -90,7 +90,7 @@ const Router: React.FC<{}> = () => {
 	}
 	
 	function goNow(url : string) {
-		if(useDefaultNav(hash ? '' : document.location.pathname, url)){
+		if (useDefaultNav(hashMode ? '' : document.location.pathname, url)){
 			document.location = url;
 			return;
 		}
@@ -105,7 +105,7 @@ const Router: React.FC<{}> = () => {
 		// Push nav event:
 		window.history.pushState({
 			scrollTop: 0
-		}, '', hash ? '#' + url : url);
+		}, '', hashMode ? '#' + url : url);
 		
 		return setPageState(url).then(() => {
 			html.scrollTo({top: 0, left: 0, behavior: 'instant'});
@@ -145,15 +145,19 @@ const Router: React.FC<{}> = () => {
 			if(config){
 				window.__cfg = config;
 			}
-			
+
+			var {
+
+			} = res;
+
 			var pgState = {url, ...res};
 			setPage(pgState);
 			triggerEvent(res);
 		});
 	}
 	
-	const onPopState = (e) => {
-		var newScrollTarget = null;
+	const onPopState = (e : PopStateEvent) => {
+		var newScrollTarget : ScrollTarget | null = null;
 		
 		if(e && e.state && e.state.scrollTop !== undefined){
 			newScrollTarget = {
@@ -163,24 +167,21 @@ const Router: React.FC<{}> = () => {
 		}
 		
 		setPageState(currentUrl()).then(() => {
-			if(newScrollTarget){
-				setScrollTarget(newScrollTarget);
-			} else {
-				setScrollTarget(null);
-			}
+			setScrollTarget(newScrollTarget);
 		});
 	}
 	
-    const onLinkClick = (e) => {
+    const onLinkClick = (e : MouseEvent) => {
         if (e.button != 0 || e.defaultPrevented) {
             // Browser default action for right/ middle clicks
             return;
         }
-        var cur = e.target;
+        var cur = e.target as Node;
         while (cur && cur !== document) {
-            if (cur.nodeName === 'A') {
-                var href = cur.getAttribute('href'); // cur.href is absolute
-                if (cur.getAttribute('target') || cur.getAttribute('download')) {
+			if (cur.nodeName === 'A') {
+				var ele = cur as HTMLAnchorElement;
+				var href = ele.getAttribute('href'); // cur.href is absolute
+				if (ele.getAttribute('target') || ele.getAttribute('download')) {
                     return;
                 }
 
@@ -206,7 +207,7 @@ const Router: React.FC<{}> = () => {
                     }
                 }
             }
-            cur = cur.parentNode;
+            cur = cur.parentNode as Node;
         }
     };
 
@@ -235,7 +236,7 @@ const Router: React.FC<{}> = () => {
 			var ce = e as CustomEvent<ContentChangeDetail>;
 			var detail = ce.detail;
 			if (po && po.type == detail.endpointType && po.id == detail.entity.id){
-				var pgState = {...pageState, po: detail.entity};
+				var pgState: PageState = {...pageState, po: detail.entity};
 				setPage(pgState);
 			}
 		};

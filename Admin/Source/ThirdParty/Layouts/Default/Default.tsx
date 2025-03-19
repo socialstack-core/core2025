@@ -248,8 +248,8 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
                                     <a href={item.target} className={
                                     item.target == '/en-admin/' ?
                                         (url == item.target ? 'active' : '') :
-                                        (url.startsWith(item.target) ? 'active' : '')}>
-                                    <Image fileRef={item.iconRef} className='fa-fw' />
+                                        (item.target && url.startsWith(item.target) ? 'active' : '')}>
+                                        {item.iconRef && <Image fileRef={item.iconRef} className='fa-fw' />}
                                     {item.title}
                                     </a>
                                 </li>
