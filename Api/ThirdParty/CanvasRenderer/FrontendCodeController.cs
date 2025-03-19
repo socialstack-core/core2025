@@ -58,6 +58,34 @@ namespace Api.CanvasRenderer
 		}
 
 		/// <summary>
+		/// The type metadata.
+		/// </summary>
+		[Route("/pack/type-meta.json")]
+		public async ValueTask<FileResult> GetTypeMeta()
+		{
+			var file = await _codeService.GetTypeMeta();
+			return ServeFile(file, "text/json; charset=UTF-8");
+		}
+
+		private FileResult ServeFile(FrontendFile file, string mime)
+		{
+			if (file.FileContent == null)
+			{
+				// 404
+				Response.StatusCode = 404;
+				return null;
+			}
+
+			if (file.Precompressed != null)
+			{
+				Response.Headers["Content-Encoding"] = "gzip";
+				return File(file.Precompressed, "text/javascript; charset=UTF-8");
+			}
+
+			return File(file.FileContent, "text/javascript; charset=UTF-8");
+		}
+
+		/// <summary>
 		/// Gets the email main.js file (site locale 1). The URL should be of the form /pack/email-static/main.js?loc=1&amp;v=123123123123&amp;h=ma83md83jd7hdur8
 		/// Where loc is the locale ID, v is the original code build timestamp in ms, and h is the hash of the file.
 		/// For convenience, ask FrontendCodeService for the url via GetMainJsUrl(Context context).
@@ -80,21 +108,7 @@ namespace Api.CanvasRenderer
 
 			// Ask the service as it's almost always cached in there.
 			var file = await _codeService.GetEmailMainJs(localeId);
-
-			if (file.FileContent == null)
-			{
-				// 404
-				Response.StatusCode = 404;
-				return null;
-			}
-
-			if (file.Precompressed != null)
-			{
-				Response.Headers["Content-Encoding"] = "gzip";
-				return File(file.Precompressed, "text/javascript; charset=UTF-8");
-			}
-
-			return File(file.FileContent, "text/javascript; charset=UTF-8");
+			return ServeFile(file, "text/javascript; charset=UTF-8");
 		}
 
 #if DEBUG
@@ -173,21 +187,7 @@ namespace Api.CanvasRenderer
 
 			// Ask the service as it's almost always cached in there.
 			var file = await _codeService.GetAdminMainJs(localeId);
-
-			if (file.FileContent == null)
-			{
-				// 404
-				Response.StatusCode = 404;
-				return null;
-			}
-
-			if (file.Precompressed != null)
-			{
-				Response.Headers["Content-Encoding"] = "gzip";
-				return File(file.Precompressed, "text/javascript; charset=UTF-8");
-			}
-
-			return File(file.FileContent, "text/javascript; charset=UTF-8");
+			return ServeFile(file, "text/javascript; charset=UTF-8");
 		}
 
 		/// <summary>
@@ -228,21 +228,7 @@ namespace Api.CanvasRenderer
 		{
 			// Ask the service as it's almost always cached in there.
 			var file = await _codeService.GetAdminMainCss(1);
-
-			if (file.FileContent == null)
-			{
-				// 404
-				Response.StatusCode = 404;
-				return null;
-			}
-
-			if (file.Precompressed != null)
-			{
-				Response.Headers["Content-Encoding"] = "gzip";
-				return File(file.Precompressed, "text/css; charset=UTF-8");
-			}
-
-			return File(file.FileContent, "text/css; charset=UTF-8");
+			return ServeFile(file, "text/css; charset=UTF-8");
 		}
 	}
 

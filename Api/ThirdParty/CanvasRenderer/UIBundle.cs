@@ -1568,8 +1568,10 @@ namespace Api.CanvasRenderer
 				// Get the src:
 				var es8Javascript = result["src"].Value<string>();
                 var literals = result["templateLiterals"] as JArray;
+                file.CustomTypeData = result["customTypeData"] as JArray;
 
-                if (literals != null)
+
+				if (literals != null)
                 {
                     List<TemplateLiteral> templates = null;
 
@@ -2171,6 +2173,11 @@ namespace Api.CanvasRenderer
         /// </summary>
         public SourceFileType FileType;
         /// <summary>
+        /// A json object representing "{..}" any metadata present in this module. 
+        /// It primarily holds type info which the admin panel uses (via meta.json).
+        /// </summary>
+        public string MetaJson;
+        /// <summary>
         /// True if this file is a "global" one. Only true for SCSS files with .global. in their filename.
         /// </summary>
         public bool IsGlobal;
@@ -2194,6 +2201,11 @@ namespace Api.CanvasRenderer
         /// Raw file content, set once loaded. Different from content as this is the original and Content is after any transpiler runs.
         /// </summary>
         public string RawSource;
+        /// <summary>
+        /// Unprocessed type data from the compiler. 
+        /// Most of the time this does just get dumped without being used.
+        /// </summary>
+        public JArray CustomTypeData;
 		/// <summary>
 		/// The contents of this file, transpiled. If it's a format that doesn't require transpiling, then this is null.
 		/// </summary>

@@ -7,6 +7,8 @@ using Api.Startup;
 using Api.Translate;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,6 +41,7 @@ namespace Api.CanvasRenderer
 
 		private FrontendCodeServiceConfig _config;
 		private ContentSyncService _contentSync;
+		private FrontendFile? _cachedTypeMetadata;
 
 		/// <summary>
 		/// The site public URL. Never ends with a path - always just the origin and scheme, e.g. https://www.example.com
@@ -370,6 +373,15 @@ namespace Api.CanvasRenderer
 				ClearCaches();
 				return new ValueTask<Translation>(translation);
 			});
+
+			Events.FrontendjsAfterUpdate.AddEventListener((Context context, long buildtimestampMs) =>
+			{
+
+				// A build has occurred - clear meta cache.
+				_cachedTypeMetadata = null;
+
+				return new ValueTask<long>(buildtimestampMs);
+			});
 		}
 
 		/// <summary>
@@ -569,6 +581,71 @@ namespace Api.CanvasRenderer
 			// Start it now:
 			builder.Start();
 		}
+
+		/// <summary>
+		/// Gets the meta.json representing all components present. It does not have a locale associated with it.
+		/// </summary>
+		/// <returns></returns>
+		public async ValueTask<FrontendFile> GetTypeMeta()
+		{
+#if DEBUG
+			// Special case for devs - may need to wait for first build if it hasn't happened yet.
+			if (initialBuildTask != null)
+			{
+				await initialBuildTask;
+			}
+#endif
+			if (_cachedTypeMetadata != null)
+			{
+				return _cachedTypeMetadata.Value;
+			}
+
+			// Must construct the same structure as the main compiler does for type-meta.json.
+
+			var metaFile = new {
+				BuildTime = Version,
+				CodeModules = new Dictionary<string, MetaCodeModule>()
+			};
+
+			foreach (var builder in SourceBuilders)
+			{
+				foreach (var kvp in builder.FileMap)
+				{
+					var file = kvp.Value;
+
+					if (file.FileType != SourceFileType.Javascript)
+					{
+						continue;
+					}
+
+					var customTypes = file.CustomTypeData;
+
+					metaFile.CodeModules[file.ModulePath] = new MetaCodeModule
+					(){
+						Types = customTypes
+					};
+
+				}
+			}
+
+			var jsonMeta = Newtonsoft.Json.JsonConvert.SerializeObject(metaFile, jsonSettings);
+			var result = new FrontendFile();
+			result.FileContent = System.Text.Encoding.UTF8.GetBytes(jsonMeta);
+			_cachedTypeMetadata = result;
+			return result;
+		}
+
+		/// <summary>
+		/// Json serialization settings for canvases
+		/// </summary>
+		private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+		{
+			ContractResolver = new DefaultContractResolver
+			{
+				NamingStrategy = new CamelCaseNamingStrategy()
+			},
+			Formatting = Formatting.None
+		};
 
 		/// <summary>
 		/// Gets the main JS file as a raw, always from memory file. Note that although the initial generation of the response is dynamic, 
