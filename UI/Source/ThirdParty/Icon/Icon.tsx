@@ -5,7 +5,8 @@ interface IconProps {
 	/**
 	 * You MUST use a constant string. UI/Icon is a first-class component in the compile process.
 	 * The compiler will use "type" to identify in-use icons and strip accordingly.
-	 * This is the type of icon you want to display, such as type="bullhorn".
+	 * This is the type of icon you want to display, such as type="fa-bullhorn". 
+	 * Don't target this type with CSS: instead, target ui-icon if you need to do so.
 	 */
 	type: string,
 
@@ -47,11 +48,16 @@ interface IconProps {
 	/**
 	 * Flip horizontally
 	 */
-	horizontalFlip?: boolean
+	horizontalFlip?: boolean,
+
+	/**
+	 * Character, used internally by the compiler.
+	 */
+	c?:string
 }
 
 const Icon: React.FC<IconProps> = (props) => {
-	const { type, light, solid, duotone, regular, brand, fixedWidth, spin, horizontalFlip } = props;
+	const { type, light, solid, duotone, regular, brand, fixedWidth, spin, horizontalFlip, c } = props;
 	
 	var variant = 'fa';
 	
@@ -67,7 +73,16 @@ const Icon: React.FC<IconProps> = (props) => {
 		variant = 'fas';
 	}
 	
-	var className = variant + " fa-" + type;
+	var className = variant + " ui-icon";
+
+	if (!c) {
+		// May need to reconsider this if people specifically target an icon using these class names.
+		// They should generally target ui-icon instead though.
+		// It exists such that static icons, which use a tiny highly accelerated subset of icons, 
+		// don't end up being given 2 characters when both the accelerated set and the 
+		// entire set are present (like on the admin panel).
+		className += " " + type;
+	}
 
 	if (fixedWidth) {
 		className += " fa-fw";
@@ -81,10 +96,10 @@ const Icon: React.FC<IconProps> = (props) => {
 		className += " fa-flip-horizontal";
 	}
 
-	// NB: count removal: if you need it, use a wrapping component instead 
+	// NB: count removal: if you need it, use a wrapping component instead
 	// due to the special case that Icon is to the compiler.
 
-	return <i className={className} />;
+	return <i className={className}>{c}</i>;
 }
 
 export default Icon;
