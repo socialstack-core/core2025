@@ -37,7 +37,7 @@ namespace Api.EcmaScript
 			
 			foreach (var builder in sourceBuilders)
 			{
-				var rootSegment = "\":[\"" + "./" + builder.RootName + "/Source/";
+				var rootSegment = "\":[\"";
 
 				foreach (var kvp in builder.FileMap)
 				{
@@ -72,7 +72,7 @@ namespace Api.EcmaScript
 					output.Append('"');
 					output.Append(modPath);
 					output.Append(rootSegment);
-					output.Append(file.RelativePath.Replace('\\', '/') + '/' + nameNoType);
+					output.Append(file.Path.Replace('\\', '/'));
 					output.Append("\"]");
 				}
 			}

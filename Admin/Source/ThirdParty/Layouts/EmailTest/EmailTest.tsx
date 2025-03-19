@@ -14,21 +14,6 @@ const EmailTest: React.FC<{}> = () =>{
 			<Form 
 				action={emailTemplateApi.testEmail}
 				submitLabel='Send test to yourself'
-				onValues={(values: EmailTestRequest) => {
-					if(values.customData){
-						try{
-							var cd = JSON.parse(values.customData);
-							values.customData = cd;
-						}catch(e){
-							// Ignore (it was probably blank).
-							console.warn("Invalid custom email data. It was dropped: ", e);
-							values.customData = null;
-						}
-					}else{
-						values.customData = null;
-					}
-					return values;
-				}}
 			>
 				<Input type='text' name='templateKey' label='Template Key' />
 				<Input type='text' contentType='application/json' name='customData' label='Custom Data JSON' />
