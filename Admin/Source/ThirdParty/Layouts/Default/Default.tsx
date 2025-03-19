@@ -58,7 +58,7 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
 
     var { user, realUser, role } = session;
 
-    var isImpersonating = realUser && (user.id != realUser.id);
+    var isImpersonating = realUser && (user?.id != realUser.id);
 
     if (!user) {
         // Login page
@@ -83,10 +83,10 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
     }
 
     var dropdownLabelJsx = <>
-        {user.fullname || user.username || user.email} <span className="avatar">{user.avatarRef ? <Image fileRef={user.avatarRef} size={32} /> : null}</span>
+        {user.fullName || user.username || user.email} <span className="avatar">{user.avatarRef ? <Image fileRef={user.avatarRef} size={32} /> : null}</span>
     </>;
 
-    function impersonateUser(userId : int) {
+    function impersonateUser(userId : uint) {
         return userApi.impersonate(userId).then(response => {
             setSession(response);
             window.location.href = '/';
@@ -112,12 +112,12 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
     function renderEntry(entry : User) {
 
         // don't include current user account
-        if (user.id == entry.id) {
+        if (user?.id == entry.id) {
             return;
         }
 
         // disallow role elevation
-        if (entry.role < user.role) {
+        if (entry.role && user?.role && entry.role < user.role) {
             return;
         }
 
@@ -241,10 +241,10 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
             {menuOpen &&
                 <div className="admin-page__menu-open" onClick={() => setMenuOpen(false)}>
                     <div className="admin-drawer">
-                        <ul>
+                        <ul className="loop">
                         <Loop over={adminNavMenuApi} filter={{ sort: { field: 'Title' } }}>
                             {item =>
-                                <li>
+                                <li className="loop-item">
                                     <a href={item.target} className={
                                     item.target == '/en-admin/' ?
                                         (url == item.target ? 'active' : '') :
