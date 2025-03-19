@@ -147,7 +147,7 @@ namespace Api.EcmaScript
                 Name = "Content"
             };
             contentType.AddTsDocLine("* The base content type for all content.");
-            contentType.AddProperty("id", "int");
+            contentType.AddProperty("id", "uint");
             contentType.AddProperty("type", "string | null");
             content.AddChild(contentType);
 
@@ -157,7 +157,7 @@ namespace Api.EcmaScript
                 Inheritence = ["UserCreatedContent"]
             };
             versionedContent.AddTsDocLine("* The base content type for all content.");
-            versionedContent.AddProperty("revisionId?", "int");
+            versionedContent.AddProperty("revisionId?", "uint");
             content.AddChild(versionedContent);
 
             // ===== USERCREATEDCONTENT.CS ===== \\
@@ -384,7 +384,16 @@ namespace Api.EcmaScript
         {
             foreach(var field in fields)
             {
-                var targetType = field.FieldType;
+                Type targetType;
+                
+                if (field.FieldInfo is not null)
+                {
+                    targetType = field.FieldInfo.FieldType;
+                }
+                else
+                {
+                    targetType = field.PropertyInfo.PropertyType;
+                }
                 if (Nullable.GetUnderlyingType(targetType) != null)
                 {
                     targetType = Nullable.GetUnderlyingType(targetType);
@@ -417,6 +426,13 @@ namespace Api.EcmaScript
                     continue;
                 }
                 var fieldName = field.Name;
+
+                if (fieldName.EndsWith("Ref"))
+                {
+                    targetType = typeof(FileRef);
+                }
+                
+
                 if (IsNullableType(field.FieldType))
                 {
                     fieldName += "?";
@@ -1175,7 +1191,7 @@ namespace Api.EcmaScript
         private void InitTypeConversions()
         {
             AddTypeConversion(typeof(string), "string");
-            AddTypeConversion(typeof(uint), "int");
+            AddTypeConversion(typeof(uint), "uint");
             AddTypeConversion(typeof(int), "int");
             AddTypeConversion(typeof(double), "double");
             AddTypeConversion(typeof(float), "float");
