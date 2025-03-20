@@ -12,24 +12,16 @@ import {getJson, ApiList} from 'UI/Functions/WebRequest'
 */
 export type User = VersionedContent & {
     email?: string,
-    emailOptOutFlags: int,
+    emailOptOutFlags: uint,
     firstName?: string,
     lastName?: string,
     fullName?: string,
-    role: int,
-    featureRef?: string,
-    avatarRef?: string,
+    role: uint,
+    featureRef?: FileRef,
+    avatarRef?: FileRef,
     username?: string,
-    localeId?: int,
-    revision: int,
-    userId: int,
-    createdUtc: Date,
-    editedUtc: Date,
-    id: int,
+    localeId?: uint,
     joinedUtc: Date,
-    revisionId?: int,
-    isDraft: boolean,
-    type?: string,
     userRole: Role,
     creatorUser: User,
 }
@@ -85,7 +77,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
             Attempts to verify the users email. If a password is supplied, the users password is also set.
 
     */
-    public verifyUser = (userid: int, token: string, newPassword: OptionalPassword): Promise<void>  => {
+    public verifyUser = (userid: uint, token: string, newPassword: OptionalPassword): Promise<void>  => {
         return getJson(this.apiUrl + '/verify/' + userid + '/' + token + '', {
         newPassword,
         })
@@ -120,7 +112,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
       Impersonate a user by their ID. This is a hard cookie switch. You will loose all admin functionality to make the impersonation as accurate as possible.
 
     */
-    public impersonate = (id: int): Promise<SessionResponse>  => {
+    public impersonate = (id: uint): Promise<SessionResponse>  => {
         return getJson(this.apiUrl + '/' + id + '/impersonate')
     }
 

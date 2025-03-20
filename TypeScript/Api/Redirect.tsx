@@ -14,14 +14,6 @@ export type Redirect = VersionedContent & {
     from?: string,
     to?: string,
     permanentRedirect: boolean,
-    revision: int,
-    userId: int,
-    createdUtc: Date,
-    editedUtc: Date,
-    id: int,
-    revisionId?: int,
-    isDraft: boolean,
-    type?: string,
     creatorUser: User,
 }
 

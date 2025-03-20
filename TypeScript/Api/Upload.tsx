@@ -27,15 +27,7 @@ export type Upload = VersionedContent & {
     isVideo: boolean,
     isAudio: boolean,
     transcodeState: int,
-    revision: int,
-    userId: int,
-    createdUtc: Date,
-    editedUtc: Date,
-    id: int,
-    ref?: string,
-    revisionId?: int,
-    isDraft: boolean,
-    type?: string,
+    ref?: FileRef,
     creatorUser: User,
 }
 
@@ -51,7 +43,7 @@ export type FileUploadBody = {
 */
 export type MediaRef = {
     type?: string,
-    id: int,
+    id: uint,
     name?: string,
     description?: string,
     field?: string,
@@ -59,7 +51,7 @@ export type MediaRef = {
     existingRef?: string,
     updatedRef?: string,
     status?: string,
-    localeId: int,
+    localeId: uint,
 }
 
 /**
@@ -88,7 +80,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Uploads a transcoded file. The body of the client request is expected to be a tar of the files, using a directory called "output" at its root.
 
     */
-    public transcodedTar = (id: int, token: string): Promise<void>  => {
+    public transcodedTar = (id: uint, token: string): Promise<void>  => {
         return getJson(this.apiUrl + '/transcoded/' + id + '?token=' + token + '')
     }
 

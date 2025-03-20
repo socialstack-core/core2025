@@ -17,15 +17,7 @@ export type Role = VersionedContent & {
     isComposite: boolean,
     adminDashboardJson?: string,
     grantRuleJson?: string,
-    inheritedRoleId: int,
-    revision: int,
-    userId: int,
-    createdUtc: Date,
-    editedUtc: Date,
-    id: int,
-    revisionId?: int,
-    isDraft: boolean,
-    type?: string,
+    inheritedRoleId: uint,
     creatorUser: User,
 }
 

@@ -43,14 +43,14 @@ export class AutoApi<EntityType extends Content, IncludeSet extends ApiIncludes>
 
     */
     public list = (where: Partial<Record<keyof(EntityType), string | number | boolean>> = {}, includes: IncludeSet[] = []): Promise<ApiList<EntityType>>  => {
-        return getList(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes.map(include => include.toString()) })
+        return getList(this.apiUrl + '/list', { where }, { method: 'POST', includes: includes?.map(include => include.toString()) })
     }
 
     /**
 
     */
     public load = (id: number, includes: IncludeSet[] = []): Promise<EntityType>  => {
-        return getOne(this.apiUrl + '/' + id, { includes: includes.map(include => include.toString()) })
+        return getOne(this.apiUrl + '/' + id, { includes: includes?.map(include => include.toString()) })
     }
 
     /**
@@ -71,7 +71,7 @@ export class AutoApi<EntityType extends Content, IncludeSet extends ApiIncludes>
 
     */
     public delete = (entityId: number, includes: IncludeSet[] = []): Promise<EntityType>  => {
-        return getOne(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes.map(include => include.toString()) })
+        return getOne(this.apiUrl + '/' + entityId, {} , { method: 'DELETE', includes: includes?.map(include => include.toString()) })
     }
 
 }
