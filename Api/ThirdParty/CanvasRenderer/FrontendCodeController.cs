@@ -79,10 +79,10 @@ namespace Api.CanvasRenderer
 			if (file.Precompressed != null)
 			{
 				Response.Headers["Content-Encoding"] = "gzip";
-				return File(file.Precompressed, "text/javascript; charset=UTF-8");
+				return File(file.Precompressed, mime);
 			}
 
-			return File(file.FileContent, "text/javascript; charset=UTF-8");
+			return File(file.FileContent, mime);
 		}
 
 		/// <summary>

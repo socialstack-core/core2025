@@ -5,7 +5,7 @@ import Icon from 'UI/Icon';
 const ALERT_PREFIX = 'alert';
 const DEFAULT_VARIANT = 'info';
 
-type AlertType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark';
+export type AlertType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark';
 
 interface AlertProps {
 	/**
