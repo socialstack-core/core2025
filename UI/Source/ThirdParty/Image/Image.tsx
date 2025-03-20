@@ -1,3 +1,4 @@
+import { MediaRef } from 'Api/Upload';
 import Link from 'UI/Link';
 
 export type ImageSize      = "original" | number | string; // add more as necessary
@@ -55,6 +56,8 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
         classNames.push("image-wide");
     }
 
+    const src = typeof fileRef === 'string' ? fileRef : (fileRef as MediaRef).url;
+
     if (!props.linkUrl) {
         return (
             <div 
@@ -65,7 +68,7 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
                 data-aos-duration={props.animationDuration || 400}
             >
                 <img
-                    src={fileRef.url}
+                    src={src}
                     alt={props.title}
                     width={width}
                     height={height}
@@ -82,7 +85,7 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
                 onClick={props.onClick} 
             >
                 <img
-                    src={fileRef.url}
+                    src={src}
                     alt={props.title}
                     width={width}
                     height={height}
