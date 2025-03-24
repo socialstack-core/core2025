@@ -9,8 +9,10 @@
 		z-index: 3000;
 
 		.suggestion {
-			@include fr-font-size(12);
-			@include padding(5, 8);
+			//@include fr-font-size(12);
+			//@include padding(5, 8);
+			font-size: .75rem;
+			padding: .3125rem .5rem;
 			color: #767676;
 			display: block;
 			width: 100%;
@@ -23,8 +25,10 @@
 		}
 
 		.no-results {
-			@include fr-font-size(12);
-			@include padding(5, 8);
+			//@include fr-font-size(12);
+			//@include padding(5, 8);
+			font-size: .75rem;
+			padding: .3125rem .5rem;
 			color: #767676;
 			font-style: italic;
 		}
