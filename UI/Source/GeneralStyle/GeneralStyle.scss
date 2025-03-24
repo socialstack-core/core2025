@@ -1,0 +1,57 @@
+.component-test {
+	padding: 1rem;
+
+	&.component-spacing {
+		display: flex;
+		gap: 10px;
+	}
+}
+
+
+.test-controls {
+	position: absolute;
+	left: 2rem;
+	top: 2rem;
+	display: flex;
+	gap: 14px;
+}
+
+.test-bg {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	//background: #D3DFB8;
+	position: relative;
+}
+
+.test-panels {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 2rem;
+}
+
+.test-panel {
+	border-radius: 2rem;
+	padding: 3rem;
+
+	&:not(:has(.text--small)) {
+		font-size: 1.5rem;
+		font-weight: bold;
+	}
+}
+
+.themed-panel {
+	border-radius: 2rem;
+	padding: 3rem;
+	background-color: var(--site-panel);
+	box-shadow: var(--site-panel-shadow);
+}
+
+.embed-wrapper {
+	resize: both;
+	overflow: hidden;
+	padding: 1rem;
+	outline: 1px solid rgba(200, 0, 200, .5);
+	max-width: 500px;
+}

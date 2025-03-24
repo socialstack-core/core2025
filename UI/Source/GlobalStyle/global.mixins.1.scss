@@ -1,0 +1,7 @@
+// set given CSS prop to REM equivalent of given px value
+// usage: @include propToRem("--button-border-radius", 4);
+@mixin propToRem($prop, $val) {
+	$result: calc((#{$val} / var(--font-size)) * 1rem);
+	
+	#{$prop}: #{$result};
+}

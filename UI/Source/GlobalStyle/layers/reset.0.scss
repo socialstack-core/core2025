@@ -1,0 +1,57 @@
+@layer reset {
+
+	// default to an intuitive box-sizing model;
+	// remove any default browser margins
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+		margin: 0;
+	}
+
+	body {
+		min-height: 100vh;
+		font-size: 1em;
+		font-family: var(--font-family, system-ui);
+		font-weight: var(--body-weight, normal);
+		background-color: var(--site-bg, #fff);
+		color: var(--site-fg, #1e1e1e);
+		-webkit-text-size-adjust: 100%;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	#react-root {
+		min-height: 100vh;
+		isolation: isolate;
+	}
+
+	// inherit font for form controls
+	input, button, textarea, select {
+		font: inherit;
+	}
+	
+	// remove default margin / padding / bullets from semantic version of ul
+	menu {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	// allow high contrast mode to override colour
+	*:focus {
+		outline-color: transparent;
+	}
+
+	*:focus-visible {
+		box-shadow: 0 0 0 .25rem var(--primaryFocus);
+	}
+
+	@supports not selector(:focus-visible) {
+
+		*:focus {
+			box-shadow: 0 0 0 .25rem var(--primaryFocus);
+		}
+
+	}
+
+}

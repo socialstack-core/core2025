@@ -1,0 +1,169 @@
+@layer forms {
+
+	.form {
+		width: 500px;
+		max-width: 100%;
+		--form-font-family: inherit;
+		--legend-font-family: var(--font-family);
+		;
+		--legend-font-size: 18px;
+		--legend-font-weight: bold;
+		--legend-spacing: 16px;
+		--label-font-family: var(--font-family);
+		;
+		--label-font-size: 18px;
+		--label-font-weight: bold;
+		--label-spacing: 10px;
+		--field-border-width: 1px;
+		--field-border-style: solid;
+		--field-border-color: var(--site-border-inactive);
+		--field-border-color--hover: var(--site-border-hover);
+		--field-border-color--active: var(--site-border-active);
+		--field-border-radius: .25rem;
+		--field-background-color: inherit;
+		--field-color: inherit;
+		--field-paddingX: .75rem;
+		--field-paddingY: .375rem;
+		--field-spacing: 1rem;
+		--field-font-family: var(--font-family);
+		--field-font-size: 18px;
+		--field-font-weight: normal;
+		--field-min-height: 50px;
+
+		fieldset {
+			border: 0;
+			margin: 0;
+			padding: 0;
+			color: inherit;
+		}
+
+		legend {
+			font-family: var(--legend-font-family);
+			font-size: var(--legend-font-size);
+			font-weight: var(--legend-font-weight);
+			margin-block-end: var(--legend-spacing);
+			color: inherit;
+		}
+
+		&__field {
+
+			label {
+				font-family: var(--label-font-family);
+				font-size: var(--label-font-size);
+				font-weight: var(--label-font-weight);
+				color: inherit;
+			}
+
+			&:not(:has(input[type="checkbox"])):not(:has(input[type="radio"])) {
+
+				label {
+					display: block;
+					margin-block-end: var(--label-spacing);
+				}
+			}
+			//input[type="button"]
+			input[type="color"],
+			input[type="date"],
+			input[type="datetime-local"],
+			input[type="email"],
+			//input[type="file"],
+			//input[type="hidden"],
+			//input[type="image"],
+			input[type="month"],
+			input[type="number"],
+			input[type="password"],
+			//input[type="range"],
+			//input[type="reset"],
+			input[type="search"],
+			//input[type="submit"],
+			input[type="tel"],
+			input[type="text"],
+			input[type="time"],
+			input[type="url"],
+			input[type="week"],
+			select,
+			textarea {
+				appearance: none;
+				border: var(--field-border-width) var(--field-border-style) var(--field-border-color);
+				border-radius: var(--field-border-radius);
+				background-color: var(--field-background-color);
+				color: var(--field-color);
+				padding: var(--field-paddingY) var(--field-paddingX);
+				margin: 0 0 var(--field-spacing) 0;
+				font-family: var(--field-font-family);
+				font-size: var(--field-font-size);
+				font-weight: var(--field-font-weight);
+				width: 100%;
+
+				&:hover {
+					border-color: var(--field-border-color--hover);
+				}
+
+				&:focus {
+					border-color: var(--field-border-color--active);
+				}
+			}
+
+			select {
+
+				&[multiple] {
+				}
+			}
+
+			optgroup,
+			option {
+				appearance: none;
+				font-family: var(--field-font-family);
+				color: var(--field-color);
+			}
+
+			textarea {
+			}
+
+			input[type="file"] {
+				margin: 0 0 var(--field-spacing) 0;
+			}
+
+			input[type="range"] {
+				margin: 0 0 var(--field-spacing) 0;
+			}
+
+			&--dotted {
+				--field-border-style: dotted;
+			}
+
+			&--dashed {
+				--field-border-style: dashed;
+			}
+
+			&--rounded {
+				--field-border-radius: calc(var(--field-min-height) / 2);
+				--field-paddingX: calc(var(--field-min-height) / 2);
+			}
+
+			&:has(input[type="checkbox"]) {
+				margin: 0 0 var(--field-spacing) 0;
+
+				input {
+				}
+
+				label {
+					-webkit-user-select: none;
+					user-select: none;
+				}
+			}
+
+			&:has(input[type="radio"]) {
+				margin: 0 0 var(--field-spacing) 0;
+
+				input {
+				}
+
+				label {
+					-webkit-user-select: none;
+					user-select: none;
+				}
+			}
+		}
+	}
+}

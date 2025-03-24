@@ -27,7 +27,7 @@
 
 */
 
-
+/*
 // Breakpoint viewport sizes and media queries.
 //
 // Breakpoints are defined as a map of (name: minimum width), order from small to large:
@@ -580,7 +580,9 @@ $ss_iPad12_9: map.get($ss_tablet, iPad12_9);
     @content;
   }
 }
+*/
 
+/*
 // desktop mixin
 // (desktop is considered anything larger than the largest mobile width, coupled with an accurate pointing device)
 @mixin mq_desktop {
@@ -594,6 +596,7 @@ $ss_iPad12_9: map.get($ss_tablet, iPad12_9);
     @content;
   }
 }
+*/
 
 // IE10/11 mixin
 @mixin mq_IE10Plus {
