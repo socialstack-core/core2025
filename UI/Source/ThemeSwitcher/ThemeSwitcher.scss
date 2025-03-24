@@ -1,0 +1,25 @@
+.theme-switcher {
+
+	> li {
+
+		.btn {
+			opacity: .5;
+
+			svg {
+				width: toRem(24);
+				height: toRem(24);
+			}
+
+			&:hover {
+				opacity: 1;
+			}
+
+			&:not(.btn--outline) {
+				opacity: 1;
+			}
+
+		}
+
+	}
+
+}
