@@ -902,15 +902,34 @@ svg {
 
 			// favicon
 			// https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs
-			/*
-            <link rel="icon" href="/favicon.ico" sizes="any"><!-- 32×32 -->
-            <link rel="icon" href="/icon.svg" type="image/svg+xml">
-            <link rel="apple-touch-icon" href="/apple-touch-icon.png"><!-- 180×180 -->
-            <link rel="manifest" href="/manifest.webmanifest">
-            */
 
-			head.AppendChild(new DocumentNode("link", true).With("rel", "icon").With("type", "image/png").With("sizes", "32x32").With("href", "/favicon-32x32.png"))
-				.AppendChild(new DocumentNode("link", true).With("rel", "icon").With("type", "image/png").With("sizes", "16x16").With("href", "/favicon-16x16.png"));
+			// suggested format for favicon.svg (allows light / dark versions to autoselect based on user preferences):
+			/*
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 106 106">
+	<style>
+		@media (prefers-color-scheme: dark) {
+			#background {
+				fill-opacity: 1;
+			}
+			
+			#foreground {
+				fill: #f3f3ff;
+			}
+		}
+	</style>
+	<path id="background" d="..." fill="#002434" fill-opacity="0"/>
+	<path id="foreground" d="..." fill="#8e9293" stroke-width="0"/>
+</svg>
+
+			where:
+			- #background defines the background shade of the favicon (hidden by default, visible for dark mode)
+			- #foreground defines the favicon content, with fill set to light mode (overridden via CSS for dark mode)
+			 */
+
+			// NB: apple-touch-icon.png should be 180x180
+			head.AppendChild(new DocumentNode("link", true).With("rel", "icon").With("sizes", "32x32").With("href", "/favicon.ico"))
+				.AppendChild(new DocumentNode("link", true).With("rel", "icon").With("type", "image/svg+xml").With("href", "/favicon.svg"))
+				.AppendChild(new DocumentNode("link", true).With("rel", "apple-touch-icon").With("href", "/apple-touch-icon.png"));
 
 			// Get the main CSS files. Note that this will (intentionally) delay on dev instances if the first compile hasn't happened yet.
 			// That's primarily because we need the hash of the contents in the URL. Note that it has an internal cache which is almost always hit.
