@@ -1,0 +1,19 @@
+.core-test {
+
+	.site-header {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+	}
+
+}
+
+/*
+Size overrides. See bootstrap breakpoints for more information:
+https://getbootstrap.com/docs/5.0/layout/breakpoints/#min-width
+
+@include media-breakpoint-up(md) {
+	.core-test {
+	}
+}
+*/
