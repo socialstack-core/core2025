@@ -19,13 +19,33 @@ export interface LoopPageConfig {
 	pageSize?: number,
 }
 
+export interface Filter<T> {
+	where: Partial<Record<keyof (T), string | number | boolean>>
+}
+
 /**
  * Props for the Loop component.
  */
 export interface LoopProps<T extends Content, I extends ApiIncludes> {
-	over: AutoApi<T, I>;
-	includes?: I[],
+
+	/**
+	 * Loop will pull data from the specified api. Alternatively if you need something other than an 
+	 * api source, use source instead.
+	 */
+	over?: AutoApi<T, I>;
+
+	/**
+	 * An alternative to 'over', where you can specify a custom data source function.
+	 * @param filter
+	 * @param includes
+	 * @returns
+	 */
+	source?: (filter?: Filter<T>, includes?: I[]) => Promise<ApiList<T>>;
+
+	includes?: I[];
+
 	filter?: any;
+
 	paged?: LoopPageConfig | boolean;
 
 	/**
@@ -129,7 +149,22 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 		var pgIndex = newPageIndex || pageIndex;
 		var filter = getPagedFilter(props.filter, pgIndex, props.paged);
 
-		return props.over.list(filter, props.includes)
+		var source : Promise<ApiList<T>> | null = null;
+
+		if (props.over) {
+			source = props.over.list(filter, props.includes);
+		} else if (props.source) {
+			source = props.source(filter, props.includes);
+		}
+
+		if (!source) {
+			return Promise.reject({
+				type: 'loop/error',
+				message: `No source`
+			} as PublicError);
+		}
+
+		return source
 		.then(list => {
 			var results = list.results;
 

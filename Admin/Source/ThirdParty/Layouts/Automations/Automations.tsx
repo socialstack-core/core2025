@@ -1,17 +1,20 @@
 import Tile from 'Admin/Tile';
-import Loop from 'UI/Loop';
+import Table from 'UI/Table';
+import { Filter } from 'UI/Loop';
 import Time from 'UI/Time';
 import Default from 'Admin/Layouts/Default';
-import webRequest from 'UI/Functions/WebRequest';
+import automationsApi, { Automation } from 'Api/Automation';
+import { useState } from 'react';
+import { ApiIncludes } from 'Api/ApiEndpoints';
+import { ApiList } from 'UI/Functions/WebRequest';
 
+var _latest: Record<string, boolean> | null = null;
 
-var _latest = null;
-
-export default function Automations (props) {
+const Automations: React.FC<React.PropsWithChildren<{}>> = (props) => {
 	
-	var [running, setRunning] = React.useState({});
+	var [running, setRunning] = useState<Record<string, boolean>>({});
 	
-	var runAutomation = (entry) => {
+	var runAutomation = (entry : Automation) => {
 		
 		entry.lastTrigger = new Date().toISOString();
 		
@@ -25,8 +28,8 @@ export default function Automations (props) {
 			delete run[entry.name];
 			setRunning(run);
 		};
-		
-		webRequest('automation/' + entry.name + '/run').then(() => {
+
+		automationsApi.execute(entry.name).then(() => {
 			doneRunning();
 		}).catch(e => {
 			console.error(e);
@@ -62,11 +65,11 @@ export default function Automations (props) {
 		];
 	};
 	
-	var renderEntry = (entry) => {
-		return [
-			<td>{entry.name}{entry.description && entry.description.length > 0 && <><br /><small>{entry.description}</small></>}</td>,
-			<td>{entry.cronDescription} ({entry.cron})</td>,
-			<td>{entry.lastTrigger ? <Time date={entry.lastTrigger}/> : `None since startup`}</td>,
+	var renderEntry = (entry: Automation) => {
+		return <tr>
+			<td>{entry.name}{entry.description && entry.description.length > 0 && <><br /><small>{entry.description}</small></>}</td>
+			<td>{entry.cronDescription} ({entry.cron})</td>
+			<td>{entry.lastTrigger ? <Time date={entry.lastTrigger}/> : `None since startup`}</td>
 			<td>
 				<button disabled={running[entry.name]} className="btn btn-primary" onClick={() => {
 					
@@ -74,7 +77,7 @@ export default function Automations (props) {
 					
 				}}>Run Now</button>
 			</td>
-		];
+		</tr>;
 	};
 	
 	var renderEmpty = () => {
@@ -89,7 +92,7 @@ export default function Automations (props) {
 			</colgroup>
 			<tbody>
 				<tr>
-					<td colspan={2} className="table__empty-message">
+					<td colSpan={2} className="table__empty-message">
 						{`No automations`}
 					</td>
 				</tr>
@@ -119,14 +122,14 @@ export default function Automations (props) {
 			</header>
 			<div className="admin-page__content">
 				<div className="admin-page__internal">
-					<Loop asTable over={"automation/list"}
-						orNone={() => renderEmpty()}>
-						{[
-							renderHeader,
-							renderColgroups,
-							renderEntry
-						]}
-					</Loop>
+					<Table source={(filter?: Filter<Automation>, includes?: ApiIncludes[]) => {
+						return automationsApi.get() as Promise<ApiList<Automation>>;
+					}}
+						orNone={() => renderEmpty()}
+						onHeader={renderHeader}
+					>
+						{renderEntry}
+					</Table>
 					{props.children}
 				</div>
 				{/*
@@ -145,6 +148,4 @@ export default function Automations (props) {
 
 }
 
-Automations.propTypes = {
-	children: true
-};
+export default Automations;
