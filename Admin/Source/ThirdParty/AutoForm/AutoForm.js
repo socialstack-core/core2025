@@ -16,6 +16,7 @@ import localeApi from 'Api/Locale';
 
 var locales = null;
 var defaultLocale = 1;
+var formId = 1;
 
 /**
  * Used to automatically generate forms used by the admin area based on fields from your entity declarations in the API.
@@ -39,6 +40,7 @@ class AutoFormInternal extends React.Component {
 
 	constructor(props) {
 		super(props);
+		this.formId = "autoform-instance-" + formId++;
 
 		var locale = defaultLocale.toString(); // Always force EN locale if it's not specified.
 		var context = null;
@@ -326,12 +328,12 @@ class AutoFormInternal extends React.Component {
 		var canvasContext = this.props.canvasContext ? this.props.canvasContext : [];
 		
 		if (canvasContext.length == 0) {
-			if (this.state.fields && this.state.fields.content && this.state.fields.content.length > 0) {
-				var fields = this.state.fields.content;
+			if (this.state.formCanvas && this.state.formCanvas.c.length > 0) {
+				var fields = this.state.formCanvas.c;
 
 				for(let i=0;i<fields.length;i++){
 					var field = fields[i];
-					var data = field ? field.data : null;
+					var data = field ? field.d : null;
 
 					if (!field || !data) {
 						continue;
@@ -366,7 +368,7 @@ class AutoFormInternal extends React.Component {
 			return;
 		}
 		// Ensure the main canvas node gets populated.
-		var data = mainCanvas.data;
+		var data = mainCanvas.d;
 		data.currentContent = content;
 		data.canvasContext = this.getCanvasContext(content);
 
@@ -469,7 +471,7 @@ class AutoFormInternal extends React.Component {
 
 		this.draftBtn = this.state.supportsRevisions;
 		this.saveAsBtn = true;
-		this.form.submit();
+		this.submitForm();
 	}
 
 	renderConfirmSaveAs(pageState, setPage) {
@@ -612,10 +614,14 @@ class AutoFormInternal extends React.Component {
 
 		return <Canvas key={this.state.updateCount} onContentNode={contentNode => {
 			var content = this.state.value || this.state.fieldData;
+			if (!contentNode || !contentNode.props) {
+				return;
+			}
+
+			var data = contentNode.props;
 
 			// setup the hint prompts even if no data 
-			if (contentNode.d && contentNode.d.name) {
-				var data = contentNode.d;
+			if (data.name) {
 
 				if (data.hint) {
 					var hint = <i className='fa fa-lg fa-question-circle hint-field-label' title={data.hint} />;
@@ -628,16 +634,14 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
-			if (mainCanvas && contentNode && contentNode.d && mainCanvas.d.name == contentNode.d.name) {
+			if (mainCanvas && mainCanvas.d.name == contentNode.props.name) {
 				// Omit the main canvas from the rest of the fields.
 				return null;
 			}
 
-			if (!contentNode.d || !contentNode.d.name || !content || contentNode.d.autoComplete == 'off') {
+			if (!data.name || !content) {
 				return;
 			}
-
-			var data = contentNode.d;
 
 			if (!data.localized && locale != '1') {
 				// Only default locale can show non-localised fields. Returning a null will ignore the contentNode.
@@ -655,9 +659,6 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
-			data.currentContent = content;
-			data.canvasContext = this.getCanvasContext(content);
-			data.autoComplete = 'off';
 			data.onChange = (e) => {
 				// Input field has changed. Update the content object so any redraws are reflected.
 				var val = e.target.value;
@@ -674,19 +675,12 @@ class AutoFormInternal extends React.Component {
 				content[data.name] = val;
 				this.unsavedChanges = true;
 
-				var newFields = [...this.state.formCanvas.c];
-
-				newFields.forEach(field => {
-					if (field) {
-						field.d.currentContent = { ...content };
-						field.d.canvasContext = this.getCanvasContext(content)
-					}
-				});
-
-				this.setState({ formCanvas: { c: newFields } });
+				// Recreate the canvas to redraw the fields:
+				this.setState({ formCanvas: { c: this.state.formCanvas.c } });
 			};
 
 			var value = content[data.name];
+			
 			if (value !== undefined) {
 				if (data.name == "createdUtc") {
 					data.defaultValue = formatTime(value);
@@ -696,6 +690,10 @@ class AutoFormInternal extends React.Component {
 			}
 
 		}} bodyJson={this.state.formCanvas} />
+	}
+
+	submitForm() {
+		document.getElementById(this.formId).requestSubmit();
 	}
 
 	renderIntl(pageState, setPage) {
@@ -768,7 +766,7 @@ class AutoFormInternal extends React.Component {
 				<Input inline type="button" className="btn btn-outline-primary createDraft" onClick={() => {
 					this.draftBtn = true;
 					this.saveAsBtn = false;
-					this.form.submit();
+					this.submitForm();
 				}} disabled={this.state.submitting}>
 					{isEdit ? `Save Draft` : `Create Draft`}
 				</Input>
@@ -787,7 +785,7 @@ class AutoFormInternal extends React.Component {
 			<Input inline type="button" disabled={this.state.submitting} onClick={() => {
 				this.draftBtn = false;
 				this.saveAsBtn = false;
-				this.form.submit();
+				this.submitForm();
 			}}>
 				{isEdit ? `Save and Publish` : `Create`}
 			</Input>
@@ -801,13 +799,15 @@ class AutoFormInternal extends React.Component {
 				<Input inline type="button" disabled={this.state.submitting} onClick={() => {
 					this.draftBtn = false;
 					this.saveAsBtn = false;
-					this.form.submit();
+					this.submitForm();
 				}}>
 					{`Save`}
 				</Input>
 			</>;
 		}
 
+		const api = this.props.api;
+		
 		var onValues = values => {
 			if (this.props.values && typeof this.props.values === 'object' && !Array.isArray(this.props.values) && this.props.values !== null) {
 				values = { ...values, ...this.props.values };
@@ -817,9 +817,7 @@ class AutoFormInternal extends React.Component {
 				// create a copy of the curent entry (as-is)
 				values.id = null;
 				if (this.draftBtn) {
-					values.setAction(this.props.endpoint + "/draft");
-				} else {
-					values.setAction(this.props.endpoint);
+					// values.setAction(this.props.endpoint + "/draft");
 				}
 
 			} else {
@@ -831,12 +829,12 @@ class AutoFormInternal extends React.Component {
 					}
 
 					// Create a draft:
-					values.setAction(this.props.endpoint + "/draft");
+					// values.setAction(this.props.endpoint + "/draft");
 				} else {
 					// Potentially publishing a draft.
 					if (this.state.revisionId) {
 						// Use the publish EP.
-						values.setAction(this.props.endpoint + "/publish/" + this.state.revisionId);
+						// values.setAction(this.props.endpoint + "/publish/" + this.state.revisionId);
 					}
 				}
 			}
@@ -1060,10 +1058,8 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
-			const api = this.props.api;
-
 			return <>
-				<Form formRef={r => this.form = r} autoComplete="off" locale={locale} action={isEdit ? api.update : api.create}
+				<Form id={this.formId} autoComplete="off" locale={locale} action={isEdit ? api.update : api.create}
 					onValues={onValues} onFailed={onFailed} onSuccess={onSuccess}>
 					<CanvasEditor
 						fullscreen
@@ -1074,6 +1070,7 @@ class AutoFormInternal extends React.Component {
 						breadcrumbs={breadcrumbs}
 						additionalFields={() => this.props.renderFormFields ? this.props.renderFormFields(this.state) : this.renderFormFields()}
 					/>
+					{isEdit && <input type="hidden" name="id" value={parsedId} />}
 				</Form>
 				{this.state.confirmDelete && this.renderConfirmDelete(pageState, setPage)}
 				{this.state.confirmSaveAs && this.renderConfirmSaveAs(pageState, setPage)}
@@ -1194,9 +1191,10 @@ class AutoFormInternal extends React.Component {
 								</Input>
 							</div>
 						}
-						<Form formRef={r => this.form = r} autoComplete="off" locale={locale} action={endpoint}
+						<Form id={this.formId} autoComplete="off" locale={locale} action={isEdit ? api.update : api.create}
 							onValues={onValues} onFailed={onFailed} onSuccess={onSuccess}>
 							{this.props.renderFormFields ? this.props.renderFormFields(this.state) : this.renderFormFields()}
+							{isEdit && <input type="hidden" name="id" value={parsedId} />}
 						</Form>
 					</div>
 					{feedback && <>

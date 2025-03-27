@@ -7,8 +7,13 @@ import getConfig from 'UI/Config';
 * This method converts a textual ref to either a HTML representation or a URL, depending on if you have options.url set to true.
 * Specific ref protocols (like public: private: fa: youtube: etc) use the options as they wish.
 */
-export function getUrl(ref : FileRefIsh, options : FileRefOptions) {
+export function getUrl(ref : FileRefIsh, options? : FileRefOptions) {
     var r = parse(ref);
+
+    if (!options) {
+        options = {};
+    }
+
     return r ? r.handler(r, options) : null;
 }
 
