@@ -27,6 +27,8 @@ export type Upload = VersionedContent & {
     isVideo: boolean,
     isAudio: boolean,
     transcodeState: int,
+    subdirectory?: string,
+    temporaryPath?: string,
     ref?: FileRef,
     creatorUser: User,
 }

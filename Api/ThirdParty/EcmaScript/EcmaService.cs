@@ -913,19 +913,28 @@ namespace Api.EcmaScript
                 // composite body build
 
                 var targetParams = method.GetParameters().Where(param => param.GetCustomAttribute<FromBodyAttribute>() != null);
+                var targetCount = targetParams.Count();
 
-                if (targetParams.Any())
+                if (targetCount > 1)
                 {
                     tsMethod.Injected = [
                         "return getJson(this.apiUrl + '/" + details + "', {" ,
                     ];
-                    foreach(var param in targetParams)
+                    foreach (var param in targetParams)
                     {
                         tsMethod.Injected.Add($"{param.Name},");
                     }
 
                     tsMethod.Injected.Add("})");
                 }
+                else if (targetCount == 1)
+                {
+					tsMethod.Injected = [
+						"return getJson(this.apiUrl + '/" + details + "', ",
+                        targetParams.First().Name,
+                        ")"
+					];
+				}
                 else
                 {
                     tsMethod.Injected = ["return getJson(this.apiUrl + '/" + details + "')"];

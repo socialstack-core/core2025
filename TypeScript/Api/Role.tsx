@@ -18,6 +18,7 @@ export type Role = VersionedContent & {
     adminDashboardJson?: string,
     grantRuleJson?: string,
     inheritedRoleId: uint,
+    grantRules?: List,
     creatorUser: User,
 }
 

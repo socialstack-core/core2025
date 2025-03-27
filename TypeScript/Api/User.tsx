@@ -13,14 +13,21 @@ import {getJson, ApiList} from 'UI/Functions/WebRequest'
 export type User = VersionedContent & {
     email?: string,
     emailOptOutFlags: uint,
+    emailVerifyToken?: string,
+    passwordHash?: string,
+    loginAttempts: int,
+    failedLoginTimeUtc?: Date,
     firstName?: string,
     lastName?: string,
     fullName?: string,
+    loginRevokeCount: uint,
     role: uint,
+    privateVerify: long,
     featureRef?: FileRef,
     avatarRef?: FileRef,
     username?: string,
     localeId?: uint,
+    passwordReset?: string,
     joinedUtc: Date,
     userRole: Role,
     creatorUser: User,
@@ -78,9 +85,9 @@ export class UserApi extends AutoApi<User, UserIncludes>{
 
     */
     public verifyUser = (userid: uint, token: string, newPassword: OptionalPassword): Promise<void>  => {
-        return getJson(this.apiUrl + '/verify/' + userid + '/' + token + '', {
-        newPassword,
-        })
+        return getJson(this.apiUrl + '/verify/' + userid + '/' + token + '', 
+        newPassword
+        )
     }
 
     /**
