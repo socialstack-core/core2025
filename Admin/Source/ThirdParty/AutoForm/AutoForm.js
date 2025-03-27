@@ -105,28 +105,7 @@ class AutoFormInternal extends React.Component {
 		global.window.removeEventListener('beforeunload', this.beforeUnload);
 	}
 
-	loadField(props) {
-		var value = {};
-
-		try {
-			value = JSON.parse(props.defaultValue || props.value);
-		} catch (e) {
-			console.log(e);
-		}
-
-		getAutoForm(props.formType || 'content', (props.formName || '').toLowerCase()).then(formData => {
-			this.setState({ value, fields: formData ? formData.canvas : { content: 'Form load error - the form type was not found.' } });
-		});
-	}
-
 	load(props) {
-		if (!props.endpoint) {
-			if (props.name) {
-				this.loadField(props);
-			}
-			return;
-		}
-
 		var createSuccess = false;
 		var revisionId = 0;
 		var locale = this.state.locale;
@@ -167,12 +146,14 @@ class AutoFormInternal extends React.Component {
 			});
 		}
 
-		getAutoForm(props.formType || 'content', (props.endpoint || '').toLowerCase()).then(formData => {
-
+		getAutoForm(props.formType || 'content', (props.endpoint || '').toLowerCase())
+			.then(formData => {
+			
 			// todo - the endpoints need wiring up
 			// var supportsRevisions = formData && formData.form && formData.form.supportsRevisions;
 			var supportsRevisions = false;
 
+			// True if any field is localized
 			var isLocalized = formData && formData.form && formData.form.fields && formData.form.fields.find(fld => fld.data.localized);
 
 			// build up master list of locales
@@ -219,28 +200,29 @@ class AutoFormInternal extends React.Component {
 				return;
 			}
 
-			// The fields of this content type are..
-			var fields = JSON.parse(formData.canvas);
-
 			// If there is exactly 1 canvas in the field set, or one is marked as the main canvas with [Data("main", "true")]
 			// then we'll use the full size panelled canvas editor layout.
 			var mainCanvas = null;
 
-			if (Array.isArray(fields)) {
-				fields = { content: fields };
-			}
+			var { fields } = formData.form;
+			var formCanvas = {c: []};
 
-			var c = fields.c || fields.content;
-
-			if (Array.isArray(c)) {
+			if (fields) {
 				var currentCanvas = null;
 				var canvasFields = [];
 				let isMainCanvas = false;
 				let notMainCanvas = null;
 
-				for (var i = 0; i < c.length; i++) {
-					var field = c[i];
-					var data = field.d || field.data;
+				for (var i = 0; i < fields.length; i++) {
+					var field = fields[i];
+					var { data } = field;
+
+					// Construct the visible canvas:
+					formCanvas.c.push({
+						t: field.module,
+						c: field.content,
+						d: field.data
+					});
 
 					if (!data) {
 						continue;
@@ -274,12 +256,13 @@ class AutoFormInternal extends React.Component {
 			}
 
 			// Store in the state:
-			this.setState({ fields, isLocalized, supportsRevisions, mainCanvas });
+			this.setState({ formCanvas, isLocalized, supportsRevisions, mainCanvas });
 		});
 
 		if (this.state.fieldData) {
 			this.setState({ fieldData: null });
 		}
+
 		var isEdit = isNumeric(props.id);
 		var fieldData = undefined;
 
@@ -322,27 +305,21 @@ class AutoFormInternal extends React.Component {
 		});
 	}
 
-	applyDefaults(fields, values) {
-
-		var c = fields.c || fields.content;
-
-		if (Array.isArray(c)) {
-
-			for (var i = 0; i < c.length; i++) {
-				var field = c[i];
-				if (!field) {
-					continue;
-				}
-				var data = field.d || field.data;
-
-				if (!data || !data.name) {
-					continue;
-				}
-
-				data.defaultValue = values[data.name];
+	applyDefaults(formCanvas, values) {
+		var c = formCanvas.c;
+		for (var i = 0; i < c.length; i++) {
+			var field = c[i];
+			if (!field) {
+				continue;
 			}
-		}
+			var data = field.d;
 
+			if (!data || !data.name) {
+				continue;
+			}
+
+			data.defaultValue = values[data.name];
+		}
 	}
 
 	getCanvasContext(content) {
@@ -633,14 +610,12 @@ class AutoFormInternal extends React.Component {
 	renderFormFields() {
 		const { locale, mainCanvas } = this.state;
 
-		console.log(this.state.fields, ' - is generated in the now obsolete canvas style, so this won\'t render (todo!)');
-
 		return <Canvas key={this.state.updateCount} onContentNode={contentNode => {
 			var content = this.state.value || this.state.fieldData;
 
 			// setup the hint prompts even if no data 
-			if (contentNode.data && contentNode.data.name) {
-				var data = contentNode.data;
+			if (contentNode.d && contentNode.d.name) {
+				var data = contentNode.d;
 
 				if (data.hint) {
 					var hint = <i className='fa fa-lg fa-question-circle hint-field-label' title={data.hint} />;
@@ -653,16 +628,16 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
-			if (mainCanvas && contentNode && contentNode.data && mainCanvas.data.name == contentNode.data.name) {
+			if (mainCanvas && contentNode && contentNode.d && mainCanvas.d.name == contentNode.d.name) {
 				// Omit the main canvas from the rest of the fields.
 				return null;
 			}
 
-			if (!contentNode.data || !contentNode.data.name || !content || contentNode.data.autoComplete == 'off') {
+			if (!contentNode.d || !contentNode.d.name || !content || contentNode.d.autoComplete == 'off') {
 				return;
 			}
 
-			var data = contentNode.data;
+			var data = contentNode.d;
 
 			if (!data.localized && locale != '1') {
 				// Only default locale can show non-localised fields. Returning a null will ignore the contentNode.
@@ -699,16 +674,16 @@ class AutoFormInternal extends React.Component {
 				content[data.name] = val;
 				this.unsavedChanges = true;
 
-				var newFields = [...this.state.fields.content];
+				var newFields = [...this.state.formCanvas.c];
 
 				newFields.forEach(field => {
 					if (field) {
-						field.data.currentContent = { ...content };
-						field.data.canvasContext = this.getCanvasContext(content)
+						field.d.currentContent = { ...content };
+						field.d.canvasContext = this.getCanvasContext(content)
 					}
 				});
 
-				this.setState({ fields: { ...this.state.fields, content: newFields } });
+				this.setState({ formCanvas: { c: newFields } });
 			};
 
 			var value = content[data.name];
@@ -720,7 +695,7 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
-		}} bodyJson={this.state.fields} />
+		}} bodyJson={this.state.formCanvas} />
 	}
 
 	renderIntl(pageState, setPage) {
@@ -737,7 +712,7 @@ class AutoFormInternal extends React.Component {
 			);
 		}
 
-		if (!this.state.fields || (isEdit && !this.state.fieldData) || this.state.deleting) {
+		if (!this.state.formCanvas || (isEdit && !this.state.fieldData) || this.state.deleting) {
 			return "Loading..";
 		}
 
@@ -890,10 +865,18 @@ class AutoFormInternal extends React.Component {
 
 			if (isEdit) {
 				// Recreate fields set such that the field canvas will re-render and apply any updated default values.
-				var fields = { ...this.state.fields };
-				this.applyDefaults(fields, response);
+				var formCanvas = { ...this.state.formCanvas };
+				this.applyDefaults(formCanvas, response);
 
-				this.setState({ editFailure: false, editSuccess: true, createSuccess: false, submitting: false, fields, fieldData: response, updateCount: this.state.updateCount + 1 });
+				this.setState({
+					editFailure: false,
+					editSuccess: true,
+					createSuccess: false,
+					submitting: false,
+					formCanvas,
+					fieldData: response,
+					updateCount: this.state.updateCount + 1
+				});
 
 				if (this.props.onActionComplete) {
 					this.props.onActionComplete(response);
@@ -923,10 +906,10 @@ class AutoFormInternal extends React.Component {
 			} else {
 
 				// Recreate fields set such that the field canvas will re-render and apply any updated default values.
-				var fields = { ...this.state.fields };
-				this.applyDefaults(fields, response);
+				var formCanvas = { ...this.state.formCanvas };
+				this.applyDefaults(formCanvas, response);
 
-				this.setState({ editFailure: false, submitting: false, fields, fieldData: response, updateCount: this.state.updateCount + 1 });
+				this.setState({ editFailure: false, submitting: false, formCanvas, fieldData: response, updateCount: this.state.updateCount + 1 });
 
 				if (this.props.onActionComplete) {
 					this.props.onActionComplete(response);
@@ -1181,7 +1164,7 @@ class AutoFormInternal extends React.Component {
 										this.setState({
 											locale: e.target.value,
 											endpoint: null,
-											fields: null
+											formCanvas: null
 										}, () => {
 											// Load now:
 											this.load(this.props);
@@ -1199,7 +1182,7 @@ class AutoFormInternal extends React.Component {
 											this.setState({
 												locale: e.target.value,
 												endpoint: null,
-												fields: null
+												formCanvas: null
 											}, () => {
 												// Load now:
 												this.load(this.props);

@@ -1,12 +1,12 @@
 import Collapsible from 'UI/Collapsible';
 import Default from 'Admin/Layouts/Default';
-import webRequest from 'UI/Functions/WebRequest';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'UI/Router';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
 import Input from 'UI/Input';
 import Form from 'UI/Form';
+import pageApi, { Page } from 'Api/Page';
 
 export default function Sitemap(props) {
 	const [ sitemap, setSitemap ] = useState(false);
@@ -58,7 +58,7 @@ export default function Sitemap(props) {
 		return sortNode(rootPage);
 	}
 
-	function addPage(url, rootPage) {
+	function addPage(url : string, rootPage : Page) {
 
 		if (!url || !url.length) {
 			return null;
@@ -198,7 +198,7 @@ export default function Sitemap(props) {
 	}
 
 	// strip leading and trailing slashes
-	function trimSlashes(url) {
+	function trimSlashes(url : string) {
 
 		if (url) {
 
@@ -220,8 +220,8 @@ export default function Sitemap(props) {
 	}, []);
 
 	function reloadPages() {
-		webRequest('page/list').then(resp => {
-			setSitemap(buildSitemap(resp.json.results));
+		pageApi.list().then(resp => {
+			setSitemap(buildSitemap(resp.results));
 		});
 	}
 
@@ -270,15 +270,15 @@ export default function Sitemap(props) {
 
 		return <>
 			{
-				node.pages.map(page => {
+				node.pages.map((page : Page) => {
 					// ensure all pages are prefixed with a path separator
-					let pageUrl = page.url;
+					let pageUrl = page.url || '';
 
 					if (!pageUrl.startsWith("/")) {
 						pageUrl = "/" + page.url;
 					}
 
-					var editClick = function (e) {
+					var editClick = function (e : MouseEvent) {
 						e.stopPropagation();
 
 						let editUrl = '/' + window.location.pathname.replace(/^\/+|\/+$/g, '') + '/' + page.id;
@@ -297,12 +297,12 @@ export default function Sitemap(props) {
 
 					};
 
-					var cloneClick = function (e) {
+					var cloneClick = function (e : MouseEvent) {
 						e.stopPropagation();
 						setShowCloneModal(page);
 					}
 
-					var removeClick = function (e) {
+					var removeClick = function (e : MouseEvent) {
 						e.stopPropagation();
 						setShowConfirmModal(page);
 					}
@@ -382,8 +382,8 @@ export default function Sitemap(props) {
 					return <>
 						<Collapsible compact expanderLeft title={pageUrl} subtitle={page.title}
 							jsx={jsx} buttons={[optionsButton]}
-							open={isRoot} alwaysOpen={isRoot} noContent={!hasChildren} className="sitemap-expander"
-							defaultClick={hasChildren || !isPage ? undefined : editClick} icon={largeIcon}>
+							open={isRoot} alwaysOpen={isRoot} className="sitemap-expander"
+							defaultClick={(hasChildren != 0 || !isPage) ? undefined : editClick} icon={largeIcon}>
 							{renderNodeChildren(node)}
 						</Collapsible>
 					</>;
@@ -402,17 +402,13 @@ export default function Sitemap(props) {
 		</>;
 	}
 
-	function removePage(page) {
-		webRequest(
-			'page/' + page.id,
-			null,
-			{ method: 'delete' }
-		).then(response => {
+	function removePage(page : Page) {
+		pageApi.delete(page.id).then(response => {
 			window.location.reload();
 		});
 	}
 
-	function getPageDescription(page) {
+	function getPageDescription(page : Page) {
 		let hasUrl = page.url && page.url.trim().length;
 
 		if (page.title && page.title.trim().length) {
@@ -494,7 +490,7 @@ export default function Sitemap(props) {
 						</>}
 						{sitemap && renderNode(sitemap, true)}
 					</div>
-					{!this.props.noCreate && <>
+					{!props.noCreate && <>
 						<footer className="admin-page__footer">
 							<a href={addUrl} className="btn btn-primary">
 								{`Create new`}

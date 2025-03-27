@@ -1,8 +1,7 @@
 import autoFormApi, { AutoFormInfo } from 'Api/AutoForm';
 
 interface CachedForm {
-	form: AutoFormInfo,
-	canvas: string
+	form: AutoFormInfo
 }
 
 /* Autoform cache */
@@ -26,7 +25,7 @@ export default (type: string, name : string) => {
 
 	return autoFormApi.get(type, name).then(form => {
 		var cacheInfo: CachedForm = {
-			form, canvas: JSON.stringify({ content: form.fields })
+			form
 		};
 		cache[type][name] = cacheInfo;
 		return cacheInfo;
