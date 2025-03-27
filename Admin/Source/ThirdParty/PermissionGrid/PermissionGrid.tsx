@@ -1,38 +1,36 @@
-import webRequest from 'UI/Functions/WebRequest';
 import Input from 'UI/Input';
 import Modal from 'UI/Modal';
+import permissionsApi from 'Api/Permission';
+import { useState, useEffect } from 'react';
+
+interface PermissionGridProps {
+	editor: boolean;
+}
 
 /**
  * A grid of capabilities and the roles they're active on
  */
-export default class PermissionGrid extends React.Component {
-	
-	constructor(props){
-		super(props);
-		this.state={
-			roles: [],
-			capabilities: [],
-			filter: '',
-			filteredCapabilities: [],
-			editingCell: null
-		};
-	}
-	
-	componentDidMount(){
-		this.load(this.props);
-	}
-	
-	componentWillReceiveProps(props){
-		this.load(props);
-	}
-	
-	load(props){
-		webRequest('permission/list').then(permissionInfo => {
+const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (props) => {
+
+	const [role, setRoles] = useState([]);
+	const [capabilities, setCapabilities] = useState([]);
+	const [filteredCapabilities, setFilteredCapabilities] = useState([]);
+	const [filter, setFilter] = useState('');
+	const [grants, setGrants] = useState(null);
+	const [dropdownType, setDropdownType] = useState(null);
+	const [editingCell, setEditingCell] = useState(null);
+
+	useEffect(() => {
+		load();
+	}, [props.editor, props.value, props.defaultValue]);
+
+	const load = () => {
+		permissionsApi.list().then(permissionInfo => {
 			
 			if(props.editor){
 				var grants = {};
 				try{
-					grants = JSON.parse(this.props.value || this.props.defaultValue);
+					grants = JSON.parse(props.value ||props.defaultValue);
 					
 					if(!grants || Array.isArray(grants)){
 						grants = {};
@@ -40,33 +38,29 @@ export default class PermissionGrid extends React.Component {
 				}catch(e){
 					console.log("Bad grant json: ", e);
 				}
-				
-				this.setState({
-					grants
-				});
+
+				setGrants(grants);
 			}
 			
-			// Has .capabilities and .roles
-			permissionInfo.json.filteredCapabilities = permissionInfo.json.capabilities;
-			this.setState(permissionInfo.json);
+			setRoles(permissionInfo.roles);
+			setCapabilities(permissionInfo.capabilities);
+			setFilteredCapabilities(permissionInfo.json.capabilities);
 		});
 	}
 
-	updateFilter(filter) {
-		this.setState({
-			filter: filter,
-			filteredCapabilities: this.state.capabilities.filter((capability) => capability.key.toLowerCase().includes(filter.toLowerCase()))
-		});
+	const updateFilter = (filter : string) => {
+		setFilter(filter);
+		setFilteredCapabilities(
+			capabilities.filter((capability) => capability.key.toLowerCase().includes(filter.toLowerCase()))
+		);
 	}
 
-	clearFilter() {
-		this.setState({
-			filter: '',
-			filteredCapabilities: this.state.capabilities
-		});
+	const clearFilter = () => {
+		setFilter('');
+		setFilteredCapabilities(capabilities);
 	}
 
-	renderFilter() {
+	const renderFilter = () => {
 		return <>
 			<th>
 				<div className="admin_permission-grid__filter">
@@ -75,8 +69,8 @@ export default class PermissionGrid extends React.Component {
 					</label>
 					<div className="admin_permission-grid__filter-field input-group">
 						<input type="text" className="form-control" id="permission_filter" placeholder={`Filter by`}
-							value={this.state.filter} onKeyUp={(e) => this.updateFilter(e.target.value)} />
-						<button className="btn btn-outline-secondary" type="button" onClick={() => this.clearFilter()}>
+							value={filter} onKeyUp={(e : KeyboardEvent) => updateFilter(e.target.value)} />
+						<button className="btn btn-outline-secondary" type="button" onClick={() => clearFilter()}>
 							{`Clear`}
 						</button>
 					</div>
@@ -85,26 +79,26 @@ export default class PermissionGrid extends React.Component {
 		</>;
 	}
 
-	renderList() {
-		if (!this.state.capabilities) {
+	const renderList = () => {
+		if (!capabilities) {
 			return null;
 		}
 
-		this.state.filteredCapabilities.sort(function(a, b) {
+		filteredCapabilities.sort(function(a, b) {
 			if (a.key < b.key) return -1;
 			if (a.key > b.key) return 1;
 			return 0;
 		});
 
-		let noMatches = (!this.state.filteredCapabilities || this.state.filteredCapabilities.length == 0) && this.state.capabilities.length > 0;
+		let noMatches = (!filteredCapabilities || filteredCapabilities.length == 0) && capabilities.length > 0;
 
         return (
             <div className={'admin_permission-grid'}>
 				<table className="table table-striped">
 					<thead>
 						<tr>
-							{this.renderFilter()}
-							{this.state.roles.map(role => {
+							{renderFilter()}
+							{roles.map(role => {
 								return (
 									<th>
 										{role.name}
@@ -116,7 +110,7 @@ export default class PermissionGrid extends React.Component {
 					<tbody>
 						{noMatches && <>
 							<tr>
-								<td colspan={this.state.roles.length + 1}>
+								<td colSpan={roles.length + 1}>
 									<span className="admin_permission-grid--nomatch">
 										{`No matching capabilities`}
 									</span>									
@@ -124,7 +118,7 @@ export default class PermissionGrid extends React.Component {
 							</tr>
 						</>}
 
-						{this.state.filteredCapabilities.map(cap => {
+						{filteredCapabilities.map(cap => {
 							var map = {};
 
 							if (cap.grants) {
@@ -138,7 +132,7 @@ export default class PermissionGrid extends React.Component {
 									<td>
 										{cap.key}
 									</td>
-									{this.state.roles.map(role => {
+									{roles.map(role => {
 										var grant = map[role.key];
 
 										if (!grant) {
@@ -171,15 +165,15 @@ export default class PermissionGrid extends React.Component {
 					{!noMatches && <>
 						<tfoot>
 							<tr>
-								<td colspan={this.state.roles.length + 1}>
+								<td colSpan={roles.length + 1}>
 								abc
-									{!this.state.filter || this.state.filter.length == 0 && <>
+									{!filter || filter.length == 0 && <>
 										x
-										{`Displaying ${this.state.capabilities.length} capabilities`}
+										{`Displaying ${capabilities.length} capabilities`}
 									</>}
-									{this.state.filter && this.state.filter.length > 0 && <>
+									{filter && filter.length > 0 && <>
 										xx
-										{`Displaying ${this.state.filteredCapabilities.length} of ${this.state.capabilities.length} capabilities`}
+										{`Displaying ${filteredCapabilities.length} of ${capabilities.length} capabilities`}
 									</>}
 								</td>
 							</tr>
@@ -190,7 +184,7 @@ export default class PermissionGrid extends React.Component {
         );
 	}
 
-	renderCell(grantInfo){
+	const renderCell = (grantInfo) => {
 
 		if(grantInfo.value === false)
 		{
@@ -212,8 +206,8 @@ export default class PermissionGrid extends React.Component {
 		return <i className='fa fa-check' style={{color: 'green'}}/>;
 	}
 	
-	getGrantInfo(capability) {
-		var content = this.content();
+	const getGrantInfo = (capability) => {
+		var content = getContent();
 		var capGrant = null; // Not granted is the default
 		if(capability.grants){
 			var grantSet = capability.grants;
@@ -240,48 +234,47 @@ export default class PermissionGrid extends React.Component {
 			current.value = true;
 		}
 		
-		if(this.state.grants && this.state.grants[capability.key] !== undefined){
+		if(grants && grants[capability.key] !== undefined){
 			current.inherited = false;
-			current.value = this.state.grants[capability.key];
+			current.value = grants[capability.key];
 		}
 		
 		return current;
 	}
 	
-	content(){
-		return this.props.currentContent || {};
+	const getContent = () => {
+		return props.currentContent || {};
 	}
 	
-	renderEditMode(){
+	const renderEditMode = () => {
 
-		if(!this.state.grants || !this.state.filteredCapabilities){
+		if(!grants || !filteredCapabilities){
 			return null;
 		}
 		
-		this.state.filteredCapabilities.sort(function(a, b) {
+		filteredCapabilities.sort(function(a, b) {
 			if (a.key < b.key) return -1;
 			if (a.key > b.key) return 1;
 			return 0;
 		});
 
-		let noMatches = (!this.state.filteredCapabilities || this.state.filteredCapabilities.length == 0) && this.state.capabilities.length > 0;
+		let noMatches = (!filteredCapabilities || filteredCapabilities.length == 0) && capabilities.length > 0;
 
 		return [
 			<Input type='hidden' inputRef={ref => {
-				this.ref = ref;
 				if(ref){
 					ref.onGetValue = () => {
-						return JSON.stringify(this.state.grants);
+						return JSON.stringify(grants);
 					};
 				}
-			}} label={`Grants`} name={this.props.name} />,
+			}} label={`Grants`} name={props.name} />,
 			<div className={'admin_permission-grid'}>
 				<table className="table table-striped">
 					<thead>
 					<tr>
-						{this.renderFilter()}
-						{this.state.roles.map(role => {
-							if(this.content().id == role.id) {
+						{renderFilter()}
+						{roles.map(role => {
+							if(getContent().id == role.id) {
 								return (
 									<th>
 										{role.name}
@@ -294,7 +287,7 @@ export default class PermissionGrid extends React.Component {
 					<tbody>
 						{noMatches && <>
 							<tr>
-								<td colspan={2}>
+								<td colSpan={2}>
 									<span className="admin_permission-grid--nomatch">
 										{`No matching capabilities`}
 									</span>
@@ -302,10 +295,10 @@ export default class PermissionGrid extends React.Component {
 							</tr>
 						</>}
 
-					{this.state.filteredCapabilities.map(cap => {
+					{filteredCapabilities.map(cap => {
 						
 						// Is it overriden? If yes, we have a custom value (otherwise it's inherited).
-						var grantInfo = this.getGrantInfo(cap);
+						var grantInfo = getGrantInfo(cap);
 						
 						return (
 							<tr>
@@ -313,15 +306,13 @@ export default class PermissionGrid extends React.Component {
 									{cap.key}
 								</td>
 								<td onClick = {() => {
-									this.setState({
-										editingCell: {
-											key: cap.key,
-											grantInfo
-										},
-										dropdownType: this.dropdownType(grantInfo)
+									setEditingCell({
+										key: cap.key,
+										grantInfo
 									});
+									setDropdownType(getDropdownType(grantInfo));
 								}}>
-									{this.renderCell(grantInfo)}
+									{renderCell(grantInfo)}
 								</td>
 							</tr>);
 					})}
@@ -329,12 +320,12 @@ export default class PermissionGrid extends React.Component {
 					{!noMatches && <>
 						<tfoot>
 							<tr>
-								<td colspan="2">
-									{this.state.filter.length == 0 && <>
-										{`Displaying ${this.state.capabilities.length} capabilities`}
+								<td colSpan={2} >
+									{filter.length == 0 && <>
+										{`Displaying ${capabilities.length} capabilities`}
 									</>}
-									{this.state.filter.length > 0 && <>
-										{`Displaying ${this.state.filteredCapabilities.length} of ${this.state.capabilities.length} capabilities`}
+									{filter.length > 0 && <>
+										{`Displaying ${filteredCapabilities.length} of ${capabilities.length} capabilities`}
 									</>}
 								</td>
 							</tr>
@@ -342,12 +333,12 @@ export default class PermissionGrid extends React.Component {
 					</>}
 				</table>
 
-				{this.state.editingCell && this.renderEditModal()}
+				{editingCell && renderEditModal()}
 			</div>
 		];
 	}
 	
-	dropdownType(grantInfo){
+	const getDropdownType = (grantInfo) => {
 		if(grantInfo.inherited){
 			return "inherited";
 		}
@@ -363,22 +354,21 @@ export default class PermissionGrid extends React.Component {
 		return "custom";
 	}
 	
-	renderEditModal(){
-		var cell = this.state.editingCell;
-		var { grantInfo } = cell;
-		var content = this.content();
-		return <Modal title = {cell.key + " for " + content.name} visible = {true} isExtraLarge onClose = {() => {
-			this.setState({editingCell: null});
+	const renderEditModal = () => {
+		var { grantInfo } = editingCell;
+		var content = getContent();
+		return <Modal title={editingCell.key + " for " + content.name} visible = {true} isExtraLarge onClose = {() => {
+			setEditingCell(null);
 		}}>
 			<Input 
 				label = "Rule"
 				type = "select"
 				name = "rule" 
 				onChange = {(e) => {
-					this.setState({dropdownType: e.target.value});
+					setDropdownType(e.target.value);
 				}}
-				value={this.state.dropdownType}
-				defaultValue={this.state.dropdownType}
+				value={dropdownType}
+				defaultValue={dropdownType}
 			>
 				[
 					<option value = {"inherited"}>
@@ -395,26 +385,24 @@ export default class PermissionGrid extends React.Component {
 					</option>
 				]
 			</Input>
-			{this.state.dropdownType == 'custom' && <Input inputRef={crRef => this.customRuleRef = crRef} defaultValue = {typeof grantInfo.value === 'string' ? grantInfo.value : ''} validate = {['Required']} label = "Custom Rule" type = "text" name = "customRule"/>}
+			{dropdownType == 'custom' && <Input inputRef={crRef => this.customRuleRef = crRef} defaultValue = {typeof grantInfo.value === 'string' ? grantInfo.value : ''} validate = {['Required']} label = "Custom Rule" type = "text" name = "customRule"/>}
 			<Input type="button" onClick={(e) => {
 				e.preventDefault();
 				
 				// Apply the change to grants now.
-				var type = this.state.dropdownType;
+				var type = dropdownType;
 				
 				if(type === "inherited"){
-					delete this.state.grants[cell.key];
+					delete grants[cell.key];
 				}else if(type === "never"){
-					this.state.grants[cell.key] = false;
+					grants[cell.key] = false;
 				}else if(type === "always"){
-					this.state.grants[cell.key] = true;
+					grants[cell.key] = true;
 				}else if(type === "custom"){
-					this.state.grants[cell.key] = this.customRuleRef.value || "";
+					grants[cell.key] = this.customRuleRef.value || "";
 				}
 				
-				this.setState({
-					editingCell: null
-				});
+				setEditingCell(null);
 				
 			}}>
 				Apply
@@ -422,12 +410,12 @@ export default class PermissionGrid extends React.Component {
 		</Modal>
 	}
 	
-	render() {
-		if(this.props.editor) {
-			return this.renderEditMode();
-		}
+	if(props.editor) {
+		return renderEditMode();
+	}
 
-		return this.renderList();
-    }
+	return  renderList();
 	
 }
+
+export default PermissionGrid;
