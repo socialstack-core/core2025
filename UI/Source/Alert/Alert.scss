@@ -69,6 +69,12 @@
 		}
 	}
 
+	&__close {
+		position: absolute;
+		top: .5rem;
+		right: .5rem;
+	}
+
 	// variants
 	&--primary {
 		border-color: var(--primary);
@@ -225,4 +231,29 @@
 			}
 		}
 	}
+
+	// hide icon
+	&--no-icon {
+
+		#{$alert}__notch {
+			display: none;
+		}
+
+		&::before {
+			top: 0;
+			height: 100%;
+			border-radius: var(--alert-border-radius) 0 0 var(--alert-border-radius);
+		}
+
+		&::after {
+			display: none;
+		}
+
+	}
+}
+
+#react-root:has(> .alert:only-child) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
