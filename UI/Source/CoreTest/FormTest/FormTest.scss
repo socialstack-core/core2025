@@ -1,0 +1,36 @@
+.form-test {
+	position: relative;
+	min-height: 300px;
+	padding-right: 200px;
+
+	&__options {
+		position: absolute;
+		top: 5rem;
+		right: 1rem;
+	}
+
+	.component-test {
+
+		.embed {
+			margin-bottom: 2rem;
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+		}
+
+	}
+
+	&:fullscreen {
+		background-color: var(--site-bg);
+		padding: 2rem;
+
+		.request-fullscreen {
+			position: fixed;
+			top: 1rem;
+			right: 1rem;
+		}
+
+	}
+
+}

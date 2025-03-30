@@ -2,10 +2,14 @@ import PageTemplate from 'UI/PageTemplate';
 import PageRegion from 'UI/PageRegion';
 import ThemeSwitcher from 'UI/ThemeSwitcher';
 import Details from 'UI/Details';
-import Summary from 'UI/Details/Summary';
-import Content from 'UI/Details/Content';
-import Alert from 'UI/Alert';
-import Button from 'UI/Button';
+//import Summary from 'UI/Details/Summary';
+//import Content from 'UI/Details/Content';
+import AlertTest from './AlertTest';
+import ButtonTest from './ButtonTest';
+import CloseButtonTest from './CloseButtonTest';
+import DialogTest from './DialogTest';
+import EmbedTest from './EmbedTest';
+import FormTest from './FormTest';
 
 export default function CoreTest(props) {
 	// reference propTypes
@@ -101,173 +105,22 @@ export default function CoreTest(props) {
 							*/}
 
 							<Details name="demo" label={`Alerts`}>
-								<section className="component-test">
-									<Alert>
-										Alerts defined without a <code>variant</code> supplied default to the <code>info</code> style.
-									</Alert>
-
-									<hr/>
-
-									<Alert variant="primary" title={`Primary`}>
-										Lorem ipsum dolor sit amet consectetur adipisicing elit. Illo alias <a href="#">aspernatur aut</a>, eaque odio numquam molestiae nihil quas aperiam non quod vero accusantium ipsum tempore corporis nulla, mollitia minus. Quos?
-									</Alert>
-
-									<Alert variant="secondary" title={`Secondary`}>
-										Lorem ipsum dolor sit amet consectetur adipisicing elit. Illo alias <a href="#">aspernatur aut</a>, eaque odio numquam molestiae nihil quas aperiam non quod vero accusantium ipsum tempore corporis nulla, mollitia minus. Quos?
-									</Alert>
-
-									<Alert variant="success" title={`Success`}>
-										Lorem ipsum dolor sit amet consectetur adipisicing elit. Illo alias <a href="#">aspernatur aut</a>, eaque odio numquam molestiae nihil quas aperiam non quod vero accusantium ipsum tempore corporis nulla, mollitia minus. Quos?
-									</Alert>
-
-									<Alert variant="danger" title={`Danger`}>
-										Lorem ipsum dolor sit amet consectetur adipisicing elit. Illo alias <a href="#">aspernatur aut</a>, eaque odio numquam molestiae nihil quas aperiam non quod vero accusantium ipsum tempore corporis nulla, mollitia minus. Quos?
-									</Alert>
-
-									<Alert variant="warning" title={`Warning`}>
-										Lorem ipsum dolor sit amet consectetur adipisicing elit. Illo alias <a href="#">aspernatur aut</a>, eaque odio numquam molestiae nihil quas aperiam non quod vero accusantium ipsum tempore corporis nulla, mollitia minus. Quos?
-									</Alert>
-
-									<Alert variant="info" title={`Info`}>
-										Lorem ipsum dolor sit amet consectetur adipisicing elit. Illo alias <a href="#">aspernatur aut</a>, eaque odio numquam molestiae nihil quas aperiam non quod vero accusantium ipsum tempore corporis nulla, mollitia minus. Quos?
-									</Alert>
-								</section>
+								<AlertTest />
 							</Details>
 							<Details name="demo" label={`Buttons`}>
-
-								<section className="component-test component-spacing">
-									<Button close />
-									<Button close outline />
-
-									&nbsp;
-
-									<Button close disabled />
-									<Button close outline disabled />
-								</section>
-
-								<section className="component-test component-spacing">
-									<Button variant="primary" close />
-									<Button variant="secondary" close />
-									<Button variant="success" close />
-									<Button variant="danger" close />
-									<Button variant="warning" close />
-									<Button variant="info" close />
-
-									&nbsp;
-
-									<Button variant="primary" close disabled />
-									<Button variant="secondary" close disabled />
-									<Button variant="success" close disabled />
-									<Button variant="danger" close disabled />
-									<Button variant="warning" close disabled />
-									<Button variant="info" close disabled />
-								</section>
-
-								<section className="component-test component-spacing">
-									<Button variant="primary" outline close />
-									<Button variant="secondary" outline close />
-									<Button variant="success" outline close />
-									<Button variant="danger" outline close />
-									<Button variant="warning" outline close />
-									<Button variant="info" outline close />
-
-									&nbsp;
-
-									<Button variant="primary" outline close disabled />
-									<Button variant="secondary" outline close disabled />
-									<Button variant="success" outline close disabled />
-									<Button variant="danger" outline close disabled />
-									<Button variant="warning" outline close disabled />
-									<Button variant="info" outline close disabled />
-								</section>
-
-								<hr />
-
-								<section className="component-test component-spacing">
-									<Button variant="primary">
-										Primary
-									</Button>
-									<Button variant="secondary">
-										Secondary
-									</Button>
-									<Button variant="success">
-										Success
-									</Button>
-									<Button variant="danger">
-										Danger
-									</Button>
-									<Button variant="warning">
-										Warning
-									</Button>
-									<Button variant="info">
-										Info
-									</Button>
-								</section>
-
-								<section className="component-test component-spacing">
-									<Button variant="primary" disabled>
-										Primary
-									</Button>
-									<Button variant="secondary" disabled>
-										Secondary
-									</Button>
-									<Button variant="success" disabled>
-										Success
-									</Button>
-									<Button variant="danger" disabled>
-										Danger
-									</Button>
-									<Button variant="warning" disabled>
-										Warning
-									</Button>
-									<Button variant="info" disabled>
-										Info
-									</Button>
-								</section>
-
-								<hr/>
-
-								<section className="component-test component-spacing">
-									<Button variant="primary" outline>
-										Primary
-									</Button>
-									<Button variant="secondary" outline>
-										Secondary
-									</Button>
-									<Button variant="success" outline>
-										Success
-									</Button>
-									<Button variant="danger" outline>
-										Danger
-									</Button>
-									<Button variant="warning" outline>
-										Warning
-									</Button>
-									<Button variant="info" outline>
-										Info
-									</Button>
-								</section>
-
-								<section className="component-test component-spacing">
-									<Button variant="primary" outline disabled>
-										Primary
-									</Button>
-									<Button variant="secondary" outline disabled>
-										Secondary
-									</Button>
-									<Button variant="success" outline disabled>
-										Success
-									</Button>
-									<Button variant="danger" outline disabled>
-										Danger
-									</Button>
-									<Button variant="warning" outline disabled>
-										Warning
-									</Button>
-									<Button variant="info" outline disabled>
-										Info
-									</Button>
-								</section>
+								<ButtonTest />
+							</Details>
+							<Details name="demo" label={`Close buttons`}>
+								<CloseButtonTest />
+							</Details>
+							<Details name="demo" label={`Dialogs`}>
+								<DialogTest />
+							</Details>
+							<Details name="demo" label={`Embeds`}>
+								<EmbedTest />
+							</Details>
+							<Details name="demo" label={`Forms`}>
+								<FormTest />
 							</Details>
 							{/*
 							<Details name="demo" label={`Dialog`}>
