@@ -1,0 +1,42 @@
+@layer forms {
+
+	.form__field-select {
+		appearance: none;
+		border: var(--field-border-width) var(--field-border-style) var(--field-border-color);
+		border-radius: var(--field-border-radius);
+		background-color: var(--field-background-color);
+		color: var(--field-color);
+		font-family: var(--field-font-family);
+		font-size: var(--field-font-size);
+		font-weight: var(--field-font-weight);
+		width: 100%;
+		min-height: var(--field-min-height);
+		padding: var(--field-paddingY) calc(var(--field-paddingX) + 2rem) var(--field-paddingY) var(--field-paddingX);
+		margin: 0;
+		background-image: var(--chevronSVG);
+		background-repeat: no-repeat;
+		background-size: toRem(24);
+		background-position: right toRem(10) center;
+
+		&:hover {
+			border-color: var(--field-border-color--hover);
+		}
+
+		&:focus {
+			border-color: var(--field-border-color--active);
+			//outline-color: transparent;
+		}
+
+		&[multiple] {
+		}
+
+		optgroup,
+		option {
+			appearance: none;
+			font-family: var(--field-font-family);
+			color: var(--field-color);
+		}
+
+	}
+
+}

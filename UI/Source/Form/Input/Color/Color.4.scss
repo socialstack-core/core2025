@@ -1,0 +1,74 @@
+@layer forms {
+
+	:root {
+		--field-color-width: #{toRem(100)};
+		--field-color-height: #{toRem(100)};
+		--field-color-border-width: #{toRem(2)};
+		--field-color-border-style: var(--field-border-style);
+		--field-color-border-color: var(--field-border-color);
+		--field-color-border-color--hover: var(--field-border-color--hover);
+		--field-color-border-color--active: var(--field-border-color--active);
+		//--field-color-border-radius: var(--field-border-radius);
+		--field-color-border-radius: #{toRem(8)};
+	}
+
+	.form__field-color {
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		appearance: none;
+		width: var(--field-color-width);
+		height: var(--field-color-height);
+		background-color: transparent;
+		border: 0;
+		cursor: pointer;
+		position: relative;
+		padding: 0;
+		margin: 0;
+		font-family: var(--field-font-family);
+		font-size: var(--field-font-size);
+		font-weight: var(--field-font-weight);
+
+		&:hover {
+			border-color: var(--field-color-border-color--hover);
+		}
+
+		&:focus {
+			border-color: var(--field-color-border-color--active);
+		}
+
+		&::-webkit-color-swatch-wrapper {
+			padding: 0;
+		}
+
+		&::-webkit-color-swatch {
+			border-radius: var(--field-color-border-radius);
+			border: var(--field-color-border-width) var(--field-color-border-style) var(--field-color-border-color);
+		}
+
+		&::-moz-color-swatch {
+			border-radius: var(--field-color-border-radius);
+			border: var(--field-color-border-width) var(--field-color-border-style) var(--field-color-border-color);
+		}
+
+		&::after {
+			//content: attr(value);
+			content: attr(data-value);
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 14px;
+			font-weight: bold;
+			pointer-events: none;
+			color: var(--contrast-text);
+		}
+
+		+ .form__field-help {
+			margin-block-start: 0;
+		}
+	}
+}

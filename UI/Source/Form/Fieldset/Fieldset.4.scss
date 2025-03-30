@@ -1,0 +1,19 @@
+@layer forms {
+
+	.form__fieldset {
+		border: 0;
+		margin: 0;
+		padding: 0;
+		color: inherit;
+
+		legend {
+			font-family: var(--legend-font-family);
+			font-size: var(--legend-font-size);
+			font-weight: var(--legend-font-weight);
+			margin-block-end: var(--legend-spacing);
+			color: inherit;
+		}
+
+	}
+
+}

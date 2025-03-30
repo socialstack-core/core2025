@@ -1,0 +1,45 @@
+@layer forms {
+
+	:root {
+		--form-width: #{toRem(500)};
+		--form-font-family: inherit;
+
+		--legend-font-family: var(--font-family);
+		--legend-font-size: #{toRem(18)};
+		--legend-font-weight: bold;
+		--legend-spacing: #{toRem(16)};
+
+		--label-font-family: var(--font-family);
+		--label-font-size: #{toRem(18)};
+		--label-font-weight: bold;
+		--label-spacing: #{toRem(10)};
+
+		--help-spacing: #{toRem(8)};
+
+		--field-border-width: 1px;
+		--field-border-style: solid;
+		--field-border-color: var(--site-border-inactive);
+		--field-border-color--hover: var(--site-border-hover);
+		--field-border-color--active: var(--site-border-active);
+		--field-border-radius: .25rem;
+		--field-background-color: var(--site-bg);
+		--field-color: inherit;
+		--field-paddingX: .75rem;
+		--field-paddingY: .375rem;
+		--field-spacing: 1rem;
+		--field-font-family: var(--font-family);
+		--field-font-size: #{toRem(18)};
+		--field-font-weight: normal;
+		--field-min-height: #{toRem(50)};
+	}
+
+	.form {
+		width: var(--form-width);
+		max-width: 100%;
+
+		&--sm {
+			width: 200px;
+		}
+	}
+
+}

@@ -1,0 +1,117 @@
+@layer forms {
+
+	:root {
+		--field-radio-size: #{toRem(32)};
+		--field-radio-spacing: #{toRem(10)};
+		--field-radio-padding: #{toRem(6)};
+		--field-radio-label-offset: #{toRem(3)};
+	}
+
+	.form__field:has(input[type="radio"]) {
+		min-height: var(--field-radio-size);
+		--field-radio-offset: calc(var(--field-radio-size) + var(--field-radio-spacing));
+		padding-inline-start: var(--field-radio-offset);
+
+		input[type="radio"] {
+			// NB: hidden by injection of .visually-hidden class (see Radio.tsx)
+
+			&:checked + label {
+
+				&::before {
+					// replacement radio (border, checked state)
+					//background-color: var(--primary);
+				}
+
+				&::after {
+					// replacement radio (icon, checked state)
+					// NB: uses background-color rather than color, as the icon is formed using a mask
+					// (allows us to recolour an SVG referenced within a data URL)
+					//background-color: var(--primary-fg);
+					background-color: var(--primary);
+				}
+
+				&:hover {
+
+					&::after {
+						background-color: var(--primary-light);
+					}
+
+				}
+
+				&:active {
+
+					&::after {
+						background-color: var(--primary-dark);
+					}
+
+				}
+
+			}
+		}
+
+		label {
+			display: block;
+			padding-block-start: var(--field-radio-label-offset);
+
+			&::before, &::after {
+				content: "";
+				display: block;
+				float: left;
+				transition-property: color, background-color, border-color, box-shadow, opacity;
+				transition-duration: .2s;
+				transition-timing-function: ease;
+				border-radius: 50%;
+			}
+
+			&::before {
+				// replacement radio (border)
+				border: var(--field-border-width) var(--field-border-style) var(--field-border-color);
+				background-color: var(--field-background-color);
+				width: var(--field-radio-size);
+				height: var(--field-radio-size);
+				margin-inline-start: calc(var(--field-radio-offset) * -1);
+				margin-block-start: calc(var(--field-radio-label-offset) * -1);
+				float: left;
+			}
+
+			&::after {
+				// replacement radio (icon)
+				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E");
+				mask-size: cover;
+				width: calc(var(--field-radio-size) - (2 * var(--field-radio-padding)));
+				height: calc(var(--field-radio-size) - (2 * var(--field-radio-padding)));
+				margin-inline-start: calc((var(--field-radio-offset) * -1) + var(--field-radio-padding));
+				margin-block-start: calc((var(--field-radio-label-offset) * -1) + var(--field-radio-padding));
+			}
+
+		}
+
+		&:hover {
+
+			label {
+
+				&::before {
+					border-color: var(--field-color-border-color--hover);
+				}
+
+			}
+
+		}
+
+		&:focus-within {
+
+			label {
+
+				&::before {
+					border-color: var(--field-color-border-color--active);
+				}
+
+			}
+
+		}
+
+		+ .form__field-help {
+			//margin-block-start: 0;
+		}
+	}
+}
