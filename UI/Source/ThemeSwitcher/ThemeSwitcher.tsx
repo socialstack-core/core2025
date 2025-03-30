@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'; 
 import store from 'UI/Functions/Store';
 
+const THEME_KEY = 'core-test-theme';
+type ThemeMode = 'light' | 'dark' | 'system';
+
 export default function ThemeSwitcher(props) {
-	const THEME_KEY = 'core-test-theme';
 	const [mode, setMode] = useState(store.get(THEME_KEY) || 'system');
 
 	useEffect(() => {
