@@ -1,12 +1,33 @@
+.component-test-category {
+	font-size: toRem(20);
+}
+
 .component-test {
 	padding: 1rem;
+	position: relative;
 
 	&.component-spacing {
 		display: flex;
-		gap: 10px;
+		flex-wrap: wrap;
+		gap: 20px;
+	}
+
+	+ .component-test-category {
+		margin-top: toRem(20);
+	}
+
+	&:fullscreen {
+		background-color: var(--site-bg);
+		padding: 2rem;
+
+		.request-fullscreen {
+			position: fixed;
+			top: 1rem;
+			right: 1rem;
+		}
+
 	}
 }
-
 
 .test-controls {
 	position: absolute;
@@ -46,12 +67,4 @@
 	padding: 3rem;
 	background-color: var(--site-panel);
 	box-shadow: var(--site-panel-shadow);
-}
-
-.embed-wrapper {
-	resize: both;
-	overflow: hidden;
-	padding: 1rem;
-	outline: 1px solid rgba(200, 0, 200, .5);
-	max-width: 500px;
 }

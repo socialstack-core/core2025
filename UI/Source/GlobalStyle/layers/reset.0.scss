@@ -18,6 +18,7 @@
 		color: var(--site-fg, #1e1e1e);
 		-webkit-text-size-adjust: 100%;
 		-webkit-font-smoothing: antialiased;
+		overflow-x: var(--body-overflow-x);
 	}
 
 	#react-root {

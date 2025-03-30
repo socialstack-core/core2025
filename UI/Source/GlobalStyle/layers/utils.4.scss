@@ -1,5 +1,9 @@
 @layer utils {
 
+	.overflow-y--auto {
+		overflow-y: auto !important;
+	}
+
 	.non-selectable {
 		-webkit-user-select: none;
 		user-select: none;
@@ -13,7 +17,7 @@
 	// still available to screenreaders
 	// NB: suitable for inactive elements only (e.g. text labels);
 	// don't apply this to interactive controls (e.g. buttons), as these will remain accessible via tab order
-	.visually-hidden {
+	.sr-only, .visually-hidden {
 		border: 0;
 		clip: rect(0 0 0 0);
 		-webkit-clip-path: inset(50%);

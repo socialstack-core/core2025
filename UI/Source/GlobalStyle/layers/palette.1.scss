@@ -76,12 +76,14 @@
 		--site-fg-quaternary-mid: #404044;
     */
 
-		--site-bg-dark: #1c1c1e;
-		--site-bg-dark: oklch(22.7% 1% 286.092);
+		//--site-bg-dark: #1c1c1e;
+		//--site-bg-dark: oklch(22.7% 1% 286.092);
+		--site-bg-dark: #201f1e;
 		
 		// increase lightness by 2%
-		--site-panel-dark: #232021;
-		--site-panel-dark: oklch(24.7% 1% 286.092);
+		//--site-panel-dark: #232021;
+		//--site-panel-dark: oklch(24.7% 1% 286.092);
+		--site-panel-dark: #252423;
 		--site-panel-shadow-dark: 0 0 2px rgba(3, 7, 18, 0.03), 0 0 6px rgba(3, 7, 18, 0.05), 0 0 14px rgba(3, 7, 18, 0.08), 0 0 25px rgba(3, 7, 18, 0.10);
 		
 		--site-fg-dark: #fff;
@@ -119,6 +121,9 @@
 
 		--link-light: hsl(240deg 95% 62%);
 		--link-dark: hsl(225deg 100% 75%);
+
+		--chevronSVG-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23222' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+		--chevronSVG-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 	}
 
 	@mixin resetPalette() {
@@ -221,6 +226,7 @@
 		--info-fg: var(--info-fg-light);
 		
 		--link: var(--link-light);
+		--chevronSVG: var(--chevronSVG-light);
 
 		@include resetPalette;
 		
@@ -283,6 +289,7 @@
 		--info-fg: var(--info-fg-dark);
 
 		--link: var(--link-dark);
+		--chevronSVG: var(--chevronSVG-dark);
 
 		@include resetPalette;
 

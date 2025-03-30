@@ -9,6 +9,8 @@
 	--h5-size: 20;
 	--h6-size: 16;
 
+	--body-overflow-x: hidden;
+
 	--link-text-decoration: underline;
 	--link-text-decoration--hover: underline;
 
@@ -19,8 +21,8 @@
 	--dialog-close-speed: .2s;
 	--dialog-transform: perspective(800px) rotateX(10deg) scale(1.05);
 
-	--button-padding-x: calc((16 / var(--font-size)) * 1rem);
-	--button-padding-y: calc((8 / var(--font-size)) * 1rem);
+	//--button-padding-x: calc((16 / var(--font-size)) * 1rem);
+	//--button-padding-y: calc((8 / var(--font-size)) * 1rem);
 
 	//-----------------------------------------------------------
 	// setting a CSS var to the rem equivalent of a px value:
