@@ -2,15 +2,17 @@ import Summary from './Summary';
 import Content from './Content';
 import { useEffect, useRef } from 'react';
 
+const COMPONENT_PREFIX = 'details';
+
 export default function Details(props) {
-	const { name, label, summaryChildren, open, className, children } = props;
+	const { id, name, label, summaryChildren, open, className, children } = props;
 	const detailsRef = useRef();
 	const CSS_ANIM_SUPPORTED = CSS.supports("interpolate-size", "allow-keywords");
 	let animation = null;
 	let isClosing = false;
 	let isExpanding = false;
 
-	let componentClasses = ['details'];
+	let componentClasses = [COMPONENT_PREFIX];
 
 	if (className) {
 		componentClasses.push(className);
@@ -164,7 +166,7 @@ export default function Details(props) {
 	}
 
 	return (
-		<details className={componentClasses.join(' ')} name={name} open={open === true ? true : undefined} ref={detailsRef}>
+		<details className={componentClasses.join(' ')} id={id} name={name} open={open === true ? true : undefined} ref={detailsRef}>
 			{/* assume <Summary> and <Content> are already supplied */}
 			{!label && !summaryChildren && <>
 				{children}

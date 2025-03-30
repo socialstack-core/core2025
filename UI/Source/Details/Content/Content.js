@@ -1,8 +1,16 @@
+const COMPONENT_PREFIX = 'details__content';
+
 export default function Content(props) {
-	const { children } = props;
+	const { children, className } = props;
+
+	let componentClasses = [COMPONENT_PREFIX];
+
+	if (className) {
+		componentClasses.push(className);
+	}
 
 	return (
-		<div className="details__content">
+		<div className={componentClasses.join(' ')}>
 			{children}
 		</div>
 	);
