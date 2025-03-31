@@ -107,6 +107,44 @@ declare global {
 	 */
 	var SERVER: boolean;
 
+	type CustomInputTypePropsBase = {
+		validationFailure: PublicError | null;
+		helpFieldId: string;
+		label?: React.ReactNode;
+		help?: React.ReactNode;
+		icon?: React.ReactNode;
+		inputRef: HTMLElement | null;
+		onInputRef?: (el: HTMLElement) => void;
+		onBlur?: (e: React.FocusEvent) => void;
+		onChange?: (e: React.ChangeEvent) => void;
+	};
+
+	/**
+	 * Used when an input type is rendering.
+	 */
+	type CustomInputTypeProps<T extends keyof InputPropsRegistry> = CustomInputTypePropsBase & {
+		field: InputPropsRegistry[T];
+	};
+
+	/**
+	 * A partial global interface which you can extend with your custom input type and the props it supports.
+	 * Those types must all extend BaseInputProps.
+	 */
+	interface InputPropsRegistry {
+
+	}
+
+	/**
+	 * The actual set of input props available.
+	 */
+	type InputProps = {
+		[K in keyof InputPropsRegistry]: { type: K } & InputPropsRegistry[K]
+	}[keyof InputPropsRegistry]
+
+	var inputTypes: {
+		[K in keyof InputPropsRegistry]: React.FC<CustomInputTypeProps<K>>;
+	};
+
 	/**
 	 * A base URL for the API.
 	 */

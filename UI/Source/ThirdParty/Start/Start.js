@@ -2,7 +2,9 @@ import App from './App.js';
 
 const providers = [];
 
-export default function start(custom){
+export default function start(custom) {
+	window.inputTypes = {};
+
 	if(!custom){
 		// Init all modules.
 		for(var m in __mm){
