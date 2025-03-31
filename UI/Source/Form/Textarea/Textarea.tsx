@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import Field from '../../Field';
+import Field from '../Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
 const COMPONENT_PREFIX = 'form__field';
