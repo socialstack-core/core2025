@@ -103,7 +103,7 @@ export default (props : LoginFormProps) => {
 
 		return (<>
 			<div style={{display: moreRequired ? 'none' : 'initial'}}>
-				<Input label = {props.noLabels ? null : (emailOnly ? `Email` : `Email or username`)}  name="emailOrUsername" placeholder={emailOnly ? `Email` : `Email or username`} validate={validate} />
+				<Input label = {props.noLabels ? null : (emailOnly ? `Email` : `Email or username`)}  name="emailOrUsername" placeholder={emailOnly ? `Email` : `Email or username`} type={emailOnly ? 'email' : 'text'} validate={validate} />
 				<Input label = {props.noLabels ? null : `Password`} name="password" placeholder={`Password`} type="password" validate = {validatePassword} />
 				{row}
 			</div>
