@@ -1,4 +1,4 @@
-const COMPONENT_PREFIX = 'btn';
+const COMPONENT_PREFIX = 'ui-btn';
 const DEFAULT_VARIANT = 'primary';
 
 import { getSizeClasses } from 'UI/Functions/Components';

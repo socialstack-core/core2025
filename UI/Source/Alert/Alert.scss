@@ -2,7 +2,7 @@
 	--alert-border-radius: #{toRem(8)};
 }
 
-.alert {
+.ui-alert {
 	$alert: &;
 	position: relative;
 	max-width: toRem(500);
@@ -252,8 +252,14 @@
 	}
 }
 
-#react-root:has(> .alert:only-child) {
+// centre alert if this is either the only element on the page, or if there's also an #admin-trigger
+#react-root:has(> .ui-alert:only-child),
+#react-root:has(:nth-child(1).ui-alert):has(:nth-child(2)#admin-trigger):not(:has(:nth-child(3))) {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+
+	> .ui-alert {
+		width: 100%;
+	}
 }

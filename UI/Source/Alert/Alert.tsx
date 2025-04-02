@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Button from 'UI/Button';
 import Icon from 'UI/Icon';
 
-const COMPONENT_PREFIX = 'alert';
+const COMPONENT_PREFIX = 'ui-alert';
 const DEFAULT_VARIANT = 'info';
 
 export type AlertType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';

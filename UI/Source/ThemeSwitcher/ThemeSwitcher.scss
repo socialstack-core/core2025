@@ -2,7 +2,7 @@
 
 	> li {
 
-		.btn {
+		.ui-btn {
 			opacity: .5;
 
 			svg {
@@ -14,7 +14,7 @@
 				opacity: 1;
 			}
 
-			&:not(.btn--outline) {
+			&:not(.ui-btn--outline) {
 				opacity: 1;
 			}
 
