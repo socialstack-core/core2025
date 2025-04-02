@@ -6,7 +6,7 @@ var inputTypes = window.inputTypes;
 
 type InputProps<T extends keyof InputPropsRegistry> = InputPropsRegistry[T] & {
 	type: T;
-	onValidationFailure: (er: PublicError) => React.ReactNode;
+	onValidationFailure?: (er: PublicError) => React.ReactNode;
 	noWrapper?: boolean;
 	validate?: string[];
 	groupClassName?: string;
@@ -224,6 +224,10 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 
 	const renderInput = () => {
 		var Handler = inputTypes[type] as React.FC<CustomInputTypeProps<T>>;
+
+		if (!Handler) {
+			Handler = inputTypes['text'] as React.FC<CustomInputTypeProps<T>>;
+		}
 
 		return <Handler
 			validationFailure={validationFailure}
