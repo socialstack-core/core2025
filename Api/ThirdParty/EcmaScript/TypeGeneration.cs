@@ -15,8 +15,15 @@ namespace Api.EcmaScript
     public partial class EcmaService
     {
 
+        private readonly List<TypeDefinition> typeDefinitionCache = []; 
+
         private void AddFieldsToType(Type source, TypeDefinition target, Script script)
         {
+            if (typeDefinitionCache.Contains(target))
+            {
+                return;
+            }
+            typeDefinitionCache.Add(target);
             foreach (var field in source.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly))
             {
                 // Skip compiler-generated backing fields (e.g., auto-properties)
@@ -69,10 +76,18 @@ namespace Api.EcmaScript
                     continue;
                 }
 
+                var targetCached = typeDefinitionCache.Where(cached => cached.Name == type.Name);
+
                 // If it's a collection (array or generic collection), handle its item type
                 if (IsCollection(field))
                 {
                     var objectType = GetCollectionItemType(field);
+
+                    if (targetCached.Any())
+                    {
+                        target.AddProperty(fieldName, targetCached.First().Name);
+                        continue;
+                    }
 
                     if (TypeConversions.TryGetValue(objectType, out string collValue))
                     {
@@ -112,6 +127,11 @@ namespace Api.EcmaScript
                 }
                 else
                 {
+                    if (targetCached.Any())
+                    {
+                        target.AddProperty(fieldName, targetCached.First().Name);
+                        continue;
+                    }
                     // If the field is not a collection, check if it's a known type
                     if (TypeConversions.TryGetValue(type, out string nonCollType))
                     {
@@ -146,6 +166,12 @@ namespace Api.EcmaScript
         }
         private void AddFieldsToType(List<ContentField> fields, TypeDefinition typeDef, Type source)
         {
+            if (typeDefinitionCache.Contains(typeDef))
+            {
+                return;
+            }
+            typeDefinitionCache.Add(typeDef);
+
             foreach(var field in fields)
             {
                 Type targetType;

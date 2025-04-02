@@ -631,7 +631,7 @@ namespace Api.EcmaScript
 
             foreach(var method in controller.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
             {
-                if (crudOperations.Contains(method.Name))
+                if (crudOperations.Contains(method.Name) && controller.BaseType == typeof(AutoController<>))
                 {
                     continue;
                 }
