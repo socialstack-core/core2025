@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import Field from '../../Field';
+import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
 const COMPONENT_PREFIX = 'form__field';
@@ -65,7 +65,7 @@ const Text: React.FC<TextProps > = ({ label, id, className, xs, sm, md, lg, xl, 
 
 		var fieldText = `${COMPONENT_PREFIX}-text`;
 		var componentClasses = [fieldText];
-		componentClasses = componentClasses.concat(getSizeClasses(fieldText, { xs, sm, md, lg, xl }));
+		componentClasses = componentClasses.concat(getSizeClasses(fieldText, { xs: Boolean(xs), sm: Boolean(sm), md: Boolean(md), lg: Boolean(lg), xl: Boolean(xl) }));
 
 		if (className) {
 			componentClasses.push(className);

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Form from 'UI/Form';
-import Fieldset from 'UI/Form/Fieldset';
-import Select from 'UI/Form/Select';
-import Input from 'UI/Form/Input';
+import Fieldset from 'UI/SimpleForm/Fieldset';
+import Select from 'UI/SimpleForm/Select';
+import Input from 'UI/SimpleForm/Input';
 import Button from 'UI/Button';
 import RequestFullscreen from 'UI/RequestFullscreen';
 

@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import Field from '../../Field';
+import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
 const COMPONENT_PREFIX = 'form__field';
@@ -52,7 +52,7 @@ interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
  */
 const Checkbox: React.FC<CheckboxProps> = ({ label, id, className, xs, sm, md, lg, xl, wrapperClass, noWrapper, value, onChange, ...rest }) => {
 
-	function renderField() {
+	function renderField(): React.ReactNode {
 		const _id = id || useId();
 
 		// filter out only valid checkbox attributes
@@ -65,7 +65,7 @@ const Checkbox: React.FC<CheckboxProps> = ({ label, id, className, xs, sm, md, l
 
 		var fieldCheckbox = `${COMPONENT_PREFIX}-checkbox`;
 		var componentClasses = [fieldCheckbox, 'visually-hidden'];
-		componentClasses = componentClasses.concat(getSizeClasses(fieldCheckbox, { xs, sm, md, lg, xl }));
+		componentClasses = componentClasses.concat(getSizeClasses(fieldCheckbox, { xs: Boolean(xs), sm: Boolean(sm), md: Boolean(md), lg: Boolean(lg), xl: Boolean(xl) }));
 
 		if (className) {
 			componentClasses.push(className);

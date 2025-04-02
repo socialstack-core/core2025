@@ -52,7 +52,7 @@ const ForgotPassword: React.FC<React.PropsWithChildren<ForgotPasswordProps>> = (
 						onSuccess && onSuccess(response);
 					}}
 				>
-					<Input name="email" placeholder={`Email address`} validate="Required" />
+					<Input type={'email'} name="email" placeholder={`Email address`} validate={["Required"]} />
 				</Form>
 		]}
 		{children || <div className="form-group">	

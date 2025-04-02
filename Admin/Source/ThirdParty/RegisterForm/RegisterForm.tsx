@@ -40,11 +40,13 @@ const RegisterForm: React.FC<RegisterFormProps> = (props: RegisterFormProps): Re
                     name="firstName" 
                     placeholder={`Your first name`} 
                     validate={['Required']} 
+                    type={'text'}
                 />
                 <Input 
                     name="lastName" 
                     placeholder={`Your last name`} 
                     validate={['Required']} 
+                    type={'text'}
                 />
                 <Input 
                     name="email" 
@@ -57,6 +59,7 @@ const RegisterForm: React.FC<RegisterFormProps> = (props: RegisterFormProps): Re
                         name="username" 
                         placeholder={`Username`} 
                         validate={['Required']} 
+                        type={'text'}
                     />
                 }
                 <Input 

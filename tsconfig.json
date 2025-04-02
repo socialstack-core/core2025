@@ -9,7 +9,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "jsx": "react-jsx",
-    "lib": [ "es2016", "DOM" ],
+    "lib": [ "es2016", "DOM", "es2017", "es2019" ],
     "strict": true,
     "noImplicitAny": true
   }

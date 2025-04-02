@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import Form from 'UI/Form';
-import Fieldset from 'UI/Form/Fieldset';
-import Field from 'UI/Form/Field';
-import Select from 'UI/Form/Select';
-import Input from 'UI/Form/Input';
-import Checkbox from 'UI/Form/Input/Checkbox';
-import Radio from 'UI/Form/Input/Radio';
+import Fieldset from 'UI/SimpleForm/Fieldset';
+import Field from 'UI/SimpleForm/Field';
+import Select from 'UI/SimpleForm/Select';
+import Input from 'UI/SimpleForm/Input';
+import Checkbox from 'UI/SimpleForm/Input/Checkbox';
+import Radio from 'UI/SimpleForm/Input/Radio';
 import Button from 'UI/Button';
 import RequestFullscreen from 'UI/RequestFullscreen';
 

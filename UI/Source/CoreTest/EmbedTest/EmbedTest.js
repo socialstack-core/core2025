@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Form from 'UI/Form';
-import Fieldset from 'UI/Form/Fieldset';
-import Select from 'UI/Form/Select';
+import Fieldset from 'UI/SimpleForm/Fieldset';
+import Select from 'UI/SimpleForm/Select';
 import Embed from 'UI/Embed';
 
 export default function EmbedTest(props) {

@@ -92,14 +92,13 @@ const PasswordReset: React.FC<PasswordResetProps> = (props) => {
 
 					<fieldset>
 						<Input
-							autocomplete="new-password"
-							showMeter
+							autoComplete="new-password"							
 							type='password'
 							name='password'
 							label={`New Password`}
 							placeholder={`Enter new password`}
 							validate={['Required', 'Password']}
-							onChange={e => { setPassword(e.target.value); }} />
+							onChange={e => { setPassword((e.target as HTMLInputElement).value); }} />
 					</fieldset>
 
 					<fieldset>

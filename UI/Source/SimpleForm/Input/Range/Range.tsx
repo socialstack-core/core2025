@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import Field from '../../Field';
+import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
 const COMPONENT_PREFIX = 'form__field';
@@ -65,7 +65,7 @@ const Range: React.FC<RangeProps > = ({ label, id, className, xs, sm, md, lg, xl
 
 		var fieldRange = `${COMPONENT_PREFIX}-range`;
 		var componentClasses = [fieldRange];
-		componentClasses = componentClasses.concat(getSizeClasses(fieldRange, { xs, sm, md, lg, xl }));
+		componentClasses = componentClasses.concat(getSizeClasses(fieldRange, { xs: Boolean(xs), sm: Boolean(sm), md: Boolean(md), lg: Boolean(lg), xl: Boolean(xl) }));
 
 		if (className) {
 			componentClasses.push(className);

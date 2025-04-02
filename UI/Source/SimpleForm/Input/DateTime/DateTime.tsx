@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import Field from '../../Field';
+import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
 const COMPONENT_PREFIX = 'form__field';
@@ -70,7 +70,7 @@ const DateTime: React.FC<DateTimeProps> = ({ label, id, className, xs, sm, md, l
 
 		var fieldDateTime = `${COMPONENT_PREFIX}-datetime`;
 		var componentClasses = [fieldDateTime];
-		componentClasses = componentClasses.concat(getSizeClasses(fieldDateTime, { xs, sm, md, lg, xl }));
+		componentClasses = componentClasses.concat(getSizeClasses(fieldDateTime, { xs: Boolean(xs), sm: Boolean(sm), md: Boolean(md), lg: Boolean(lg), xl: Boolean(xl) }));
 
 		if (className) {
 			componentClasses.push(className);

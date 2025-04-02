@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import Field from '../../Field';
+import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
 const COMPONENT_PREFIX = 'form__field';
@@ -65,7 +65,7 @@ const Month: React.FC<MonthProps > = ({ label, id, className, xs, sm, md, lg, xl
 
 		var fieldMonth = `${COMPONENT_PREFIX}-month`;
 		var componentClasses = [fieldMonth];
-		componentClasses = componentClasses.concat(getSizeClasses(fieldMonth, { xs, sm, md, lg, xl }));
+		componentClasses = componentClasses.concat(getSizeClasses(fieldMonth, { xs: Boolean(xs), sm: Boolean(sm), md: Boolean(md), lg: Boolean(lg), xl: Boolean(xl) }));
 
 		if (className) {
 			componentClasses.push(className);
