@@ -142,6 +142,12 @@ export function expandIncludes<T>(response : any){
 }
 
 function mapWhere(where : any, args : any[]){
+
+	// small fix.
+	if (where.where) {
+		where = where.where;
+	}
+
 	var str = '';
 	if(Array.isArray(where)){
 		for(var i=0;i<where.length;i++){

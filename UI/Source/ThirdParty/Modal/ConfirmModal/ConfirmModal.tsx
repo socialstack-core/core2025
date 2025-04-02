@@ -1,6 +1,17 @@
+import { useState, useEffect } from 'react'
 import Modal from 'UI/Modal';
 
-export default function ConfirmModal(props) {
+export type ConfirmModalProps = {
+    title?: string,
+    confirmCallback: Function, 
+    confirmText?: string, 
+    confirmVariant: string,
+    cancelCallback: (callbackValue?: boolean) => void, 
+    cancelText?: string, 
+    cancelVariant?: string
+}
+
+const ConfirmModal: React.FC<React.PropsWithChildren<ConfirmModalProps>> = (props: React.PropsWithChildren<ConfirmModalProps>): React.ReactNode => {
 	const {
 		title,
 		confirmCallback, confirmText, confirmVariant,
@@ -12,7 +23,7 @@ export default function ConfirmModal(props) {
 	
 	return (
 		<Modal visible className="confirm-modal" title={title || `Please confirm`} onClose={() => cancelCallback()}>
-			{this.props.children}
+			{props.children}
 			<footer className="confirm-modal__footer">
 				<button type="button" className={cancelClass} onClick={() => cancelCallback(false)}>
 					{cancelText || `Cancel`}
@@ -27,3 +38,5 @@ export default function ConfirmModal(props) {
 		</Modal>
 	);
 }
+
+export default ConfirmModal;

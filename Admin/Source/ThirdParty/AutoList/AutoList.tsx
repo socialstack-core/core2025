@@ -6,6 +6,10 @@ import ConfirmModal from 'UI/Modal/ConfirmModal';
 import {useTokens} from 'UI/Token';
 import { isoConvert } from "UI/Functions/DateTools";
 import { useState, useEffect } from 'react';
+import { ApiIncludes } from 'Api/ApiEndpoints';
+import { ApiList } from 'UI/Functions/WebRequest';
+
+type ScalarValue = string | number | boolean
 
 /**
  * Props for the AutoList component.
@@ -21,6 +25,8 @@ export interface AutoListProps {
 	create?: boolean;
 	beforeList?: React.ReactNode;
 	afterList?: React.ReactNode;
+	listEndpoint?: (where?: Partial<Content>, includes?: ApiIncludes) => Promise<Content[]>,
+	deleteEndpoint?: (id: number) => Promise<Content>
 }
 
 export interface SortField {
@@ -243,13 +249,15 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 		setDeleting(true);
 
 		// get the item IDs:
-		var ids = Object.keys(bulkSelections);
+		var ids: number[] = Object.keys(bulkSelections).map(id => parseInt(id));
+
+		if (typeof props.deleteEndpoint !== 'function') {
+			console.warn("[AutoForm] - No delete functionality")
+			return
+		}
 		
-		var deletes = ids.map(id => webRequest(
-			props.contentType + '/' + id,
-			null,
-			{ method: 'delete' }
-		));
+		// we checked above that this was a function. hence '!'
+		var deletes = ids.map(id => props.deleteEndpoint!(id));
 
 		Promise.all(deletes).then(response => {
 			setBulkSelections(null);
@@ -338,10 +346,13 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 					</ul>
 				</div>
 				{searchFields && <>
-					<Search className="admin-page__search" placeholder={`Search ${searchFieldsDesc}`}
+					<Search 
+						className="admin-page__search" 
+						placeholder={`Search ${searchFieldsDesc}`}
 						onQuery={(where, query : string) => {
 							setSearchText(query);
-						}} />
+						}}
+					/>
 				</>}
 			</header>
 			<div className="admin-page__content">
