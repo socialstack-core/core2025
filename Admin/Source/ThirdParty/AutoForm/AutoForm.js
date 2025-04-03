@@ -634,7 +634,7 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
-			if (mainCanvas && mainCanvas.d.name == contentNode.props.name) {
+			if (mainCanvas && mainCanvas?.d?.name == contentNode?.props?.name) {
 				// Omit the main canvas from the rest of the fields.
 				return null;
 			}
