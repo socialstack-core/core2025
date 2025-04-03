@@ -367,6 +367,9 @@ class AutoFormInternal extends React.Component {
 		if (!content || !mainCanvas) {
 			return;
 		}
+		if (!mainCanvas.d) {
+			return;
+		}
 		// Ensure the main canvas node gets populated.
 		var data = mainCanvas.d;
 		data.currentContent = content;
