@@ -1,6 +1,8 @@
 import PageTemplate from 'UI/PageTemplate';
 import PageRegion from 'UI/PageRegion';
 import ThemeSwitcher from 'UI/ThemeSwitcher';
+import ToggleBootstrap from 'UI/ToggleBootstrap';
+import ToggleBootstrapRevert from 'UI/ToggleBootstrapRevert';
 import Details from 'UI/Details';
 //import Summary from 'UI/Details/Summary';
 //import Content from 'UI/Details/Content';
@@ -10,6 +12,7 @@ import CloseButtonTest from './CloseButtonTest';
 import DialogTest from './DialogTest';
 import EmbedTest from './EmbedTest';
 import FormTest from './FormTest';
+import TabSetTest from './TabSetTest';
 
 export default function CoreTest(props) {
 	// reference propTypes
@@ -61,9 +64,17 @@ export default function CoreTest(props) {
 
 	return (
 		<PageTemplate className="core-test">
+			<style id="bootstrap_revert" media="print" dangerouslySetInnerHTML={{
+				__html: `
+			h1 {
+				color: red !important;
+			}
+		`}} />
 			<PageRegion landmark="banner" tag="header" sticky>
 				<nav className="site-header">
 					<ThemeSwitcher />
+					<ToggleBootstrap />
+					<ToggleBootstrapRevert />
 				</nav>
 			</PageRegion>
 			<PageRegion name="content" tag="div">
@@ -122,13 +133,9 @@ export default function CoreTest(props) {
 							<Details name="demo" label={`Forms`}>
 								<FormTest />
 							</Details>
-							{/*
-							<Details name="demo" label={`Dialog`}>
-								Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea harum, dignissimos ut minus nesciunt modi corrupti, similique laboriosam doloribus animi, quibusdam dolor esse reiciendis quaerat voluptatem. Ut dolore sit aliquam.
-								Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea harum, dignissimos ut minus nesciunt modi corrupti, similique laboriosam doloribus animi, quibusdam dolor esse reiciendis quaerat voluptatem. Ut dolore sit aliquam.
-								Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea harum, dignissimos ut minus nesciunt modi corrupti, similique laboriosam doloribus animi, quibusdam dolor esse reiciendis quaerat voluptatem. Ut dolore sit aliquam.
+							<Details name="demo" label={`Tabset`}>
+								<TabSetTest />
 							</Details>
-							*/}
 						</div>
 					</PageRegion>
 				</PageTemplate>

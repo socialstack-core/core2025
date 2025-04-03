@@ -30,7 +30,7 @@
 		--button-font-size: var(--button-font-size--md);
 	}
 
-	.btn {
+	.ui-btn {
 		$btn: &;
 		display: inline-flex;
 		gap: toRem(8);
@@ -157,7 +157,7 @@
 		&--outline {
 			background-color: transparent;
 
-			&.btn--primary {
+			&#{$btn}--primary {
 				border-color: var(--primary);
 				//color: var(--primary);
 				color: var(--site-fg);
@@ -175,7 +175,7 @@
 				}
 			}
 
-			&.btn--secondary {
+			&#{$btn}--secondary {
 				border-color: var(--secondary);
 				//color: var(--secondary);
 				color: var(--site-fg);
@@ -193,7 +193,7 @@
 				}
 			}
 
-			&.btn--success {
+			&#{$btn}--success {
 				border-color: var(--success);
 				//color: var(--success);
 				color: var(--site-fg);
@@ -211,7 +211,7 @@
 				}
 			}
 
-			&.btn--danger {
+			&#{$btn}--danger {
 				border-color: var(--danger);
 				//color: var(--danger);
 				color: var(--site-fg);
@@ -229,7 +229,7 @@
 				}
 			}
 
-			&.btn--warning {
+			&#{$btn}--warning {
 				border-color: var(--warning);
 				//color: var(--warning);
 				color: var(--site-fg);
@@ -247,7 +247,7 @@
 				}
 			}
 
-			&.btn--info {
+			&#{$btn}--info {
 				border-color: var(--info);
 				//color: var(--info);
 				color: var(--site-fg);
@@ -375,7 +375,7 @@
 				}
 			}
 
-			&.btn--outline {
+			&#{$btn}--outline {
 				border-color: var(--site-fg-secondary);
 
 				&:hover {
@@ -385,7 +385,7 @@
 				&:active {
 				}
 
-				&.btn--primary {
+				&#{$btn}--primary {
 					border-color: var(--primary);
 
 					&::before {
@@ -398,7 +398,7 @@
 					}
 				}
 
-				&.btn--secondary {
+				&#{$btn}--secondary {
 					border-color: var(--secondary);
 
 					&::before {
@@ -411,7 +411,7 @@
 					}
 				}
 
-				&.btn--success {
+				&#{$btn}--success {
 					border-color: var(--success);
 
 					&::before {
@@ -424,7 +424,7 @@
 					}
 				}
 
-				&.btn--danger {
+				&#{$btn}--danger {
 					border-color: var(--danger);
 
 					&::before {
@@ -437,7 +437,7 @@
 					}
 				}
 
-				&.btn--warning {
+				&#{$btn}--warning {
 					border-color: var(--warning);
 
 					&::before {
@@ -450,7 +450,7 @@
 					}
 				}
 
-				&.btn--info {
+				&#{$btn}--info {
 					border-color: var(--info);
 
 					&::before {
@@ -465,29 +465,29 @@
 
 			}
 
-			&:not(.btn--outline) {
+			&:not(#{$btn}--outline) {
 
-				&.btn--primary::before {
+				&#{$btn}--primary::before {
 					background-color: var(--primary-fg);
 				}
 
-				&.btn--secondary::before {
+				&#{$btn}--secondary::before {
 					background-color: var(--secondary-fg);
 				}
 
-				&.btn--success::before {
+				&#{$btn}--success::before {
 					background-color: var(--success-fg);
 				}
 
-				&.btn--danger::before {
+				&#{$btn}--danger::before {
 					background-color: var(--danger-fg);
 				}
 
-				&.btn--warning::before {
+				&#{$btn}--warning::before {
 					background-color: var(--warning-fg);
 				}
 
-				&.btn--info::before {
+				&#{$btn}--info::before {
 					background-color: var(--info-fg);
 				}
 
