@@ -2,7 +2,7 @@ import { useId } from 'react';
 import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
-const COMPONENT_PREFIX = 'form__field';
+const COMPONENT_PREFIX = 'ui-form__field';
 
 /**
  * Props for the Url component.

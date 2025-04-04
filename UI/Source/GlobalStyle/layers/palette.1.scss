@@ -22,46 +22,46 @@
     --darkness-offset2: .3;
     */
 
-		--lightness: 0.54;
+		--ui-lightness: 0.54;
 		//--chroma: 0.05;
-		--chroma-light: 0.15;
-		--chroma-dark: 0.05;
-		--lightness-offset: .3;
-		--lightness-offset2: .7;
-		--lightness-text-offset: 0.5;
-		--darkness-offset: .1;
-		--darkness-offset2: .24;
-		--darkness-text-offset: 0.16;
+		--ui-chroma-light: 0.15;
+		--ui-chroma-dark: 0.05;
+		--ui-lightness-offset: .3;
+		--ui-lightness-offset2: .7;
+		--ui-lightness-text-offset: 0.5;
+		--ui-darkness-offset: .1;
+		--ui-darkness-offset2: .24;
+		--ui-darkness-text-offset: 0.16;
 
-		--primary-hue-dark: 244.68;
-		--secondary-hue-dark: 0;
-		--success-hue-dark: 130.93;
-		--danger-hue-dark: 18.68;
-		--warning-hue-dark: 91.41;
-		//--info-hue-dark: 212.55;
-		--info-hue-dark: 182.55;
+		--ui-primary-hue-dark: 244.68;
+		--ui-secondary-hue-dark: 0;
+		--ui-success-hue-dark: 130.93;
+		--ui-danger-hue-dark: 18.68;
+		--ui-warning-hue-dark: 91.41;
+		//--ui-info-hue-dark: 212.55;
+		--ui-info-hue-dark: 182.55;
 
-		--primary-hue-light: 244.68;
-		--secondary-hue-light: 0;
-		--success-hue-light: 130.93;
-		--danger-hue-light: 18.68;
-		--warning-hue-light: 91.41;
-		//--info-hue-light: 212.55;
-		--info-hue-light: 182.55;
+		--ui-primary-hue-light: 244.68;
+		--ui-secondary-hue-light: 0;
+		--ui-success-hue-light: 130.93;
+		--ui-danger-hue-light: 18.68;
+		--ui-warning-hue-light: 91.41;
+		//--ui-info-hue-light: 212.55;
+		--ui-info-hue-light: 182.55;
 
-		--primary-fg-dark: #fff;
-		--secondary-fg-dark: #fff;
-		--success-fg-dark: #fff;
-		--danger-fg-dark: #fff;
-		--warning-fg-dark: #fff;
-		--info-fg-dark: #fff;
+		--ui-primary-fg-dark: #fff;
+		--ui-secondary-fg-dark: #fff;
+		--ui-success-fg-dark: #fff;
+		--ui-danger-fg-dark: #fff;
+		--ui-warning-fg-dark: #fff;
+		--ui-info-fg-dark: #fff;
 		
-		--primary-fg-light: #fff;
-		--secondary-fg-light: #fff;
-		--success-fg-light: #fff;
-		--danger-fg-light: #fff;
-		--warning-fg-light: #fff;
-		--info-fg-light: #fff;
+		--ui-primary-fg-light: #fff;
+		--ui-secondary-fg-light: #fff;
+		--ui-success-fg-light: #fff;
+		--ui-danger-fg-light: #fff;
+		--ui-warning-fg-light: #fff;
+		--ui-info-fg-light: #fff;
 		/*
 		--site-bg-dark: #333;
 		--site-fg-dark: #fff;
@@ -78,240 +78,244 @@
 
 		//--site-bg-dark: #1c1c1e;
 		//--site-bg-dark: oklch(22.7% 1% 286.092);
-		--site-bg-dark: #201f1e;
+		--ui-site-bg-dark: #201f1e;
 		
 		// increase lightness by 2%
 		//--site-panel-dark: #232021;
 		//--site-panel-dark: oklch(24.7% 1% 286.092);
-		--site-panel-dark: #252423;
-		--site-panel-shadow-dark: 0 0 2px rgba(3, 7, 18, 0.03), 0 0 6px rgba(3, 7, 18, 0.05), 0 0 14px rgba(3, 7, 18, 0.08), 0 0 25px rgba(3, 7, 18, 0.10);
+		--ui-site-panel-dark: #252423;
+		--ui-site-panel-shadow-dark: 
+			0 0 2px rgba(3, 7, 18, 0.03), 
+			0 0 6px rgba(3, 7, 18, 0.05), 
+			0 0 14px rgba(3, 7, 18, 0.08), 
+			0 0 25px rgba(3, 7, 18, 0.10);
 		
-		--site-fg-dark: #fff;
-		--site-fg-secondary-dark: #989899;
-		--site-fg-tertiary-dark: #5a5a5e;
-		--site-fg-quaternary-dark: #404044;
+		--ui-site-fg-dark: #fff;
+		--ui-site-fg-secondary-dark: #989899;
+		--ui-site-fg-tertiary-dark: #5a5a5e;
+		--ui-site-fg-quaternary-dark: #404044;
 		
-		--site-bg-light: #fff;
-		--site-bg-light: oklch(100% 0% 89.876);
+		--ui-site-bg-light: #fff;
+		--ui-site-bg-light: oklch(100% 0% 89.876);
 		
 		// decrease lightness by 4%
-		--site-panel-light: #f8f8f8;
-		--site-panel-light: oklch(96% 0% 89.876);
-		--site-panel-shadow-light: 0 0 2px rgba(84, 84, 84, 0.03), 0 0 6px rgba(84, 84, 84, 0.05), 0 0 14px rgba(84, 84, 84, 0.08), 0 0 25px rgba(84, 84, 84, 0.10);
+		--ui-site-panel-light: #f8f8f8;
+		--ui-site-panel-light: oklch(96% 0% 89.876);
+		--ui-site-panel-shadow-light: 0 0 2px rgba(84, 84, 84, 0.03), 0 0 6px rgba(84, 84, 84, 0.05), 0 0 14px rgba(84, 84, 84, 0.08), 0 0 25px rgba(84, 84, 84, 0.10);
 		
-		--site-fg-light: #1e1e1e;
-		--site-fg-secondary-light: #8a8a8e;
-		--site-fg-tertiary-light: #c4c4c6;
-		--site-fg-quaternary-light: #dcdcdd;
+		--ui-site-fg-light: #1e1e1e;
+		--ui-site-fg-secondary-light: #8a8a8e;
+		--ui-site-fg-tertiary-light: #c4c4c6;
+		--ui-site-fg-quaternary-light: #dcdcdd;
 		
-		--header-bg-dark: #0a0a0a;
-		--header-bg-light: #d8d8d8;
+		--ui-header-bg-dark: #0a0a0a;
+		--ui-header-bg-light: #d8d8d8;
 		/*
     --content-bg-dark: #1d1e22;
     --content-bg-light: #d8d8d8;
     */
 
-		--footer-bg-dark: #0a0a0a;
-		--footer-bg-light: #d8d8d8;
+		--ui-footer-bg-dark: #0a0a0a;
+		--ui-footer-bg-light: #d8d8d8;
 		/*
 		--primaryRGB: 100,149,237; // cornflowerblue
 		--primary: rgb(--primaryRGB);
-		--primaryFocus: rgba(var(--primaryRGB), .5);
+		--primaryFocus: rgba(var(--ui-primaryRGB), .5);
     */
 
-		--link-light: hsl(240deg 95% 62%);
-		--link-dark: hsl(225deg 100% 75%);
+		--ui-link-light: hsl(240deg 95% 62%);
+		--ui-link-dark: hsl(225deg 100% 75%);
 
-		--chevronSVG-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23222' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-		--chevronSVG-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+		--ui-chevronSVG-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23222' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+		--ui-chevronSVG-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 	}
 
 	@mixin resetPalette() {
-		--primary: oklch(var(--lightness) var(--chroma) var(--primary-hue));
-		--primary-light: oklch(calc(var(--lightness) * (1 + var(--lightness-offset))) var(--chroma) var(--primary-hue));
-		//--primary-light2: oklch(calc(var(--lightness) * (1 + var(--lightness-offset2))) var(--chroma) var(--primary-hue));
-		--primary-light2: oklch(.94 .02 var(--primary-hue));
-		--primary-light-text: oklch(calc(var(--lightness) * (1 + var(--lightness-text-offset))) var(--chroma) var(--primary-hue));
-		--primary-dark: oklch(calc(var(--lightness) * (1 - var(--darkness-offset))) var(--chroma) var(--primary-hue));
-		--primary-dark2: oklch(calc(var(--lightness) * (1 - var(--darkness-offset2))) var(--chroma) var(--primary-hue));
-		--primary-dark-text: oklch(calc(var(--lightness) * (1 + var(--darkness-text-offset))) var(--chroma) var(--primary-hue));
+		--ui-primary: oklch(var(--ui-lightness) var(--ui-chroma) var(--ui-primary-hue));
+		--ui-primary-light: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset))) var(--ui-chroma) var(--ui-primary-hue));
+		//--ui-primary-light2: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset2))) var(--ui-chroma) var(--ui-primary-hue));
+		--ui-primary-light2: oklch(.94 .02 var(--ui-primary-hue));
+		--ui-primary-light-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-text-offset))) var(--ui-chroma) var(--ui-primary-hue));
+		--ui-primary-dark: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset))) var(--ui-chroma) var(--ui-primary-hue));
+		--ui-primary-dark2: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset2))) var(--ui-chroma) var(--ui-primary-hue));
+		--ui-primary-dark-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-darkness-text-offset))) var(--ui-chroma) var(--ui-primary-hue));
 
-		--secondary: oklch(var(--lightness) 0 var(--secondary-hue));
-		--secondary-light: oklch(calc(var(--lightness) * (1 + var(--lightness-offset))) 0 var(--secondary-hue));
-		//--secondary-light2: oklch(calc(var(--lightness) * (1 + var(--lightness-offset2))) 0 var(--secondary-hue));
-		--secondary-light2: oklch(.94 0 var(--secondary-hue));
-		--secondary-light-text: oklch(calc(var(--lightness) * (1 + var(--lightness-text-offset))) 0 var(--secondary-hue));
-		--secondary-dark: oklch(calc(var(--lightness) * (1 - var(--darkness-offset))) 0 var(--secondary-hue));
-		--secondary-dark2: oklch(calc(var(--lightness) * (1 - var(--darkness-offset2))) 0 var(--secondary-hue));
-		--secondary-dark-text: oklch(calc(var(--lightness) * (1 + var(--darkness-text-offset))) 0 var(--secondary-hue));
+		--ui-secondary: oklch(var(--ui-lightness) 0 var(--ui-secondary-hue));
+		--ui-secondary-light: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset))) 0 var(--ui-secondary-hue));
+		//--ui-secondary-light2: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset2))) 0 var(--ui-secondary-hue));
+		--ui-secondary-light2: oklch(.94 0 var(--ui-secondary-hue));
+		--ui-secondary-light-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-text-offset))) 0 var(--ui-secondary-hue));
+		--ui-secondary-dark: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset))) 0 var(--ui-secondary-hue));
+		--ui-secondary-dark2: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset2))) 0 var(--ui-secondary-hue));
+		--ui-secondary-dark-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-darkness-text-offset))) 0 var(--ui-secondary-hue));
 
-		--success: oklch(var(--lightness) var(--chroma) var(--success-hue));
-		--success-light: oklch(calc(var(--lightness) * (1 + var(--lightness-offset))) var(--chroma) var(--success-hue));
-		//--success-light2: oklch(calc(var(--lightness) * (1 + var(--lightness-offset2))) var(--chroma) var(--success-hue));
-		--success-light2: oklch(.94 .02 var(--success-hue));
-		--success-light-text: oklch(calc(var(--lightness) * (1 + var(--lightness-text-offset))) var(--chroma) var(--success-hue));
-		--success-dark: oklch(calc(var(--lightness) * (1 - var(--darkness-offset))) var(--chroma) var(--success-hue));
-		--success-dark2: oklch(calc(var(--lightness) * (1 - var(--darkness-offset2))) var(--chroma) var(--success-hue));
-		--success-dark-text: oklch(calc(var(--lightness) * (1 + var(--darkness-text-offset))) var(--chroma) var(--success-hue));
+		--ui-success: oklch(var(--ui-lightness) var(--ui-chroma) var(--ui-success-hue));
+		--ui-success-light: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset))) var(--ui-chroma) var(--ui-success-hue));
+		//--ui-success-light2: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset2))) var(--ui-chroma) var(--ui-success-hue));
+		--ui-success-light2: oklch(.94 .02 var(--ui-success-hue));
+		--ui-success-light-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-text-offset))) var(--ui-chroma) var(--ui-success-hue));
+		--ui-success-dark: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset))) var(--ui-chroma) var(--ui-success-hue));
+		--ui-success-dark2: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset2))) var(--ui-chroma) var(--ui-success-hue));
+		--ui-success-dark-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-darkness-text-offset))) var(--ui-chroma) var(--ui-success-hue));
 
-		--danger: oklch(var(--lightness) var(--chroma) var(--danger-hue));
-		--danger-light: oklch(calc(var(--lightness) * (1 + var(--lightness-offset))) var(--chroma) var(--danger-hue));
-		//--danger-light2: oklch(calc(var(--lightness) * (1 + var(--lightness-offset2))) var(--chroma) var(--danger-hue));
-		--danger-light2: oklch(.94 .02 var(--danger-hue));
-		--danger-light-text: oklch(calc(var(--lightness) * (1 + var(--lightness-text-offset))) var(--chroma) var(--danger-hue));
-		--danger-dark: oklch(calc(var(--lightness) * (1 - var(--darkness-offset))) var(--chroma) var(--danger-hue));
-		--danger-dark2: oklch(calc(var(--lightness) * (1 - var(--darkness-offset2))) var(--chroma) var(--danger-hue));
-		--danger-dark-text: oklch(calc(var(--lightness) * (1 + var(--darkness-text-offset))) var(--chroma) var(--danger-hue));
+		--ui-danger: oklch(var(--ui-lightness) var(--ui-chroma) var(--ui-danger-hue));
+		--ui-danger-light: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset))) var(--ui-chroma) var(--ui-danger-hue));
+		//--ui-danger-light2: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset2))) var(--ui-chroma) var(--ui-danger-hue));
+		--ui-danger-light2: oklch(.94 .02 var(--ui-danger-hue));
+		--ui-danger-light-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-text-offset))) var(--ui-chroma) var(--ui-danger-hue));
+		--ui-danger-dark: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset))) var(--ui-chroma) var(--ui-danger-hue));
+		--ui-danger-dark2: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset2))) var(--ui-chroma) var(--ui-danger-hue));
+		--ui-danger-dark-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-darkness-text-offset))) var(--ui-chroma) var(--ui-danger-hue));
 
-		--warning: oklch(var(--lightness) var(--chroma) var(--warning-hue));
-		--warning-light: oklch(calc(var(--lightness) * (1 + var(--lightness-offset))) var(--chroma) var(--warning-hue));
-		//--warning-light2: oklch(calc(var(--lightness) * (1 + var(--lightness-offset2))) var(--chroma) var(--warning-hue));
-		--warning-light2: oklch(.94 .02 var(--warning-hue));
-		--warning-light-text: oklch(calc(var(--lightness) * (1 + var(--lightness-text-offset))) var(--chroma) var(--warning-hue));
-		--warning-dark: oklch(calc(var(--lightness) * (1 - var(--darkness-offset))) var(--chroma) var(--warning-hue));
-		--warning-dark2: oklch(calc(var(--lightness) * (1 - var(--darkness-offset2))) var(--chroma) var(--warning-hue));
-		--warning-dark-text: oklch(calc(var(--lightness) * (1 + var(--darkness-text-offset))) var(--chroma) var(--warning-hue));
+		--ui-warning: oklch(var(--ui-lightness) var(--ui-chroma) var(--ui-warning-hue));
+		--ui-warning-light: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset))) var(--ui-chroma) var(--ui-warning-hue));
+		//--ui-warning-light2: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset2))) var(--ui-chroma) var(--ui-warning-hue));
+		--ui-warning-light2: oklch(.94 .02 var(--ui-warning-hue));
+		--ui-warning-light-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-text-offset))) var(--ui-chroma) var(--ui-warning-hue));
+		--ui-warning-dark: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset))) var(--ui-chroma) var(--ui-warning-hue));
+		--ui-warning-dark2: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset2))) var(--ui-chroma) var(--ui-warning-hue));
+		--ui-warning-dark-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-darkness-text-offset))) var(--ui-chroma) var(--ui-warning-hue));
 
-		--info: oklch(var(--lightness) var(--chroma) var(--info-hue));
-		--info-light: oklch(calc(var(--lightness) * (1 + var(--lightness-offset))) var(--chroma) var(--info-hue));
-		//--info-light2: oklch(calc(var(--lightness) * (1 + var(--lightness-offset2))) var(--chroma) var(--info-hue));
-		--info-light2: oklch(.94 .02 var(--info-hue));
-		--info-light-text: oklch(calc(var(--lightness) * (1 + var(--lightness-text-offset))) var(--chroma) var(--info-hue));
-		--info-dark: oklch(calc(var(--lightness) * (1 - var(--darkness-offset))) var(--chroma) var(--info-hue));
-		--info-dark2: oklch(calc(var(--lightness) * (1 - var(--darkness-offset2))) var(--chroma) var(--info-hue));
-		--info-dark-text: oklch(calc(var(--lightness) * (1 + var(--darkness-text-offset))) var(--chroma) var(--info-hue));
+		--ui-info: oklch(var(--ui-lightness) var(--ui-chroma) var(--ui-info-hue));
+		--ui-info-light: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset))) var(--ui-chroma) var(--ui-info-hue));
+		//--ui-info-light2: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset2))) var(--ui-chroma) var(--ui-info-hue));
+		--ui-info-light2: oklch(.94 .02 var(--ui-info-hue));
+		--ui-info-light-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-text-offset))) var(--ui-chroma) var(--ui-info-hue));
+		--ui-info-dark: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset))) var(--ui-chroma) var(--ui-info-hue));
+		--ui-info-dark2: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset2))) var(--ui-chroma) var(--ui-info-hue));
+		--ui-info-dark-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-darkness-text-offset))) var(--ui-chroma) var(--ui-info-hue));
 
-		--details-bg: var(--site-bg);
-		--details-fg: var(--site-fg);
+		--ui-expander-bg: var(--ui-site-bg);
+		--ui-expander-fg: var(--ui-site-fg);
 
-		--summary-bg: var(--primary);
-		--summary-fg: var(--primary-fg);
+		--ui-summary-bg: var(--ui-primary);
+		--ui-summary-fg: var(--ui-primary-fg);
 	}
 
 	@mixin lightMode() {
-		--site-bg: var(--site-bg-light);
-		--site-bg-secondary: var(--site-fg-secondary-dark);
+		--ui-site-bg: var(--ui-site-bg-light);
+		--ui-site-bg-secondary: var(--ui-site-fg-secondary-dark);
 
-		--site-fg: var(--site-fg-light);
-		--site-fg-secondary: var(--site-fg-secondary-light);
-	    --site-fg-muted: var(--site-fg-secondary);
-		--site-fg-tertiary: var(--site-fg-tertiary-light);
-		--site-fg-quaternary: var(--site-fg-quaternary-light);
+		--ui-site-fg: var(--ui-site-fg-light);
+		--ui-site-fg-secondary: var(--ui-site-fg-secondary-light);
+	    --ui-site-fg-muted: var(--ui-site-fg-secondary);
+		--ui-site-fg-tertiary: var(--ui-site-fg-tertiary-light);
+		--ui-site-fg-quaternary: var(--ui-site-fg-quaternary-light);
 
-		--site-panel: var(--site-panel-light);
-		--site-panel-shadow: var(--site-panel-shadow-light);
+		--ui-site-panel: var(--ui-site-panel-light);
+		--ui-site-panel-shadow: var(--ui-site-panel-shadow-light);
 
-		--site-border-inactive: var(--site-fg-quaternary);
-		--site-border-hover: var(--site-fg-tertiary);
-		--site-border-active: var(--site-fg-secondary);
+		--ui-site-border-inactive: var(--ui-site-fg-quaternary);
+		--ui-site-border-hover: var(--ui-site-fg-tertiary);
+		--ui-site-border-active: var(--ui-site-fg-secondary);
 
-		//--content-bg: var(--content-bg-light);
-		--header-bg: var(--header-bg-light);
-		--footer-bg: var(--footer-bg-light);
+		//--content-bg: var(--ui-content-bg-light);
+		--ui-header-bg: var(--ui-header-bg-light);
+		--ui-footer-bg: var(--ui-footer-bg-light);
 
-		--chroma: var(--chroma-light);
+		--ui-chroma: var(--ui-chroma-light);
 		
-		--primary-hue: var(--primary-hue-light);
-		--secondary-hue: var(--secondary-hue-light);
-		--success-hue: var(--success-hue-light);
-		--danger-hue: var(--danger-hue-light);
-		--warning-hue: var(--warning-hue-light);
-		--info-hue: var(--info-hue-light);
+		--ui-primary-hue: var(--ui-primary-hue-light);
+		--ui-secondary-hue: var(--ui-secondary-hue-light);
+		--ui-success-hue: var(--ui-success-hue-light);
+		--ui-danger-hue: var(--ui-danger-hue-light);
+		--ui-warning-hue: var(--ui-warning-hue-light);
+		--ui-info-hue: var(--ui-info-hue-light);
 		
-		--primary-fg: var(--primary-fg-light);
-		--secondary-fg: var(--secondary-fg-light);
-		--success-fg: var(--success-fg-light);
-		--danger-fg: var(--danger-fg-light);
-		--warning-fg: var(--warning-fg-light);
-		--info-fg: var(--info-fg-light);
+		--ui-primary-fg: var(--ui-primary-fg-light);
+		--ui-secondary-fg: var(--ui-secondary-fg-light);
+		--ui-success-fg: var(--ui-success-fg-light);
+		--ui-danger-fg: var(--ui-danger-fg-light);
+		--ui-warning-fg: var(--ui-warning-fg-light);
+		--ui-info-fg: var(--ui-info-fg-light);
 		
-		--link: var(--link-light);
-		--chevronSVG: var(--chevronSVG-light);
+		--ui-link: var(--ui-link-light);
+		--ui-chevronSVG: var(--ui-chevronSVG-light);
 
 		@include resetPalette;
 		
-		--primary-bg: var(--primary-light2);
-		--primary-text: var(--primary-light-text);
+		--ui-primary-bg: var(--ui-primary-light2);
+		--ui-primary-text: var(--ui-primary-light-text);
 
-		--secondary-bg: var(--secondary-light2);
-		--secondary-text: var(--secondary-light-text);
+		--ui-secondary-bg: var(--ui-secondary-light2);
+		--ui-secondary-text: var(--ui-secondary-light-text);
 
-		--success-bg: var(--success-light2);
-		--success-text: var(--success-light-text);
+		--ui-success-bg: var(--ui-success-light2);
+		--ui-success-text: var(--ui-success-light-text);
 
-		--danger-bg: var(--danger-light2);
-		--danger-text: var(--danger-light-text);
+		--ui-danger-bg: var(--ui-danger-light2);
+		--ui-danger-text: var(--ui-danger-light-text);
 
-		--warning-bg: var(--warning-light2);
-		--warning-text: var(--warning-light-text);
+		--ui-warning-bg: var(--ui-warning-light2);
+		--ui-warning-text: var(--ui-warning-light-text);
 
-		--info-bg: var(--info-light2);
-		--info-text: var(--info-light-text);
+		--ui-info-bg: var(--ui-info-light2);
+		--ui-info-text: var(--ui-info-light-text);
 
-		--panel-fg: var(--site-fg-light);
+		--ui-panel-fg: var(--ui-site-fg-light);
 	}
 
 	@mixin darkMode() {
-		--site-bg: var(--site-bg-dark);
-		--site-bg-secondary: var(--site-fg-secondary-light);
+		--ui-site-bg: var(--ui-site-bg-dark);
+		--ui-site-bg-secondary: var(--ui-site-fg-secondary-light);
 			
-		--site-fg: var(--site-fg-dark);
-		--site-fg-secondary: var(--site-fg-secondary-dark);
-	    --site-fg-muted: var(--site-fg-secondary);
-		--site-fg-tertiary: var(--site-fg-tertiary-dark);
-		--site-fg-quaternary: var(--site-fg-quaternary-dark);
+		--ui-site-fg: var(--ui-site-fg-dark);
+		--ui-site-fg-secondary: var(--ui-site-fg-secondary-dark);
+	    --ui-site-fg-muted: var(--ui-site-fg-secondary);
+		--ui-site-fg-tertiary: var(--ui-site-fg-tertiary-dark);
+		--ui-site-fg-quaternary: var(--ui-site-fg-quaternary-dark);
 			
-		--site-panel: var(--site-panel-dark);
-		--site-panel-shadow: var(--site-panel-shadow-dark);
+		--ui-site-panel: var(--ui-site-panel-dark);
+		--ui-site-panel-shadow: var(--ui-site-panel-shadow-dark);
 
-  		--site-border-inactive: var(--site-fg-quaternary);
-		--site-border-hover: var(--site-fg-tertiary);
-		--site-border-active: var(--site-fg-secondary);
+  		--ui-site-border-inactive: var(--ui-site-fg-quaternary);
+		--ui-site-border-hover: var(--ui-site-fg-tertiary);
+		--ui-site-border-active: var(--ui-site-fg-secondary);
 
-		/*--content-bg: var(--content-bg-dark);*/
-		--header-bg: var(--header-bg-dark);
-		--footer-bg: var(--footer-bg-dark);
+		/*--ui-content-bg: var(--ui-content-bg-dark);*/
+		--ui-header-bg: var(--ui-header-bg-dark);
+		--ui-footer-bg: var(--ui-footer-bg-dark);
 
-		--chroma: var(--chroma-dark);
+		--ui-chroma: var(--ui-chroma-dark);
 
-		--primary-hue: var(--primary-hue-dark);
-		--secondary-hue: var(--secondary-hue-dark);
-		--success-hue: var(--success-hue-dark);
-		--danger-hue: var(--danger-hue-dark);
-		--warning-hue: var(--warning-hue-dark);
-		--info-hue: var(--info-hue-dark);
+		--ui-primary-hue: var(--ui-primary-hue-dark);
+		--ui-secondary-hue: var(--ui-secondary-hue-dark);
+		--ui-success-hue: var(--ui-success-hue-dark);
+		--ui-danger-hue: var(--ui-danger-hue-dark);
+		--ui-warning-hue: var(--ui-warning-hue-dark);
+		--ui-info-hue: var(--ui-info-hue-dark);
 
-		--primary-fg: var(--primary-fg-dark);
-		--secondary-fg: var(--secondary-fg-dark);
-		--success-fg: var(--success-fg-dark);
-		--danger-fg: var(--danger-fg-dark);
-		--warning-fg: var(--warning-fg-dark);
-		--info-fg: var(--info-fg-dark);
+		--ui-primary-fg: var(--ui-primary-fg-dark);
+		--ui-secondary-fg: var(--ui-secondary-fg-dark);
+		--ui-success-fg: var(--ui-success-fg-dark);
+		--ui-danger-fg: var(--ui-danger-fg-dark);
+		--ui-warning-fg: var(--ui-warning-fg-dark);
+		--ui-info-fg: var(--ui-info-fg-dark);
 
-		--link: var(--link-dark);
-		--chevronSVG: var(--chevronSVG-dark);
+		--ui-link: var(--ui-link-dark);
+		--ui-chevronSVG: var(--ui-chevronSVG-dark);
 
 		@include resetPalette;
 
-		--primary-bg: var(--primary-dark2);
-		--primary-text: var(--primary-dark-text);
+		--ui-primary-bg: var(--ui-primary-dark2);
+		--ui-primary-text: var(--ui-primary-dark-text);
 
-		--secondary-bg: var(--secondary-dark2);
-		--secondary-text: var(--secondary-dark-text);
+		--ui-secondary-bg: var(--ui-secondary-dark2);
+		--ui-secondary-text: var(--ui-secondary-dark-text);
 
-		--success-bg: var(--success-dark2);
-		--success-text: var(--success-dark-text);
+		--ui-success-bg: var(--ui-success-dark2);
+		--ui-success-text: var(--ui-success-dark-text);
 
-		--danger-bg: var(--danger-dark2);
-		--danger-text: var(--danger-dark-text);
+		--ui-danger-bg: var(--ui-danger-dark2);
+		--ui-danger-text: var(--ui-danger-dark-text);
 
-		--warning-bg: var(--warning-dark2);
-		--warning-text: var(--warning-dark-text);
+		--ui-warning-bg: var(--ui-warning-dark2);
+		--ui-warning-text: var(--ui-warning-dark-text);
 
-		--info-bg: var(--info-dark2);
-		--info-text: var(--info-dark-text);
+		--ui-info-bg: var(--ui-info-dark2);
+		--ui-info-text: var(--ui-info-dark-text);
 
-		--panel-fg: var(--site-fg-dark);
+		--ui-panel-fg: var(--ui-site-fg-dark);
 	}
 
 	// set defaults
@@ -399,67 +403,67 @@
 	}
 
 	.text--secondary {
-		color: var(--site-fg-secondary);
+		color: var(--ui-site-fg-secondary);
 	}
 
 	.text--tertiary {
-		color: var(--site-fg-tertiary);
+		color: var(--ui-site-fg-tertiary);
 	}
 
 	.text--quaternary {
-		color: var(--site-fg-quaternary);
+		color: var(--ui-site-fg-quaternary);
 	}
 
 	.theme {
 
 		&--light {
-			background-color: var(--site-bg-light);
-			color: var(--site-fg-light);
+			background-color: var(--ui-site-bg-light);
+			color: var(--ui-site-fg-light);
 
 			.text--secondary {
-				color: var(--site-fg-secondary-light);
+				color: var(--ui-site-fg-secondary-light);
 			}
 
 			.text--tertiary {
-				color: var(--site-fg-tertiary-light);
+				color: var(--ui-site-fg-tertiary-light);
 			}
 
 			.text--quaternary {
-				color: var(--site-fg-quaternary-light);
+				color: var(--ui-site-fg-quaternary-light);
 			}
 		}
 
 		&--mid {
-			background-color: var(--site-bg-mid);
-			color: var(--site-fg-mid);
+			background-color: var(--ui-site-bg-mid);
+			color: var(--ui-site-fg-mid);
 
 			.text--secondary {
-				color: var(--site-fg-secondary-mid);
+				color: var(--ui-site-fg-secondary-mid);
 			}
 
 			.text--tertiary {
-				color: var(--site-fg-tertiary-mid);
+				color: var(--ui-site-fg-tertiary-mid);
 			}
 
 			.text--quaternary {
-				color: var(--site-fg-quaternary-mid);
+				color: var(--ui-site-fg-quaternary-mid);
 			}
 		}
 
 		&--dark {
-			background-color: var(--site-bg-dark);
-			color: var(--site-fg-dark);
+			background-color: var(--ui-site-bg-dark);
+			color: var(--ui-site-fg-dark);
 
 			.text--secondary {
-				color: var(--site-fg-secondary-dark);
+				color: var(--ui-site-fg-secondary-dark);
 			}
 
 			.text--tertiary {
-				color: var(--site-fg-tertiary-dark);
+				color: var(--ui-site-fg-tertiary-dark);
 			}
 
 			.text--quaternary {
-				color: var(--site-fg-quaternary-dark);
+				color: var(--ui-site-fg-quaternary-dark);
 			}
 		}
 	}

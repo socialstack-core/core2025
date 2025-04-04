@@ -1,15 +1,15 @@
-@layer components.details {
+@layer components.expander {
 
 	:root {
 		// NB: additional settings can be found within GlobalStyle/laters/palette.1.scss
 		//     (not defined here so that they can react to light / dark mode overrides)
-		--details-animation-duration: .6s;
-		--details-animation-timing-function: ease;
+		--ui-expander-animation-duration: .6s;
+		--ui-expander-animation-timing-function: ease;
 	}
 
-	.details {
-		$details: &;
-		color: var(--details-fg);
+	.ui-expander {
+		$expander: &;
+		color: var(--ui-expander-fg);
 		margin-block-end: 1rem;
 
 		&:last-child {
@@ -17,7 +17,7 @@
 		}
 
 		&__content {
-			border: 2px solid var(--summary-bg);
+			border: 2px solid var(--ui-summary-bg);
 			border-block-start-width: 0;
 			margin-block-start: 0;
 			padding: 1rem;
@@ -25,7 +25,7 @@
 
 		&:not([open]) {
 
-			#{$details}__content {
+			#{$expander}__content {
 				// uncomment to prevent content from being discovered via CTRL+F
 				//visibility: hidden;
 			}
@@ -40,8 +40,8 @@
 				block-size: 0;
 				overflow: hidden;
 				transition: 
-					block-size var(--details-animation-duration) var(--details-animation-timing-function),
-					content-visibility var(--details-animation-duration) var(--details-animation-timing-function);
+					block-size var(--ui-expander-animation-duration) var(--ui-expander-animation-timing-function),
+					content-visibility var(--ui-expander-animation-duration) var(--ui-expander-animation-timing-function);
 				transition-behavior: allow-discrete;
 			}
 

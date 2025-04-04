@@ -16,7 +16,7 @@ export default function ToggleBootstrapRevert({ }: ToggleBootstrapRevertProps) {
 		}
 	}
 
-	let classNames = ['toggle-bootstrap-revert'];
+	let classNames = ['ui-toggle-bootstrap-revert'];
 
 	if (!included) {
 		classNames.push('ui-btn--danger');

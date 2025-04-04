@@ -1,6 +1,6 @@
 import { getSizeClasses } from 'UI/Functions/Components';
 
-const COMPONENT_PREFIX = 'form__fieldset';
+const COMPONENT_PREFIX = 'ui-form__fieldset';
 //const DEFAULT_VARIANT = 'primary';
 
 export default function Fieldset(props) {
@@ -10,7 +10,7 @@ export default function Fieldset(props) {
 		//outline, outlined,
 		//close,
 		//submit,
-		//disable, disabled,
+		disable, disabled,
 		//round, rounded,
 		legend,
 		children,
@@ -31,7 +31,7 @@ export default function Fieldset(props) {
 		componentClasses.push(className);
 	}
 
-	//let isDisabled = disable || disabled;
+	let isDisabled = disable || disabled;
 
 	/* runs only after component initialisation (comparable to legacy componentDidMount lifecycle method)
 	useEffect(() => {
@@ -46,7 +46,7 @@ export default function Fieldset(props) {
 	*/
 
 	return (
-		<fieldset className={componentClasses.join(' ')}>
+		<fieldset className={componentClasses.join(' ')} disabled={isDisabled ? true : undefined}>
 			{hasLegend && <>
 				<legend>
 					{legend}

@@ -1,17 +1,21 @@
 @layer forms {
 
 	:root {
-		--field-checkbox-width: #{toRem(32)};
-		--field-checkbox-height: #{toRem(32)};
-		--field-checkbox-spacing: #{toRem(10)};
-		--field-checkbox-padding: #{toRem(4)};
-		--field-checkbox-label-offset: #{toRem(3)};
+		--ui-field-checkbox-width: #{toRem(32)};
+		--ui-field-checkbox-height: #{toRem(32)};
+		--ui-field-checkbox-spacing: #{toRem(10)};
+		--ui-field-checkbox-padding: #{toRem(6)};
+		--ui-field-checkbox-label-offset: #{toRem(3)};
 	}
 
-	.form__field:has(input[type="checkbox"]) {
-		min-height: var(--field-checkbox-height);
-		--field-checkbox-offset: calc(var(--field-checkbox-width) + var(--field-checkbox-spacing));
-		padding-inline-start: var(--field-checkbox-offset);
+	.ui-form__field:has(input[type="checkbox"]) {
+		min-height: var(--ui-field-checkbox-height);
+		--ui-field-checkbox-offset: calc(var(--ui-field-checkbox-width) + var(--ui-field-checkbox-spacing));
+		padding-inline-start: var(--ui-field-checkbox-offset);
+
+		&:has(input[type="checkbox"]:disabled) {
+			@include disabledProps;
+		}
 
 		input[type="checkbox"] {
 			// NB: hidden by injection of .visually-hidden class (see Checkbox.tsx)
@@ -20,20 +24,20 @@
 
 				&::before {
 					// replacement checkbox (border, checked state)
-					background-color: var(--primary);
+					background-color: var(--ui-primary);
 				}
 
 				&::after {
 					// replacement checkbox (icon, checked state)
 					// NB: uses background-color rather than color, as the icon is formed using a mask
 					// (allows us to recolour an SVG referenced within a data URL)
-					background-color: var(--primary-fg);
+					background-color: var(--ui-primary-fg);
 				}
 
 				&:hover {
 
 					&::before {
-						background-color: var(--primary-light);
+						background-color: var(--ui-primary-light);
 					}
 
 				}
@@ -41,17 +45,18 @@
 				&:active {
 
 					&::before {
-						background-color: var(--primary-dark);
+						background-color: var(--ui-primary-dark);
 					}
 
 				}
 
 			}
+
 		}
 
 		label {
 			display: block;
-			padding-block-start: var(--field-checkbox-label-offset);
+			padding-block-start: var(--ui-field-checkbox-label-offset);
 
 			&::before, &::after {
 				content: "";
@@ -64,23 +69,23 @@
 
 			&::before {
 				// replacement checkbox (border)
-				border: var(--field-border-width) var(--field-border-style) var(--field-border-color);
-				border-radius: var(--field-border-radius);
-				background-color: var(--field-background-color);
-				width: var(--field-checkbox-width);
-				height: var(--field-checkbox-height);
-				margin-inline-start: calc(var(--field-checkbox-offset) * -1);
-				margin-block-start: calc(var(--field-checkbox-label-offset) * -1);
+				border: var(--ui-field-border-width) var(--ui-field-border-style) var(--ui-field-border-color);
+				border-radius: var(--ui-field-border-radius);
+				background-color: var(--ui-field-background-color);
+				width: var(--ui-field-checkbox-width);
+				height: var(--ui-field-checkbox-height);
+				margin-inline-start: calc(var(--ui-field-checkbox-offset) * -1);
+				margin-block-start: calc(var(--ui-field-checkbox-label-offset) * -1);
 			}
 
 			&::after {
 				// replacement checkbox (icon)
-				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 				mask-size: cover;
-				width: calc(var(--field-checkbox-width) - (2 * var(--field-checkbox-padding)));
-				height: calc(var(--field-checkbox-height) - (2 * var(--field-checkbox-padding)));
-				margin-inline-start: calc((var(--field-checkbox-offset) * -1) + var(--field-checkbox-padding));
-				margin-block-start: calc((var(--field-checkbox-label-offset) * -1) + var(--field-checkbox-padding));
+				width: calc(var(--ui-field-checkbox-width) - (2 * var(--ui-field-checkbox-padding)));
+				height: calc(var(--ui-field-checkbox-height) - (2 * var(--ui-field-checkbox-padding)));
+				margin-inline-start: calc((var(--ui-field-checkbox-offset) * -1) + var(--ui-field-checkbox-padding));
+				margin-block-start: calc((var(--ui-field-checkbox-label-offset) * -1) + var(--ui-field-checkbox-padding));
 			}
 
 		}
@@ -90,7 +95,7 @@
 			label {
 
 				&::before {
-					border-color: var(--field-color-border-color--hover);
+					border-color: var(--ui-field-color-border-color--hover);
 				}
 
 			}
@@ -102,14 +107,14 @@
 			label {
 
 				&::before {
-					border-color: var(--field-color-border-color--active);
+					border-color: var(--ui-field-color-border-color--active);
 				}
 
 			}
 
 		}
 
-		+ .form__field-help {
+		+ .ui-form__field-help {
 			//margin-block-start: 0;
 		}
 	}

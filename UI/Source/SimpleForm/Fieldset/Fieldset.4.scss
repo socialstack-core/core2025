@@ -1,16 +1,21 @@
 @layer forms {
 
-	.form__fieldset {
+	.ui-form__fieldset {
 		border: 0;
 		margin: 0;
+		margin-block-end: toRem(32);
 		padding: 0;
 		color: inherit;
 
+		&:last-child {
+			margin-block-end: 0;
+		}
+
 		legend {
-			font-family: var(--legend-font-family);
-			font-size: var(--legend-font-size);
-			font-weight: var(--legend-font-weight);
-			margin-block-end: var(--legend-spacing);
+			font-family: var(--ui-legend-font-family);
+			font-size: var(--ui-legend-font-size);
+			font-weight: var(--ui-legend-font-weight);
+			margin-block-end: var(--ui-legend-spacing);
 			color: inherit;
 		}
 

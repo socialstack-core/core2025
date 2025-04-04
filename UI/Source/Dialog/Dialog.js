@@ -1,4 +1,4 @@
-const COMPONENT_PREFIX = 'dialog';
+const COMPONENT_PREFIX = 'ui-dialog';
 //const DEFAULT_VARIANT = 'primary';
 
 import { useEffect, useRef } from 'react';

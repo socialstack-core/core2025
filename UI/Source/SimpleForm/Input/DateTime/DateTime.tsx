@@ -2,7 +2,7 @@ import { useId } from 'react';
 import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
-const COMPONENT_PREFIX = 'form__field';
+const COMPONENT_PREFIX = 'ui-form__field';
 
 /**
  * Props for the DateTime component.
@@ -82,7 +82,7 @@ const DateTime: React.FC<DateTimeProps> = ({ label, id, className, xs, sm, md, l
 					{label}
 				</label>
 			</>}
-			<input data-test="FOOOO" type="datetime-local" id={_id} className={componentClasses.join(' ')} {...dateTimeProps} />
+			<input type="datetime-local" id={_id} className={componentClasses.join(' ')} {...dateTimeProps} />
 		</>;
 	}
 

@@ -1,265 +1,166 @@
-:root {
-	--alert-border-radius: #{toRem(8)};
-}
+@use "sass:list";
 
-.ui-alert {
-	$alert: &;
-	position: relative;
-	max-width: toRem(500);
-	margin-left: toRem(30);
-	padding: toRem(24);
-	padding-inline-start: 0;
-	border-radius: 0 var(--alert-border-radius) var(--alert-border-radius) 0;
-	margin-block-end: toRem(32);
-	color: var(--panel-fg);
-	isolation: isolate;
+@layer components.alert {
+	$alert-variants: primary, secondary, success, danger, warning, info;
+	$icon-variants: success, danger, warning, info;
+	//$alert-sizes: xs, sm, md, lg, xl;
 
-	// left edge
-	&::before {
-		content: "";
-		position: absolute;
-		left: toRem(-30);
-		top: toRem(39);
-		height: calc(100% - #{toRem(39)});
-		width: toRem(30);
-		border-left: 3px solid transparent;
-		border-radius: 0 0 0 var(--alert-border-radius);
+	:root {
+		--ui-alert-border-radius: #{toRem(8)};
 	}
 
-	// icon
-	&::after {
-		content: "";
-		position: absolute;
-		width: toRem(40);
-		height: toRem(40);
-		background-size: toRem(40) toRem(40);
-		background-repeat: no-repeat;
-		left: toRem(-50);
-		top: toRem(-20);
-		mask-size: cover;
-	}
+	.ui-alert {
+		$alert: &;
+		position: relative;
+		max-width: toRem(500);
+		margin-left: toRem(30);
+		padding: toRem(24);
+		padding-inline-start: 0;
+		border-radius: 0 var(--ui-alert-border-radius) var(--ui-alert-border-radius) 0;
+		margin-block-end: toRem(32);
+		color: var(--ui-panel-fg);
+		isolation: isolate;
 
-	&__title {
-		display: block;
-		font-weight: bold;
-		font-size: 1.125em;
-		margin-block-end: .5rem;
-		text-wrap: balance;
-	}
+		// left edge
+		&::before {
+			content: "";
+			position: absolute;
+			left: toRem(-30);
+			top: toRem(39);
+			height: calc(100% - #{toRem(39)});
+			width: toRem(30);
+			border-left: 3px solid transparent;
+			border-radius: 0 0 0 var(--ui-alert-border-radius);
+		}
 
-	&__notch {
-		position: absolute;
-		width: toRem(40);
-		height: toRem(40);
-		border-left: 3px solid transparent;
-		clip-path: path("M27,0 A27,27 0 0 1 1,28 L0,40 L40,40 L40,0 Z");
-		left: toRem(-30);
-		top: 0;
-		z-index: -1;
-		// border
+		// icon
 		&::after {
 			content: "";
-			width: toRem(60);
-			height: toRem(60);
 			position: absolute;
-			border: 3px solid transparent;
-			border-radius: 50%;
-			left: toRem(-33);
-			top: toRem(-30);
-		}
-	}
-
-	&__close {
-		position: absolute;
-		top: .5rem;
-		right: .5rem;
-	}
-
-	// variants
-	&--primary {
-		border-color: var(--primary);
-		background-color: var(--primary-bg);
-		//color: var(--primary-fg);
-
-		> a {
-			color: var(--primary-text);
+			width: toRem(40);
+			height: toRem(40);
+			background-size: toRem(40) toRem(40);
+			background-repeat: no-repeat;
+			left: toRem(-50);
+			top: toRem(-20);
+			mask-size: cover;
 		}
 
-		&::before {
-			background-color: var(--primary-bg);
+		&__title {
+			display: block;
+			font-weight: bold;
+			font-size: 1.125em;
+			margin-block-end: .5rem;
+			text-wrap: balance;
+		}
 
-			// currently assumes no icon
+		&__notch {
+			position: absolute;
+			width: toRem(40);
+			height: toRem(40);
+			border-left: 3px solid transparent;
+			clip-path: path("M27,0 A27,27 0 0 1 1,28 L0,40 L40,40 L40,0 Z");
+			left: toRem(-30);
 			top: 0;
-			height: 100%;
-			border-color: var(--primary);
-			border-radius: var(--alert-border-radius) 0 0 var(--alert-border-radius);
-		}
-	}
-
-	&--secondary {
-		border-color: var(--secondary);
-		background-color: var(--secondary-bg);
-		//color: var(--secondary-fg);
-
-		> a {
-			color: var(--secondary-text);
-		}
-
-		&::before {
-			background-color: var(--secondary-bg);
-
-			// currently assumes no icon
-			top: 0;
-			height: 100%;
-			border-color: var(--secondary);
-			border-radius: var(--alert-border-radius) 0 0 var(--alert-border-radius);
-		}
-	}
-
-	&--success {
-		border-color: var(--success);
-		background-color: var(--success-bg);
-		//color: var(--success-fg);
-
-		> a {
-			color: var(--success-text);
-		}
-
-		&::before {
-			background-color: var(--success-bg);
-			border-color: var(--success);
-		}
-
-		&::after {
-			background-color: var(--success);
-			mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E");
-		}
-
-		#{$alert}__notch {
-			background-color: var(--success-bg);
-			border-color: var(--success);
-
+			z-index: -1;
+			// border
 			&::after {
-				border-color: var(--success);
+				content: "";
+				width: toRem(60);
+				height: toRem(60);
+				position: absolute;
+				border: 3px solid transparent;
+				border-radius: 50%;
+				left: toRem(-33);
+				top: toRem(-30);
 			}
 		}
-	}
 
-	&--danger {
-		border-color: var(--danger);
-		background-color: var(--danger-bg);
-		//color: var(--danger-fg);
-
-		> a {
-			color: var(--danger-text);
+		&__close {
+			position: absolute;
+			top: .5rem;
+			right: .5rem;
 		}
 
-		&::before {
-			background-color: var(--danger-bg);
-			border-color: var(--danger);
-		}
+		// variants
+		@each $variant in $alert-variants {
+			&--#{$variant} {
+				border-color: var(--ui-#{$variant});
+				background-color: var(--ui-#{$variant}-bg);
+				//color: var(--ui-#{$variant}-fg);
 
-		&::after {
-			background-color: var(--danger);
-			mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 16h.01'/%3E%3Cpath d='M12 8v4'/%3E%3Cpath d='M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z'/%3E%3C/svg%3E");
-		}
+				> a {
+					color: var(--ui-#{$variant}-text);
+				}
 
-		#{$alert}__notch {
-			background-color: var(--danger-bg);
-			border-color: var(--danger);
+				// no icon support
+				@if not list.index($icon-variants, $variant) {
 
-			&::after {
-				border-color: var(--danger);
+					&::before {
+						background-color: var(--ui-#{$variant}-bg);
+						top: 0;
+						height: 100%;
+						border-color: var(--ui-#{$variant});
+						border-radius: var(--ui-alert-border-radius) 0 0 var(--ui-alert-border-radius);
+					}
+
+				}
+
+				// icon support
+				@if list.index($icon-variants, $variant) {
+
+					&::before {
+						background-color: var(--ui-#{$variant}-bg);
+						border-color: var(--ui-#{$variant});
+					}
+
+					&::after {
+						background-color: var(--ui-#{$variant});
+						mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E");
+					}
+					
+					#{$alert}__notch {
+						background-color: var(--ui-#{$variant}-bg);
+						border-color: var(--ui-#{$variant});
+
+						&::after {
+							border-color: var(--ui-#{$variant});
+						}
+					}
+				}
 			}
 		}
-	}
 
-	&--warning {
-		border-color: var(--warning);
-		background-color: var(--warning-bg);
-		//color: var(--warning-fg);
+		// hide icon
+		&--no-icon {
 
-		> a {
-			color: var(--warning-text);
-		}
+			#{$alert}__notch {
+				display: none;
+			}
 
-		&::before {
-			background-color: var(--warning-bg);
-			border-color: var(--warning);
-		}
-
-		&::after {
-			background-color: var(--warning);
-			mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3'/%3E%3Cpath d='M12 9v4'/%3E%3Cpath d='M12 17h.01'/%3E%3C/svg%3E");
-		}
-
-		#{$alert}__notch {
-			background-color: var(--warning-bg);
-			border-color: var(--warning);
+			&::before {
+				top: 0;
+				height: 100%;
+				border-radius: var(--ui-alert-border-radius) 0 0 var(--ui-alert-border-radius);
+			}
 
 			&::after {
-				border-color: var(--warning);
+				display: none;
 			}
+
 		}
 	}
 
-	&--info {
-		border-color: var(--info);
-		background-color: var(--info-bg);
-		//color: var(--info-fg);
+	// centre alert if this is either the only element on the page, or if there's also an #admin-trigger
+	#react-root:has(> .ui-alert:only-child),
+	#react-root:has(:nth-child(1).ui-alert):has(:nth-child(2)#admin-trigger):not(:has(:nth-child(3))) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
 
-		> a {
-			color: var(--info-text);
-		}
-
-		&::before {
-			background-color: var(--info-bg);
-			border-color: var(--info);
-		}
-
-		&::after {
-			background-color: var(--info);
-			mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='red' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E");
-		}
-
-		#{$alert}__notch {
-			background-color: var(--info-bg);
-			border-color: var(--info);
-
-			&::after {
-				border-color: var(--info);
-			}
+		> .ui-alert {
+			width: 100%;
 		}
 	}
 
-	// hide icon
-	&--no-icon {
-
-		#{$alert}__notch {
-			display: none;
-		}
-
-		&::before {
-			top: 0;
-			height: 100%;
-			border-radius: var(--alert-border-radius) 0 0 var(--alert-border-radius);
-		}
-
-		&::after {
-			display: none;
-		}
-
-	}
-}
-
-// centre alert if this is either the only element on the page, or if there's also an #admin-trigger
-#react-root:has(> .ui-alert:only-child),
-#react-root:has(:nth-child(1).ui-alert):has(:nth-child(2)#admin-trigger):not(:has(:nth-child(3))) {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-
-	> .ui-alert {
-		width: 100%;
-	}
 }

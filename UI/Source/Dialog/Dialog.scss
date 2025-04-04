@@ -1,53 +1,56 @@
 @layer components.dialog {
 
 	:root {
+		--ui-dialog-open-speed: .5s;
+		--ui-dialog-close-speed: .2s;
+		--ui-dialog-transform: perspective(800px) rotateX(10deg) scale(1.05);
 		/*
 		--button-min-height--xs: #{toRem(30)};
 		--button-min-height--sm: #{toRem(40)};
 		--button-min-height--md: #{toRem(50)};
 		--button-min-height--lg: #{toRem(60)};
 		--button-min-height--xl: #{toRem(70)};
-		--button-min-height: var(--button-min-height--md);
+		--button-min-height: var(--ui-button-min-height--md);
 
 		--button-padding-y--xs: 0;
 		--button-padding-y--sm: 0;
 		--button-padding-y--md: #{toRem(8)};
 		--button-padding-y--lg: #{toRem(8)};
 		--button-padding-y--xl: #{toRem(8)};
-		--button-padding-y: var(--button-padding-y--md);
+		--button-padding-y: var(--ui-button-padding-y--md);
 
 		--button-padding-x--xs: #{toRem(8)};
 		--button-padding-x--sm: #{toRem(20)};
 		--button-padding-x--md: #{toRem(30)};
 		--button-padding-x--lg: #{toRem(40)};
 		--button-padding-x--xl: #{toRem(50)};
-		--button-padding-x: var(--button-padding-x--md);
+		--button-padding-x: var(--ui-button-padding-x--md);
 
 		--button-font-size--xs: .75em;
 		--button-font-size--sm: .85em;
 		--button-font-size--md: 1em;
 		--button-font-size--lg: 1.5em;
 		--button-font-size--xl: 1.8em;
-		--button-font-size: var(--button-font-size--md);
+		--button-font-size: var(--ui-button-font-size--md);
 			*/
 	}
 
-	.dialog {
+	.ui-dialog {
 		border: 0;
 		padding: 0;
 		opacity: 0;
 		margin: auto;
 		border-radius: toRem(4);
-		box-shadow: var(--shadow-elevation-high);
+		box-shadow: var(--ui-shadow-elevation-high);
 		min-width: toRem(400);
 		//max-width: 100%;
 		max-width: toRem(600);
 		min-height: toRem(300);
 		overflow: hidden;
 		flex-direction: column;
-		//background-color: var(--site-bg);
-		background-color: var(--site-panel);
-		color: var(--site-fg);
+		//background-color: var(--ui-site-bg);
+		background-color: var(--ui-site-panel);
+		color: var(--ui-site-fg);
 
 		&.show {
 			display: flex;
@@ -144,24 +147,24 @@
 	}
 
 	@media (prefers-reduced-motion: no-preference) {
-		.dialog {
+		.ui-dialog {
 			//will-change: transform;
-			transform: var(--dialog-transform);
+			transform: var(--ui-dialog-transform);
 			transition-property: transform, opacity;
-			transition-duration: var(--dialog-open-speed);
+			transition-duration: var(--ui-dialog-open-speed);
 			transition-timing-function: ease;
 
 			&::backdrop {
 				transition-property: background-color, opacity;
-				transition-duration: var(--dialog-open-speed);
+				transition-duration: var(--ui-dialog-open-speed);
 				transition-timing-function: ease;
 			}
 
 			&.shown {
-				transition-duration: var(--dialog-close-speed);
+				transition-duration: var(--ui-dialog-close-speed);
 
 				&::backdrop {
-					transition-duration: var(--dialog-close-speed);
+					transition-duration: var(--ui-dialog-close-speed);
 				}
 			}
 		}

@@ -1,6 +1,6 @@
 import { getSizeClasses } from 'UI/Functions/Components';
 
-const COMPONENT_PREFIX = 'embed';
+const COMPONENT_PREFIX = 'ui-embed';
 //const DEFAULT_VARIANT = 'primary';
 
 const DEFAULT_WIDTH = 560;
@@ -104,8 +104,8 @@ export default function Embed(props) {
 	*/
 
 	let wrapperStyle = {
-		maxWidth: maxWidth ? `calc((${maxWidth} / var(--font-size)) * 1rem)` : undefined,
-		maxHeight: maxHeight ? `calc((${maxHeight} / var(--font-size)) * 1rem)` : undefined,
+		maxWidth: maxWidth ? `calc((${maxWidth} / var(--ui-font-size)) * 1rem)` : undefined,
+		maxHeight: maxHeight ? `calc((${maxHeight} / var(--ui-font-size)) * 1rem)` : undefined,
 		resize: _resize
 	};
 

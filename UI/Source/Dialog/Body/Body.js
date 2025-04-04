@@ -1,4 +1,4 @@
-const COMPONENT_PREFIX = 'dialog';
+const COMPONENT_PREFIX = 'ui-dialog';
 
 export default function Body(props) {
 	const { children, className } = props;

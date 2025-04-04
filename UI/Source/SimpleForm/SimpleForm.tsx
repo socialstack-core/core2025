@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { getSizeClasses } from 'UI/Functions/Components';
 
-const COMPONENT_PREFIX = 'form';
+const COMPONENT_PREFIX = 'ui-form';
 
 /**
  * Props for the Form component.

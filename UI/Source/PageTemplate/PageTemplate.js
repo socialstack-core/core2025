@@ -1,7 +1,7 @@
 export default function PageTemplate(props) {
 	const { className, children } = props;
 
-	let componentClasses = ['page-template'];
+	let componentClasses = ['ui-page-template'];
 
 	if (className) {
 		componentClasses.push(className);

@@ -2,10 +2,10 @@ export default function PageRegion(props) {
 	const { landmark, tag, sticky, className, children } = props;
 	const Tag = tag;
 
-	let componentClasses = ['page-region'];
+	let componentClasses = ['ui-page-region'];
 
 	if (sticky) {
-		componentClasses.push('page-region--sticky');
+		componentClasses.push('ui-page-region--sticky');
 	}
 
 	if (className) {

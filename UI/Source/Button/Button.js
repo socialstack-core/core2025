@@ -12,6 +12,7 @@ export default function Button(props) {
 		submit,
 		disable, disabled,
 		round, rounded,
+		square, squared,
 		children,
 		className,
 		onClick
@@ -38,6 +39,10 @@ export default function Button(props) {
 
 	if (round || rounded) {
 		componentClasses.push(`${COMPONENT_PREFIX}--rounded`);
+	}
+
+	if (square || squared) {
+		componentClasses.push(`${COMPONENT_PREFIX}--squared`);
 	}
 
 	if (className) {

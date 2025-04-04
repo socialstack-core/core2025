@@ -1,7 +1,14 @@
 // set given CSS prop to REM equivalent of given px value
-// usage: @include propToRem("--button-border-radius", 4);
+// usage: @include propToRem("--ui-button-border-radius", 4);
 @mixin propToRem($prop, $val) {
-	$result: calc((#{$val} / var(--font-size)) * 1rem);
+	$result: calc((#{$val} / var(--ui-font-size)) * 1rem);
 	
 	#{$prop}: #{$result};
+}
+
+// use for clickable / focusable components which have been marked as :disabled
+@mixin disabledProps {
+	opacity: var(--ui-disabled-opacity);
+	cursor: not-allowed;
+	pointer-events: none;
 }

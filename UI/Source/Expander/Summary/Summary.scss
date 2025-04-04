@@ -1,20 +1,20 @@
-@layer components.details {
+@layer components.expander {
 
 	:root {
-		--summary-min-height: #{toRem(40)};
+		--ui-summary-min-height: #{toRem(40)};
 	}
 
-	.details {
-		$details: &;
+	.ui-expander {
+		$expander: &;
 
 		&__summary {
 			cursor: pointer;
 			-webkit-user-select: none;
 			user-select: none;
-			background-color: var(--summary-bg);
-			color: var(--summary-fg);
+			background-color: var(--ui-summary-bg);
+			color: var(--ui-summary-fg);
 			padding: .5rem 2rem .5rem 1rem;
-			min-height: var(--summary-min-height);
+			min-height: var(--ui-summary-min-height);
 			display: flex;
 			align-items: center;
 			list-style: none;
@@ -30,7 +30,7 @@
 				display: inline-block;
 				width: toRem(24);
 				height: toRem(24);
-				background-color: var(--summary-fg);
+				background-color: var(--ui-summary-fg);
 				mask-size: cover;
 				position: absolute;
 				right: .75em;
@@ -42,7 +42,7 @@
 
 		&[open] {
 
-			#{$details}__summary::after {
+			#{$expander}__summary::after {
 				transform: rotate(-180deg);
 			}
 

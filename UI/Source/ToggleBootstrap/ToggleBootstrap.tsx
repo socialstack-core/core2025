@@ -14,13 +14,19 @@ export default function ToggleBootstrap({ }: ToggleBootstrapProps) {
 			bootstrapCdn.remove();
 			setIncluded(false);
 		} else {
-			document.head.insertAdjacentHTML('beforeend', `<link id="bootstrap_cdn" typs="text/css" crossorigin="anonymous" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">`);
+			let origin = 'http://localhost:5050';
+			let injectBootstrapURL = `${origin}/inject-bootstrap.css`;
+
+			// any third-party styling should be referenced directly after the `<meta charset />` tag in the head
+			// this ensures our classes get a chance to override
+			//document.head.querySelector("meta[charset]").insertAdjacentHTML('afterend', `<link id="bootstrap_cdn" type="text/css" crossorigin="anonymous" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">`);
+			document.head.querySelector("meta[charset]").insertAdjacentHTML('afterend', `<link id="bootstrap_cdn" type="text/css" rel="stylesheet" href=${injectBootstrapURL}>`);
 			setIncluded(true);
 		}
 
 	}
 
-	let classNames = ['toggle-bootstrap'];
+	let classNames = ['ui-toggle-bootstrap'];
 
 	if (!included) {
 		classNames.push('ui-btn--danger');

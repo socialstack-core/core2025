@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import Field from '../Field';
 
-const COMPONENT_PREFIX = 'form__field';
+const COMPONENT_PREFIX = 'ui-form__field';
 
 /**
  * Props for the Footer component.

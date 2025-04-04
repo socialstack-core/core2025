@@ -1,7 +1,7 @@
-# UI/Details
+# UI/Expander
 
 ```tsx
-import Details from 'UI/Details';
+import Expander from 'UI/Expander';
 ```
 
 No description has been added for this component.
@@ -11,5 +11,5 @@ No description has been added for this component.
 ## Default
 
 ```tsx
-<Details />
+<Expander />
 ```

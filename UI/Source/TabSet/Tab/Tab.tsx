@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const COMPONENT_PREFIX = 'tabset';
+const COMPONENT_PREFIX = 'ui-tabset';
 
 interface TabProps {
 	/**
@@ -85,6 +85,7 @@ const Tab: React.FC<React.PropsWithChildren<TabSetProps>> = ({ label, hash, id, 
 	</> : <>
 		{/* render tab link */}
 		{/* checked / defaultChecked? */}
+		{/* TODO: use Input/Radio */}
 		<div className={tabLinkClasses.join(' ')}>
 			{tabLink ? tabLink : <>
 				<input type="radio" name={name} id={linkId} checked={index == selectedIndex ? true : undefined} aria-controls={panelId} onClick={(e) => handleClick(e, index)} />

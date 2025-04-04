@@ -1,6 +1,6 @@
 import { useEffect, useId } from 'react';
 
-const COMPONENT_PREFIX = 'tabset';
+const COMPONENT_PREFIX = 'ui-tabset';
 //const DEFAULT_VARIANT = 'info';
 
 //export type AlertType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';

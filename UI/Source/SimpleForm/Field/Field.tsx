@@ -1,6 +1,6 @@
 import { getSizeClasses } from 'UI/Functions/Components';
 
-const COMPONENT_PREFIX = 'form__field';
+const COMPONENT_PREFIX = 'ui-form__field';
 //const DEFAULT_VARIANT = 'primary';
 
 export type FieldProps = {

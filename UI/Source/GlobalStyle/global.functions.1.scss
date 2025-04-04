@@ -1,7 +1,7 @@
 // convert given value from px to rem (based on base font size)
 // usage: toRem(8)
 @function toRem($val) {
-	@return calc((#{$val} / var(--font-size)) * 1rem);
+	@return calc((#{$val} / var(--ui-font-size)) * 1rem);
 }
 
 // as above, but previous function name

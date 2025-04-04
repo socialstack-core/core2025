@@ -1,50 +1,27 @@
 :root {
-	--font-size: 16;
-	--font-family: "Nunito Sans", system-ui;
-	--line-height: 1.333;
-	--h1-size: 40;
-	--h2-size: 32;
-	--h3-size: 28;
-	--h4-size: 24;
-	--h5-size: 20;
-	--h6-size: 16;
+	--ui-body-overflow-x: hidden;
 
-	--body-overflow-x: hidden;
+	--ui-container-max: 1400;
+	--ui-container-padding: 1.5rem;
 
-	--link-text-decoration: underline;
-	--link-text-decoration--hover: underline;
-
-	--container-max: 1400;
-	--container-padding: 1.5rem;
-
-	--dialog-open-speed: .5s;
-	--dialog-close-speed: .2s;
-	--dialog-transform: perspective(800px) rotateX(10deg) scale(1.05);
-
-	//--button-padding-x: calc((16 / var(--font-size)) * 1rem);
-	//--button-padding-y: calc((8 / var(--font-size)) * 1rem);
-
-	//-----------------------------------------------------------
-	// setting a CSS var to the rem equivalent of a px value:
-
-	// option 1 - longhand
-	--button-border-radius: calc((4 / var(--font-size)) * 1rem);
-
-	// option 2 - using SASS interpolation
-	--button-border-radius: #{toRem(4)};
-
-	// option 3 - using SASS mixin
-	@include propToRem("--button-border-radius", 4);
-	//-----------------------------------------------------------
+	--ui-disabled-opacity: 0.375;
 
 	/*
-  --shadow-color: 79deg 21% 52%;
-  --shadow-elevation-high:
-    0.6px 0.7px 0.9px hsl(var(--shadow-color) / 0.81),
-    5.2px 6.5px 8.2px -1.1px hsl(var(--shadow-color) / 0.7),
-    18.6px 23.2px 29.2px -2.3px hsl(var(--shadow-color) / 0.59),
-    52.5px 65.3px 82.3px -3.4px hsl(var(--shadow-color) / 0.48);   
+  --ui-shadow-color: 79deg 21% 52%;
+  --ui-shadow-elevation-high:
+    0.6px 0.7px 0.9px hsl(var(--ui-shadow-color) / 0.81),
+    5.2px 6.5px 8.2px -1.1px hsl(var(--ui-shadow-color) / 0.7),
+    18.6px 23.2px 29.2px -2.3px hsl(var(--ui-shadow-color) / 0.59),
+    52.5px 65.3px 82.3px -3.4px hsl(var(--ui-shadow-color) / 0.48);   
   */
-	--shadow-color: 0deg 0% 0%;
-	--shadow-elevation-high: 0.3px 0.5px 0.7px hsl(var(--shadow-color) / 0.1), 1.5px 2.9px 3.7px -0.4px hsl(var(--shadow-color) / 0.1), 2.7px 5.4px 6.8px -0.7px hsl(var(--shadow-color) / 0.1), 4.5px 8.9px 11.2px -1.1px hsl(var(--shadow-color) / 0.1), 7.1px 14.3px 18px -1.4px hsl(var(--shadow-color) / 0.1), 11.2px 22.3px 28.1px -1.8px hsl(var(--shadow-color) / 0.1), 17px 33.9px 42.7px -2.1px hsl(var(--shadow-color) / 0.1), 25px 50px 62.9px -2.5px hsl(var(--shadow-color) / 0.1);
+	--ui-shadow-color: 0deg 0% 0%;
+	--ui-shadow-elevation-high: 
+		0.3px 0.5px 0.7px hsl(var(--ui-shadow-color) / 0.1), 
+		1.5px 2.9px 3.7px -0.4px hsl(var(--ui-shadow-color) / 0.1), 
+		2.7px 5.4px 6.8px -0.7px hsl(var(--ui-shadow-color) / 0.1), 
+		4.5px 8.9px 11.2px -1.1px hsl(var(--ui-shadow-color) / 0.1), 
+		7.1px 14.3px 18px -1.4px hsl(var(--ui-shadow-color) / 0.1), 
+		11.2px 22.3px 28.1px -1.8px hsl(var(--ui-shadow-color) / 0.1), 
+		17px 33.9px 42.7px -2.1px hsl(var(--ui-shadow-color) / 0.1), 
+		25px 50px 62.9px -2.5px hsl(var(--ui-shadow-color) / 0.1);
 }

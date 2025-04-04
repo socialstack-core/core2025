@@ -1,4 +1,4 @@
-const COMPONENT_PREFIX = 'dialog';
+const COMPONENT_PREFIX = 'ui-dialog';
 
 import Button from 'UI/Button';
 

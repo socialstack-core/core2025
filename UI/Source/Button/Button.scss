@@ -1,33 +1,42 @@
 @layer components.buttons {
+	$button-variants: primary, secondary, success, danger, warning, info;
+	$button-sizes: xs, sm, md, lg, xl;
 
 	:root {
-		--button-min-height--xs: #{toRem(30)};
-		--button-min-height--sm: #{toRem(40)};
-		--button-min-height--md: #{toRem(50)};
-		--button-min-height--lg: #{toRem(60)};
-		--button-min-height--xl: #{toRem(70)};
-		--button-min-height: var(--button-min-height--md);
+		--ui-button-min-height--xs: #{toRem(30)};
+		--ui-button-min-height--sm: #{toRem(40)};
+		--ui-button-min-height--md: #{toRem(50)};
+		--ui-button-min-height--lg: #{toRem(60)};
+		--ui-button-min-height--xl: #{toRem(70)};
+		--ui-button-min-height: var(--ui-button-min-height--md);
 
-		--button-padding-y--xs: 0;
-		--button-padding-y--sm: 0;
-		--button-padding-y--md: #{toRem(8)};
-		--button-padding-y--lg: #{toRem(8)};
-		--button-padding-y--xl: #{toRem(8)};
-		--button-padding-y: var(--button-padding-y--md);
+		--ui-button-padding-y--xs: 0;
+		--ui-button-padding-y--sm: 0;
+		--ui-button-padding-y--md: #{toRem(8)};
+		--ui-button-padding-y--lg: #{toRem(8)};
+		--ui-button-padding-y--xl: #{toRem(8)};
+		--ui-button-padding-y: var(--ui-button-padding-y--md);
 
-		--button-padding-x--xs: #{toRem(8)};
-		--button-padding-x--sm: #{toRem(20)};
-		--button-padding-x--md: #{toRem(30)};
-		--button-padding-x--lg: #{toRem(40)};
-		--button-padding-x--xl: #{toRem(50)};
-		--button-padding-x: var(--button-padding-x--md);
+		--ui-button-padding-x--xs: #{toRem(8)};
+		--ui-button-padding-x--sm: #{toRem(20)};
+		--ui-button-padding-x--md: #{toRem(30)};
+		--ui-button-padding-x--lg: #{toRem(40)};
+		--ui-button-padding-x--xl: #{toRem(50)};
+		--ui-button-padding-x: var(--ui-button-padding-x--md);
 
-		--button-font-size--xs: .75em;
-		--button-font-size--sm: .85em;
-		--button-font-size--md: 1em;
-		--button-font-size--lg: 1.5em;
-		--button-font-size--xl: 1.8em;
-		--button-font-size: var(--button-font-size--md);
+		--ui-button-font-size--xs: .75em;
+		--ui-button-font-size--sm: .85em;
+		--ui-button-font-size--md: 1em;
+		--ui-button-font-size--lg: 1.5em;
+		--ui-button-font-size--xl: 1.8em;
+		--ui-button-font-size: var(--ui-button-font-size--md);
+
+		--ui-button-border-radius--xs: #{toRem(2)};
+		--ui-button-border-radius--sm: #{toRem(4)};
+		--ui-button-border-radius--md: #{toRem(6)};
+		--ui-button-border-radius--lg: #{toRem(12)};
+		--ui-button-border-radius--xl: #{toRem(16)};
+		--ui-button-border-radius: var(--ui-button-border-radius--md);
 	}
 
 	.ui-btn {
@@ -38,9 +47,9 @@
 		justify-content: center;
 		background-color: transparent;
 		border: 1px solid transparent;
-		padding: var(--button-padding-y) var(--button-padding-x);
-		min-height: var(--button-min-height);
-		font-size: var(--button-font-size);
+		padding: var(--ui-button-padding-y) var(--ui-button-padding-x);
+		min-height: var(--ui-button-min-height);
+		font-size: var(--ui-button-font-size);
 		/*
     font-family: var(--bs-btn-font-family);
     font-size: var(--bs-btn-font-size);
@@ -59,291 +68,97 @@
     background-color: var(--bs-btn-bg);
     transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
     */
-		border-radius: var(--button-border-radius);
+		border-radius: var(--ui-button-border-radius);
 		transition-property: color, background-color, border-color, box-shadow, opacity;
 		transition-duration: .2s;
 		transition-timing-function: ease;
 
 		&:disabled {
-			opacity: 0.375;
-			cursor: not-allowed;
-			pointer-events: none;
+			@include disabledProps;
 		}
 
-		&--primary {
-			background-color: var(--primary);
-			color: var(--primary-fg);
+		@each $variant in $button-variants {
+			&--#{$variant} {
+				background-color: var(--ui-#{$variant});
+				color: var(--ui-#{$variant}-fg);
 
-			&:hover {
-				background-color: var(--primary-light);
-			}
+				&:hover {
+					background-color: var(--ui-#{$variant}-light);
+				}
 
-			&:active {
-				background-color: var(--primary-dark);
-			}
-		}
-
-		&--secondary {
-			background-color: var(--secondary);
-			color: var(--secondary-fg);
-
-			&:hover {
-				background-color: var(--secondary-light);
-			}
-
-			&:active {
-				background-color: var(--secondary-dark);
-			}
-		}
-
-		&--success {
-			background-color: var(--success);
-			color: var(--success-fg);
-
-			&:hover {
-				background-color: var(--success-light);
-			}
-
-			&:active {
-				background-color: var(--success-dark);
-			}
-		}
-
-		&--danger {
-			background-color: var(--danger);
-			color: var(--danger-fg);
-
-			&:hover {
-				background-color: var(--danger-light);
-			}
-
-			&:active {
-				background-color: var(--danger-dark);
-			}
-		}
-
-		&--warning {
-			background-color: var(--warning);
-			color: var(--warning-fg);
-
-			&:hover {
-				background-color: var(--warning-light);
-			}
-
-			&:active {
-				background-color: var(--warning-dark);
-			}
-		}
-
-		&--info {
-			background-color: var(--info);
-			color: var(--info-fg);
-
-			&:hover {
-				background-color: var(--info-light);
-			}
-
-			&:active {
-				background-color: var(--info-dark);
+				&:active {
+					background-color: var(--ui-#{$variant}-dark);
+				}
 			}
 		}
 
 		&--link {
 			// TODO
 		}
-
 		// ----
 
 		&--outline {
 			background-color: transparent;
 
-			&#{$btn}--primary {
-				border-color: var(--primary);
-				//color: var(--primary);
-				color: var(--site-fg);
+			@each $variant in $button-variants {
+				&#{$btn}--#{$variant} {
+					border-color: var(--ui-#{$variant});
+					//color: var(--ui-#{$variant});
+					color: var(--ui-site-fg);
 
-				&:hover {
-					border-color: var(--primary-light);
-					background-color: var(--primary-light);
-					color: var(--primary-fg);
-				}
+					&:hover {
+						border-color: var(--ui-#{$variant}-light);
+						background-color: var(--ui-#{$variant}-light);
+						color: var(--ui-#{$variant}-fg);
+					}
 
-				&:active {
-					border-color: var(--primary-dark);
-					background-color: var(--primary-dark);
-					color: var(--primary-fg);
-				}
-			}
-
-			&#{$btn}--secondary {
-				border-color: var(--secondary);
-				//color: var(--secondary);
-				color: var(--site-fg);
-
-				&:hover {
-					border-color: var(--secondary-light);
-					background-color: var(--secondary-light);
-					color: var(--secondary-fg);
-				}
-
-				&:active {
-					border-color: var(--secondary-dark);
-					background-color: var(--secondary-dark);
-					color: var(--secondary-fg);
-				}
-			}
-
-			&#{$btn}--success {
-				border-color: var(--success);
-				//color: var(--success);
-				color: var(--site-fg);
-
-				&:hover {
-					border-color: var(--success-light);
-					background-color: var(--success-light);
-					color: var(--success-fg);
-				}
-
-				&:active {
-					border-color: var(--success-dark);
-					background-color: var(--success-dark);
-					color: var(--success-fg);
-				}
-			}
-
-			&#{$btn}--danger {
-				border-color: var(--danger);
-				//color: var(--danger);
-				color: var(--site-fg);
-
-				&:hover {
-					border-color: var(--danger-light);
-					background-color: var(--danger-light);
-					color: var(--danger-fg);
-				}
-
-				&:active {
-					border-color: var(--danger-dark);
-					background-color: var(--danger-dark);
-					color: var(--danger-fg);
-				}
-			}
-
-			&#{$btn}--warning {
-				border-color: var(--warning);
-				//color: var(--warning);
-				color: var(--site-fg);
-
-				&:hover {
-					border-color: var(--warning-light);
-					background-color: var(--warning-light);
-					color: var(--warning-fg);
-				}
-
-				&:active {
-					border-color: var(--warning-dark);
-					background-color: var(--warning-dark);
-					color: var(--warning-fg);
-				}
-			}
-
-			&#{$btn}--info {
-				border-color: var(--info);
-				//color: var(--info);
-				color: var(--site-fg);
-
-				&:hover {
-					border-color: var(--info-light);
-					background-color: var(--info-light);
-					color: var(--info-fg);
-				}
-
-				&:active {
-					border-color: var(--info-dark);
-					background-color: var(--info-dark);
-					color: var(--info-fg);
+					&:active {
+						border-color: var(--ui-#{$variant}-dark);
+						background-color: var(--ui-#{$variant}-dark);
+						color: var(--ui-#{$variant}-fg);
+					}
 				}
 			}
 		}
 		// ----
 
 		&--rounded {
-			--button-border-radius: calc(var(--button-min-height) / 2);
+			// !important to override border radius set via size
+			--ui-button-border-radius: calc(var(--ui-button-min-height) / 2) !important;
 
 			&#{$btn}--close {
-				--button-border-radius: 50%;
+				--ui-button-border-radius: 50%;
 				//inset: 25%;
 			}
 		}
-
 		// ----
 
-		&--xs {
-			--button-min-height: var(--button-min-height--xs);
-			--button-padding-y: var(--button-padding-y--xs);
-			--button-padding-x: var(--button-padding-x--xs);
-			--button-font-size: var(--button-font-size--xs);
+		&--squared {
+			// !important to override border radius set via size
+			--ui-button-border-radius: 0 !important;
 
 			&#{$btn}--close {
-				width: var(--button-min-height--xs);
-				height: var(--button-min-height--xs);
+				--ui-button-border-radius: 0;
+				//inset: 25%;
 			}
-
 		}
+		// ----
 
-		&--sm {
-			--button-min-height: var(--button-min-height--sm);
-			--button-padding-y: var(--button-padding-y--sm);
-			--button-padding-x: var(--button-padding-x--sm);
-			--button-font-size: var(--button-font-size--sm);
+		@each $size in $button-sizes {
+			&--#{$size} {
+				--ui-button-min-height: var(--ui-button-min-height--#{$size});
+				--ui-button-padding-y: var(--ui-button-padding-y--#{$size});
+				--ui-button-padding-x: var(--ui-button-padding-x--#{$size});
+				--ui-button-font-size: var(--ui-button-font-size--#{$size});
+				--ui-button-border-radius: var(--ui-button-border-radius--#{$size});
 
-			&#{$btn}--close {
-				width: var(--button-min-height--sm);
-				height: var(--button-min-height--sm);
+				&#{$btn}--close {
+					width: var(--ui-button-min-height--#{$size});
+					height: var(--ui-button-min-height--#{$size});
+				}
+
 			}
-
 		}
-
-		&--md {
-			--button-min-height: var(--button-min-height--md);
-			--button-padding-y: var(--button-padding-y--md);
-			--button-padding-x: var(--button-padding-x--md);
-			--button-font-size: var(--button-font-size--md);
-
-			&#{$btn}--close {
-				width: var(--button-min-height--md);
-				height: var(--button-min-height--md);
-			}
-
-		}
-
-		&--lg {
-			--button-min-height: var(--button-min-height--lg);
-			--button-padding-y: var(--button-padding-y--lg);
-			--button-padding-x: var(--button-padding-x--lg);
-			--button-font-size: var(--button-font-size--lg);
-
-			&#{$btn}--close {
-				width: var(--button-min-height--lg);
-				height: var(--button-min-height--lg);
-			}
-
-		}
-
-		&--xl {
-			--button-min-height: var(--button-min-height--xl);
-			--button-padding-y: var(--button-padding-y--xl);
-			--button-padding-x: var(--button-padding-x--xl);
-			--button-font-size: var(--button-font-size--xl);
-
-			&#{$btn}--close {
-				width: var(--button-min-height--xl);
-				height: var(--button-min-height--xl);
-			}
-
-		}
-
-
 		// ----
 
 		&--close {
@@ -351,8 +166,8 @@
 			//height: 2rem;
 			position: relative;
 			padding: 0;
-			width: var(--button-min-height--md);
-			height: var(--button-min-height--md);
+			width: var(--ui-button-min-height--md);
+			height: var(--ui-button-min-height--md);
 
 			&:not(:focus) {
 				//border-color: transparent;
@@ -363,7 +178,7 @@
 				position: absolute;
 				//inset: toRem(6);
 				inset: 20%;
-				background-color: var(--site-fg-secondary);
+				background-color: var(--ui-site-fg-secondary);
 				transition: background-color .3s ease;
 				mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 474.133 474.133' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M55.132 29.633L29.633 55.184c61.043 58.222 126.374 129.47 181.504 182.305L29.633 419.147l25.499 25.335c58.557-60.323 128.077-126.248 181.934-181.007a51861.68 51861.68 0 01181.94 181.007l25.494-25.335L262.996 237.49c61.08-61.02 118.9-119.722 181.504-182.305l-25.495-25.55c-62.712 63.043-122.833 122.929-181.934 182.093-62.4-63.89-128.662-128.828-181.94-182.094z' /%3E%3C/svg%3E");
 				mask-size: cover;
@@ -371,130 +186,44 @@
 
 			&:hover {
 				&::before {
-					background-color: var(--site-fg);
+					background-color: var(--ui-site-fg);
 				}
 			}
 
 			&#{$btn}--outline {
-				border-color: var(--site-fg-secondary);
+				border-color: var(--ui-site-fg-secondary);
 
 				&:hover {
-					border-color: var(--site-fg);
+					border-color: var(--ui-site-fg);
 				}
 
 				&:active {
 				}
 
-				&#{$btn}--primary {
-					border-color: var(--primary);
+				@each $variant in $button-variants {
+					&#{$btn}--#{$variant} {
+						border-color: var(--ui-#{$variant});
 
-					&::before {
-						//background-color: var(--primary);
-						background-color: var(--site-fg);
-					}
+						&::before {
+							//background-color: var(--ui-#{$variant});
+							background-color: var(--ui-site-fg);
+						}
 
-					&:hover::before {
-						background-color: var(--primary-fg);
-					}
-				}
-
-				&#{$btn}--secondary {
-					border-color: var(--secondary);
-
-					&::before {
-						//background-color: var(--secondary);
-						background-color: var(--site-fg);
-					}
-
-					&:hover::before {
-						background-color: var(--secondary-fg);
+						&:hover::before {
+							background-color: var(--ui-#{$variant}-fg);
+						}
 					}
 				}
-
-				&#{$btn}--success {
-					border-color: var(--success);
-
-					&::before {
-						//background-color: var(--success);
-						background-color: var(--site-fg);
-					}
-
-					&:hover::before {
-						background-color: var(--success-fg);
-					}
-				}
-
-				&#{$btn}--danger {
-					border-color: var(--danger);
-
-					&::before {
-						//background-color: var(--danger);
-						background-color: var(--site-fg);
-					}
-
-					&:hover::before {
-						background-color: var(--danger-fg);
-					}
-				}
-
-				&#{$btn}--warning {
-					border-color: var(--warning);
-
-					&::before {
-						//background-color: var(--warning);
-						background-color: var(--site-fg);
-					}
-
-					&:hover::before {
-						background-color: var(--warning-fg);
-					}
-				}
-
-				&#{$btn}--info {
-					border-color: var(--info);
-
-					&::before {
-						//background-color: var(--info);
-						background-color: var(--site-fg);
-					}
-
-					&:hover::before {
-						background-color: var(--info-fg);
-					}
-				}
-
 			}
 
 			&:not(#{$btn}--outline) {
 
-				&#{$btn}--primary::before {
-					background-color: var(--primary-fg);
+				@each $variant in $button-variants {
+					&#{$btn}--#{$variant}::before {
+						background-color: var(--ui-#{$variant}-fg);
+					}
 				}
-
-				&#{$btn}--secondary::before {
-					background-color: var(--secondary-fg);
-				}
-
-				&#{$btn}--success::before {
-					background-color: var(--success-fg);
-				}
-
-				&#{$btn}--danger::before {
-					background-color: var(--danger-fg);
-				}
-
-				&#{$btn}--warning::before {
-					background-color: var(--warning-fg);
-				}
-
-				&#{$btn}--info::before {
-					background-color: var(--info-fg);
-				}
-
-
 			}
-
-
 		}
 	}
 }

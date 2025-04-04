@@ -2,11 +2,11 @@ import Summary from './Summary';
 import Content from './Content';
 import { useEffect, useRef } from 'react';
 
-const COMPONENT_PREFIX = 'details';
+const COMPONENT_PREFIX = 'ui-expander';
 
-export default function Details(props) {
+export default function Expander(props) {
 	const { id, name, label, summaryChildren, open, className, children } = props;
-	const detailsRef = useRef();
+	const expanderRef = useRef();
 	const CSS_ANIM_SUPPORTED = CSS.supports("interpolate-size", "allow-keywords");
 	let animation = null;
 	let isClosing = false;
@@ -20,16 +20,16 @@ export default function Details(props) {
 
 	useEffect(() => {
 
-		if (detailsRef.current) {
-			detailsRef.current.addEventListener("click", clickHandler);
-			detailsRef.current.addEventListener("toggle", toggleHandler);
+		if (expanderRef.current) {
+			expanderRef.current.addEventListener("click", clickHandler);
+			expanderRef.current.addEventListener("toggle", toggleHandler);
 		}
 
 		return () => {
 
-			if (detailsRef.current) {
-				detailsRef.current.removeEventListener("click", clickHandler);
-				detailsRef.current.removeEventListener("toggle", toggleHandler);
+			if (expanderRef.current) {
+				expanderRef.current.removeEventListener("click", clickHandler);
+				expanderRef.current.removeEventListener("toggle", toggleHandler);
 			}
 
 		};
@@ -43,11 +43,11 @@ export default function Details(props) {
 		if (!CSS_ANIM_SUPPORTED) {
 			e.preventDefault();
 
-			detailsRef.current.style.overflow = 'hidden';
+			expanderRef.current.style.overflow = 'hidden';
 
-			if (isClosing || !detailsRef.current.open) {
+			if (isClosing || !expanderRef.current.open) {
 				expand();
-			} else if (isExpanding || detailsRef.current.open) {
+			} else if (isExpanding || expanderRef.current.open) {
 				contract();
 			}
 
@@ -56,8 +56,8 @@ export default function Details(props) {
 	}
 
 	function expand() {
-		detailsRef.current.style.height = `${detailsRef.current.offsetHeight}px`;
-		detailsRef.current.open = true;
+		expanderRef.current.style.height = `${expanderRef.current.offsetHeight}px`;
+		expanderRef.current.open = true;
 
 		// wait for the next frame to trigger the expansion
 		window.requestAnimationFrame(() => expand2());
@@ -65,15 +65,15 @@ export default function Details(props) {
 
 	function expand2() {
 		isExpanding = true;
-		let summary = detailsRef.current.querySelector("summary");
-		let content = detailsRef.current.querySelector(".details__content");
+		let summary = expanderRef.current.querySelector("summary");
+		let content = expanderRef.current.querySelector(`.${COMPONENT_PREFIX}__content`);
 
 		if (!summary || !content) {
 			return;
 		}
 
 		// Get the current fixed height of the element
-		const startHeight = `${detailsRef.current.offsetHeight}px`;
+		const startHeight = `${expanderRef.current.offsetHeight}px`;
 
 		// Calculate the open height of the element (summary height + content height)
 		const endHeight = `${summary.offsetHeight + content.offsetHeight}px`;
@@ -84,7 +84,7 @@ export default function Details(props) {
 		}
 
 		// Start a WAAPI animation
-		animation = detailsRef.current.animate({
+		animation = expanderRef.current.animate({
 			// Set the keyframes from the startHeight to endHeight
 			height: [startHeight, endHeight]
 		}, {
@@ -98,14 +98,14 @@ export default function Details(props) {
 
 	function contract() {
 		isClosing = true;
-		let summary = detailsRef.current.querySelector("summary");
+		let summary = expanderRef.current.querySelector("summary");
 
 		if (!summary) {
 			return;
 		}
 
 		// Store the current height of the element
-		const startHeight = `${detailsRef.current.offsetHeight}px`;
+		const startHeight = `${expanderRef.current.offsetHeight}px`;
 
 		// Calculate the height of the summary
 		const endHeight = `${summary.offsetHeight}px`;
@@ -116,7 +116,7 @@ export default function Details(props) {
 		}
 
 		// Start a WAAPI animation
-		animation = detailsRef.current.animate({
+		animation = expanderRef.current.animate({
 			// Set the keyframes from the startHeight to endHeight
 			height: [startHeight, endHeight]
 		}, {
@@ -129,14 +129,14 @@ export default function Details(props) {
 	}
 	
 	function onAnimationFinish(open) {
-		detailsRef.current.open = open;
+		expanderRef.current.open = open;
 
 		animation = null;
 		isClosing = false;
 		isExpanding = false;
 
-		detailsRef.current.style.height = '';
-		detailsRef.current.style.overflow = '';
+		expanderRef.current.style.height = '';
+		expanderRef.current.style.overflow = '';
 	}
 
 	function toggleHandler(e) {
@@ -166,7 +166,7 @@ export default function Details(props) {
 	}
 
 	return (
-		<details className={componentClasses.join(' ')} id={id} name={name} open={open === true ? true : undefined} ref={detailsRef}>
+		<details className={componentClasses.join(' ')} id={id} name={name} open={open === true ? true : undefined} ref={expanderRef}>
 			{/* assume <Summary> and <Content> are already supplied */}
 			{!label && !summaryChildren && <>
 				{children}
@@ -184,7 +184,7 @@ export default function Details(props) {
 	);
 }
 
-Details.propTypes = {
+Expander.propTypes = {
 	name: 'string',
 	label: 'string',
 	open: 'boolean',
@@ -192,5 +192,5 @@ Details.propTypes = {
 	summaryChildren: 'jsx'
 };
 
-Details.defaultProps = {
+Expander.defaultProps = {
 }

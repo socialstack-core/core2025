@@ -1,29 +1,29 @@
 @layer forms {
 
-	.form__field-select {
+	.ui-form__field-select {
 		appearance: none;
-		border: var(--field-border-width) var(--field-border-style) var(--field-border-color);
-		border-radius: var(--field-border-radius);
-		background-color: var(--field-background-color);
-		color: var(--field-color);
-		font-family: var(--field-font-family);
-		font-size: var(--field-font-size);
-		font-weight: var(--field-font-weight);
+		border: var(--ui-field-border-width) var(--ui-field-border-style) var(--ui-field-border-color);
+		border-radius: var(--ui-field-border-radius);
+		background-color: var(--ui-field-background-color);
+		color: var(--ui-field-color);
+		font-family: var(--ui-field-font-family);
+		font-size: var(--ui-field-font-size);
+		font-weight: var(--ui-field-font-weight);
 		width: 100%;
-		min-height: var(--field-min-height);
-		padding: var(--field-paddingY) calc(var(--field-paddingX) + 2rem) var(--field-paddingY) var(--field-paddingX);
+		min-height: var(--ui-field-min-height);
+		padding: var(--ui-field-paddingY) calc(var(--ui-field-paddingX) + 2rem) var(--ui-field-paddingY) var(--ui-field-paddingX);
 		margin: 0;
-		background-image: var(--chevronSVG);
+		background-image: var(--ui-chevronSVG);
 		background-repeat: no-repeat;
 		background-size: toRem(24);
 		background-position: right toRem(10) center;
 
 		&:hover {
-			border-color: var(--field-border-color--hover);
+			border-color: var(--ui-field-border-color--hover);
 		}
 
 		&:focus {
-			border-color: var(--field-border-color--active);
+			border-color: var(--ui-field-border-color--active);
 			//outline-color: transparent;
 		}
 
@@ -33,8 +33,8 @@
 		optgroup,
 		option {
 			appearance: none;
-			font-family: var(--field-font-family);
-			color: var(--field-color);
+			font-family: var(--ui-field-font-family);
+			color: var(--ui-field-color);
 		}
 
 	}

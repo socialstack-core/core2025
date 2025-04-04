@@ -17,8 +17,10 @@
 	}
 
 	&:fullscreen {
-		background-color: var(--site-bg);
-		padding: 2rem;
+		background-color: var(--ui-site-bg);
+		padding-left: 2rem;
+		padding-top: 2rem;
+		padding-bottom: 2rem;
 
 		.request-fullscreen {
 			position: fixed;
@@ -65,6 +67,6 @@
 .themed-panel {
 	border-radius: 2rem;
 	padding: 3rem;
-	background-color: var(--site-panel);
-	box-shadow: var(--site-panel-shadow);
+	background-color: var(--ui-site-panel);
+	box-shadow: var(--ui-site-panel-shadow);
 }

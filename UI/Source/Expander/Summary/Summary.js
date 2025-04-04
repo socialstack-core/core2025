@@ -1,4 +1,4 @@
-const COMPONENT_PREFIX = 'details__summary';
+const COMPONENT_PREFIX = 'ui-expander__summary';
 
 export default function Summary(props) {
 	const { label, children, className } = props;

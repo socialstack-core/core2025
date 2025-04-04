@@ -1,40 +1,41 @@
 @layer forms {
 
 	:root {
-		--form-width: #{toRem(500)};
-		--form-font-family: inherit;
+		--ui-form-width: #{toRem(500)};
+		--ui-form-font-family: inherit;
 
-		--legend-font-family: var(--font-family);
-		--legend-font-size: #{toRem(18)};
-		--legend-font-weight: bold;
-		--legend-spacing: #{toRem(16)};
+		//--ui-legend-font-family: var(--ui-font-family);
+		--ui-legend-font-family: var(--ui-heading-font-family);
+		--ui-legend-font-size: #{toRem(18)};
+		--ui-legend-font-weight: bold;
+		--ui-legend-spacing: #{toRem(16)};
 
-		--label-font-family: var(--font-family);
-		--label-font-size: #{toRem(18)};
-		--label-font-weight: bold;
-		--label-spacing: #{toRem(10)};
+		--ui-label-font-family: var(--ui-font-family);
+		--ui-label-font-size: #{toRem(18)};
+		--ui-label-font-weight: bold;
+		--ui-label-spacing: #{toRem(10)};
 
-		--help-spacing: #{toRem(8)};
+		--ui-help-spacing: #{toRem(8)};
 
-		--field-border-width: 1px;
-		--field-border-style: solid;
-		--field-border-color: var(--site-border-inactive);
-		--field-border-color--hover: var(--site-border-hover);
-		--field-border-color--active: var(--site-border-active);
-		--field-border-radius: .25rem;
-		--field-background-color: var(--site-bg);
-		--field-color: inherit;
-		--field-paddingX: .75rem;
-		--field-paddingY: .375rem;
-		--field-spacing: 1rem;
-		--field-font-family: var(--font-family);
-		--field-font-size: #{toRem(18)};
-		--field-font-weight: normal;
-		--field-min-height: #{toRem(50)};
+		--ui-field-border-width: 1px;
+		--ui-field-border-style: solid;
+		--ui-field-border-color: var(--ui-site-border-inactive);
+		--ui-field-border-color--hover: var(--ui-site-border-hover);
+		--ui-field-border-color--active: var(--ui-site-border-active);
+		--ui-field-border-radius: .25rem;
+		--ui-field-background-color: var(--ui-site-bg);
+		--ui-field-color: inherit;
+		--ui-field-paddingX: .75rem;
+		--ui-field-paddingY: .375rem;
+		--ui-field-spacing: 1rem;
+		--ui-field-font-family: var(--ui-font-family);
+		--ui-field-font-size: #{toRem(18)};
+		--ui-field-font-weight: normal;
+		--ui-field-min-height: #{toRem(50)};
 	}
 
-	.form {
-		width: var(--form-width);
+	.ui-form {
+		width: var(--ui-form-width);
 		max-width: 100%;
 
 		&--sm {

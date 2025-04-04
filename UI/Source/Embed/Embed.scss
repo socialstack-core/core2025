@@ -1,13 +1,13 @@
 @use "sass:math";
 
-@layer components.embeds {
+@layer components.embed {
 	$ratio16-9: math.div(100%, 1.7778);
 	$ratio4-3: math.div(100%, 1.3333);
 
 	:root {
 	}
 
-	.embed {
+	.ui-embed {
 		$embed: &;
 
 		&__wrapper {

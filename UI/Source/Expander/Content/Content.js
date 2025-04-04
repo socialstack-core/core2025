@@ -1,4 +1,4 @@
-const COMPONENT_PREFIX = 'details__content';
+const COMPONENT_PREFIX = 'ui-expander__content';
 
 export default function Content(props) {
 	const { children, className } = props;

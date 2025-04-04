@@ -1270,6 +1270,23 @@ svg {
 			// Charset must be within first 1kb of the header:
 			head.AppendChild(new DocumentNode("meta", true).With("charset", "utf-8"));
 
+			// check for overriding user theme preference - do it early as possible here to prevent a potential flash of the inverse colour
+			head.AppendChild(new DocumentNode("script").AppendChild(new TextNode(
+				@"
+  (function() {
+    try {
+      const theme = JSON.parse(window.localStorage.getItem('core-test-theme'));
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-mode');
+      }
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark-mode');
+      }
+    } catch (e) {}
+  })();
+			"
+			)));
+
 			// Handle all Start Head Tags in the config.
 			HandleCustomHeadList(_config.StartHeadTags, head);
 

@@ -1,16 +1,20 @@
 @layer forms {
 
 	:root {
-		--field-radio-size: #{toRem(32)};
-		--field-radio-spacing: #{toRem(10)};
-		--field-radio-padding: #{toRem(6)};
-		--field-radio-label-offset: #{toRem(3)};
+		--ui-field-radio-size: #{toRem(32)};
+		--ui-field-radio-spacing: #{toRem(10)};
+		--ui-field-radio-padding: #{toRem(6)};
+		--ui-field-radio-label-offset: #{toRem(3)};
 	}
 
-	.form__field:has(input[type="radio"]) {
-		min-height: var(--field-radio-size);
-		--field-radio-offset: calc(var(--field-radio-size) + var(--field-radio-spacing));
-		padding-inline-start: var(--field-radio-offset);
+	.ui-form__field:has(input[type="radio"]) {
+		min-height: var(--ui-field-radio-size);
+		--ui-field-radio-offset: calc(var(--ui-field-radio-size) + var(--ui-field-radio-spacing));
+		padding-inline-start: var(--ui-field-radio-offset);
+
+		&:has(input[type="radio"]:disabled) {
+			@include disabledProps;
+		}
 
 		input[type="radio"] {
 			// NB: hidden by injection of .visually-hidden class (see Radio.tsx)
@@ -19,21 +23,21 @@
 
 				&::before {
 					// replacement radio (border, checked state)
-					//background-color: var(--primary);
+					//background-color: var(--ui-primary);
 				}
 
 				&::after {
 					// replacement radio (icon, checked state)
 					// NB: uses background-color rather than color, as the icon is formed using a mask
 					// (allows us to recolour an SVG referenced within a data URL)
-					//background-color: var(--primary-fg);
-					background-color: var(--primary);
+					//background-color: var(--ui-primary-fg);
+					background-color: var(--ui-primary);
 				}
 
 				&:hover {
 
 					&::after {
-						background-color: var(--primary-light);
+						background-color: var(--ui-primary-light);
 					}
 
 				}
@@ -41,7 +45,7 @@
 				&:active {
 
 					&::after {
-						background-color: var(--primary-dark);
+						background-color: var(--ui-primary-dark);
 					}
 
 				}
@@ -51,7 +55,7 @@
 
 		label {
 			display: block;
-			padding-block-start: var(--field-radio-label-offset);
+			padding-block-start: var(--ui-field-radio-label-offset);
 
 			&::before, &::after {
 				content: "";
@@ -65,12 +69,12 @@
 
 			&::before {
 				// replacement radio (border)
-				border: var(--field-border-width) var(--field-border-style) var(--field-border-color);
-				background-color: var(--field-background-color);
-				width: var(--field-radio-size);
-				height: var(--field-radio-size);
-				margin-inline-start: calc(var(--field-radio-offset) * -1);
-				margin-block-start: calc(var(--field-radio-label-offset) * -1);
+				border: var(--ui-field-border-width) var(--ui-field-border-style) var(--ui-field-border-color);
+				background-color: var(--ui-field-background-color);
+				width: var(--ui-field-radio-size);
+				height: var(--ui-field-radio-size);
+				margin-inline-start: calc(var(--ui-field-radio-offset) * -1);
+				margin-block-start: calc(var(--ui-field-radio-label-offset) * -1);
 				float: left;
 			}
 
@@ -78,10 +82,10 @@
 				// replacement radio (icon)
 				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E");
 				mask-size: cover;
-				width: calc(var(--field-radio-size) - (2 * var(--field-radio-padding)));
-				height: calc(var(--field-radio-size) - (2 * var(--field-radio-padding)));
-				margin-inline-start: calc((var(--field-radio-offset) * -1) + var(--field-radio-padding));
-				margin-block-start: calc((var(--field-radio-label-offset) * -1) + var(--field-radio-padding));
+				width: calc(var(--ui-field-radio-size) - (2 * var(--ui-field-radio-padding)));
+				height: calc(var(--ui-field-radio-size) - (2 * var(--ui-field-radio-padding)));
+				margin-inline-start: calc((var(--ui-field-radio-offset) * -1) + var(--ui-field-radio-padding));
+				margin-block-start: calc((var(--ui-field-radio-label-offset) * -1) + var(--ui-field-radio-padding));
 			}
 
 		}
@@ -91,7 +95,7 @@
 			label {
 
 				&::before {
-					border-color: var(--field-color-border-color--hover);
+					border-color: var(--ui-field-color-border-color--hover);
 				}
 
 			}
@@ -103,14 +107,14 @@
 			label {
 
 				&::before {
-					border-color: var(--field-color-border-color--active);
+					border-color: var(--ui-field-color-border-color--active);
 				}
 
 			}
 
 		}
 
-		+ .form__field-help {
+		+ .ui-form__field-help {
 			//margin-block-start: 0;
 		}
 	}

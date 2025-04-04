@@ -13,6 +13,7 @@ export default function ButtonTest(props) {
 	const [size, setSize] = useState('md');
 	const [outlined, setOutlined] = useState(false);
 	const [rounded, setRounded] = useState(false);
+	const [squared, setSquared] = useState(false);
 	const [disabled, setDisabled] = useState(false);
 	const [buttonProps, setButtonProps] = useState({});
 
@@ -22,6 +23,7 @@ export default function ButtonTest(props) {
 			//size: size,
 			outline: outlined || undefined,
 			rounded: rounded || undefined,
+			squared: squared || undefined,
 			disabled: disabled || undefined,
 		};
 
@@ -30,7 +32,7 @@ export default function ButtonTest(props) {
 		}
 
 		setButtonProps(_props);
-	}, [/*variant,*/ size, outlined, rounded, disabled]);
+	}, [/*variant,*/ size, outlined, rounded, squared, disabled]);
 
 	return <div className="button-test" ref={parentRef}>
 		<RequestFullscreen elementRef={parentRef} />
@@ -56,6 +58,7 @@ export default function ButtonTest(props) {
 				</Select>
 				<Input type="checkbox" label={`Outlined`} checked={outlined} onChange={() => setOutlined(!outlined)} />
 				<Input type="checkbox" label={`Rounded`} checked={rounded} onChange={() => setRounded(!rounded)} />
+				<Input type="checkbox" label={`Squared`} checked={squared} onChange={() => setSquared(!squared)} disabled={rounded ? true : undefined} />
 				<Input type="checkbox" label={`Disabled`} checked={disabled} onChange={() => setDisabled(!disabled)} />
 			</Fieldset>
 		</Form>

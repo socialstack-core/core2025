@@ -16,7 +16,7 @@ export default function FormTest(props) {
 	const [size, setSize] = useState('md');
 	//const [outlined, setOutlined] = useState(false);
 	//const [rounded, setRounded] = useState(false);
-	//const [disabled, setDisabled] = useState(false);
+	const [disabled, setDisabled] = useState(false);
 	const [formProps, setFormProps] = useState({});
 	const [fieldProps, setFieldProps] = useState({});
 
@@ -56,7 +56,7 @@ export default function FormTest(props) {
 			//size: size,
 			//outline: outlined || undefined,
 			//rounded: rounded || undefined,
-			//disabled: disabled || undefined,
+			disabled: disabled || undefined,
 		};
 
 		if (size) {
@@ -64,7 +64,7 @@ export default function FormTest(props) {
 		}
 
 		setFormProps(_props);
-	}, [/*variant,*/ size /*, outlined, rounded, disabled*/]);
+	}, [/*variant,*/ size, /*outlined, rounded,*/ disabled ]);
 
 	useEffect(() => {
 		let _props = {
@@ -118,42 +118,39 @@ export default function FormTest(props) {
 					Rounded
 				</label>
 			</div>
-			<div className="form__field">
-				<input type="checkbox" id="btnDisabled" checked={disabled} onChange={() => setDisabled(!disabled)} />
-				<label htmlFor="btnDisabled">
-					Disabled
-				</label>
-			</div>
 				*/}
+			<Input type="checkbox" label={`Disabled`} checked={disabled} onChange={() => setDisabled(!disabled)} />
 		</Fieldset>
 
 		<h2 className="component-test-category">Form fields</h2>
 		<section className="component-test">
 			<Form>
-				<Select id={'title'} label={`Title`} value={title} onChange={(e) => {
-					setTitle(e.target.value)
-				}} help={`Selected: ${title}`} {...fieldProps}>
-					<option value="mr">Mr</option>
-					<option value="mrs">Mrs</option>
-					<option value="ms">Ms</option>
-					<option value="dr">Dr</option>
-					<option value="rev">Rev</option>
-					<option value="other">Other</option>
-					<optgroup label={`Another group`}>
-						<option value="lorem">Lorem</option>
-						<option value="ipsum">Ipsum</option>
-						<option value="dolor">Dolor</option>
-						<option value="sit">Sit</option>
-						<option value="amet" disabled>Amet (disabled)</option>
-					</optgroup>
-					<optgroup label={`Disabled`} disabled>
-						<option value="foo">Foo</option>
-						<option value="bar">Bar</option>
-						<option value="etc">Etc.</option>
-					</optgroup>
-				</Select>
+				<Fieldset legend={`Dropdowns`} disabled={disabled ? true : undefined}>
+					<Select id={'title'} label={`Title`} value={title} onChange={(e) => {
+						setTitle(e.target.value)
+					}} help={`Selected: ${title}`} {...fieldProps}>
+						<option value="mr">Mr</option>
+						<option value="mrs">Mrs</option>
+						<option value="ms">Ms</option>
+						<option value="dr">Dr</option>
+						<option value="rev">Rev</option>
+						<option value="other">Other</option>
+						<optgroup label={`Another group`}>
+							<option value="lorem">Lorem</option>
+							<option value="ipsum">Ipsum</option>
+							<option value="dolor">Dolor</option>
+							<option value="sit">Sit</option>
+							<option value="amet" disabled>Amet (disabled)</option>
+						</optgroup>
+						<optgroup label={`Disabled`} disabled>
+							<option value="foo">Foo</option>
+							<option value="bar">Bar</option>
+							<option value="etc">Etc.</option>
+						</optgroup>
+					</Select>
+				</Fieldset>
 
-				<Fieldset legend={`Date and Time`}>
+				<Fieldset legend={`Date and Time`} disabled={disabled ? true : undefined}>
 					<Input type="date" label={`Select a date`} value={date} />
 					<Input type="datetime" label={`Select a date and time`} value={dateTime} />
 					<Input type="month" label={`Select a month`} value={month} />
@@ -161,27 +158,27 @@ export default function FormTest(props) {
 					<Input type="week" label={`Select a week`} value={number} />
 				</Fieldset>
 
-				<Fieldset legend={`Numbers`}>
+				<Fieldset legend={`Numbers`} disabled={disabled ? true : undefined}>
 					<Input type="number" label={`Enter a number`} value={number} />
 				</Fieldset>
 
-				<Fieldset legend={`Passwords`}>
+				<Fieldset legend={`Passwords`} disabled={disabled ? true : undefined}>
 					<Input type="password" label={`Password`} value={password} />
 				</Fieldset>
 
-				<Fieldset legend={`Search`}>
+				<Fieldset legend={`Search`} disabled={disabled ? true : undefined}>
 					<Input type="search" label={`Enter a search query`} value={search} />
 				</Fieldset>
 
-				<Fieldset legend={`Range`}>
+				<Fieldset legend={`Range`} disabled={disabled ? true : undefined}>
 					<Input type="range" label={`Select a range`} value={range} />
 				</Fieldset>
 
-				<Fieldset legend={`File uploads`}>
+				<Fieldset legend={`File uploads`} disabled={disabled ? true : undefined}>
 					<Input type="file" label={`Select a file`} value={file} />
 				</Fieldset>
 
-				<Fieldset legend={`Other input types`}>
+				<Fieldset legend={`Other input types`} disabled={disabled ? true : undefined}>
 					<Input type="color" label={`Select a colour`} help={`Click to select`} value={color} />
 					<Input type="email" label={`E-mail address`} value={email} />
 					<Input type="tel" label={`Telephone number`} value={tel} />
@@ -189,12 +186,12 @@ export default function FormTest(props) {
 					<Input type="url" label={`Web address`} value={url} />
 				</Fieldset>
 
-				<Fieldset legend={`Checkboxes`}>
+				<Fieldset legend={`Checkboxes`} disabled={disabled ? true : undefined}>
 					<Input type="check" label={`Referenced with <input>`} value={check1} />
 					<Checkbox label={`Referenced with <Checkbox>`} value={check2} />
 				</Fieldset>
 
-				<Fieldset legend={`Radio buttons`}>
+				<Fieldset legend={`Radio buttons`} disabled={disabled ? true : undefined}>
 					<Input type="radio" label={`Referenced with <input>`} name="radioGroup" value="option1" currentValue={radio} />
 					<Radio label={`Referenced with <Radio>`} name="radioGroup" value="option2" currentValue={radio} />
 					<Radio label={`Additional option`} name="radioGroup" value="option3" currentValue={radio} />

@@ -2,7 +2,7 @@ import { useId } from 'react';
 import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses } from 'UI/Functions/Components';
 
-const COMPONENT_PREFIX = 'form__field';
+const COMPONENT_PREFIX = 'ui-form__field';
 
 /**
  * Props for the Checkbox component.
@@ -62,6 +62,11 @@ const Checkbox: React.FC<CheckboxProps> = ({ label, id, className, xs, sm, md, l
 					key in document.createElement("input")
 				)
 			) as React.InputHTMLAttributes<HTMLInputElement>;
+
+		// NB: ensure we've not been sent the outdated "datetime" type
+		if (checkboxProps.type == "check") {
+			checkboxProps.type = "checkbox";
+		}
 
 		var fieldCheckbox = `${COMPONENT_PREFIX}-checkbox`;
 		var componentClasses = [fieldCheckbox, 'visually-hidden'];

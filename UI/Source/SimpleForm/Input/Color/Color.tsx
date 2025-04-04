@@ -2,7 +2,7 @@ import { useEffect, useRef, useId } from 'react';
 import Field from 'UI/SimpleForm/Field';
 import { getSizeClasses, getValidProps } from 'UI/Functions/Components';
 
-const COMPONENT_PREFIX = 'form__field';
+const COMPONENT_PREFIX = 'ui-form__field';
 const DEFAULT_COLOR = '#000';
 
 /**
@@ -68,7 +68,7 @@ const Color: React.FC<ColorProps > = ({ label, id, className, xs, sm, md, lg, xl
 
 		if (fieldRef?.current) {
 			fieldRef.current.dataset.value = value || DEFAULT_COLOR;
-			fieldRef.current.style.setProperty("--contrast-text", getContrastingColor(value || DEFAULT_COLOR));
+			fieldRef.current.style.setProperty("--ui-contrast-text", getContrastingColor(value || DEFAULT_COLOR));
 			//fieldRef.current.addEventListener('input', handleColorChange);
 		}
 
@@ -144,7 +144,7 @@ const Color: React.FC<ColorProps > = ({ label, id, className, xs, sm, md, lg, xl
 
 				if (fieldRef?.current) {
 					fieldRef.current.dataset.value = e.target.value;
-					fieldRef.current.style.setProperty("--contrast-text", getContrastingColor(e.target.value));
+					fieldRef.current.style.setProperty("--ui-contrast-text", getContrastingColor(e.target.value));
 					//fieldRef.current.addEventListener('input', handleColorChange);
 				}
 
