@@ -1,0 +1,35 @@
+// thin 200
+@font-face {
+	font-display: swap;
+	font-family: 'Roboto Slab';
+	font-style: normal;
+	font-weight: 200;
+	src: url('./roboto-slab-v34-latin-200.woff2') format('woff2');
+}
+
+// regular 400
+@font-face {
+	font-display: swap;
+	font-family: 'Roboto Slab';
+	font-style: normal;
+	font-weight: 400;
+	src: url('./roboto-slab-v34-latin-regular.woff2') format('woff2');
+}
+
+// bold 700
+@font-face {
+	font-display: swap;
+	font-family: 'Roboto Slab';
+	font-style: normal;
+	font-weight: 700;
+	src: url('./roboto-slab-v34-latin-700.woff2') format('woff2');
+}
+
+// black 900
+@font-face {
+	font-display: swap;
+	font-family: 'Roboto Slab';
+	font-style: normal;
+	font-weight: 900;
+	src: url('./roboto-slab-v34-latin-900.woff2') format('woff2');
+}
