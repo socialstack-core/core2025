@@ -135,8 +135,7 @@ export default function ModuleSelector(props) {
 							{group.name || `Common Modules`}
 						</h6>
 						<div className="module-group__internal">
-							<Loop raw over={group.modules}>
-								{module => {
+								{group.modules.map(module => {
 									let wrappedModuleName = module.name.match(/[A-Z][a-z]*/g);
 
 									return <>
@@ -164,8 +163,7 @@ export default function ModuleSelector(props) {
 											})}
 										</button>
 									</>;
-								}}
-							</Loop>
+								})}
 						</div>
 					</div>;
 

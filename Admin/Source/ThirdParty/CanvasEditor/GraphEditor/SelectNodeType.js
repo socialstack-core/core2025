@@ -24,8 +24,8 @@ export default function NodeTypeSelect(props){
 			title={`Add a node to your graph`}
 			onClose={props.onClose} className={"module-select-modal"}>
 			<div className="module-group">
-			<Loop asCols over={nsModules} size={4}>
-				{moduleAndName => {
+			{
+				nsModules.map(moduleAndName => {
 					var nodeType = moduleAndName.module;
 					var name = nodeType.name;
 					
@@ -37,8 +37,8 @@ export default function NodeTypeSelect(props){
 						</div>
 						{niceName(name)}
 					</div>;
-				}}
-			</Loop>
+				})
+			}
 		</div>
 	</Modal>
 }
