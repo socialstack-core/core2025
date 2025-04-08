@@ -17,24 +17,24 @@ namespace Api.Startup
 		/// Forces a GC run. Convenience for testing for memory leaks.
 		/// </summary>
 		[HttpGet("whoami")]
-		public async ValueTask WhoAmI()
+		public ServerIdentification WhoAmI()
 		{
 			// Get server ID from csync service:
 			var id = Services.Get<ContentSyncService>().ServerId;
-			
-			var writer = Writer.GetPooled();
-			writer.Start(null);
-
-			writer.WriteASCII("{\"id\":");
-			
-			writer.WriteS(id);
-			
-			writer.Write((byte)'}');
-
-			// Flush after each one:
-			await writer.CopyToAsync(Response.Body);
-			writer.Release();
+			return new ServerIdentification() {
+				Id = id
+			};
 		}
 
+	}
+
+	/// <summary>
+	/// Server identifier from the whoami endpoint.
+	/// </summary>
+	public struct ServerIdentification {
+		/// <summary>
+		/// Server ID.
+		/// </summary>
+		public uint Id;
 	}
 }

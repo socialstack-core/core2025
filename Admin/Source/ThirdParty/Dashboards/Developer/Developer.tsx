@@ -5,7 +5,7 @@ import Row from 'UI/Row';
 import Modal from 'UI/Modal';
 import Input from 'UI/Input';
 import { useState, useEffect } from 'react';
-// import monitoringApi from 'Api/Monitoring';
+import monitoringApi from 'Api/StdOut';
 
 interface Confirmer {
 	message: string,
@@ -22,9 +22,11 @@ const Developer: React.FC<{}> = () => {
 	
 	var whoAmI = () => {
 		
-		var [who, setWho] = useState();
+		var [who, setWho] = useState<int>();
 		
-		// useEffect(() => monitoringApi.whoAmI().then((response) => setWho(response.json.id)), []);
+		useEffect(() => {
+			monitoringApi.whoAmI().then((response) => setWho(response.id))
+		}, []);
 		
 		if(!who){
 			return <Loading />;
@@ -77,16 +79,8 @@ const Developer: React.FC<{}> = () => {
 					</li>
 					<li>
 						<a href='#' onClick={() => confirmAction(
-							`This will tell this server to reload the UI (not all servers in the cluster currently)`,
-							() => monitoringApi.uiReload()
-						)}>
-							Hot reload the UI (will prompt first)
-						</a>
-					</li>
-					<li>
-						<a href='#' onClick={() => confirmAction(
 							`Force the C# garbage collector to run inside the API`,
-							() => monitoringApi.gc()
+							() => monitoringApi.gC()
 						)}>
 							Run the garbage collector (will prompt first)
 						</a>
