@@ -22,11 +22,14 @@
 		--ui-field-border-color: var(--ui-site-border-inactive);
 		--ui-field-border-color--hover: var(--ui-site-border-hover);
 		--ui-field-border-color--active: var(--ui-site-border-active);
-		--ui-field-border-radius: .25rem;
-		--ui-field-background-color: var(--ui-site-bg);
+		//--ui-field-border-radius: .25rem;
+		--ui-field-border-radius: calc(var(--ui-field-min-height) / 4);
+		--ui-field-background-color--outline: var(--ui-site-bg);
 		--ui-field-color: inherit;
-		--ui-field-paddingX: .75rem;
-		--ui-field-paddingY: .375rem;
+		//--ui-field-paddingX: .75rem;
+		//--ui-field-paddingY: .375rem;
+		--ui-field-paddingX: #{toRem(24)};
+		--ui-field-paddingY: #{toRem(6)};
 		--ui-field-spacing: 1rem;
 		--ui-field-font-family: var(--ui-font-family);
 		--ui-field-font-size: #{toRem(18)};

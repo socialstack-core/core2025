@@ -94,6 +94,8 @@
 		--ui-site-fg-secondary-dark: #989899;
 		--ui-site-fg-tertiary-dark: #5a5a5e;
 		--ui-site-fg-quaternary-dark: #404044;
+
+		--ui-field-background-color-dark: #1a1a19;
 		
 		--ui-site-bg-light: #fff;
 		--ui-site-bg-light: oklch(100% 0% 89.876);
@@ -107,6 +109,8 @@
 		--ui-site-fg-secondary-light: #8a8a8e;
 		--ui-site-fg-tertiary-light: #c4c4c6;
 		--ui-site-fg-quaternary-light: #dcdcdd;
+
+		--ui-field-background-color-light: #f6f5f7;
 		
 		--ui-header-bg-dark: #0a0a0a;
 		--ui-header-bg-light: #d8d8d8;
@@ -131,6 +135,7 @@
 	}
 
 	@mixin resetPalette() {
+		/*
 		--ui-primary: oklch(var(--ui-lightness) var(--ui-chroma) var(--ui-primary-hue));
 		--ui-primary-light: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset))) var(--ui-chroma) var(--ui-primary-hue));
 		//--ui-primary-light2: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset2))) var(--ui-chroma) var(--ui-primary-hue));
@@ -139,6 +144,25 @@
 		--ui-primary-dark: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset))) var(--ui-chroma) var(--ui-primary-hue));
 		--ui-primary-dark2: oklch(calc(var(--ui-lightness) * (1 - var(--ui-darkness-offset2))) var(--ui-chroma) var(--ui-primary-hue));
 		--ui-primary-dark-text: oklch(calc(var(--ui-lightness) * (1 + var(--ui-darkness-text-offset))) var(--ui-chroma) var(--ui-primary-hue));
+		*/
+
+		--ui-primary: #0072d9; // oklch(54.15% .2 244.68)
+		--ui-primary-light: #0084ec; // oklch(54.15% *1.1 .2 244.68)
+		--ui-primary-light2: #0072d9; // oklch(54.15% *1.2 .2 244.68)
+
+		// LIGHT
+		//--ui-primary-hue: 203.56deg;
+		//--ui-primary: hsl(var(--ui-primary-hue) 100% 37.45%);
+		//--ui-primary-light: hsl(205.16deg 90.29% 59.61%);
+		//--ui-primary-light2: hsl(208.7deg 62.16% 92.75%);
+
+		// DARK
+		//--ui-primary-hue: 207.69deg 
+		//--ui-primary: hsl(var(--ui-primary-hue) 23.21% 43.92%);
+		//--ui-primary-light: hsl(207.86deg 29.79% 63.14%);
+		//--ui-primary-light2: hsl(208.7deg 62.16% 92.75%);
+
+
 
 		--ui-secondary: oklch(var(--ui-lightness) 0 var(--ui-secondary-hue));
 		--ui-secondary-light: oklch(calc(var(--ui-lightness) * (1 + var(--ui-lightness-offset))) 0 var(--ui-secondary-hue));
@@ -201,6 +225,8 @@
 	    --ui-site-fg-muted: var(--ui-site-fg-secondary);
 		--ui-site-fg-tertiary: var(--ui-site-fg-tertiary-light);
 		--ui-site-fg-quaternary: var(--ui-site-fg-quaternary-light);
+		
+		--ui-field-background-color: var(--ui-field-background-color-light);
 
 		--ui-site-panel: var(--ui-site-panel-light);
 		--ui-site-panel-shadow: var(--ui-site-panel-shadow-light);
@@ -265,6 +291,8 @@
 		--ui-site-fg-tertiary: var(--ui-site-fg-tertiary-dark);
 		--ui-site-fg-quaternary: var(--ui-site-fg-quaternary-dark);
 			
+		--ui-field-background-color: var(--ui-field-background-color-dark);
+
 		--ui-site-panel: var(--ui-site-panel-dark);
 		--ui-site-panel-shadow: var(--ui-site-panel-shadow-dark);
 

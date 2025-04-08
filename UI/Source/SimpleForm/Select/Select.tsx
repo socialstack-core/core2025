@@ -16,6 +16,10 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 	 */
 	className?: string,
 	/**
+	 * true if outlined (false for solid background colour with no border)
+	 */
+	outlined?: boolean,
+	/**
 	 * render field at extra small size
 	 */
 	xs?: boolean,
@@ -61,7 +65,7 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
  * The Select React component.
  * @param props Select props.
  */
-const Select: React.FC<SelectProps> = ({ label, id, className, children, xs, sm, md, lg, xl, wrapperClass, noWrapper, help, value, onChange, ...rest }) => {
+const Select: React.FC<SelectProps> = ({ label, id, className, outlined, children, xs, sm, md, lg, xl, wrapperClass, noWrapper, help, value, onChange, ...rest }) => {
 
 	function renderField() {
 		const _id = id || useId();
@@ -82,6 +86,10 @@ const Select: React.FC<SelectProps> = ({ label, id, className, children, xs, sm,
 				componentClasses.push(`${COMPONENT_PREFIX}--${key}`);
 			}
 		});
+
+		if (outlined) {
+			componentClasses.push(`${COMPONENT_PREFIX}--outlined`);
+		}
 
 		if (className) {
 			componentClasses.push(className);

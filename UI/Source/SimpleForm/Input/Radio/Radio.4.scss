@@ -3,7 +3,7 @@
 	:root {
 		--ui-field-radio-size: #{toRem(32)};
 		--ui-field-radio-spacing: #{toRem(10)};
-		--ui-field-radio-padding: #{toRem(6)};
+		--ui-field-radio-padding: #{toRem(8)};
 		--ui-field-radio-label-offset: #{toRem(3)};
 	}
 
@@ -23,20 +23,21 @@
 
 				&::before {
 					// replacement radio (border, checked state)
-					//background-color: var(--ui-primary);
+					background-color: var(--ui-primary);
 				}
 
 				&::after {
 					// replacement radio (icon, checked state)
 					// NB: uses background-color rather than color, as the icon is formed using a mask
 					// (allows us to recolour an SVG referenced within a data URL)
-					//background-color: var(--ui-primary-fg);
-					background-color: var(--ui-primary);
+					background-color: var(--ui-primary-fg);
+					//background-color: var(--ui-primary);
 				}
 
 				&:hover {
 
-					&::after {
+					&::before {
+					//&::after {
 						background-color: var(--ui-primary-light);
 					}
 
@@ -44,7 +45,8 @@
 
 				&:active {
 
-					&::after {
+					&::before {
+					//&::after {
 						background-color: var(--ui-primary-dark);
 					}
 

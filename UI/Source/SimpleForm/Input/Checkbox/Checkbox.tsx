@@ -43,14 +43,20 @@ interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	/**
 	 * disable wrapping element
 	 */
-	noWrapper?: boolean
+	noWrapper?: boolean,
+	/**
+	 * true if field should be rendered as a switch
+	 */
+	switch?: boolean
 }
 
 /**
  * The Checkbox React component.
  * @param props Checkbox props.
+ * 
+ * NB: switch aliased to isSwitch to prevent "unexpected keyword" error
  */
-const Checkbox: React.FC<CheckboxProps> = ({ label, id, className, xs, sm, md, lg, xl, wrapperClass, noWrapper, value, onChange, ...rest }) => {
+const Checkbox: React.FC<CheckboxProps> = ({ label, id, className, xs, sm, md, lg, xl, wrapperClass, noWrapper, switch: isSwitch, value, onChange, ...rest }) => {
 
 	function renderField(): React.ReactNode {
 		const _id = id || useId();
@@ -72,12 +78,18 @@ const Checkbox: React.FC<CheckboxProps> = ({ label, id, className, xs, sm, md, l
 		var componentClasses = [fieldCheckbox, 'visually-hidden'];
 		componentClasses = componentClasses.concat(getSizeClasses(fieldCheckbox, { xs: Boolean(xs), sm: Boolean(sm), md: Boolean(md), lg: Boolean(lg), xl: Boolean(xl) }));
 
+		if (isSwitch) {
+			componentClasses.push(`${COMPONENT_PREFIX}-checkbox--switch`);
+		}
+
 		if (className) {
 			componentClasses.push(className);
 		}
 
+		// NB: setting switch attribute as well as class / role, as this will trigger haptics on iOS
 		return <>
-			<input type="checkbox" id={_id} className={componentClasses.join(' ')} value={value} onChange={(e) => {
+			<input type="checkbox" id={_id} className={componentClasses.join(' ')} role={isSwitch ? "switch" : undefined} switch={isSwitch ? true : undefined}
+				value={value} onChange={(e) => {
 				if (onChange instanceof Function) {
 					onChange(e);
 				}
