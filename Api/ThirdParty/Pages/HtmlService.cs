@@ -1270,6 +1270,9 @@ svg {
 			// Charset must be within first 1kb of the header:
 			head.AppendChild(new DocumentNode("meta", true).With("charset", "utf-8"));
 
+			// NB: commented out as this currently relies on the "core-test-theme" storage key and associated styling within ui2025 branch;
+			//     unknown if / when theme support will be revisited in core branch
+			/*
 			// check for overriding user theme preference - do it early as possible here to prevent a potential flash of the inverse colour
 			head.AppendChild(new DocumentNode("script").AppendChild(new TextNode(
 				@"
@@ -1286,6 +1289,7 @@ svg {
   })();
 			"
 			)));
+			 */
 
 			// Handle all Start Head Tags in the config.
 			HandleCustomHeadList(_config.StartHeadTags, head);
