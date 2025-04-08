@@ -1,7 +1,7 @@
 const COMPONENT_PREFIX = 'ui-btn';
 const DEFAULT_VARIANT = 'primary';
 
-import { getSizeClasses } from 'UI/Functions/Components';
+//import { getSizeClasses } from 'UI/Functions/Components';
 
 export default function Button(props) {
 	const {
@@ -27,7 +27,7 @@ export default function Button(props) {
 		componentClasses.push(`${COMPONENT_PREFIX}--${btnVariant}`);
 	}
 
-	componentClasses = componentClasses.concat(getSizeClasses(COMPONENT_PREFIX, props));
+	//componentClasses = componentClasses.concat(getSizeClasses(COMPONENT_PREFIX, props));
 
 	if (outline || outlined) {
 		componentClasses.push(`${COMPONENT_PREFIX}--outline`);

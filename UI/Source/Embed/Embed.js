@@ -1,4 +1,4 @@
-import { getSizeClasses } from 'UI/Functions/Components';
+//import { getSizeClasses } from 'UI/Functions/Components';
 
 const COMPONENT_PREFIX = 'ui-embed';
 //const DEFAULT_VARIANT = 'primary';
@@ -79,7 +79,7 @@ export default function Embed(props) {
 	//	componentClasses.push(`${COMPONENT_PREFIX}--${btnVariant}`);
 	//}
 
-	componentClasses = componentClasses.concat(getSizeClasses(COMPONENT_PREFIX, props));
+	//componentClasses = componentClasses.concat(getSizeClasses(COMPONENT_PREFIX, props));
 
 	if (ratio43) {
 		componentClasses.push(`${COMPONENT_PREFIX}--ratio-4-3`);
