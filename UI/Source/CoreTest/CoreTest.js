@@ -2,7 +2,7 @@ import PageTemplate from 'UI/PageTemplate';
 import PageRegion from 'UI/PageRegion';
 import ThemeSwitcher from 'UI/ThemeSwitcher';
 import ToggleBootstrap from 'UI/ToggleBootstrap';
-import ToggleBootstrapRevert from 'UI/ToggleBootstrapRevert';
+//import ToggleBootstrapRevert from 'UI/ToggleBootstrapRevert';
 import Expander from 'UI/Expander';
 //import Summary from 'UI/Expander/Summary';
 //import Content from 'UI/Expander/Content';
