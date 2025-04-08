@@ -1,16 +1,11 @@
 import {getUrl} from 'UI/FileRef';
 import aceJs from './static/ace.js';
 
-var inputTypes = global.inputTypes = global.inputTypes || {};
-
-inputTypes.ontypecode = inputTypes['application/json'] = inputTypes['text/html'] = inputTypes['text/javascript'] = inputTypes['text/css'] = inputTypes['application/sql'] = function ({ id, className, type, inline, ...props }, _this){
-	
+inputTypes.json = function (props) {
+	const { field } = props;
 	return <AceEditor 
-		id={id || _this.fieldId}
-		className={className || "form-control"}
-		{...props}
+		{...field}
 	/>;
-	
 };
 
 var aceLoading;
@@ -59,6 +54,7 @@ export default class AceEditor extends React.Component{
 			}
 			
 			this.goToType(p, editor);
+
 			editor.session.setValue(p.defaultValue || p.value || '');
 			
 			if(p.readonly){
