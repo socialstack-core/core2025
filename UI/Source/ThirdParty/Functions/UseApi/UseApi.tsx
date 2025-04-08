@@ -11,7 +11,12 @@ const useApi = <T,>(loader: () => Promise<T>, deps?: React.DependencyList) => {
 
     useEffect(() => {
         loader()
-            .then(val => setCurrent(val));
+            .then(val => {
+                if (!val) {
+                    return;
+                }
+                setCurrent(val)
+            });
     }, deps);
 
     return state;

@@ -111,7 +111,18 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 	const [pageIndex, setPageIndex] = useState(props.defaultPage || 1);
 	const [totalResults, setTotalResults] = useState(0);
 	const [errored, setErrored] = useState<PublicError | null>(null);
-	const [results, setResults] = useApi<T[] | null>(() => load(), [props.filter, props.paged]);
+	const [filterStr, setFilterStr] = useState<string | null>();
+	const [results, setResults] = useApi<T[] | null>(() => {
+		var currentFilterStr = props.filter ? JSON.stringify(props.filter) : '';
+
+		if (filterStr === currentFilterStr)
+		{
+			return Promise.resolve(null);
+		}
+
+		setFilterStr(currentFilterStr);
+		return load();
+	}, [props.filter, props.paged]);
 	
 	const getPagedFilter = (filter: any, pageIndex: number, paged?: LoopPageConfig | boolean) => {
 		if (!paged) {
