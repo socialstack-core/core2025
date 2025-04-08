@@ -3,6 +3,7 @@ import Failure from 'UI/Failed';
 import Paginator from 'UI/Paginator';
 import { AutoApi, ApiIncludes } from 'Api/ApiEndpoints';
 import { Content } from 'Api/Content';
+import { ContentChangeDetail } from 'UI/Functions/ContentChange';
 import useApi from 'UI/Functions/UseApi';
 import { useEffect, useState } from 'react';
 const DEFAULT_PAGE_SIZE = 50;
@@ -123,7 +124,51 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 		setFilterStr(currentFilterStr);
 		return load();
 	}, [props.filter, props.paged]);
-	
+
+	useEffect(() => {
+		var onContentUpdate = (e: CustomEvent<ContentChangeDetail>) => {
+			const changeInfo = e.detail;
+			const entity = changeInfo.entity as T;
+
+			if (!results || !entity) {
+				return;
+			}
+
+			if (changeInfo.deleted) {
+				var postDeleteResults = results
+					.filter(content => !(content.type == entity.type && content.id == entity.id));
+
+				if (postDeleteResults.length != results.length) {
+					setResults(postDeleteResults);
+				}
+
+			} else if (changeInfo.updated) {
+				var changed = false;
+				var updatedResults = results
+					.map(content => {
+						if (content.type == entity.type && content.id == entity.id) {
+							changed = true;
+							return changeInfo.entity as T;
+						} else {
+							return content;
+						}
+					});
+
+				if (changed) {
+					setResults(updatedResults);
+				}
+			} else if (changeInfo.added) {
+				load().then(res => setResults(res));
+			}
+		};
+
+		document.addEventListener("contentchange", onContentUpdate as EventListener);
+
+		return () => {
+			document.removeEventListener("contentchange", onContentUpdate as EventListener);
+		};
+	}, [results]);
+
 	const getPagedFilter = (filter: any, pageIndex: number, paged?: LoopPageConfig | boolean) => {
 		if (!paged) {
 			return filter;
@@ -262,7 +307,9 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 		pageIndex={pageIndex}
 		totalResults={totalResults}
 		onChange={pageIndex => {
-			load(pageIndex);
+			load(pageIndex).then(res => {
+				setResults(res);
+			});
 			if (!noScroll) {
 				window.scrollTo(0, 0);
 			}
