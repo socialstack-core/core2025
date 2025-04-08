@@ -6,6 +6,7 @@ declare global {
 		text: DefaultInputType;
 		email: DefaultInputType;
 		url: DefaultInputType;
+		hidden: DefaultInputType;
 	}
 }
 
@@ -48,4 +49,5 @@ const Default: React.FC<DefaultProps> = (props) => {
 window.inputTypes['text'] = (props: CustomInputTypeProps<"text">) => <Default type="text" field={props.field} config={props} />;
 window.inputTypes['url'] = (props: CustomInputTypeProps<"url">) => <Default type="url" field={props.field} config={props} />;
 window.inputTypes['email'] = (props: CustomInputTypeProps<"email">) => <Default type="email" field={props.field} config={props} />;
+window.inputTypes['hidden'] = (props: CustomInputTypeProps<"hidden">) => <Default type="hidden" field={props.field} config={props} />;
 export default Default;
