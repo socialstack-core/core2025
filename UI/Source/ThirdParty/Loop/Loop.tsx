@@ -3,6 +3,7 @@ import Failure from 'UI/Failed';
 import Paginator from 'UI/Paginator';
 import { AutoApi, ApiIncludes } from 'Api/ApiEndpoints';
 import { Content } from 'Api/Content';
+import useApi from 'UI/Functions/UseApi';
 import { useEffect, useState } from 'react';
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -110,12 +111,8 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 	const [pageIndex, setPageIndex] = useState(props.defaultPage || 1);
 	const [totalResults, setTotalResults] = useState(0);
 	const [errored, setErrored] = useState<PublicError | null>(null);
-	const [results, setResults] = useState<T[] | null>(null);
+	const [results, setResults] = useApi<T[] | null>(() => load(), [props.filter, props.paged]);
 	
-	useEffect(() => {
-		load();
-	}, [props.filter, props.paged]);
-
 	const getPagedFilter = (filter: any, pageIndex: number, paged?: LoopPageConfig | boolean) => {
 		if (!paged) {
 			return filter;
@@ -176,8 +173,8 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 				results = results.reverse();
 			}
 
-			setResults(results);
 			setTotalResults(list.totalResults);
+			return results;
 		})
 		.catch(e => {
 			console.log('Loop caught an error:');
@@ -192,6 +189,8 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 					detail: e
 				} as PublicError);
 			}
+
+			return null;
 		});
 	}
 	
