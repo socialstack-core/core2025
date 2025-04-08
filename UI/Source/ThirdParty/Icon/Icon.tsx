@@ -1,15 +1,6 @@
-/**
- * Props for the Icon component.
- */
-interface IconProps {
-	/**
-	 * You MUST use a constant string. UI/Icon is a first-class component in the compile process.
-	 * The compiler will use "type" to identify in-use icons and strip accordingly.
-	 * This is the type of icon you want to display, such as type="fa-bullhorn". 
-	 * Don't target this type with CSS: instead, target ui-icon if you need to do so.
-	 */
-	type: string,
+import { parse } from 'UI/FileRef';
 
+interface IconBaseProps {
 	/**
 	 * Use the light variation.
 	 */
@@ -54,6 +45,19 @@ interface IconProps {
 	 * Character, used internally by the compiler.
 	 */
 	c?:string
+}
+
+/**
+ * Props for the Icon component.
+ */
+type IconProps = IconBaseProps & {
+	/**
+	 * You MUST use a constant string. UI/Icon is a first-class component in the compile process.
+	 * The compiler will use "type" to identify in-use icons and strip accordingly.
+	 * This is the type of icon you want to display, such as type="fa-bullhorn". 
+	 * Don't target this type with CSS: instead, target ui-icon if you need to do so.
+	 */
+	type: string,
 }
 
 const Icon: React.FC<IconProps> = (props) => {
@@ -103,3 +107,17 @@ const Icon: React.FC<IconProps> = (props) => {
 }
 
 export default Icon;
+
+type IconRefProps = IconBaseProps & {
+	fileRef: FileRef
+};
+
+export const IconRef : React.FC<IconRefProps> = (props) => {
+	const { fileRef, ...iconProps } = props;
+
+	// future version where the inline icons are actually stripped -
+	// this one would not do so and instead refs the main font files with all.
+	var fullRef = parse(fileRef);
+
+	return <Icon {...iconProps} type={fullRef?.basepath || ''} />;
+};

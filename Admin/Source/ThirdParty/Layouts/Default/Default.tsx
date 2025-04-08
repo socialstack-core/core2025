@@ -9,7 +9,7 @@ import Dropdown, { DropdownItem } from 'UI/Dropdown';
 import { useState } from 'react';
 import store from 'UI/Functions/Store';
 import Modal from 'UI/Modal';
-import Icon from 'UI/Icon';
+import Icon, { IconRef } from 'UI/Icon';
 import Table from 'UI/Table';
 import Image from 'UI/Image';
 import Alert from 'UI/Alert';
@@ -249,7 +249,7 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
                                     item.target == '/en-admin/' ?
                                         (url == item.target ? 'active' : '') :
                                         (item.target && url.startsWith(item.target) ? 'active' : '')}>
-                                        {item.iconRef && <Image fileRef={item.iconRef} className='fa-fw' />}
+                                        {item.iconRef && <IconRef fileRef={item.iconRef} />}
                                     {item.title}
                                     </a>
                                 </li>
