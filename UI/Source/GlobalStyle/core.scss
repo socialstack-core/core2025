@@ -1,6 +1,0 @@
-/*
-   establish a layer order up-front, from lowest to highest priority
-   NB: iOS versions earlier than 15.4 will need a polyfill:
-   https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-cascade-layers#how-it-works
-*/
-@layer thirdparty, reset, palette, typography, forms, utils, media, components, anims, mobile, tablet, laptop, desktop;
