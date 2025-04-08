@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import Button from 'UI/Button';
+import CloseButton from 'UI/CloseButton';
 import Icon from 'UI/Icon';
 
-const COMPONENT_PREFIX = 'ui-alert';
+const ALERT_PREFIX = 'alert';
 const DEFAULT_VARIANT = 'info';
 
-export type AlertType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';
+export type AlertType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark';
 
 interface AlertProps {
 	/**
@@ -13,17 +13,9 @@ interface AlertProps {
 	 */
 	variant?: AlertType,
 	/**
-	 * optional title
+	 * set true to display icon
 	 */
-	title?: string,
-	/**
-	 * HTML tag to use for title (defaults to <strong>)
-	 */
-	titleTag?: HTMLElement,
-	/**
-	 * set true to hide icon
-	 */
-	hideIcon?: boolean,
+	showIcon?: boolean,
 	/**
 	 * Optionally provide a custom Icon instance.
 	 */
@@ -31,50 +23,29 @@ interface AlertProps {
 	/**
 	 * set true to display close button
 	 */
-	dismissable?: boolean,
+	isDismissable?: boolean,
+	
 	/**
 	 * The alert type
 	 */
-	type?: string,
-	/**
-	 * render at extra small size
-	 */
-	xs?: boolean,
-	/**
-	 * render at small size
-	 */
-	sm?: boolean,
-	/**
-	 * render at medium size (default)
-	 */
-	md?: boolean,
-	/**
-	 * render at large size
-	 */
-	lg?: boolean,
-	/**
-	 * render at extra large size
-	 */
-	xl?: boolean,
-	/**
-	 * optional additional classes
-	 */
-	className?: string,
+	type?: string
 }
 
 /**
  * Alert component
  */
-const Alert: React.FC<React.PropsWithChildren<AlertProps>> = ({ variant, title, titleTag, hideIcon, customIcon, dismissable, isDismissable, type, xs, sm, md, lg, xl, children }) => {
+const Alert: React.FC<React.PropsWithChildren<AlertProps>> = (props) => {
+	const { children, variant, customIcon, isDismissable } = props;
+	let { showIcon } = props;
 	const [showAlert, setShowAlert] = useState(true);
-	let TitleTag = titleTag || 'strong';
-	let alertVariant = variant?.toLowerCase() || DEFAULT_VARIANT;
-	let icon: React.ReactNode = undefined;
 
-	/****************
-	 * NB: new markup currently injects a suitable icon via CSS;
-	 *     needs revisiting for custom icon support
-	 ****************/
+	if (showIcon === undefined) {
+		showIcon = true;
+	}
+
+	var alertVariant = variant?.toLowerCase() || DEFAULT_VARIANT;
+
+	var icon: React.ReactNode = undefined;
 
 	// resolve default icon class
 	switch (alertVariant) {
@@ -111,37 +82,28 @@ const Alert: React.FC<React.PropsWithChildren<AlertProps>> = ({ variant, title, 
 		icon = customIcon;
 	}
 
-	var componentClasses = [COMPONENT_PREFIX];
-	componentClasses.push(`${COMPONENT_PREFIX}--${alertVariant}`);
+	var alertClass = [ALERT_PREFIX];
+	alertClass.push(ALERT_PREFIX + '-' + alertVariant);
 
-	let _dismissable = dismissable || isDismissable;
-
-	if (_dismissable) {
-		componentClasses.push(`${COMPONENT_PREFIX}--dismissable`);
+	if (isDismissable) {
+		alertClass.push(ALERT_PREFIX + '-dismissable');
 	}
 
-	if (hideIcon) {
-		componentClasses.push(`${COMPONENT_PREFIX}--no-icon`);
-	}
-
-	if (!showAlert) {
-		return;
-	}
-
-	return (
-		<div className={componentClasses.join(' ')} role="alert">
-			<div className={`${COMPONENT_PREFIX}__notch`}></div>
-			{_dismissable && <>
-				<Button close xs className={`${COMPONENT_PREFIX}__close`} onClick={() => setShowAlert(false)} />
-			</>}
-			{title && <>
-				<TitleTag className={`${COMPONENT_PREFIX}__title`}>
-					{title}
-				</TitleTag>
-			</>}
-			{children}
-		</div>
-	);
+	return (<>
+		{showAlert && <>
+			<div className={alertClass.join(' ')} role="alert">
+				{isDismissable && <>
+					<CloseButton callback={e => setShowAlert(false)} />
+				</>}
+				<div className="alert__internal">
+					{showIcon && icon}
+					<span className="alert__content">
+						{children}
+					</span>
+				</div>
+			</div>
+		</>}
+	</>);
 }
 
 export default Alert;
