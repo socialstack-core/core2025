@@ -25,8 +25,6 @@ export interface AutoListProps {
 	create?: boolean;
 	beforeList?: React.ReactNode;
 	afterList?: React.ReactNode;
-	listEndpoint?: (where?: Partial<Content>, includes?: ApiIncludes) => Promise<Content[]>,
-	deleteEndpoint?: (id: number) => Promise<Content>
 }
 
 export interface SortField {
@@ -55,6 +53,13 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 
 	}, [props.fields]);
 
+	if (!props.contentType) {
+		return `Old page identified: please delete your en-admin pages and restart the API to regenerate them.`;
+	}
+
+	// Api is expected to be an ApiEndpoints object.
+	var api = require('Api/' + props.contentType).default;
+	
 	const renderEmpty = () => {
 		return <tr>
 			{searchText ? `No matching records for "${searchText}"` : `No data available`}
@@ -171,7 +176,7 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 					newBs = {...bulkSelections};
 					delete newBs[entry.id];
 				}else{
-					newBs = {};
+					newBs = bulkSelections ? { ...bulkSelections } : {};
 					newBs[entry.id] = true;
 				}
 				
@@ -236,14 +241,8 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 
 		// get the item IDs:
 		var ids: number[] = Object.keys(bulkSelections).map(id => parseInt(id));
-
-		if (typeof props.deleteEndpoint !== 'function') {
-			console.warn("[AutoForm] - No delete functionality")
-			return
-		}
 		
-		// we checked above that this was a function. hence '!'
-		var deletes = ids.map(id => props.deleteEndpoint!(id));
+		var deletes = ids.map(id => api.delete(id));
 
 		Promise.all(deletes).then(response => {
 			setBulkSelections(null);
@@ -290,18 +289,11 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 		combinedFilter.where = searchWhere;
 	}
 
-	if (!props.contentType) {
-		return `Old page identified: please delete your en-admin pages and restart the API to regenerate them.`;
-	}
-
 	var addUrl = props.customUrl 
 		? '/en-admin/' + props.customUrl + '/' + 'add'
 		: '/en-admin/' + props.contentType.toLowerCase() + '/' + 'add';
 	
 	var selectedCount = getSelectedCount();
-
-	// Api is expected to be an ApiEndpoints object.
-	var api = require('Api/' + props.contentType).default;
 
 	return <>
 		<div className="admin-page">
