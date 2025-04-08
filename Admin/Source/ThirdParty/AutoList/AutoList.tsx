@@ -56,23 +56,9 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 	}, [props.fields]);
 
 	const renderEmpty = () => {
-		return <table className="table">
-			<thead>
-				<tr>
-					{renderHeader()}
-				</tr>
-			</thead>
-			<colgroup>
-				{renderColgroups()}
-			</colgroup>
-			<tbody>
-				<tr>
-					<td colSpan={props.fields.length + 1} className="table__empty-message">
-						{searchText ? `No matching records for "${searchText}"` : `No data available`}
-					</td>
-				</tr>
-			</tbody>
-		</table>;
+		return <tr>
+			{searchText ? `No matching records for "${searchText}"` : `No data available`}
+		</tr>;
 	}
 
 	const renderHeader = (allContent? : Content[]) => {

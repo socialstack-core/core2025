@@ -1,11 +1,11 @@
 import Loop, { LoopProps } from 'UI/Loop';
 import { AutoApi, ApiIncludes } from 'Api/ApiEndpoints';
-import { VersionedContent } from 'Api/Content';
+import { Content, VersionedContent } from 'Api/Content';
 
 /**
  * Props for the Table component.
  */
-interface TableProps<T, I> extends LoopProps<T, I> {
+interface TableProps<T extends Content, I extends ApiIncludes> extends LoopProps<T, I> {
 	/**
 	 * Optionally used to render your table's header.
 	 * @returns
