@@ -5,6 +5,7 @@ import Field from 'UI/SimpleForm/Field';
 import Select from 'UI/SimpleForm/Select';
 import Input from 'UI/SimpleForm/Input';
 import Checkbox from 'UI/SimpleForm/Input/Checkbox';
+import Switch from 'UI/SimpleForm/Input/Switch';
 import Radio from 'UI/SimpleForm/Input/Radio';
 import Button from 'UI/Button';
 import RequestFullscreen from 'UI/RequestFullscreen';
@@ -14,7 +15,7 @@ export default function FormTest(props) {
 	//const { } = props;
 	//const [variant, setVariant] = useState('primary');
 	const [size, setSize] = useState('md');
-	//const [outlined, setOutlined] = useState(false);
+	const [outlined, setOutlined] = useState(false);
 	//const [rounded, setRounded] = useState(false);
 	const [disabled, setDisabled] = useState(false);
 	const [formProps, setFormProps] = useState({});
@@ -46,6 +47,8 @@ export default function FormTest(props) {
 
 	const [check1, setCheck1] = useState();
 	const [check2, setCheck2] = useState();
+	const [switch1, setSwitch1] = useState();
+	const [switch2, setSwitch2] = useState();
 
 	const [radio, setRadio] = useState();
 
@@ -54,7 +57,7 @@ export default function FormTest(props) {
 			//variant: variant,
 			//ratio: ratio,
 			//size: size,
-			//outline: outlined || undefined,
+			outline: outlined || undefined,
 			//rounded: rounded || undefined,
 			disabled: disabled || undefined,
 		};
@@ -64,14 +67,14 @@ export default function FormTest(props) {
 		}
 
 		setFormProps(_props);
-	}, [/*variant,*/ size, /*outlined, rounded,*/ disabled ]);
+	}, [/*variant,*/ size, outlined, /*rounded,*/ disabled ]);
 
 	useEffect(() => {
 		let _props = {
 			//variant: variant,
 			//ratio: ratio,
 			//size: size,
-			//outline: outlined || undefined,
+			outline: outlined || undefined,
 			//rounded: rounded || undefined,
 			//disabled: disabled || undefined,
 		};
@@ -81,7 +84,7 @@ export default function FormTest(props) {
 		}
 
 		setFieldProps(_props);
-	}, [/*variant,*/ size /*, outlined, rounded, disabled*/]);
+	}, [/*variant,*/ size, outlined /*, rounded, disabled*/]);
 
 	return <div className="form-test" ref={parentRef}>
 		<RequestFullscreen elementRef={parentRef} />
@@ -104,20 +107,10 @@ export default function FormTest(props) {
 				<option value="lg">Large</option>
 				<option value="xl">Extra large</option>
 			</Select>
-			{/*
 			<hr/>
-			<div className="form__field">
-				<input type="checkbox" id="btnOutlined" checked={outlined} onChange={() => setOutlined(!outlined)} />
-				<label htmlFor="btnOutlined">
-					Outlined
-				</label>
-			</div>
-			<div className="form__field">
-				<input type="checkbox" id="btnRounded" checked={rounded} onChange={() => setRounded(!rounded)} />
-				<label htmlFor="btnRounded">
-					Rounded
-				</label>
-			</div>
+			<Input type="checkbox" label={`Outlined`} checked={outlined} onChange={() => setOutlined(!outlined)} />
+			{/*
+			<Input type="checkbox" label={`Rounded`} checked={rounded} onChange={() => setRounded(!rounded)} />
 				*/}
 			<Input type="checkbox" label={`Disabled`} checked={disabled} onChange={() => setDisabled(!disabled)} />
 		</Fieldset>
@@ -126,7 +119,30 @@ export default function FormTest(props) {
 		<section className="component-test">
 			<Form>
 				<Fieldset legend={`Dropdowns`} disabled={disabled ? true : undefined}>
-					<Select id={'title'} label={`Title`} value={title} onChange={(e) => {
+					<Select id="title" label={`Title`} value={title} onChange={(e) => {
+						setTitle(e.target.value)
+					}} help={`Selected: ${title}`} {...fieldProps}>
+						<option value="mr">Mr</option>
+						<option value="mrs">Mrs</option>
+						<option value="ms">Ms</option>
+						<option value="dr">Dr</option>
+						<option value="rev">Rev</option>
+						<option value="other">Other</option>
+						<optgroup label={`Another group`}>
+							<option value="lorem">Lorem</option>
+							<option value="ipsum">Ipsum</option>
+							<option value="dolor">Dolor</option>
+							<option value="sit">Sit</option>
+							<option value="amet" disabled>Amet (disabled)</option>
+						</optgroup>
+						<optgroup label={`Disabled`} disabled>
+							<option value="foo">Foo</option>
+							<option value="bar">Bar</option>
+							<option value="etc">Etc.</option>
+						</optgroup>
+					</Select>
+
+					<Select id="title2" label={`Title`} outlined value={title} onChange={(e) => {
 						setTitle(e.target.value)
 					}} help={`Selected: ${title}`} {...fieldProps}>
 						<option value="mr">Mr</option>
@@ -151,11 +167,11 @@ export default function FormTest(props) {
 				</Fieldset>
 
 				<Fieldset legend={`Date and Time`} disabled={disabled ? true : undefined}>
-					<Input type="date" label={`Select a date`} value={date} />
-					<Input type="datetime" label={`Select a date and time`} value={dateTime} />
-					<Input type="month" label={`Select a month`} value={month} />
-					<Input type="time" label={`Select a time`} value={time} />
-					<Input type="week" label={`Select a week`} value={number} />
+					<Input type="date" label={`Select a date`} value={date} {...fieldProps} />
+					<Input type="datetime" label={`Select a date and time`} value={dateTime} {...fieldProps} />
+					<Input type="month" label={`Select a month`} value={month} {...fieldProps} />
+					<Input type="time" label={`Select a time`} value={time} {...fieldProps} />
+					<Input type="week" label={`Select a week`} value={number} {...fieldProps} />
 				</Fieldset>
 
 				<Fieldset legend={`Numbers`} disabled={disabled ? true : undefined}>
@@ -187,8 +203,11 @@ export default function FormTest(props) {
 				</Fieldset>
 
 				<Fieldset legend={`Checkboxes`} disabled={disabled ? true : undefined}>
-					<Input type="check" label={`Referenced with <input>`} value={check1} />
+					<Input type="checkbox" label={`Referenced with <input>`} value={check1} />
 					<Checkbox label={`Referenced with <Checkbox>`} value={check2} />
+					<hr />
+					<Checkbox label={`Switch style (checkbox referencing "switch" prop)`} switch value={switch1} />
+					<Switch label={`Switch style (using <Switch />)`} value={switch2} />
 				</Fieldset>
 
 				<Fieldset legend={`Radio buttons`} disabled={disabled ? true : undefined}>

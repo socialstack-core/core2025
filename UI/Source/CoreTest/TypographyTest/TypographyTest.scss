@@ -1,0 +1,27 @@
+.typography-test {
+	position: relative;
+	min-height: 300px;
+	padding-right: 200px;
+	max-width: 1000px;
+
+	&__options {
+		position: absolute;
+		top: 5rem;
+		right: 1rem;
+	}
+
+	&:fullscreen {
+		background-color: var(--ui-site-bg);
+		padding-left: 2rem;
+		padding-top: 2rem;
+		padding-bottom: 2rem;
+
+		.request-fullscreen {
+			position: fixed;
+			top: 1rem;
+			right: 1rem;
+		}
+
+	}
+
+}

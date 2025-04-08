@@ -13,6 +13,7 @@ import DialogTest from './DialogTest';
 import EmbedTest from './EmbedTest';
 import FormTest from './FormTest';
 import TabSetTest from './TabSetTest';
+import TypographyTest from './TypographyTest';
 
 export default function CoreTest(props) {
 	// reference propTypes
@@ -90,7 +91,7 @@ export default function CoreTest(props) {
 					</PageRegion>
 					*/}
 					<PageRegion landmark="main" tag="main">
-						<div className="themed-panel">
+						<div className="themed-panel" style="background-color: transparent">
 							<h1>
 								SocialStack CSS Test
 							</h1>
@@ -137,6 +138,10 @@ export default function CoreTest(props) {
 							<Expander name="demo" label={`Tabset`}>
 								<TabSetTest />
 							</Expander>
+							<Expander name="demo" label={`Typography`}>
+								<TypographyTest />
+							</Expander>
+
 						</div>
 					</PageRegion>
 				</PageTemplate>
