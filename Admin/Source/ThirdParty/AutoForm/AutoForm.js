@@ -662,6 +662,8 @@ class AutoFormInternal extends React.Component {
 				}
 			}
 
+			data.currentContent = content;
+
 			data.onChange = (e) => {
 				// Input field has changed. Update the content object so any redraws are reflected.
 				var val = e.target.value;

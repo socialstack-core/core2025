@@ -252,7 +252,7 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 	}
 	
 	const getContent = () => {
-		return {key: 'developer' ,id: 1};
+		return props.currentContent || {};
 	}
 	
 	const renderEditMode = () => {
