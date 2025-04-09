@@ -71,7 +71,6 @@ class AutoFormInternal extends React.Component {
 		};
 
 		this.beforeUnload = this.beforeUnload.bind(this);
-
 	}
 
 	beforeUnload(e) {
@@ -217,13 +216,13 @@ class AutoFormInternal extends React.Component {
 
 				for (var i = 0; i < fields.length; i++) {
 					var field = fields[i];
-					var { data } = field;
+					var data = field.data ? { ...field.data } : null;
 
 					// Construct the visible canvas:
 					formCanvas.c.push({
 						t: field.module,
 						c: field.content,
-						d: field.data
+						d: data
 					});
 
 					if (!data) {
