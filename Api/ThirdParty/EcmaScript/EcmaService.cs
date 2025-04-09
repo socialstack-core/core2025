@@ -587,8 +587,6 @@ namespace Api.EcmaScript
                 return null;
             }
             
-            var crudOperations = new string[]{"List", "Load", "Create", "Update", "Delete"};
-            
             var controllerDef = new ClassDefinition() {
                 Name = entityType.Name + "Api",
                 Extends = 
@@ -631,8 +629,11 @@ namespace Api.EcmaScript
 
             foreach(var method in controller.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
             {
-                if (crudOperations.Contains(method.Name))
+                var isOverride = method.GetBaseDefinition().DeclaringType != method.DeclaringType;
+
+				if (isOverride)
                 {
+                    // Skip methods which are overriding something on the base class
                     continue;
                 }
                 if (!IsEndpoint(method))

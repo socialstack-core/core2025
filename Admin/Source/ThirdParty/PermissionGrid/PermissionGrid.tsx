@@ -1,18 +1,20 @@
 import Input from 'UI/Input';
 import Modal from 'UI/Modal';
 import permissionsApi from 'Api/Permission';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface PermissionGridProps {
 	editor: boolean;
+	defaultValue?: string;
+	value?: string;
 }
 
 /**
  * A grid of capabilities and the roles they're active on
  */
 const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (props) => {
-
-	const [role, setRoles] = useState([]);
+	const [roles, setRoles] = useState([]);
+	const [customRuleEle, setCustomRuleEle] = useState<HTMLInputElement | null>(null);
 	const [capabilities, setCapabilities] = useState([]);
 	const [filteredCapabilities, setFilteredCapabilities] = useState([]);
 	const [filter, setFilter] = useState('');
@@ -25,18 +27,24 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 	}, [props.editor, props.value, props.defaultValue]);
 
 	const load = () => {
+
 		permissionsApi.list().then(permissionInfo => {
 			
-			if(props.editor){
+			if (props.editor) {
+				var val = props.value || props.defaultValue || '';
+
 				var grants = {};
-				try{
-					grants = JSON.parse(props.value ||props.defaultValue);
-					
-					if(!grants || Array.isArray(grants)){
-						grants = {};
+
+				if (val) {
+					try {
+						grants = JSON.parse(val);
+
+						if (!grants || Array.isArray(grants)) {
+							grants = {};
+						}
+					} catch (e) {
+						console.log("Bad grant json: ", e);
 					}
-				}catch(e){
-					console.log("Bad grant json: ", e);
 				}
 
 				setGrants(grants);
@@ -44,7 +52,7 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 			
 			setRoles(permissionInfo.roles);
 			setCapabilities(permissionInfo.capabilities);
-			setFilteredCapabilities(permissionInfo.json.capabilities);
+			setFilteredCapabilities(permissionInfo.capabilities);
 		});
 	}
 
@@ -221,7 +229,8 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 		}
 		
 		var current = {
-			inherited: true
+			inherited: true,
+			value: null
 		};
 		
 		if(!capGrant){
@@ -243,7 +252,7 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 	}
 	
 	const getContent = () => {
-		return props.currentContent || {};
+		return {key: 'developer' ,id: 1};
 	}
 	
 	const renderEditMode = () => {
@@ -261,9 +270,9 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 		let noMatches = (!filteredCapabilities || filteredCapabilities.length == 0) && capabilities.length > 0;
 
 		return [
-			<Input type='hidden' inputRef={ref => {
+			<Input type='hidden' onInputRef={ref => {
 				if(ref){
-					ref.onGetValue = () => {
+					(ref as any).onGetValue = () => {
 						return JSON.stringify(grants);
 					};
 				}
@@ -357,6 +366,7 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 	const renderEditModal = () => {
 		var { grantInfo } = editingCell;
 		var content = getContent();
+
 		return <Modal title={editingCell.key + " for " + content.name} visible = {true} isExtraLarge onClose = {() => {
 			setEditingCell(null);
 		}}>
@@ -364,42 +374,43 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 				label = "Rule"
 				type = "select"
 				name = "rule" 
-				onChange = {(e) => {
+				onChange={(e) => {
 					setDropdownType(e.target.value);
 				}}
-				value={dropdownType}
 				defaultValue={dropdownType}
 			>
-				[
-					<option value = {"inherited"}>
-						Inherited
-					</option>,
-					<option value = {"never"}>
-						Always denied
-					</option>,
-					<option value = {"always"}>
-						Always granted
-					</option>,
-					<option value = {"custom"}>
-						Custom rule
-					</option>
-				]
+				<option value = {"inherited"}>
+					Inherited
+				</option>,
+				<option value = {"never"}>
+					Always denied
+				</option>,
+				<option value = {"always"}>
+					Always granted
+				</option>,
+				<option value = {"custom"}>
+					Custom rule
+				</option>
 			</Input>
-			{dropdownType == 'custom' && <Input inputRef={crRef => this.customRuleRef = crRef} defaultValue = {typeof grantInfo.value === 'string' ? grantInfo.value : ''} validate = {['Required']} label = "Custom Rule" type = "text" name = "customRule"/>}
+			{dropdownType == 'custom' && <Input onInputRef={setCustomRuleEle} defaultValue = {typeof grantInfo.value === 'string' ? grantInfo.value : ''} validate = {['Required']} label = "Custom Rule" type = "text" name = "customRule"/>}
 			<Input type="button" onClick={(e) => {
 				e.preventDefault();
-				
+
+				if (!editingCell || !grants) {
+					return;
+				}
+
 				// Apply the change to grants now.
 				var type = dropdownType;
 				
 				if(type === "inherited"){
-					delete grants[cell.key];
+					delete grants[editingCell.key];
 				}else if(type === "never"){
-					grants[cell.key] = false;
+					grants[editingCell.key] = false;
 				}else if(type === "always"){
-					grants[cell.key] = true;
+					grants[editingCell.key] = true;
 				}else if(type === "custom"){
-					grants[cell.key] = this.customRuleRef.value || "";
+					grants[editingCell.key] = customRuleEle?.value || "";
 				}
 				
 				setEditingCell(null);
