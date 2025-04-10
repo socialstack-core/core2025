@@ -222,9 +222,27 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
                 >+</button>
             </div>
             <div className='child-regions'>
-                {config.components?.map((component) => {
+                {config.components?.map((component, idx) => {
                     return (
-                        <ChildRegionEditor item={component}/>
+                        <ChildRegionEditor 
+                            deleteFunc={() => {
+                                const components: TreeComponentItem[] = [];
+
+                                config.components?.forEach(child => {
+                                    if (child === component) {
+                                        return;
+                                    }
+
+                                    components.push(child);
+                                })
+
+                                config.components = components;
+
+                                emitChange();
+                            }} 
+                            onChange={emitChange}
+                            item={component}
+                        />
                     )
                 })}
             </div>
@@ -268,7 +286,9 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
 
 type ChildRegionEditorProps = {
     item: TreeComponentItem,
-    name?: string
+    name?: string,
+    deleteFunc: () => void,
+    onChange: Function
 }
 
 const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEditorProps): React.ReactElement => {
@@ -279,6 +299,7 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
     // useStates
     const [isRenaming, setIsRenaming] = useState(false)
     const [isConfigureMode, setIsConfigureMode] = useState(false)
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
 
     // useful vars
@@ -306,9 +327,13 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                         onKeyDown={(ev: React.KeyboardEvent<HTMLInputElement>) => {
                             if (['Enter', 'Escape'].includes(ev.key)) {
                                 setIsRenaming(false)
+                                props.onChange()
                             }
                         }}
-                        onBlur={() => { setIsRenaming(false) }}
+                        onBlur={() => { 
+                            setIsRenaming(false)
+                            props.onChange() 
+                        }}
                         defaultValue={itemName}
                     />
                 : 
@@ -318,19 +343,58 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                     <>
                         <i onClick={() => setIsRenaming(true)} className='fas fa-pencil'/>
                         <i onClick={() => setIsConfigureMode(true)} className='fas fa-cog'/>
-                        <i className='fas fa-plus'/>
+                        <i onClick={() => setIsAddModalOpen(true)} className='fas fa-plus'/>
+                        <i className='fas fa-trash' onClick={() => props.deleteFunc()}/>
                     </>
                 )}
             </div>
             <div className='child-children'>
-                {item.r && Object.keys(item.r).map(key => {
+                {item.r && Object.keys(item.r).map((key, idx) => {
                     const child = item.r![key];
 
-                    return <ChildRegionEditor item={child} name={child.d.$editorLabel as string ?? key}/>
+                    return (
+                        <ChildRegionEditor 
+                            deleteFunc={() => {
+                                const newR: Record<string, TreeComponentItem> = {};
+
+                                Object.keys(item.r!).forEach(existingKey => {
+                                    if (existingKey === key) {
+                                        return;
+                                    }
+                                    newR[key] = item.r![existingKey];
+                                })
+
+                                item.r = newR;
+                                props.onChange();
+                            }} 
+                            item={child} 
+                            onChange={props.onChange}
+                            name={child.d.$editorLabel as string ?? key}
+                        />
+                    )
                 })}
 
                 {item.c && item.c.map((child) => {
-                    return <ChildRegionEditor item={child} name={child.d.$editorLabel as string ?? child.t}/>
+                    return (
+                        <ChildRegionEditor 
+                            deleteFunc={() => {
+                                const newItems: TreeComponentItem[] = [];
+
+                                item.c?.forEach(item => {
+                                    if (item === child) {
+                                        return;
+                                    }
+                                    newItems.push(item);
+                                })
+
+                                item.c = newItems;
+                                props.onChange();
+                            }} 
+                            item={child} 
+                            onChange={props.onChange}
+                            name={child.d.$editorLabel as string ?? child.t}
+                        />
+                    )
                 })}
             </div>
             {isConfigureMode && (
@@ -344,6 +408,27 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                         item={item}
                     />
                 </Modal>
+            )}
+            {isAddModalOpen && (
+                <ComponentSelector
+                    title={`Add component to ${itemName}`}
+                    onClose={() => setIsAddModalOpen(false)}
+                    onComponentSelected={(component, d) => {
+                        if (!item.c) {
+                            item.c = [];
+                        }
+                        item.c.push({
+                            t: component, 
+                            d: d ?? {},
+                            c: [],
+                            r: {} 
+                        })
+
+                        console.log({ component, d })
+                        props?.onChange && props.onChange();
+                        setIsAddModalOpen(false)
+                    }}
+                />
             )}
         </div>
     )

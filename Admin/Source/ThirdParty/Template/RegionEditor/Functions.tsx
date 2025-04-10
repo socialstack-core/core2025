@@ -44,6 +44,10 @@ export const templateConfigToCanvasJson = (config: Record<string, CoreRegionConf
                     if (!permitted.includes(child.t)) {
                         throw new Error(`You cannot use the component ${child.d.$editorLabel ?? child.t} inside ${item.propName} > ${component.d.$editorLabel ?? component.t}`)
                     }
+                    // for the case of ! not allowing a certain component
+                    if (permitted.includes("!" + child.t)) {
+                        throw new Error(`You cannot use the component ${child.d.$editorLabel ?? child.t} inside ${item.propName} > ${component.d.$editorLabel ?? component.t}`)
+                    }
                 })
             }
 
