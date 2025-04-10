@@ -52,9 +52,9 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 
     // this holds the config for all fields, when this is updated
     // the full template is updated.
-    const [fullConfig, setFullConfig] = useState<Record<string, CoreRegionConfig & Record<string, Scalar>>>({});
+    const [fullConfig, setFullConfig] = useState<Record<string, CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>>>({});
 
-    const onChange = (update: CoreRegionConfig & Record<string, Scalar>) => {
+    const onChange = (update: CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>) => {
         fullConfig[update.propName] = {...update};
 
         setFullConfig({...fullConfig});
@@ -80,12 +80,7 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
                     // keep everything the same, see below.
                     propName: field.name,
                     // sets the component name (ex. UI/Functions/SomeComponent)
-                    component: componentInfo
-                }
-
-                if (templateJson.d[field.name + 'Props']) {
-                    // props['footerProps'] = { ... }
-                    fullConfig[field.name].componentProps = templateJson.d[field.name + 'Props'] as unknown as Record<string, Scalar>
+                    components: []
                 }
                 
                 // make sure it runs the same way a normal run happens
@@ -111,8 +106,7 @@ type RegionLevelEditorProps = {
 type CoreRegionConfig = {
     enabled: boolean,
     propName: string,
-    component?: string,
-    componentProps?: Record<string, Scalar | Record<string, Scalar>>,
+    components?: TreeComponentItem[],
     isLockedByParent?: boolean
 }
 
@@ -144,9 +138,6 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
     const emitChange = () => {
 
         // get the checked status before passing to parent handler.
-        // config['enabled'] = Boolean(enabledRef?.current && enabledRef.current.checked)
-
-
         props.onChange(config);
     }
 
@@ -188,23 +179,28 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
                     setShowSelectComponentModal(true)
                 }}
             >
-                <h3>{field.name} {config.component && <span>(<i>{config.component}</i>)</span>}</h3>
+                <h3>{field.name}</h3>
                 <button  
                     type={'button'}
                 >+</button>
             </div>
             <div className='child-regions'>
-
+                {config.components?.map((component) => {
+                    return (
+                        <div className='child-region'>
+                            {`Component: ${component.t}`}
+                        </div>
+                    )
+                })}
             </div>
             {
                 showSelectComponentModal && (
                     <ComponentSelector
                         title={`Choose component for ${field.name}`}
                         onClose={() => {
-                            if (!config.component) {
+                            if (!config.components || config.components.length == 0) {
                                 config.enabled = false;
                                 config.component = undefined;
-                                config.componentProps = {}
                             }
                             emitChange();
                             setShowSelectComponentModal(false)
@@ -212,7 +208,15 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
                         onComponentSelected={(component) => {
 
                             config.enabled = true;
-                            config.component = component;
+
+                            if (!config.components) {
+                                config.components = [];
+                            }
+                            config.components.push({
+                                t: component,
+                                d: {},
+                                c: []
+                            })
 
                             emitChange();
                             setShowSelectComponentModal(false)

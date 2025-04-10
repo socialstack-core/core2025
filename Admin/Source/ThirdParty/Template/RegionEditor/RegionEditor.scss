@@ -52,6 +52,10 @@
             }
         }
 
+        .child-regions {
+            margin-top: var(--region-height)
+        }
+
         &:hover {
             
             background:#cccccc50;
