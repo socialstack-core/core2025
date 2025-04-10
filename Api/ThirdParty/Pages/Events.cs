@@ -1,3 +1,4 @@
+using Api.CanvasRenderer;
 using Api.Pages;
 using Api.Permissions;
 using System.Collections.Generic;
@@ -32,6 +33,11 @@ namespace Api.Eventing
 		/// </summary>
 		public EventHandler<UrlInfo, Microsoft.AspNetCore.Http.QueryString> BeforeParseUrl;
 
+		/// <summary>
+		/// Canvas node transformation.
+		/// </summary>
+		public EventHandler<CanvasNode> TransformCanvasNode;
+		
 		/// <summary>
 		/// During page generation.
 		/// </summary>
