@@ -10,7 +10,9 @@ import ComponentGroup from "./ComponentGroup";
 export type ComponentSelectorProps = {
     onClose?: () => void,
     title: string,
-    onComponentSelected: (componentPath:string) => void
+    onComponentSelected: (componentPath:string, componentProps?: Record<string, Scalar | Scalar[]>) => void,
+    extra?: Record<string, Record<string, Scalar | Scalar[]>>,
+    extraLabel?: string
 }
 
 const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSelectorProps): React.ReactElement => {
@@ -71,6 +73,8 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
 
     }, [components])
 
+    const { extra } = props;
+
     return (
         <Modal 
             visible={true}
@@ -87,6 +91,27 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                             onInput={(ev) => setFilter((ev.target as HTMLInputElement).value)}
                             placeholder="Filter components"
                         />
+                        {extra && (
+                            <div className='component-group'>
+                                <div className='group-head'>{props.extraLabel ?? `Other`}</div>
+                                <div className='group-content'>
+                                    {Object.keys(extra).map(componentName => {
+                                        const componentProps = extra[componentName];
+
+                                        return (
+                                            <div title={componentName} className='group-item' onClick={() => props.onComponentSelected(componentName, componentProps)}>
+                                                <i className="fa fa-puzzle-piece" />
+                                                <label>{
+                                                    componentName.includes('/') ? 
+                                                        componentName.substring(componentName.lastIndexOf('/') + 1, componentName.length) :
+                                                        componentName
+                                                }</label>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
                         {Object.keys(components).map(group => {
                             return (
                                 <ComponentGroup 

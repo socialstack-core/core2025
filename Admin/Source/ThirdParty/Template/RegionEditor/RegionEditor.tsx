@@ -12,7 +12,7 @@ export type TreeComponentItem = {
     t: string,
     // the initialising props, don't change this to "any" or "unknown", just 
     // adjoin it to the accepted V types below
-    d: Record<string, Scalar>,
+    d: Record<string, Scalar | Scalar[]>,
     // roots 
     r: Record<string, TreeComponentItem> 
 }
@@ -141,6 +141,24 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
         props.onChange(config);
     }
 
+    // this is for the meta components (i.e ones that don't physically exist)
+    // but act as things like a placeholder etc...
+    const extraComponents: Record<string, Record<string, Scalar | Scalar[]>> = {
+        'Admin/Template/Slot': {
+            // the name is editable, so we start with untitled slot
+            $editorLabel: 'Untitled Slot',
+            // creates this value by default,
+            // this is just a marker that its not a real component.
+            $isMeta: true,
+            // start off with it being optional, can always enforce it when ready
+            optional: true,
+            // whether the slot can hold multiple child components
+            multipleAllowed: false,
+            // what components are permitted?
+            permitted: []
+        }
+    }
+
     return (
         <div className='region'>
             <div className='enablement'>
@@ -187,7 +205,7 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
             <div className='child-regions'>
                 {config.components?.map((component) => {
                     return (
-                        <ChildRegionEditor name={component.d.$editorLabel as string ?? component.t} item={component}/>
+                        <ChildRegionEditor item={component}/>
                     )
                 })}
             </div>
@@ -203,7 +221,9 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
                             emitChange();
                             setShowSelectComponentModal(false)
                         }}
-                        onComponentSelected={(component) => {
+                        extra={extraComponents}
+                        extraLabel={`Structure`}
+                        onComponentSelected={(component, props) => {
 
                             config.enabled = true;
 
@@ -212,7 +232,7 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
                             }
                             config.components.push({
                                 t: component,
-                                d: {},
+                                d: props ?? {},
                                 r: {}
                             })
 
@@ -229,14 +249,14 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
 
 type ChildRegionEditorProps = {
     item: TreeComponentItem,
-    name: string
+    name?: string
 }
 
 const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEditorProps): React.ReactElement => {
     
     const { item } = props;
 
-    const itemName: string = item.d.$editorLabel as string ?? item.t.substring(item.t.lastIndexOf('/') + 1, item.t.length);
+    const itemName: string = props.name ?? item.d.$editorLabel as string ?? item.t.substring(item.t.lastIndexOf('/') + 1, item.t.length);
 
     const [isRenaming, setIsRenaming] = useState(false)
 
