@@ -44,6 +44,7 @@ namespace Api.Templates
 		/// 2 = email
 		/// 3 = pdf (add as necessary)
 		/// </summary>
+		[Module("Admin/Template/TemplateTypeSelector")]
 		public uint TemplateType = 1;
 		
 		/// <summary>

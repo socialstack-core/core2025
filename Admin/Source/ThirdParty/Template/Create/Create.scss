@@ -1,0 +1,21 @@
+
+
+.admin {
+    .template-create {
+        .row {
+            justify-content: center;
+
+
+            label {
+                color:#000;
+            }
+        }
+        .section-container {
+            display: none;
+
+            &.active {
+                display: block;
+            }
+        }
+    }
+}

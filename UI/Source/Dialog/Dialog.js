@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import Header from './Header';
 import Body from './Body';
 import Footer from './Footer';
-import { getSizeClasses } from 'UI/Functions/Components';
+// import { getSizeClasses } from 'UI/Functions/Components';
 
 export default function Dialog(props) {
 	const {

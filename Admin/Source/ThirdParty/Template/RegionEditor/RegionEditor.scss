@@ -1,0 +1,65 @@
+
+.region-editor {
+
+    --region-height: 60px;
+
+    .region {
+        position: relative;
+        width: 100%;
+        min-height: var(--region-height);
+        border:1px solid #00000020;
+        margin-bottom:1px;
+
+
+        .enablement {
+            position: absolute;
+            top:0px;
+            left:0px;
+            width:calc(var(--region-height) - 2px);
+            height:calc(var(--region-height) - 2px);
+
+            input {
+                position: absolute;
+                top:calc(50% - 6.5px);
+                left:calc(50% - 6.5px);
+            }
+        }
+
+        .main-info {
+            position: absolute;
+            top:0px;
+            left:var(--region-height);
+            right:0px;
+            height:var(--region-height);
+
+            h3 {
+                margin:0px;
+                line-height: var(--region-height);
+                height:var(--region-height);
+                font-size:17px;
+                width: fit-content;
+                display: inline-block;
+                min-width:25%;
+            }
+            button {
+                color:#000;
+                background:#ccc;
+                border:1px solid #aaa;
+                margin-left:10px;
+                border-radius:4px;
+                cursor: pointer;
+                display: none;
+            }
+        }
+
+        &:hover {
+            
+            background:#cccccc50;
+
+            button {
+                display: inline;
+            }
+        }
+    }
+
+}

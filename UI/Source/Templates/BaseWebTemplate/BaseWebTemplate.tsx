@@ -6,17 +6,19 @@ interface SidebarTemplateProps {
     sidebarSide?: 'left' | 'right'
 }
 
-export default (props : SidebarTemplateProps) => {
+const BaseWebTemplate: React.FC = (props : SidebarTemplateProps) => {
 
      return (
           <div id="wrapper">
                {props.header && <header>{props.header}</header>}
                <div id="content">
-                    {props.sidebar && props.sidebarSide == 'left' && <aside>{props.sidebar}</aside>}
                     {props.body && <main>{props.body}</main>}
-                    {props.sidebar && props.sidebarSide == 'right' && <aside>{props.sidebar}</aside>}
                </div>
                {props.footer && <footer>{props.footer}</footer>}
           </div>
      )
 };
+
+// BaseWebTemplate.propTypes = {}
+
+export default BaseWebTemplate;
