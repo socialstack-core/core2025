@@ -77,8 +77,26 @@
                     line-height: 40px;
                     margin: 0px;
                     text-indent:12.5px;
+                    width: fit-content;
+                    display: inline-block;
+                    margin-right:20px;
                 }
-                
+
+                i {
+                    cursor: pointer;
+                    display: inline-block;
+                    height:40px;
+                    line-height: 40px;
+                    width:40px;
+                    text-align: center;
+                    position: relative;
+                    top:1px;
+
+                    &:hover {
+                        border:1px solid #aaa;
+                        background: #dedede;
+                    }
+                }
                 .main > input {
                     background: transparent;
                     height:40px;
@@ -87,6 +105,7 @@
                     background: #00000010;
                     border:0px;
                     outline:0px;
+                    width: 100%;
                 }
 
             }

@@ -1,8 +1,11 @@
 import { CodeModuleTypeField, TemplateModule } from "Admin/Functions/GetPropTypes";
+import ComponentPropEditor from "Admin/Template/ComponentPropEditor";
 import ComponentSelector from "Admin/Template/ComponentSelector";
 import { Template } from "Api/Template";
 import { createRef, useState } from "react";
 import Alert from "UI/Alert";
+import Modal from "UI/Modal";
+import { templateConfigToCanvasJson } from "./Functions";
 
 
 export type Scalar = string | number | boolean | null | undefined;
@@ -62,6 +65,8 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 
         setFullConfig({...fullConfig});
 
+        console.log(templateConfigToCanvasJson(fullConfig, currentLayout))
+
         console.log(fullConfig)
     }
 
@@ -106,7 +111,7 @@ type RegionLevelEditorProps = {
     onChange: (config: CoreRegionConfig & Record<string, Scalar>) => void
 }
 
-type CoreRegionConfig = {
+export type CoreRegionConfig = {
     enabled: boolean,
     propName: string,
     components?: TreeComponentItem[],
@@ -238,7 +243,7 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
                             config.components.push({
                                 t: component,
                                 d: props ?? {},
-                                r: {}
+                                c: []
                             })
 
                             emitChange();
@@ -259,11 +264,24 @@ type ChildRegionEditorProps = {
 
 const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEditorProps): React.ReactElement => {
     
+    // destructuring
     const { item } = props;
 
-    const itemName: string = props.name ?? item.d.$editorLabel as string ?? item.t.substring(item.t.lastIndexOf('/') + 1, item.t.length);
-
+    // useStates
     const [isRenaming, setIsRenaming] = useState(false)
+    const [isConfigureMode, setIsConfigureMode] = useState(false)
+
+
+    // useful vars
+    const itemName: string = (
+        props.name ?? 
+        item.d.$editorLabel as string ?? 
+        (
+            item.t.includes('/') ? 
+                item.t.substring(item.t.lastIndexOf('/') + 1, item.t.length) : 
+                item.t
+        )
+    );
 
     return (
         <div className='child-section'>
@@ -277,7 +295,7 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                             item.d.$editorLabel = target.value.length == 0 ? `Untitled-Component` : target.value.replaceAll(" ", "-");
                         }}
                         onKeyDown={(ev: React.KeyboardEvent<HTMLInputElement>) => {
-                            if (ev.key === 'Enter') {
+                            if (['Enter', 'Escape'].includes(ev.key)) {
                                 setIsRenaming(false)
                             }
                         }}
@@ -287,18 +305,37 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                 : 
                     <h4 onClick={(e) => e.detail == 2 && setIsRenaming(true) }>{itemName}</h4>
                 }
+                {!isRenaming && (
+                    <>
+                        <i onClick={() => setIsRenaming(true)} className='fas fa-pencil'/>
+                        <i onClick={() => setIsConfigureMode(true)} className='fas fa-cog'/>
+                        <i className='fas fa-plus'/>
+                    </>
+                )}
             </div>
             <div className='child-children'>
                 {item.r && Object.keys(item.r).map(key => {
                     const child = item.r![key];
 
-                    return <ChildRegionEditor item={child} name={key}/>
+                    return <ChildRegionEditor item={child} name={child.d.$editorLabel as string ?? key}/>
                 })}
 
                 {item.c && item.c.map((child) => {
                     return <ChildRegionEditor item={child} name={child.d.$editorLabel as string ?? child.t}/>
                 })}
             </div>
+            {isConfigureMode && (
+                <Modal
+                    visible={true}
+                    title={`Configuration for ${itemName}`}
+                    onClose={() => setIsConfigureMode(false)}
+                    noFooter
+                >
+                    <ComponentPropEditor
+                        item={item}
+                    />
+                </Modal>
+            )}
         </div>
     )
 }
