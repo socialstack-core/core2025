@@ -46,6 +46,8 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     // make sure we can find the props:MyProps type first, if we can't show an error
     const layoutProps = types.find(type => type.instanceName?.includes('Props') && type.name == 'interface');
 
+    const [error, setError] = useState<string | undefined>();
+
     if (!layoutProps) {
         return (
             <Alert type='error'>{`Invalid template: Cannot find a props type in this template`}</Alert>
@@ -65,7 +67,15 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 
         setFullConfig({...fullConfig});
 
-        console.log(templateConfigToCanvasJson(fullConfig, currentLayout))
+        // now to valid any rules 
+        try
+        {
+            templateConfigToCanvasJson(fullConfig, currentLayout)
+        }
+        catch(e)
+        {
+            setError((e as Error).message);
+        }
 
         console.log(fullConfig)
     }
@@ -77,9 +87,6 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 
         fields?.forEach(field => {
             if (templateJson.d[field.name]) {
-
-                // props['footer'] = UI/Blocks/Footer
-                const componentInfo = templateJson.d[field.name] as string;
 
                 fullConfig[field.name] = {
                     // this is set to true due to the fact templateJson.d[field.name] exists, if it isn't used
@@ -99,7 +106,8 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 
     return (
         <div className='region-editor'>
-            {fields?.map(field => field.fieldType.instanceName === 'React.ReactNode' && <RegionLevelEditor config={fullConfig[field.name]} onChange={onChange} field={field} />)}
+            {error && <Alert variant='danger'>{error}</Alert>}
+            {fields?.map(field => field.fieldType.instanceName === 'React.ReactNode' && <RegionLevelEditor setError={setError} config={fullConfig[field.name]} onChange={onChange} field={field} />)}
         </div>
     )
 
@@ -108,7 +116,8 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 type RegionLevelEditorProps = {
     field: CodeModuleTypeField,
     config: CoreRegionConfig & Record<string, any>, 
-    onChange: (config: CoreRegionConfig & Record<string, Scalar>) => void
+    onChange: (config: CoreRegionConfig & Record<string, Scalar>) => void,
+    setError: Function
 }
 
 export type CoreRegionConfig = {
