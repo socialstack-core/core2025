@@ -20,7 +20,14 @@ interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
 	/*
 	* True if you want to hide this container.
 	*/
-	hidden?: boolean
+	hidden?: boolean,
+
+	/**
+	 * Due to children not being exported as
+	 * a property need to manually add it to
+	 * support the children property.
+	 */
+	children?: React.ReactNode | undefined
 }
 
 /**

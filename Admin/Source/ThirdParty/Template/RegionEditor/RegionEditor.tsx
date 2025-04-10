@@ -2,10 +2,10 @@ import { CodeModuleTypeField, TemplateModule } from "Admin/Functions/GetPropType
 import ComponentPropEditor from "Admin/Template/ComponentPropEditor";
 import ComponentSelector from "Admin/Template/ComponentSelector";
 import { Template } from "Api/Template";
-import { createRef, useState } from "react";
+import { createRef, useEffect, useState } from "react";
 import Alert from "UI/Alert";
 import Modal from "UI/Modal";
-import { templateConfigToCanvasJson } from "./Functions";
+import { canAddChildren, templateConfigToCanvasJson } from "./Functions";
 
 
 export type Scalar = string | number | boolean | null | undefined;
@@ -63,6 +63,8 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     const [fullConfig, setFullConfig] = useState<Record<string, CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>>>({});
 
     const onChange = (update: CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>) => {
+        
+        setError(undefined);
         fullConfig[update.propName] = {...update};
 
         setFullConfig({...fullConfig});
@@ -301,6 +303,8 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
     const [isConfigureMode, setIsConfigureMode] = useState(false)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+    const [canHaveChildren, setCanHaveChildren] = useState<boolean>();
+
 
     // useful vars
     const itemName: string = (
@@ -312,6 +316,16 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                 item.t
         )
     );
+    
+    useEffect(() => {
+        canAddChildren(item.t)
+            .then(result => {
+                setCanHaveChildren(result)
+            })
+            .catch((err) => {
+                console.error(err);
+            })
+    }, [canHaveChildren])
 
     return (
         <div className='child-section'>
@@ -343,8 +357,10 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                     <>
                         <i onClick={() => setIsRenaming(true)} className='fas fa-pencil'/>
                         <i onClick={() => setIsConfigureMode(true)} className='fas fa-cog'/>
-                        <i onClick={() => setIsAddModalOpen(true)} className='fas fa-plus'/>
-                        <i className='fas fa-trash' onClick={() => props.deleteFunc()}/>
+                        {canHaveChildren && <i onClick={() => setIsAddModalOpen(true)} className='fas fa-plus'/>}
+                        <i className='fas fa-trash' onClick={() => {
+                            props.deleteFunc()
+                        }}/>
                     </>
                 )}
             </div>
@@ -401,7 +417,10 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                 <Modal
                     visible={true}
                     title={`Configuration for ${itemName}`}
-                    onClose={() => setIsConfigureMode(false)}
+                    onClose={() => {
+                        setIsConfigureMode(false)
+                        props.onChange();
+                    }}
                     noFooter
                 >
                     <ComponentPropEditor
@@ -424,8 +443,7 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                             r: {} 
                         })
 
-                        console.log({ component, d })
-                        props?.onChange && props.onChange();
+                        props.onChange();
                         setIsAddModalOpen(false)
                     }}
                 />
