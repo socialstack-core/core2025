@@ -397,13 +397,13 @@ namespace Api.CanvasRenderer
         private Uri _bundleUri = new Uri("file://bundle.js");
         private Uri _rendererUri = new Uri("file://renderer.js");
 
-        /// <summary>
-        /// Gets the script engine for the given locale by its locale.
-        /// Also see GetEngineSearch
-        /// </summary>
-        /// <param name="localeId">The locale in use.</param>
-        /// <returns></returns>
-        private async ValueTask<V8ScriptEngine> GetEngine(uint localeId)
+		/// <summary>
+		/// Gets the script engine for the given locale by its locale.
+		/// Also see GetEngineSearch
+		/// </summary>
+		/// <param name="localeId">The locale in use.</param>
+		/// <returns></returns>
+		private async ValueTask<V8ScriptEngine> GetEngine(uint localeId)
         {
             if (_engines != null && _engines.Length >= localeId && _engines[localeId - 1] != null)
             {

@@ -542,7 +542,7 @@ public partial class AutoService<T, ID> : AutoService
 							strSet.Add(strVal);
 						}
 
-						filter.BindUnknown(strSet as IEnumerable<string>);
+						filter.Bind(strSet as IEnumerable<string>);
 					}
 					else
 					{
@@ -563,7 +563,7 @@ public partial class AutoService<T, ID> : AutoService
 							idSet.Add(id);
 						}
 
-						filter.BindUnknown(idSet as IEnumerable<uint>);
+						filter.Bind(idSet as IEnumerable<uint>);
 					}
 				}
 				else
@@ -680,7 +680,93 @@ public partial class AutoService<T, ID> : AutoService
 
 		return filter;
 	}
-	
+
+	/// <summary>
+	/// Loads a filter from the given newtonsoft representation. You must .Release() this filter when you're done with it.
+	/// </summary>
+	/// <param name="filterConfig"></param>
+	/// <returns></returns>
+	public override FilterBase LoadFilter(ListFilter filterConfig)
+	{
+		string str = (filterConfig == null || filterConfig.Query == null) ? "" : filterConfig.Query;
+
+		// Get the filter base:
+		var filter = GetFilterFor(str, DataOptions.Default, false);
+
+		if (filterConfig == null)
+		{
+			return filter;
+		}
+
+		var argTypes = filter.GetArgTypes();
+
+		if (argTypes != null && argTypes.Count > 0)
+		{
+			var argSet = filterConfig.Args;
+			if (argSet == null)
+			{
+				throw new PublicException(
+					"Your filter has arguments (?) in it, but no args were given, or the args were not an array. Please provide an array of args.",
+					"filter_invalid"
+				);
+			}
+
+			if (argSet.Count != argTypes.Count)
+			{
+				throw new PublicException(
+					"Not enough arguments were given. Your filter has " + argTypes.Count + " but the given args array only has " + argSet.Count,
+					"filter_invalid"
+				);
+			}
+
+			for (var i = 0; i < argSet.Count; i++)
+			{
+				var arg = argSet[i];
+				filter.Bind(arg);
+			}
+		}
+
+		// Handle universal pagination:
+		var pageSize = filterConfig.PageSize;
+		var pageIndex = filterConfig.PageIndex;
+
+		if (pageSize != 0)
+		{
+			filter.SetPage(pageIndex, pageSize);
+		}
+		else if (pageIndex != 0)
+		{
+			// Default page size used
+			filter.SetPage(pageIndex);
+		}
+
+		if (filterConfig.IncludeTotal.HasValue)
+		{
+			filter.IncludeTotal = filterConfig.IncludeTotal.Value;
+		}
+
+		if (filterConfig.Sort.HasValue)
+		{
+			var sort = filterConfig.Sort.Value;
+			var field = sort.Field;
+			var dir = sort.Direction;
+			
+			if (field != null)
+			{
+				if (dir != null && dir == "desc")
+				{
+					filter.Sort(field, false);
+				}
+				else
+				{
+					filter.Sort(field, true);
+				}
+			}
+		}
+
+		return filter;
+	}
+
 	/// <summary>
 	/// Gets a fast filter for the given query text. 
 	/// You should ensure the query text is constant and that you use binded args on the filter instead of baking values into a string.
@@ -1711,6 +1797,16 @@ public partial class AutoService
 	/// <param name="newtonsoft"></param>
 	/// <returns></returns>
 	public virtual FilterBase LoadFilter(JObject newtonsoft)
+	{
+		return null;
+	}
+
+	/// <summary>
+	/// Loads a filter from the given filterConfig. You must .Release() this filter when you're done with it.
+	/// </summary>
+	/// <param name="filterConfig"></param>
+	/// <returns></returns>
+	public virtual FilterBase LoadFilter(ListFilter filterConfig)
 	{
 		return null;
 	}

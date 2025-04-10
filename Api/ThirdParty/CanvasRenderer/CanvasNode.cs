@@ -1,8 +1,13 @@
-﻿using Api.SocketServerLibrary;
+﻿using Api.Contexts;
+using Api.Eventing;
+using Api.SocketServerLibrary;
+using Api.Templates;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 
 namespace Api.CanvasRenderer
@@ -20,6 +25,16 @@ namespace Api.CanvasRenderer
 		{
 			Module = module;
 		}
+
+		/// <summary>
+		/// The canvas that the node is a part of.
+		/// </summary>
+		public CanvasDetails Canvas;
+
+		/// <summary>
+		/// The source node. Usually an object.
+		/// </summary>
+		public JToken Source;
 
 		/// <summary>
 		/// A graph if there is one.
@@ -64,6 +79,267 @@ namespace Api.CanvasRenderer
 		/// Set if this is a text node.
 		/// </summary>
 		public string StringContent;
+
+		/// <summary>
+		/// Get or create a datamap entry for a field in a graph node.
+		/// </summary>
+		/// <param name="node"></param>
+		/// <param name="outputField"></param>
+		/// <param name="dataMap"></param>
+		/// <returns></returns>
+		public static CanvasGeneratorMapEntry GetDataMapEntry(Executor node, string outputField, List<CanvasGeneratorMapEntry> dataMap)
+		{
+			for (var i = 0; i < dataMap.Count; i++)
+			{
+				var existing = dataMap[i];
+				if (existing.GraphNode == node && existing.Field == outputField)
+				{
+					return existing;
+				}
+			}
+
+			var cgm = new CanvasGeneratorMapEntry();
+			cgm.GraphNode = node;
+			cgm.Field = outputField;
+			dataMap.Add(cgm);
+			cgm.Id = (uint)dataMap.Count; // ID must be non-zero so we use index+1.
+			node.AddDataMapOutput(cgm);
+			return cgm;
+		}
+
+		/// <summary>
+		/// Loads a node from the given newtonsoft object.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="node"></param>
+		/// <param name="canvas"></param>
+		/// <returns></returns>
+		/// <exception cref="NotSupportedException"></exception>
+		public static async ValueTask<CanvasNode> LoadCanvasNode(
+			Context context, 
+			JToken node,
+			CanvasDetails canvas
+		) {
+			if (node == null)
+			{
+				return null;
+			}
+
+			var result = new CanvasNode();
+			result.Canvas = canvas;
+			result.Source = node;
+
+			if (node.Type == JTokenType.String)
+			{
+				result.StringContent = node.Value<string>();
+				return result;
+			}
+
+			if (node.Type == JTokenType.Array)
+			{
+				throw new NotSupportedException("Canvas with arrays are now only supported if the array is set as a content (c) value.");
+			}
+
+			// Here we only care about:
+			// - t(ype)
+			// - d(ata)
+			// - s(trings)
+			// - g(raphs)
+			// - r(oots)
+			// - c(ontent)
+
+			// Type
+			var type = node["t"];
+
+			if (type != null)
+			{
+				result.Module = type.Value<string>();
+			}
+
+			// Data
+			var data = node["d"] as JObject;
+
+			if (data != null)
+			{
+				foreach (var kvp in data)
+				{
+					if (result.Data == null)
+					{
+						result.Data = new Dictionary<string, string>();
+					}
+
+					string val;
+
+					if (kvp.Value.Type == JTokenType.Null)
+					{
+						val = null;
+					}
+					else if (kvp.Value.Type == JTokenType.Boolean)
+					{
+						val = kvp.Value.Value<bool>() ? "true" : "false";
+					}
+					else if (kvp.Value.Type == JTokenType.String)
+					{
+						val = kvp.Value.Value<string>();
+					}
+					else
+					{
+						val = kvp.Value.ToString();
+					}
+
+					result.Data[kvp.Key] = val;
+				}
+			}
+
+			// Strings
+			var str = node["s"];
+
+			if (str != null)
+			{
+				result.StringContent = str.Value<string>();
+			}
+
+			// Graphs
+			var graphData = node["g"];
+
+			if (graphData != null)
+			{
+				if (canvas == null || canvas.GraphNodeLoader == null)
+				{
+					throw new Exception("Discovered a graph in a canvas that does not support them. This is typically because a graph is present in something like a template canvas.");
+				}
+
+				// Found a graph. Load it using the canvas-wide graph node loader.
+				var graph = new Graph(graphData, canvas.GraphNodeLoader);
+
+				// If the root node is a component then this canvas node morphs in to that component.
+				var comp = graph.Root as Component;
+				if (comp != null)
+				{
+					// Inline it now.
+					foreach (var kvp in comp.ConstantData)
+					{
+						if (kvp.Key == "componentType")
+						{
+							result.Module = kvp.Value.ToString();
+						}
+						else
+						{
+							if (result.Data == null)
+							{
+								result.Data = new Dictionary<string, string>();
+							}
+
+							string val;
+
+							if (kvp.Value.Type == JTokenType.Null)
+							{
+								val = null;
+							}
+							else if (kvp.Value.Type == JTokenType.Boolean)
+							{
+								val = kvp.Value.Value<bool>() ? "true" : "false";
+							}
+							else if (kvp.Value.Type == JTokenType.String)
+							{
+								val = kvp.Value.Value<string>();
+							}
+							else
+							{
+								val = kvp.Value.ToString();
+							}
+
+							result.Data[kvp.Key] = val;
+						}
+					}
+
+					// Each link (non-constant data) becomes a datamap pointer.
+					foreach (var kvp in comp.Links)
+					{
+						if (result.Pointers == null)
+						{
+							result.Pointers = new Dictionary<string, uint>();
+						}
+
+						if (canvas == null || canvas.DataMap == null)
+						{
+							throw new Exception("Non-constant data links are in use but not supported by this canvas. " +
+								"This is usually because they are present in e.g. templates.");
+						}
+
+						var cdm = GetDataMapEntry(kvp.Value.SourceNode.AddedAs, kvp.Value.Field, canvas.DataMap);
+						result.Pointers[kvp.Key] = cdm.Id;
+					}
+				}
+				else
+				{
+					result.Graph = graph;
+				}
+			}
+
+			// Roots
+			var roots = node["r"] as JObject;
+
+			if (roots != null)
+			{
+				foreach (var kvp in roots)
+				{
+					if (result.Roots == null)
+					{
+						result.Roots = new Dictionary<string, CanvasNode>();
+					}
+
+					result.Roots[kvp.Key] = await LoadCanvasNode(context, kvp.Value, canvas);
+				}
+			}
+
+			// Content
+			var content = node["c"];
+
+			if (content != null)
+			{
+				// Content can be: an array an object or a string.
+				var array = content as JArray;
+
+				if (array != null)
+				{
+					for (var i = 0; i < array.Count; i++)
+					{
+						if (result.Content == null)
+						{
+							result.Content = new List<CanvasNode>();
+						}
+
+						var child = await LoadCanvasNode(context, array[i], canvas);
+
+						if (child != null)
+						{
+							result.Content.Add(child);
+						}
+					}
+				}
+				else
+				{
+					// Either a string or object.
+					var child = await LoadCanvasNode(context, content, canvas);
+
+					if (result.Content == null)
+					{
+						result.Content = new List<CanvasNode>();
+					}
+
+					if (child != null)
+					{
+						result.Content.Add(child);
+					}
+				}
+			}
+
+			// Modules may want to transform this node (such as templates)
+			result = await Events.Page.TransformCanvasNode.Dispatch(context, result);
+
+			return result;
+		}
 
 		/// <summary>
 		/// Converts canvas to JSON.
@@ -185,7 +461,7 @@ namespace Api.CanvasRenderer
 					else
 					{
 						writer.Write((byte)':');
-						writer.WriteS(kvp.Value);
+						writer.WriteEscaped(kvp.Value);
 					}
 					
 				}
@@ -283,9 +559,25 @@ namespace Api.CanvasRenderer
 			{
 				Data = new Dictionary<string, string>();
 			}
-			Data[attrib] = value == null ? null : Newtonsoft.Json.JsonConvert.SerializeObject(value, jsonSettings);
+			Data[attrib] = value == null ? null : value.ToString();
 			return this;
 		}
 
+	}
+	
+	/// <summary>
+	/// Details for the canvas being loaded, if any.
+	/// </summary>
+	public partial class CanvasDetails
+	{
+		/// <summary>
+		/// A graph node loader if one is present.
+		/// </summary>
+		public NodeLoader GraphNodeLoader;
+
+		/// <summary>
+		/// The data map if one is present.
+		/// </summary>
+		public List<CanvasGeneratorMapEntry> DataMap;
 	}
 }
