@@ -60,7 +60,7 @@ export interface CodeModuleTypeField {
     /**
      * True if field is optional.
      */
-    isOptional: boolean;
+    optional: boolean;
 
     /**
      * The type of this field.
@@ -263,7 +263,11 @@ let _cache : TypeMeta | null = null;
  * Loads the prop type data. Generally call this once when e.g. the canvas editor starts up.
  * @returns
  */
-export const getAll = () => loadCache();
+const getAll = () => loadCache();
+
+export {
+    getAll
+}
 
 /**
  * Gets the prop types for a named component from the given cache set, which you get once from waiting for getAll.
@@ -278,3 +282,32 @@ export const getPropTypes = (name: string, cache: TypeMeta): Record<string, Prop
 
     return module.propTypes;
 };
+
+export type TemplateModule = {
+    name:string,
+    types: CodeModuleMeta
+}
+
+export const getTemplates = async (): Promise<TemplateModule[]> => {
+    return new Promise((res, rej) => {
+        
+        getAll().then((result) => {
+
+            const { codeModules } = result;
+
+            const resolution: TemplateModule[] = [];
+
+            Object.keys(codeModules)
+                    .filter(key => key.startsWith('UI/Templates'))
+                    .forEach(key => {
+                        resolution.push({
+                            name: key,
+                            types: codeModules[key]
+                        })
+                    })
+            res(resolution)
+        })
+        .catch(rej)
+
+    })
+} 
