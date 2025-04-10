@@ -1,5 +1,6 @@
 ﻿using Api.Contexts;
 using Api.Permissions;
+using Api.Startup;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -22,7 +23,7 @@ namespace Api.NavMenus
 		/// <param name="includes"></param>
 		/// <returns></returns>
 		[HttpPost("list")]
-		public override async ValueTask List([FromBody] JObject filters, [FromQuery] string includes = null)
+		public override async ValueTask List([FromBody] ListFilter filters, [FromQuery] string includes = null)
 		{
 			var service = _service as AdminNavMenuItemService;
 			var context = await Request.GetContext();

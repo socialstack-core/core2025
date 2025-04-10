@@ -318,24 +318,6 @@ namespace Api.Permissions
 		}
 
 		/// <summary>
-		/// Binds the current arg using the given textual representation.
-		/// </summary>
-		/// <param name="str"></param>
-		public virtual FilterBase BindUnknown(string str)
-		{
-			return this;
-		}
-
-		/// <summary>
-		/// Binds the current arg using the given textual representation.
-		/// </summary>
-		/// <param name="enumerable"></param>
-		public virtual FilterBase BindUnknown(object enumerable)
-		{
-			return this;
-		}
-
-		/// <summary>
 		/// Gets the set of argument types for this filter. Can be null if there are none.
 		/// </summary>
 		/// <returns></returns>
@@ -828,24 +810,6 @@ namespace Api.Permissions
 			argInfo.ConstructedField.SetValue(this, v);
 			_arg++;
 			return this;
-		}
-
-		/// <summary>
-		/// Binds the current arg using the given textual representation.
-		/// </summary>
-		/// <param name="enumerable"></param>
-		public override FilterBase BindUnknown(object enumerable)
-		{
-			return Bind(enumerable);
-		}
-		
-		/// <summary>
-		/// Binds the current arg using the given textual representation.
-		/// </summary>
-		/// <param name="str"></param>
-		public override FilterBase BindUnknown(string str)
-		{
-			return BindFromString(str);
 		}
 
 		/// <summary>

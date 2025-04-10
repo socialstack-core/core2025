@@ -216,7 +216,7 @@ public partial class AutoController<T,ID> : ControllerBase
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("list")]
-	public virtual async ValueTask List([FromQuery] string includes = null)
+	public virtual async ValueTask ListAll([FromQuery] string includes = null)
 	{
 		await List(null, includes);
 	}
@@ -228,7 +228,7 @@ public partial class AutoController<T,ID> : ControllerBase
 	/// </summary>
 	/// <returns></returns>
 	[HttpPost("list")]
-	public virtual async ValueTask List([FromBody] JObject filters, [FromQuery] string includes = null)
+	public virtual async ValueTask List([FromBody] ListFilter filters, [FromQuery] string includes = null)
 	{
 		var context = await Request.GetContext();
 
