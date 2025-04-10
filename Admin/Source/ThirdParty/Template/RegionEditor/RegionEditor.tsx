@@ -13,8 +13,8 @@ export type TreeComponentItem = {
     // the initialising props, don't change this to "any" or "unknown", just 
     // adjoin it to the accepted V types below
     d: Record<string, Scalar>,
-    // children in here.
-    c: TreeComponentItem[]
+    // roots 
+    r: Record<string, TreeComponentItem> 
 }
 
 export type RegionEditorProps = {
@@ -187,7 +187,7 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
             <div className='child-regions'>
                 {config.components?.map((component) => {
                     return (
-                        <ChildRegionEditor item={component}/>
+                        <ChildRegionEditor name={component.d.$editorLabel as string ?? component.t} item={component}/>
                     )
                 })}
             </div>
@@ -213,7 +213,7 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
                             config.components.push({
                                 t: component,
                                 d: {},
-                                c: []
+                                r: {}
                             })
 
                             emitChange();
@@ -228,7 +228,8 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
 }
 
 type ChildRegionEditorProps = {
-    item: TreeComponentItem
+    item: TreeComponentItem,
+    name: string
 }
 
 const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEditorProps): React.ReactElement => {
@@ -263,7 +264,11 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                 }
             </div>
             <div className='child-children'>
-                {item.c.map(child => <ChildRegionEditor item={child} />)}
+                {Object.keys(item.r).map(key => {
+                    const child = item.r[key];
+
+                    return <ChildRegionEditor item={child} name={key}/>
+                })}
             </div>
         </div>
     )

@@ -68,7 +68,7 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                             setTemplateJson({
                                 t: chosenLayout.name,
                                 d,
-                                c: []
+                                r: {}
                             })
                        })
                        .catch((err) => {
@@ -90,8 +90,6 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
         // needs better handling
         return <p>Loading</p>
     }
-
-    console.log(chosenLayout)
 
     return (
         <div className='template-config'>
