@@ -95,7 +95,7 @@ export default function Dialog(props) {
 	}
 	*/
 
-	componentClasses = componentClasses.concat(getSizeClasses(COMPONENT_PREFIX, props));
+	// componentClasses = componentClasses.concat(getSizeClasses(COMPONENT_PREFIX, props));
 
 	/*
 	if (outline || outlined) {

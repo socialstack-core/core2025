@@ -31,7 +31,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 		noSelection, className, defaultValue, value,
 		displayField, contentTypeValue, onDisplay, filter, ...attribs } = field;
 
-	const onSelectChange = (e : React.FormEvent<HTMLSelectElement>) => {
+	const onSelectChange = (e: React.FormEvent<HTMLSelectElement>) => {
 		setSelectValue((e.target as HTMLSelectElement).value);
 		onChange && onChange(e as React.ChangeEvent<HTMLSelectElement>);
 	};
@@ -81,6 +81,12 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 				(e as any).content = content;
 				onSelectChange(e);
 			}}
+			onChange={e => {
+				const select = e.target as HTMLSelectElement;
+				var content = options && (options as any)[select.selectedIndex - 1];
+				(e as any).content = content;
+				onSelectChange(e);
+			}}
 			value={selectDefaultValue}
 			className={selectClass}
 			{...attribs}
@@ -108,6 +114,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			onInput={onSelectChange}
 			value={selectDefaultValue}
 			className={selectClass}
+			onChange={onSelectChange}
 			{...attribs}
 		>
 			{children}

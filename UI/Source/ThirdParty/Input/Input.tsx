@@ -229,6 +229,9 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 			Handler = inputTypes['text'] as React.FC<CustomInputTypeProps<T>>;
 		}
 
+		field.onChange = onChangeWithVal;
+		field.onBlur = onBlurWithVal;
+
 		return <Handler
 			validationFailure={validationFailure}
 			helpFieldId={helpFieldId}
@@ -238,8 +241,6 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 			field={field}
 			inputRef={inputRef}
 			onInputRef={setRef}
-			onBlur={onBlurWithVal}
-			onChange={onChangeWithVal}
 		/>;
 	}
 
