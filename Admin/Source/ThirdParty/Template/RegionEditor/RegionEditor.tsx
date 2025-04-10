@@ -235,11 +235,33 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
     
     const { item } = props;
 
+    const itemName: string = item.d.$editorLabel as string ?? item.t.substring(item.t.lastIndexOf('/') + 1, item.t.length);
+
+    const [isRenaming, setIsRenaming] = useState(false)
+
     return (
         <div className='child-section'>
             
-            <h4>{item.t.substring(item.t.lastIndexOf('/') + 1, item.t.length)}</h4>
-
+            <div className='main'>
+                {isRenaming ? 
+                    <input 
+                        type='text' 
+                        onInput={(ev) => {
+                            const target: HTMLInputElement = ev.target as HTMLInputElement;
+                            item.d.$editorLabel = target.value;
+                        }}
+                        onKeyDown={(ev: React.KeyboardEvent<HTMLInputElement>) => {
+                            if (ev.key === 'Enter') {
+                                setIsRenaming(false)
+                            }
+                        }}
+                        onBlur={() => { setIsRenaming(false) }}
+                        defaultValue={itemName}
+                    />
+                : 
+                    <h4 onClick={(e) => e.detail == 2 && setIsRenaming(true) }>{itemName}</h4>
+                }
+            </div>
             <div className='child-children'>
                 {item.c.map(child => <ChildRegionEditor item={child} />)}
             </div>

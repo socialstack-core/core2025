@@ -9,7 +9,8 @@
         min-height: var(--region-height);
         border:1px solid #00000020;
         margin-bottom:1px;
-
+        background:transparent;
+        transition: background 0.1s linear;
 
         .enablement {
             position: absolute;
@@ -53,7 +54,42 @@
         }
 
         .child-regions {
-            margin-top: var(--region-height)
+            margin-top: var(--region-height);
+
+            .child-section {
+                position: relative;
+                margin-left:var(--region-height);
+                width: calc(100% - var(--region-height));
+                border:1px solid transparent;
+                min-height: 40px;
+                border-radius: 4px;
+                transition: background 0.1s linear, border 0.1s linear;
+
+                &:hover {
+                    border:1px solid #aaa;
+                    background: #dedede;
+                }
+
+                h4 {
+                    font-size:15px;
+                    font-weight: 600;
+                    height:40px;
+                    line-height: 40px;
+                    margin: 0px;
+                    text-indent:12.5px;
+                }
+                
+                .main > input {
+                    background: transparent;
+                    height:40px;
+                    line-height: 40px;
+                    text-indent: 12.5px;
+                    background: #00000010;
+                    border:0px;
+                    outline:0px;
+                }
+
+            }
         }
 
         &:hover {
