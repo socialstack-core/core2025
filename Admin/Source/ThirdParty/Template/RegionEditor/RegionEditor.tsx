@@ -13,8 +13,11 @@ export type TreeComponentItem = {
     // the initialising props, don't change this to "any" or "unknown", just 
     // adjoin it to the accepted V types below
     d: Record<string, Scalar | Scalar[]>,
-    // roots 
-    r: Record<string, TreeComponentItem> 
+    // roots, these are different to children, these tell the canvas
+    // when a prop is a React Component to render the component 
+    r?: Record<string, TreeComponentItem>,
+    // these are children that exist within non-root components.
+    c?: TreeComponentItem[]
 }
 
 export type RegionEditorProps = {
@@ -146,7 +149,9 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
     const extraComponents: Record<string, Record<string, Scalar | Scalar[]>> = {
         'Admin/Template/Slot': {
             // the name is editable, so we start with untitled slot
-            $editorLabel: 'Untitled Slot',
+            // $editorLabel is purely a UX feature, it allows areas to 
+            // be effectively named as to remind a user what its purpose is.
+            $editorLabel: 'Untitled-Slot',
             // creates this value by default,
             // this is just a marker that its not a real component.
             $isMeta: true,
@@ -269,7 +274,7 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                         type='text' 
                         onInput={(ev) => {
                             const target: HTMLInputElement = ev.target as HTMLInputElement;
-                            item.d.$editorLabel = target.value;
+                            item.d.$editorLabel = target.value.length == 0 ? `Untitled-Component` : target.value.replaceAll(" ", "-");
                         }}
                         onKeyDown={(ev: React.KeyboardEvent<HTMLInputElement>) => {
                             if (ev.key === 'Enter') {
@@ -284,10 +289,14 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                 }
             </div>
             <div className='child-children'>
-                {Object.keys(item.r).map(key => {
-                    const child = item.r[key];
+                {item.r && Object.keys(item.r).map(key => {
+                    const child = item.r![key];
 
                     return <ChildRegionEditor item={child} name={key}/>
+                })}
+
+                {item.c && item.c.map((child) => {
+                    return <ChildRegionEditor item={child} name={child.d.$editorLabel as string ?? child.t}/>
                 })}
             </div>
         </div>
