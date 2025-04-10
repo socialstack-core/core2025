@@ -187,9 +187,7 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
             <div className='child-regions'>
                 {config.components?.map((component) => {
                     return (
-                        <div className='child-region'>
-                            {`Component: ${component.t}`}
-                        </div>
+                        <ChildRegionEditor item={component}/>
                     )
                 })}
             </div>
@@ -227,6 +225,26 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
         </div>
     )
 
+}
+
+type ChildRegionEditorProps = {
+    item: TreeComponentItem
+}
+
+const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEditorProps): React.ReactElement => {
+    
+    const { item } = props;
+
+    return (
+        <div className='child-section'>
+            
+            <h4>{item.t.substring(item.t.lastIndexOf('/') + 1, item.t.length)}</h4>
+
+            <div className='child-children'>
+                {item.c.map(child => <ChildRegionEditor item={child} />)}
+            </div>
+        </div>
+    )
 }
 
 export default RegionEditor;
