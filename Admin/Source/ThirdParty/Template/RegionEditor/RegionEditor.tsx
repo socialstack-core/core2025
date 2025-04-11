@@ -89,29 +89,34 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
         console.log(fullConfig)
     }
 
-    if (currentTemplate) {
-        // fill the config with values based on the current template. 
-        // we know the templates share the same baseTemplate so 
-        // we can pull in the existing templates information
+    // this only fires when the "inherits" field is changed. 
+    useEffect(() => {
 
-        fields?.forEach(field => {
-            if (templateJson.d[field.name]) {
+        const json: TreeComponentItem = JSON.parse(currentTemplate?.bodyJson ?? '{}') ?? {};
 
-                fullConfig[field.name] = {
-                    // this is set to true due to the fact templateJson.d[field.name] exists, if it isn't used
-                    // it remains empty.
-                    enabled: true,
-                    // keep everything the same, see below.
-                    propName: field.name,
-                    // sets the component name (ex. UI/Functions/SomeComponent)
-                    components: []
-                }
-                
-                // make sure it runs the same way a normal run happens
-                onChange(fullConfig[field.name])
+        if (json.d) {
+            // sets the initial config
+            setTemplateConfig(json.d as Record<string, Scalar>);
+
+            if (json.r) {
+                Object.keys(json.r).forEach((componentKeyName: string) => {
+
+                    const cfg = json.r![componentKeyName]
+
+                    console.log({cfg, fullConfig})
+
+                    fullConfig[componentKeyName] = {
+                        enabled: true,
+                        propName: componentKeyName,
+                        components: cfg.c,
+                        isLockedByParent: Boolean(cfg.d.$isLocked),
+                        $isLocked: Boolean(cfg.d.$isLocked) 
+                    }
+                });
             }
-        })
-    }
+        }
+
+    }, [currentTemplate])
 
     return (
         <div className='region-editor'>
@@ -218,7 +223,9 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
             // whether the slot can hold multiple child components
             multipleAllowed: false,
             // what components are permitted?
-            permitted: []
+            permitted: [],
+            // not locked by default
+            $isLocked: false,
         }
     }
 

@@ -94,8 +94,6 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
         return <p>Loading</p>
     }
 
-    console.log({ renderedJson })
-
     return (
         <div className='template-config'>
             <Input
@@ -119,7 +117,7 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                     name='templateParent'
                     label={`Inherits`}
                     onInput={(ev) => {
-                        setChosenTemplate(possibleTemplates?.find(template => template.title === ((ev.target as HTMLSelectElement).value)))
+                        setChosenTemplate(possibleTemplates?.find(template => template.id === parseInt((ev.target as HTMLSelectElement).value)))
                     }}
                 >
                     <option value={0}>{`None (Blank)`}</option>

@@ -19,7 +19,9 @@ export const templateConfigToCanvasJson = (config: Record<string, CoreRegionConf
         // can be easily filtered out by the collapse function
         tree.r![item.propName] = {
             t: 'Admin/Template/Wrapper',
-            d: {},
+            d: {
+                $isLocked: Boolean(item.isLockedByParent || item.$isLocked)
+            },
             c: []
         }
 
