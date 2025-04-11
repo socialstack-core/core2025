@@ -1,7 +1,10 @@
 import { CodeModuleMeta, getAll } from "Admin/Functions/GetPropTypes";
-import { TreeComponentItem } from "Admin/Template/RegionEditor"
+import { Scalar, TreeComponentItem } from "Admin/Template/RegionEditor"
 import { useEffect, useState } from "react";
 import Input from "UI/Input";
+import { getPropsForComponent } from "../RegionEditor/Functions";
+import Alert from "UI/Alert";
+import PropInput from "./PropInputMap";
 
 export type ComponentPropEditorProps = {
     item: TreeComponentItem
@@ -97,9 +100,32 @@ export type PhysicalComponentProps = ComponentPropEditorProps & {
 
 const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: PhysicalComponentProps): React.ReactElement => {
 
+    const { tsInfo, item } = props;
+
+    const fields = getPropsForComponent(tsInfo);
+
+    console.log(fields)
+
+    if (!fields) {
+        return <Alert variant="danger">{`There was an issue reading this component`}</Alert>
+    }
+
     return (
         <div className='component-prop-editor'>
-
+            {fields.map(field => {
+                if (field.name === 'children') {
+                    return;
+                }
+                return (
+                    <PropInput
+                        type={field}
+                        onInput={(value: Scalar) => {
+                            item.d[field.name] = value;
+                        }}
+                        value={item.d[field.name] as Scalar}
+                    />
+                )
+            })}
         </div>
     )
 }

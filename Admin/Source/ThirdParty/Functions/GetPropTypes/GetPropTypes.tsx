@@ -46,6 +46,14 @@ export interface CodeModuleType {
      * If this type extends other types, the set of those types.
      */
     extends?: CodeModuleType[];
+
+    types?: UnionType[]
+}
+
+export type UnionType = {
+    name: string, 
+    builtIn: boolean,
+    value: string
 }
 
 /**

@@ -22,6 +22,8 @@ interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
 		Set this to true if you don't want gutters on your row.
 	*/
 	noGutters?: boolean;
+
+	children?: React.ReactNode | null
 }
 
 /**

@@ -1,4 +1,4 @@
-import { CodeModuleType, getAll, TemplateModule } from "Admin/Functions/GetPropTypes";
+import { CodeModuleMeta, CodeModuleType, getAll, TemplateModule } from "Admin/Functions/GetPropTypes";
 import { CoreRegionConfig, Scalar, TreeComponentItem } from "./RegionEditor";
 
 
@@ -101,7 +101,7 @@ export const canAddChildren = (componentName:string): Promise<boolean> => {
                 const { detail } = defExport?.detail!;
 
                 const childrenEnabledPropTypes: string[] = [
-                    "PropsWithChildren", 
+                    "React.PropsWithChildren", 
                     // add more here.
                 ]
 
@@ -123,3 +123,46 @@ export const canAddChildren = (componentName:string): Promise<boolean> => {
         })
     })
 }
+
+export const getPropsForComponent = (type: CodeModuleMeta) => {
+    
+    const propTypes = type.types.find(type => type.instanceName === 'default');
+
+    if (!propTypes) {
+        // fallback on another way, for now, return null.
+        return null;
+    }
+
+    // check for generic parameters
+    if (!propTypes.detail?.detail?.genericParameters && propTypes.detail?.detail?.genericParameters?.length != 0) {
+        return null;
+    }
+
+    // since the generic parameters exist, we grab the first generic parameter
+    // but we need to make sure its of type React.FC
+    if (propTypes.detail.detail.instanceName != "React.FC") {
+        return null;
+    }
+
+    // we're fairly certain we've got a match here
+    let ifaceName = propTypes.detail?.detail?.genericParameters[0].instanceName;
+
+    // just incase we dont, cheeky null check.
+    if (!ifaceName) {
+        return null;
+    }
+
+    if (ifaceName == 'React.PropsWithChildren') {
+        ifaceName = propTypes.detail?.detail?.genericParameters![0].genericParameters![0].instanceName;
+    }
+
+    const iface = type.types.find(type => type.name === 'interface' && type.instanceName === ifaceName);
+
+    // do a null check, there is a possibility the type lives elsewhere outside the script
+    // this does need to be handled in future
+    if (!iface) {
+        return null;
+    }
+
+    return iface.fields;
+} 

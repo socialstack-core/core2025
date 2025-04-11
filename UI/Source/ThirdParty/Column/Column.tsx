@@ -35,6 +35,8 @@ interface ColumnProps extends React.HTMLAttributes<HTMLDivElement> {
 	*/
 	noGutters?: boolean;
 
+	children?: React.ReactNode | null
+
 }
 
 /**
