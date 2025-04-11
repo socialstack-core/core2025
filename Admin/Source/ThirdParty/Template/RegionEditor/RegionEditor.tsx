@@ -31,6 +31,16 @@ export type RegionEditorProps = {
     onChange?: (newTree: TreeComponentItem) => void
 }
 
+const assignParentLock = (child: TreeComponentItem) => {
+    if (child.d.$isLocked) {
+        child.d.isLockedByParent = true;
+    }
+
+    child.c?.forEach(subChild => {
+        assignParentLock(subChild);
+    })
+}
+
 /*
 * When choosing ReactNode props, this should re-create the whole tree but only
 * affect the changed item, lets say a user changes a header element, anything else
@@ -103,8 +113,6 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 
                     const cfg = json.r![componentKeyName]
 
-                    console.log({cfg, fullConfig})
-
                     fullConfig[componentKeyName] = {
                         enabled: true,
                         propName: componentKeyName,
@@ -112,9 +120,17 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
                         isLockedByParent: Boolean(cfg.d.$isLocked),
                         $isLocked: Boolean(cfg.d.$isLocked) 
                     }
+
+                    cfg.c?.forEach((child) => {
+                        assignParentLock(child)
+                    })
                 });
             }
         }
+
+        json.c?.forEach((child: TreeComponentItem) => {
+            assignParentLock(child);
+        })
 
     }, [currentTemplate])
 
@@ -264,22 +280,33 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
             <div 
                 className='main-info'
                 onClick={() => {
+
+                    if (config.isLockedByParent) {
+                        return;
+                    }
                     setShowSelectComponentModal(true)
                 }}
             >
                 <h3>{field.name} {config.$isLocked && <i className='lock-status'>(locked)</i>}</h3>
-                <button  
-                    type={'button'}
-                >+</button>
-                <button 
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                {!config.isLockedByParent && (
+                    <button  
+                        type={'button'}
+                    >+</button>
+                )}
+                
+                {!config.isLockedByParent && (
+                    <button 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
 
-                        config.$isLocked = !config.$isLocked;
-                        emitChange();
-                    }}
-                ><i className={'fas fa-lock' + (!config.$isLocked ? '-open' : '')}/></button>
+                            config.$isLocked = !config.$isLocked;
+                            emitChange();
+                        }}
+                    >
+                        <i className={'fas fa-lock' + (!config.$isLocked ? '-open' : '')}/>
+                    </button>
+                )}
             </div>
             <div className='child-regions'>
                 {config.components?.map((component, idx) => {
@@ -409,9 +436,17 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                         defaultValue={itemName}
                     />
                 : 
-                    <h4 onClick={(e) => e.detail == 2 && setIsRenaming(true) }>{itemName} {item.d.$isLocked && <i className='lock-status'>(locked)</i>}</h4>
+                    <h4 onClick={(e) => {
+                        e.detail == 2 && !item.d.isLockedByParent && setIsRenaming(true) 
+                    }}>
+                        {itemName} 
+                        {
+                            item.d.$isLocked && 
+                            <i className='lock-status'>(locked)</i>
+                        }
+                    </h4>
                 }
-                {!isRenaming && (
+                {!isRenaming && !item.d.isLockedByParent && (
                     <>
                         <i onClick={() => setIsRenaming(true)} className='fas fa-pencil'/>
                         <i onClick={() => setIsConfigureMode(true)} className='fas fa-cog'/>
