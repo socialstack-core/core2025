@@ -156,6 +156,10 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
     // the parent component will then pass the new config back to here where it will render accordingly.
     const emitChange = () => {
 
+        if (!config.components) {
+            config.components = []
+        }
+
         // get the checked status before passing to parent handler.
         props.onChange(config);
     }
@@ -218,10 +222,19 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
                     setShowSelectComponentModal(true)
                 }}
             >
-                <h3>{field.name}</h3>
+                <h3>{field.name} {config.$isLocked && <i className='lock-status'>(locked)</i>}</h3>
                 <button  
                     type={'button'}
                 >+</button>
+                <button 
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        config.$isLocked = !config.$isLocked;
+                        emitChange();
+                    }}
+                ><i className={'fas fa-lock' + (!config.$isLocked ? '-open' : '')}/></button>
             </div>
             <div className='child-regions'>
                 {config.components?.map((component, idx) => {
@@ -351,7 +364,7 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                         defaultValue={itemName}
                     />
                 : 
-                    <h4 onClick={(e) => e.detail == 2 && setIsRenaming(true) }>{itemName}</h4>
+                    <h4 onClick={(e) => e.detail == 2 && setIsRenaming(true) }>{itemName} {item.d.$isLocked && <i className='lock-status'>(locked)</i>}</h4>
                 }
                 {!isRenaming && (
                     <>
@@ -361,6 +374,13 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                         <i className='fas fa-trash' onClick={() => {
                             props.deleteFunc()
                         }}/>
+                        <i
+                            onClick={() => {
+                                item.d.$isLocked = !item.d.$isLocked;
+                                props.onChange();
+                            }} 
+                            className={'fas fa-lock' + (!item.d.$isLocked ? '-open' : '')}
+                        />
                     </>
                 )}
             </div>

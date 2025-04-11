@@ -51,6 +51,10 @@
                 cursor: pointer;
                 display: none;
             }
+            .lock-status {
+                color:#aaa;
+                font-size:14px;
+            }
         }
 
         .child-regions {
@@ -80,6 +84,14 @@
                     width: fit-content;
                     display: inline-block;
                     margin-right:20px;
+
+                    
+                    .lock-status {
+                        color:#aaa;
+                        font-size:14px;
+                        position: relative;
+                        left:-5px;
+                    }
                 }
 
                 i {
