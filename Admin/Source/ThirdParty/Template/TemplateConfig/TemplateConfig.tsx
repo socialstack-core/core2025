@@ -27,6 +27,9 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
     // this value.
     const [templateJson, setTemplateJson] = useState<TreeComponentItem | null>();
 
+    // holds the generated renderedJson
+    const [renderedJson, setRenderedJson] = useState<TreeComponentItem | null>();
+
 
     // load in templates if they aren't loaded in, runs once.
     useEffect(() => {
@@ -91,6 +94,8 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
         return <p>Loading</p>
     }
 
+    console.log({ renderedJson })
+
     return (
         <div className='template-config'>
             <Input
@@ -125,6 +130,7 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                     })}
                 </Input>
             }
+            <input type='hidden' name='bodyJson' value={JSON.stringify(renderedJson)}/>
             {chosenLayout && templateJson && 
                 <div className='component-config'>
                     <h4>Regions</h4>
@@ -132,19 +138,10 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                         templateJson={templateJson}
                         currentLayout={chosenLayout}
                         currentTemplate={chosenTemplate ?? undefined}
+                        onChange={(newTree: TreeComponentItem) => {
+                            setRenderedJson(newTree)
+                        }}
                     />
-                </div>
-            }
-            {chosenLayout && 
-                <div className='configurable-items'>
-                    <h3>Configuration</h3>
-                    {(chosenLayout as any).types.types[0].fields.map((layoutConfig: CodeModuleTypeField) => {
-                        if (['React.ReactNode', 'React.ReactElement'].includes(layoutConfig?.fieldType?.instanceName!))
-                        {
-                            return;
-                        }
-                        return <h3>{layoutConfig.name}</h3>
-                    })}
                 </div>
             }
         </div>

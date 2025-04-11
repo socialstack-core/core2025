@@ -6,6 +6,7 @@ import { createRef, useEffect, useState } from "react";
 import Alert from "UI/Alert";
 import Modal from "UI/Modal";
 import { canAddChildren, templateConfigToCanvasJson } from "./Functions";
+import PropInput from "../ComponentPropEditor/PropInputMap";
 
 
 export type Scalar = string | number | boolean | null | undefined;
@@ -46,6 +47,8 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     // make sure we can find the props:MyProps type first, if we can't show an error
     const layoutProps = types.find(type => type.instanceName?.includes('Props') && type.name == 'interface');
 
+    // this exists purely for the template root component
+    const [templateConfig, setTemplateConfig] = useState<Record<string, Scalar>>({});
     const [error, setError] = useState<string | undefined>();
 
     if (!layoutProps) {
@@ -53,6 +56,7 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
             <Alert type='error'>{`Invalid template: Cannot find a props type in this template`}</Alert>
         )
     }
+
 
     // get the fields, from here we iterate over them
     // and then these directly reflect on the template
@@ -72,7 +76,10 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
         // now to valid any rules 
         try
         {
-            templateConfigToCanvasJson(fullConfig, currentLayout)
+            const convertedJson = templateConfigToCanvasJson(fullConfig, currentLayout)
+            Object.assign(convertedJson.d, templateConfig);
+
+            props.onChange && props.onChange(convertedJson)
         }
         catch(e)
         {
@@ -110,6 +117,37 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
         <div className='region-editor'>
             {error && <Alert variant='danger'>{error}</Alert>}
             {fields?.map(field => field.fieldType.instanceName === 'React.ReactNode' && <RegionLevelEditor setError={setError} config={fullConfig[field.name]} onChange={onChange} field={field} />)}
+
+            {currentLayout && templateJson && 
+                <div className='template-component-configuration'>
+                    <h4>Configuration</h4>
+                    <div className='configurable-items'>
+                        {(currentLayout as any).types.types[0].fields.map((layoutConfig: CodeModuleTypeField) => {
+                            if (['React.ReactNode', 'React.ReactElement'].includes(layoutConfig?.fieldType?.instanceName!))
+                            {
+                                return;
+                            }
+
+                            return (
+                                <PropInput
+                                    type={layoutConfig}
+                                    onInput={(value: Scalar) => {
+                                        templateConfig[layoutConfig.name] = value;
+                                        
+                                        setTemplateConfig({...templateConfig})
+
+                                        const convertedJson = templateConfigToCanvasJson(fullConfig, currentLayout)
+                                        Object.assign(convertedJson.d, templateConfig);
+
+                                        props.onChange && props.onChange(convertedJson)
+                                    }}
+                                    value={templateConfig[layoutConfig.name] as string}
+                                />
+                            )
+                        })}
+                    </div>
+                </div>
+            }
         </div>
     )
 

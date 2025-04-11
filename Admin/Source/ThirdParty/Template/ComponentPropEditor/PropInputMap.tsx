@@ -33,6 +33,7 @@ const PropInput: React.FC<PropInputProps> = (props:PropInputProps): React.ReactE
                     help={(props.type.optional ? ' (optional)' : undefined)}
                     label={props.type.name}
                 >
+                    <option value={''}>{`Please choose an option`}</option>
                     {props.type.fieldType.types?.map((value: UnionType) => {
                         return (
                             <option value={value.value}>{value.value}</option>
@@ -52,6 +53,7 @@ const PropInput: React.FC<PropInputProps> = (props:PropInputProps): React.ReactE
                     help={(props.type.optional ? ' (optional)' : undefined)}
                     label={props.type.name}
                 >
+                    <option value={'false'}>{`Choose Yes or No`}</option>
                     <option value={"false"}>{`No`}</option>
                     <option value={"true"}>{`Yes`}</option>
                 </Input>
