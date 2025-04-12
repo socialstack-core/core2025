@@ -18,6 +18,7 @@ namespace Api.Templates
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
 	[CustomCreatePage("Admin/Template/Create")]
+	[CustomEditPage("Admin/Template/Edit")]
 	public partial class TemplateService : AutoService<Template>
     {
 		/// <summary>

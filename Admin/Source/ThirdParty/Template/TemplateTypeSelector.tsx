@@ -2,7 +2,8 @@ import Input from 'UI/Input'
 
 type TemplateTypeSelectorProps = {
     name: string,
-    label: string
+    label: string,
+    selected?: number
 }
 
 const TemplateTypeSelector: React.FC<TemplateTypeSelectorProps> = (props: TemplateTypeSelectorProps): React.ReactNode => (
@@ -11,10 +12,10 @@ const TemplateTypeSelector: React.FC<TemplateTypeSelectorProps> = (props: Templa
             name={props.name}
             label={props.label}
         >
-            <option value={0}>{`Choose ${props.label}`}</option>
-            <option value={1}>Web</option>
-            <option value={2}>Email</option>
-            <option value={3}>PDF</option>
+            <option selected={props.selected === 0} value={0}>{`Choose ${props.label}`}</option>
+            <option selected={props.selected == 1} value={1}>Web</option>
+            <option selected={props.selected == 2} value={2}>Email</option>
+            <option selected={props.selected == 3} value={3}>PDF</option>
         </Input>
 )
 

@@ -29,17 +29,20 @@ export type RegionEditorProps = {
     currentTemplate?: Template,
     currentLayout: TemplateModule,
     onChange?: (newTree: TreeComponentItem) => void,
+    existing?: Template
 }
 
-const assignParentLock = (child: TreeComponentItem) => {
-    if (child.d.$isLocked) {
-        child.d.isLockedByParent = true;
+const assignParentLock = (child: TreeComponentItem, isExisting: boolean = false) => {
+    
+    if (!isExisting) {
+        if (child.d.$isLocked) {
+            child.d.isLockedByParent = true;
+        }
+
+        child.d.isFromParent = true;
     }
-
-    child.d.isFromParent = true;
-
     child.c?.forEach(subChild => {
-        assignParentLock(subChild);
+        assignParentLock(subChild, isExisting);
     })
 }
 
@@ -119,12 +122,12 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
                         enabled: true,
                         propName: componentKeyName,
                         components: cfg.c,
-                        isLockedByParent: Boolean(cfg.d.$isLocked),
+                        isLockedByParent: !props.existing && Boolean(cfg.d.$isLocked),
                         $isLocked: Boolean(cfg.d.$isLocked) 
                     }
 
                     cfg.c?.forEach((child) => {
-                        assignParentLock(child)
+                        assignParentLock(child, Boolean(props.existing))
                     })
                 });
             }
@@ -137,7 +140,7 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     }, [currentTemplate])
 
     const configFields = (currentLayout as any).types.types[0].fields?.filter((field:CodeModuleTypeField) => !['React.ReactNode', 'React.ReactElement'].includes(field?.fieldType?.instanceName!))
-    
+
     return (
         <div className='region-editor'>
             {error && <Alert variant='danger'>{error}</Alert>}

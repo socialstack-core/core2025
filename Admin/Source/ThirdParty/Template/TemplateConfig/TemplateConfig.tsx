@@ -5,14 +5,17 @@ import { ApiList } from "UI/Functions/WebRequest";
 import Input from "UI/Input";
 import RegionEditor, { Scalar, TreeComponentItem } from "Admin/Template/RegionEditor";
 
+export type TemplateConfigProps = {
+    existing?: Template
+}
 
-const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
+const TemplateConfig: React.FC<TemplateConfigProps> = (props: TemplateConfigProps): React.ReactElement => {
 
     // holds the base templates/layouts from the filesystem
     const [layoutTemplates, setLayoutTemplates] = useState<TemplateModule[] | null>(null);
     
     // the chosen layout, used to query templates that share the same layout.
-    const [chosenLayout, setChosen] = useState<TemplateModule | null>()
+    const [chosenLayout, setChosenLayout] = useState<TemplateModule | null>()
 
     // when a filesystem layout is chosen, this then populates this with a list of templates
     // will be empty until templates are actually created.
@@ -36,6 +39,10 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
 
         if (!layoutTemplates) {
             getTemplates().then(templates => setLayoutTemplates(templates))
+        } 
+        if (props.existing) {
+            // if we're loading an existing one in, mind aswell pass this in :P
+            setChosenLayout(layoutTemplates?.find(tpl => tpl.name === props.existing?.baseTemplate))
         }
 
     }, [layoutTemplates])
@@ -83,10 +90,20 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
     }, [chosenLayout]);
 
     useEffect(() => {
+
+        if (props.existing) {
+            // this actually allows it to load in its existing values
+            setChosenTemplate(possibleTemplates?.find(tpl => tpl.id === props.existing?.id))
+        }
+            
+    }, [possibleTemplates])
+
+    useEffect(() => {
         // when the update occurs, set the template JSON
         // when a user chooses a different template, it then in turns
         // updates this.
         setTemplateJson(JSON.parse(chosenTemplate?.bodyJson ?? '{}') ?? {})
+
     }, [chosenTemplate])
 
     if (!layoutTemplates || (chosenLayout && !possibleTemplates)) {
@@ -96,12 +113,12 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
 
     return (
         <div className='template-config'>
-            <Input
+            {!props.existing && <Input
                 type='select'
                 name='baseTemplate'
                 label={'Choose base layout'}
                 onInput={(ev) => {
-                    setChosen(layoutTemplates.find(template => template.name === (ev.target as HTMLSelectElement).value))
+                    setChosenLayout(layoutTemplates.find(template => template.name === (ev.target as HTMLSelectElement).value))
                     setChosenTemplate({ id: 0 } as Template)
                 }}
             >
@@ -111,8 +128,8 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                         <option selected={template.name == chosenLayout?.name} value={template.name}>{template.name.replace("UI/Templates/", "")}</option>
                     )
                 })}
-            </Input>
-            {chosenLayout && 
+            </Input>}
+            {chosenLayout && !props.existing && 
                 <Input
                     type='select'
                     name='templateParent'
@@ -138,6 +155,7 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                         templateJson={templateJson}
                         currentLayout={chosenLayout}
                         currentTemplate={chosenTemplate ?? undefined}
+                        existing={props.existing}
                         onChange={(newTree: TreeComponentItem) => {
                             setRenderedJson(newTree)
                         }}
