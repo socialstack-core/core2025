@@ -65,6 +65,11 @@ export const validateTemplate = (template: Template, onError?: Function): Promis
             })
         }
 
+        if (template.id) {
+            // skips the first time validation on templates
+            return resolve(template);
+        }
+
         if (!template.bodyJson || template.bodyJson.length == 0) {
             return reject({
                 type: 'validation', 

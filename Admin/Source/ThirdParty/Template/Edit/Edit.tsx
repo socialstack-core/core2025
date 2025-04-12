@@ -9,7 +9,7 @@ const showError = () => {
 
 const EditTemplate: React.FC = (props: any): React.ReactNode => {
 
-    const pathItems = location.pathname.split('/')
+    const pathItems = location.pathname.replaceAll("//", "/").split('/')
     const targetIdx = pathItems.indexOf('template');
 
     if (targetIdx < 0 || !pathItems[targetIdx + 1]) {

@@ -7,6 +7,7 @@ import Default from "Admin/Layouts/Default";
 import { useState, useEffect } from "react";
 import Form from "UI/Form";
 import { validateTemplate } from "../Functions";
+import Alert from "UI/Alert";
 
 export type TemplateEditorProps = {
     formAction: (template: Template) => Promise<Template>,
@@ -40,6 +41,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProp
                 defaultValue={props.existing?.key}
             />
             <TemplateTypeSelector selected={props.existing?.templateType} name='templateType' label={`Template type`}/>
+            {props.existing && <input type='hidden' name='baseTemplate' value={props.existing.baseTemplate}/>}
     
         </div> , 
         // template config
@@ -48,6 +50,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProp
 
 
     const [currentSection, setSection] = useState(0)
+    const [successMessage, setSuccessMessage] = useState<string>()
 
     useEffect(() => {
         if (currentSection < 0) {
@@ -69,6 +72,16 @@ const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProp
                         <Form
                             action={props.formAction}
                             onValues={(template: Template) => {
+
+                                if (props.existing) {
+                                    const { existing } = props;
+
+                                    // this can happen if there arent any changes to the regions. 
+                                    if (!template.bodyJson || template.bodyJson.length == 0) {
+                                        template.bodyJson = existing.bodyJson;
+                                    }
+                                }
+
                                 return validateTemplate(template, (errorInfo: Record<string, Scalar>) => {
                                     const { field } = errorInfo;
 
@@ -83,8 +96,16 @@ const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProp
                                     }
                                 })
                             }}
+                            onSuccess={(response: Template) => {
+                                if (!props.existing) {
+                                    location.href = '/en-admin/template/' + response.id
+                                } else {
+                                    setSuccessMessage(`Successfully saved template ${response.title}`)
+                                }
+                            }}
                         >
                             {props.existing && <input type='hidden' name='id' value={props.existing.id}/>}
+                            {successMessage && <Alert variant="success">{successMessage}</Alert>}
                             {formSections.map((section, idx) => {
                                 return (
                                     <div className={'section-container' + (idx === currentSection ? ' active' : '')}>
