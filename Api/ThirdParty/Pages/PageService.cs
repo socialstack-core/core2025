@@ -801,7 +801,7 @@ namespace Api.Pages
 				}
 				else
 				{
-					await Update(context, editPage, (ctx, original, update) => {
+					await Update(context, editPage, (ctx, update, original) => {
 						update.BodyJson = $@"{{
 							""c"": {{
 								""t"": ""{editPageAttribute.Component}""
@@ -837,7 +837,7 @@ namespace Api.Pages
 				}
 				else 
 				{
-					await Update(context, listPage, (ctx, original, update) => {
+					await Update(context, listPage, (ctx, update, original) => {
 						update.BodyJson = $@"{{
 							""c"": {{
 								""t"": ""{listPageAttribute.Component}""
