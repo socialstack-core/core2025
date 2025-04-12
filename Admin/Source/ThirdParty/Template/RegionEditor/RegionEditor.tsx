@@ -137,9 +137,7 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     }, [currentTemplate])
 
     const configFields = (currentLayout as any).types.types[0].fields?.filter((field:CodeModuleTypeField) => !['React.ReactNode', 'React.ReactElement'].includes(field?.fieldType?.instanceName!))
-
-    console.log(configFields)
-
+    
     return (
         <div className='region-editor'>
             {error && <Alert variant='danger'>{error}</Alert>}
