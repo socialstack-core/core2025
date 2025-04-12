@@ -102,6 +102,7 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                 label={'Choose base layout'}
                 onInput={(ev) => {
                     setChosen(layoutTemplates.find(template => template.name === (ev.target as HTMLSelectElement).value))
+                    setChosenTemplate({ id: 0 } as Template)
                 }}
             >
                 <option value={''}>{`Choose base layout`}</option>
@@ -116,6 +117,7 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                     type='select'
                     name='templateParent'
                     label={`Inherits`}
+                    key={chosenTemplate?.id}
                     onInput={(ev) => {
                         setChosenTemplate(possibleTemplates?.find(template => template.id === parseInt((ev.target as HTMLSelectElement).value)))
                     }}
@@ -139,6 +141,7 @@ const TemplateConfig: React.FC = (props: {}): React.ReactElement => {
                         onChange={(newTree: TreeComponentItem) => {
                             setRenderedJson(newTree)
                         }}
+                        key={chosenLayout.name + ":" + chosenTemplate?.id}
                     />
                 </div>
             }

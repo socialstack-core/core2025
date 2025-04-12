@@ -28,13 +28,15 @@ export type RegionEditorProps = {
     templateJson: TreeComponentItem,
     currentTemplate?: Template,
     currentLayout: TemplateModule,
-    onChange?: (newTree: TreeComponentItem) => void
+    onChange?: (newTree: TreeComponentItem) => void,
 }
 
 const assignParentLock = (child: TreeComponentItem) => {
     if (child.d.$isLocked) {
         child.d.isLockedByParent = true;
     }
+
+    child.d.isFromParent = true;
 
     child.c?.forEach(subChild => {
         assignParentLock(subChild);
@@ -55,7 +57,7 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     const { types } = currentLayout.types;
 
     // make sure we can find the props:MyProps type first, if we can't show an error
-    const layoutProps = types.find(type => type.instanceName?.includes('Props') && type.name == 'interface');
+    const layoutProps = types.find(type => type.instanceName?.includes('Props') && (type.name == 'interface' || type.name === 'type' || type.name === 'union'));
 
     // this exists purely for the template root component
     const [templateConfig, setTemplateConfig] = useState<Record<string, Scalar>>({});
@@ -63,7 +65,7 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 
     if (!layoutProps) {
         return (
-            <Alert type='error'>{`Invalid template: Cannot find a props type in this template`}</Alert>
+            <Alert type='error'>{`Invalid template: Cannot find a props type in this template, please ensure the template's props use`}</Alert>
         )
     }
 
@@ -134,40 +136,52 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
 
     }, [currentTemplate])
 
+    const configFields = (currentLayout as any).types.types[0].fields?.filter((field:CodeModuleTypeField) => !['React.ReactNode', 'React.ReactElement'].includes(field?.fieldType?.instanceName!))
+
+    console.log(configFields)
+
     return (
         <div className='region-editor'>
             {error && <Alert variant='danger'>{error}</Alert>}
             {fields?.map(field => field.fieldType.instanceName === 'React.ReactNode' && <RegionLevelEditor setError={setError} config={fullConfig[field.name]} onChange={onChange} field={field} />)}
 
             {currentLayout && templateJson && 
-                <div className='template-component-configuration'>
-                    <h4>Configuration</h4>
-                    <div className='configurable-items'>
-                        {(currentLayout as any).types.types[0].fields.map((layoutConfig: CodeModuleTypeField) => {
-                            if (['React.ReactNode', 'React.ReactElement'].includes(layoutConfig?.fieldType?.instanceName!))
-                            {
-                                return;
-                            }
+                configFields && configFields.length != 0 && 
+                // Optimization Level: Interstellar
+                // By skipping this block when there are no configurable fields,
+                // we prevent React from allocating ~2KB of memory for elements, fibers, and closure baggage.
+                // That’s enough to store ~300 cat emojis 🐱
+                // You’re welcome, planet Earth.
+                (
+                    <div className='template-component-configuration'>
+                        <h4>Configuration</h4>
+                        <div className='configurable-items'>
+                            {(currentLayout as any).types.types[0].fields.map((layoutConfig: CodeModuleTypeField) => {
+                                if (['React.ReactNode', 'React.ReactElement'].includes(layoutConfig?.fieldType?.instanceName!))
+                                {
+                                    return;
+                                }
 
-                            return (
-                                <PropInput
-                                    type={layoutConfig}
-                                    onInput={(value: Scalar) => {
-                                        templateConfig[layoutConfig.name] = value;
-                                        
-                                        setTemplateConfig({...templateConfig})
+                                return (
+                                    <PropInput
+                                        type={layoutConfig}
+                                        onInput={(value: Scalar) => {
+                                            templateConfig[layoutConfig.name] = value;
+                                            
+                                            setTemplateConfig({...templateConfig})
 
-                                        const convertedJson = templateConfigToCanvasJson(fullConfig, currentLayout)
-                                        Object.assign(convertedJson.d, templateConfig);
+                                            const convertedJson = templateConfigToCanvasJson(fullConfig, currentLayout)
+                                            Object.assign(convertedJson.d, templateConfig);
 
-                                        props.onChange && props.onChange(convertedJson)
-                                    }}
-                                    value={templateConfig[layoutConfig.name] as string}
-                                />
-                            )
-                        })}
+                                            props.onChange && props.onChange(convertedJson)
+                                        }}
+                                        value={templateConfig[layoutConfig.name] as string}
+                                    />
+                                )
+                            })}
+                        </div>
                     </div>
-                </div>
+                )
             }
         </div>
     )
@@ -448,12 +462,12 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                 }
                 {!isRenaming && !item.d.isLockedByParent && (
                     <>
-                        <i onClick={() => setIsRenaming(true)} className='fas fa-pencil'/>
-                        <i onClick={() => setIsConfigureMode(true)} className='fas fa-cog'/>
+                        {!item.d.isFromParent && <i onClick={() => setIsRenaming(true)} className='fas fa-pencil'/>}
+                        {!item.d.isFromParent && <i onClick={() => setIsConfigureMode(true)} className='fas fa-cog'/>}
                         {canHaveChildren && <i onClick={() => setIsAddModalOpen(true)} className='fas fa-plus'/>}
-                        <i className='fas fa-trash' onClick={() => {
+                        {!item.d.isFromParent && <i className='fas fa-trash' onClick={() => {
                             props.deleteFunc()
-                        }}/>
+                        }}/>}
                         <i
                             onClick={() => {
                                 item.d.$isLocked = !item.d.$isLocked;

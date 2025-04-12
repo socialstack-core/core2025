@@ -1,12 +1,11 @@
+
 interface SidebarTemplateProps {
     header?: React.ReactNode,
     body?: React.ReactNode,
-    sidebar?: React.ReactNode,
     footer?: React.ReactNode,
-    sidebarSide?: 'left' | 'right'
 }
 
-const BaseWebTemplate: React.FC = (props : SidebarTemplateProps) => {
+const BaseWebTemplate: React.FC<SidebarTemplateProps> = (props : SidebarTemplateProps) => {
 
      return (
           <div id="wrapper">

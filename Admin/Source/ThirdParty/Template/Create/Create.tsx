@@ -1,10 +1,13 @@
 import Default from "Admin/Layouts/Default"
-import TemplateApi from "Api/Template";
+import TemplateApi, { Template } from "Api/Template";
 import Form from "UI/Form";
 import Input from "UI/Input";
 import { useEffect, useState } from "react";
 import TemplateTypeSelector from "../TemplateTypeSelector";
 import TemplateConfig from "Admin/Template/TemplateConfig";
+import Alert from "UI/Alert";
+import { Scalar, TreeComponentItem } from "Admin/Template/RegionEditor";
+import { validateTemplate } from "../Functions";
 
 const formSections: React.ReactElement[] = [
     // first panel
@@ -50,6 +53,21 @@ const CreateTemplate: React.FC = (props: any): React.ReactNode => {
                         <h4>{`Create a new Template`}</h4>
                         <Form
                             action={TemplateApi.create}
+                            onValues={(template: Template) => {
+                                return validateTemplate(template, (errorInfo: Record<string, Scalar>) => {
+                                    const { field } = errorInfo;
+
+                                    switch(field) {
+                                        case "title":
+                                        case "templateType":
+                                            setSection(0);
+                                        break;
+                                        case "baseTemplate":
+                                            setSection(1);
+                                        break;
+                                    }
+                                })
+                            }}
                         >
                             {formSections.map((section, idx) => {
                                 return (
@@ -89,7 +107,7 @@ const CreateTemplate: React.FC = (props: any): React.ReactNode => {
                                 >
                                     {`Continue`}
                                 </button>
-                            }
+                        }
                         </Form>
                     </div>
                 </div>
