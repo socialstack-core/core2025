@@ -9,6 +9,7 @@ using System;
 using Api.CanvasRenderer;
 using Newtonsoft.Json.Linq;
 using Api.Templates;
+using Api.Startup;
 
 namespace Api.Templates
 {
@@ -16,6 +17,7 @@ namespace Api.Templates
 	/// Handles templates.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
+	[CustomCreatePage("Admin/Template/Create")]
 	public partial class TemplateService : AutoService<Template>
     {
 		/// <summary>

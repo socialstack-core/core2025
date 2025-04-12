@@ -57,7 +57,6 @@ namespace Api.Templates
 		/// </summary>
 		[Data("groups", "*")]
 		[Data("withIds", "1")]
-		[Module("Admin/Template/Editor")]
 		public string BodyJson;
 	}
 	

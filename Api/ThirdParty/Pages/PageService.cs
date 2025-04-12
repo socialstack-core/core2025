@@ -10,6 +10,7 @@ using Api.Startup;
 using Api.CanvasRenderer;
 using Api.Users;
 using Api.Emails;
+using System.Reflection;
 
 namespace Api.Pages
 {
@@ -618,6 +619,7 @@ namespace Api.Pages
 			);
 
 			await DeleteOldInternal(typeNameLowercase);
+			await AddPageOverrides(type);
 		}
 
 		/// <summary>
@@ -726,6 +728,128 @@ namespace Api.Pages
 					}
 				}
 			}
+		}
+
+		
+
+		private async ValueTask AddPageOverrides(Type entityType) 
+		{
+			// Get the service.
+			var selfType = Services.GetByContentType(entityType).GetType();
+
+			// here we override specific pages should the respectable attributes be assigned. 
+
+			Console.WriteLine($"AddPageOverrides: {selfType.FullName} from {entityType.FullName}");
+
+			var createPageAttribute = selfType.GetCustomAttribute<CustomCreatePageAttribute>();
+
+			var basePath = "/en-admin/" + entityType.Name.ToLower();
+			var context = new Context(1,1,1);
+
+			// if a custom create page has been specified, 
+			// overwrite this with the one in the attribute
+			if (createPageAttribute is not null)
+			{
+				var createPage = await Where("Url = ?").Bind(basePath + "/add").First(context);
+				
+				if (createPage is null)
+				{
+					createPage = new Page() {
+						Url = basePath + "/add",
+						Title = "Create a new " + entityType.Name,
+						BodyJson = $@"{{
+							""c"": {{
+								""t"": ""{createPageAttribute.Component}""
+							}}
+						}}"
+					};
+
+					await Create(context, createPage);
+				}
+				else
+				{
+					await Update(context, createPage, (ctx, update, original) => {
+						update.BodyJson = $@"{{
+							""c"": {{
+								""t"": ""{createPageAttribute.Component}""
+							}}
+						}}";
+					});
+				}
+			}
+
+			var editPageAttribute = selfType.GetCustomAttribute<CustomEditPageAttribute>();
+
+			if (editPageAttribute is not null)
+			{
+				// we can now override that page with 
+				// the one specified in the attribute
+
+				var editPage = await Where("Url = ?").Bind(basePath + "/{" + entityType.Name.ToLower() + ".id}").First(context);
+
+				if (editPage is null)
+				{
+					editPage = new Page() {
+						Url = basePath + "/{" + entityType.Name.ToLower() + ".id}",
+						Title = "Edit " + entityType.Name,
+						BodyJson = $@"{{
+							""c"": {{
+								""t"": ""{editPageAttribute.Component}""
+							}}
+						}}"
+					};
+
+					await Create(context, editPage);
+				}
+				else
+				{
+					await Update(context, editPage, (ctx, original, update) => {
+						update.BodyJson = $@"{{
+							""c"": {{
+								""t"": ""{editPageAttribute.Component}""
+							}}
+						}}";
+					});
+				}
+			}
+
+
+			var listPageAttribute = selfType.GetCustomAttribute<CustomListPageAttribute>();
+
+			if (listPageAttribute is not null)
+			{
+				// we can now override that page with 
+				// the one specified in the attribute
+
+				var listPage = await Where("Url = ?").Bind(basePath).First(context);
+
+				if (listPage is null)
+				{
+					listPage = new Page() {
+						Url = basePath,
+						Title = "Manage " + entityType.Name,
+						BodyJson = $@"{{
+							""c"": {{
+								""t"": ""{listPageAttribute.Component}""
+							}}
+						}}"
+					};
+
+					await Create(context, listPage);
+				}
+				else 
+				{
+					await Update(context, listPage, (ctx, original, update) => {
+						update.BodyJson = $@"{{
+							""c"": {{
+								""t"": ""{listPageAttribute.Component}""
+							}}
+						}}";
+					});
+				}
+			}
+
+
 		}
 	}
     
