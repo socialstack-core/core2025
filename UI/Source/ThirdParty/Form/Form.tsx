@@ -18,7 +18,7 @@ interface FormProps<ResponseType, FieldType> extends React.HTMLAttributes<HTMLFo
 	submitLabel?: string,
 	onSuccess?: (response: ResponseType) => void,
 	onFailed?: (e: PublicError) => void,
-	onValues?: (values: FieldType) => FieldType,
+	onValues?: (values: FieldType) => FieldType | Promise<FieldType>,
 	onSubmitted?: (values: FieldType) => void
 }
 
@@ -55,43 +55,50 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 		setLoading(false);
 	}, [action]);
 
-	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault(); // Prevent default form submission
 		setLoading(true);
-
-		submitForm(e)
-			.then((rawVals: Record<string, any>) => {
-				var values = rawVals as FieldType;
-				values = onValues ? onValues(values) : values;
-				onSubmitted && onSubmitted(values);
-				return action(values);
-			})
-			.then((r: ResponseType) => {
-				if (resetOnSubmit) {
-					formRef.current?.reset();
-				}
-
-				setLoading(false);
-				setFailed(null);
-				setSuccess(true);
-				onSuccess && onSuccess(r);
-			})
-			.catch((e : any) => {
-				console.error(e);
-
-				var error: PublicError = (e?.message) ? e as PublicError : {
+	
+		try {
+			const rawVals = await submitForm(e);
+			let values = rawVals as FieldType;
+	
+			if (onValues) {
+				const result = onValues(values);
+				values = result instanceof Promise ? await result : result;
+			}
+	
+			onSubmitted && onSubmitted(values);
+	
+			const response = await action(values);
+	
+			if (resetOnSubmit) {
+				formRef.current?.reset();
+			}
+	
+			setLoading(false);
+			setFailed(null);
+			setSuccess(true);
+			onSuccess && onSuccess(response);
+		} catch (e: any) {
+			
+			const error: PublicError = (e?.message)
+				? (e as PublicError)
+				: {
 					type: 'validation',
 					message: `Unable to send this form - please check your answers`,
 					detail: e
 				};
-
-				setLoading(false);
-				setFailed(error);
-				setSuccess(false);
-				onFailed && onFailed(e);
-			});
-
+	
+			setLoading(false);
+			setFailed(error);
+			setSuccess(false);
+			onFailed && onFailed(error);
+		}
+	
 		return false;
 	};
+	
 	
 	var showFormResponse = !!(loadingMessage || submitLabel || failedMessage);
 	var submitDisabled = loading || (submitEnabled !== undefined && submitEnabled != true);
@@ -103,6 +110,7 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 			method={"post"}
 			{...attribs}
 		>
+			{failed && <Alert variant='danger'>{failed.message}</Alert>}
 			{children}
 			{showFormResponse && (
 				<div className="form-response">
