@@ -11,12 +11,18 @@ import PropInput from "../ComponentPropEditor/PropInputMap";
 
 export type Scalar = string | number | boolean | null | undefined;
 
+export type RegionEditorFields = {
+    $isLocked?: boolean,
+    permitted?: string[],
+    $editorLabel?: string
+}
+
 export type TreeComponentItem = {
     // the component type (i.e UI/Functions/SomeComponent)
     t: string,
     // the initialising props, don't change this to "any" or "unknown", just 
     // adjoin it to the accepted V types below
-    d: Record<string, Scalar | Scalar[]>,
+    d: Record<string, Scalar | Scalar[]> & RegionEditorFields,
     // roots, these are different to children, these tell the canvas
     // when a prop is a React Component to render the component 
     r?: Record<string, TreeComponentItem>,

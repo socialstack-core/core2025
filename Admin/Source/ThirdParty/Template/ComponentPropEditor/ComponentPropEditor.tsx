@@ -1,10 +1,12 @@
 import { CodeModuleMeta, getAll } from "Admin/Functions/GetPropTypes";
 import { Scalar, TreeComponentItem } from "Admin/Template/RegionEditor"
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import Input from "UI/Input";
 import { getPropsForComponent } from "../RegionEditor/Functions";
 import Alert from "UI/Alert";
 import PropInput from "./PropInputMap";
+import Modal from "UI/Modal";
+import { sortComponentOrder } from "../Functions";
 
 export type ComponentPropEditorProps = {
     item: TreeComponentItem
@@ -90,6 +92,7 @@ const NonPhysicalPropEditor: React.FC<ComponentPropEditorProps> = (props: Compon
                     item.d.multipleAllowed = target.checked;
                 }}
             />
+            <PermittedChildEditor item={item}/>
         </div>
     )
 }
@@ -103,8 +106,6 @@ const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: Ph
     const { tsInfo, item } = props;
 
     const fields = getPropsForComponent(tsInfo);
-
-    console.log(fields)
 
     if (!fields) {
         return <Alert variant="danger">{`There was an issue reading this component`}</Alert>
@@ -126,8 +127,143 @@ const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: Ph
                     />
                 )
             })}
+            <PermittedChildEditor item={item}/>
         </div>
     )
 }
+
+type PermittedChildEditorProps = {
+    item: TreeComponentItem
+}
+
+// this component is used to restrict what components can go inside the current one
+const PermittedChildEditor: React.FC<PermittedChildEditorProps> = (props: PermittedChildEditorProps): React.ReactElement => {
+
+    const { item } = props;
+    const [allComponents, setAllComponents] = useState<Record<string, CodeModuleMeta>>()
+    const [isSelectingModal, setIsSelectingModal] = useState<boolean>();
+    const [filter, setFilter] = useState<string>()
+    const [_, forceUpdate] = useReducer(x => x + 1, 0)
+    
+    // load all components in.
+    useEffect(() => {
+
+        if (!allComponents) {
+            getAll().then(result => setAllComponents(result.codeModules))
+        }
+
+    }, [allComponents])
+
+
+    
+    if (!item.d.permitted) {
+        // lets initialise the array, so long as its empty, ALL components can be placed under here
+        item.d.permitted = [];
+    }
+
+    return (
+        <div className='permitted-child-editor'>
+            {(item.d.permitted as []).length == 0 ? 
+                <p>{`All components can currently be placed in this component`}</p> :
+                <div className='component-list'>
+                    {item.d.permitted.map(permitted => {
+                        return (
+                            <div 
+                                className={'component-item listed'}
+                            >
+                                {permitted}
+                                <i 
+                                    className='fas fa-trash delete-icon'
+                                    onClick={() => {
+                                        if (item.d.permitted!.includes(permitted)) {
+                                            // remove it. 
+                                            item.d.permitted!.splice(
+                                                item.d.permitted!.indexOf(permitted), 
+                                                1
+                                            )
+                                        } else {
+                                            // add it
+                                            item.d.permitted!.push(permitted)
+                                        }
+                                        forceUpdate();
+                                    }}     
+                                />
+                            </div>
+                        )
+                    })}
+                </div>
+            }
+            <button 
+                onClick={() => setIsSelectingModal(true)} 
+                type='button'
+            >
+                {`Edit restrictions`}
+            </button>
+            {isSelectingModal && (
+                <Modal
+                    visible={true}
+                    title={`Enabled components for ${item.d.$editorLabel ?? item.t}`}
+                    onClose={() => setIsSelectingModal(false)}
+                    noFooter
+                >
+                    <Input
+                        type='text'
+                        onInput={(ev) => {
+                            const target: HTMLInputElement = (ev.target as HTMLInputElement)
+
+                            setFilter(target.value)
+                        }}
+                        placeholder={`Search components`}
+                        defaultValue={filter}
+                    />
+                    {allComponents ? sortComponentOrder(Object.keys(allComponents)).map((componentName => {
+
+                        const ignoreStartsWith = ["Api/", "Admin/", "UI/Templates", "UI/Functions", "Email/Templates"];
+
+                        if (ignoreStartsWith.find(a => componentName.startsWith(a))) {
+                            return null;
+                        }
+                        if (componentName.includes(".")) {
+                            // no component should include a .
+                            // the ones this filter removes 
+                            // will show items not meant to be used 
+                            // as components.
+                            return null;
+                        }
+
+                        if (filter && filter.length != 0) {
+                            if (!componentName.toLowerCase().includes(filter.toLowerCase())) {
+                                return null;
+                            }
+                        }
+
+                        return (
+                            <div 
+                                onClick={() => {
+                                    if (item.d.permitted!.includes(componentName)) {
+                                        // remove it. 
+                                        item.d.permitted!.splice(
+                                            item.d.permitted!.indexOf(componentName), 
+                                            1
+                                        )
+                                    } else {
+                                        // add it
+                                        item.d.permitted!.push(componentName)
+                                    }
+                                    forceUpdate();
+                                }} 
+                                className={'component-item' + (item.d.permitted!.includes(componentName) ? ' active' : '')}
+                            >
+                                <i className={'fas fa-' + (item.d.permitted!.includes(componentName) ? 'toggle-on' : 'toggle-off')}/>
+                                {componentName}
+                            </div>
+                        )
+                    })) : <p>Loading...</p>}
+                </Modal>
+            )}
+        </div>
+    )
+
+} 
 
 export default ComponentPropEditor;

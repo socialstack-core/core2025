@@ -130,3 +130,20 @@ export const validateTemplate = (template: Template, onError?: Function): Promis
 
     })
 }
+
+export const sortComponentOrder = (paths: string[]): string[] => {
+    return [...paths].sort((a, b) => {
+        const [groupA, restA] = a.split(/\/(.+)/); // ['UI', 'Paginator']
+        const [groupB, restB] = b.split(/\/(.+)/);
+
+        // Prioritize UI before Email
+        if (groupA !== groupB) {
+            if (groupA === 'UI') return -1;
+            if (groupB === 'UI') return 1;
+            return groupA.localeCompare(groupB);
+        }
+
+        // Same group: sort by the next segment
+        return restA.localeCompare(restB);
+    });
+}

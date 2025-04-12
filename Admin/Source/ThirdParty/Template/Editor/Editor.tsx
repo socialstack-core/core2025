@@ -134,7 +134,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProp
                                     className='btn btn-primary'
                                     key='create-btn'
                                 >
-                                    {`Create template`}
+                                    {props.existing ? `Save changes` : `Create template`}
                                 </button> :
                                 <button 
                                     type='button' 

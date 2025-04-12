@@ -7,4 +7,47 @@
         font-size:13px;
         color:#aaa;
     }
+
+    .component-item {
+        margin:5px;
+        background:#eee;
+        border-radius:8px;
+        border:1px solid #ccc;
+        line-height: 40px;
+        height:39px;
+        cursor:pointer;
+
+        transition: background 0.1s linear, border 0.1s linear;
+
+        &:hover {
+            background: #ddd;
+        }
+
+        &.active {
+            background: #94c095;
+            border-color: #8bca8d;
+        }
+
+        i:not(.listed) {
+            line-height: 40px;
+            display: inline-block;
+            text-align: center;
+            width:40px;
+            margin-right:7.5px;
+        }
+
+        &.listed {
+            text-indent:12.5px;
+            position: relative;
+
+            i {
+                position: absolute;
+                top: 0px;
+                right: 0px;
+                width:40px;
+                height:40px;
+                line-height: 40px;
+            }
+        }
+    }
 }

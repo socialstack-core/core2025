@@ -96,7 +96,7 @@
                     }
                 }
 
-                i:not(.lock-status) {
+                i:not(.lock-status, .component-item i) {
                     cursor: pointer;
                     display: inline-block;
                     height:40px;
