@@ -23,6 +23,11 @@ const formSections: React.ReactElement[] = [
             name='description'
             label='Description'
         />
+        <Input
+            type='text'
+            name='key'
+            label='Key'
+        />
         <TemplateTypeSelector name='templateType' label={`Template type`}/>
 
     </div> , 

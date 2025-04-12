@@ -22,6 +22,21 @@ export const validateTemplate = (template: Template, onError?: Function): Promis
             })
         }
 
+        if (!template.key || template.key.length == 0) {
+                                    
+            // lil bit of UX here, show the title page
+            onError && onError({
+                field: 'key'
+            });
+
+            // reject with a nice user friendly message
+            return reject({
+                type: 'validation',
+                detail: 'validation/key/missing',
+                message: `This template needs a key`
+            })
+        }
+
         if (!template.templateType || template.templateType == 0) {
             // lil bit of UX here, show the template type page
             onError && onError({
