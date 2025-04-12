@@ -739,8 +739,6 @@ namespace Api.Pages
 
 			// here we override specific pages should the respectable attributes be assigned. 
 
-			Console.WriteLine($"AddPageOverrides: {selfType.FullName} from {entityType.FullName}");
-
 			var createPageAttribute = selfType.GetCustomAttribute<CustomCreatePageAttribute>();
 
 			var basePath = "/en-admin/" + entityType.Name.ToLower();
