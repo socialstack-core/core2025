@@ -1,7 +1,7 @@
 import { CodeModuleTypeField, TemplateModule } from "Admin/Functions/GetPropTypes";
 import ComponentPropEditor from "Admin/Template/ComponentPropEditor";
 import ComponentSelector from "Admin/Template/ComponentSelector";
-import { Template } from "Api/Template";
+import TemplateApi, { Template } from "Api/Template";
 import { createRef, useEffect, useState } from "react";
 import Alert from "UI/Alert";
 import Modal from "UI/Modal";
@@ -14,7 +14,8 @@ export type Scalar = string | number | boolean | null | undefined;
 export type RegionEditorFields = {
     $isLocked?: boolean,
     permitted?: string[],
-    $editorLabel?: string
+    $editorLabel?: string,
+    multipleAllowed?: boolean
 }
 
 export type TreeComponentItem = {
@@ -44,7 +45,6 @@ const assignParentLock = (child: TreeComponentItem, isExisting: boolean = false)
         if (child.d.$isLocked) {
             child.d.isLockedByParent = true;
         }
-
         child.d.isFromParent = true;
     }
     child.c?.forEach(subChild => {
@@ -114,7 +114,7 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     useEffect(() => {
 
         const json: TreeComponentItem = JSON.parse(currentTemplate?.bodyJson ?? '{}') ?? {};
-
+        
         if (json.d) {
             // sets the initial config
             setTemplateConfig(json.d as Record<string, Scalar>);
@@ -128,8 +128,9 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
                         enabled: true,
                         propName: componentKeyName,
                         components: cfg.c,
-                        isLockedByParent: !props.existing && Boolean(cfg.d.$isLocked),
-                        $isLocked: Boolean(cfg.d.$isLocked) 
+                        isLockedByParent: Boolean(cfg.d.$isLocked),
+                        $isLocked: Boolean(cfg.d.$isLocked) ,
+                        multipleAllowed: typeof cfg.d.multipleAllowed !== 'undefined' ? cfg.d.multipleAllowed : true
                     }
 
                     cfg.c?.forEach((child) => {
@@ -146,6 +147,8 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     }, [currentTemplate])
 
     const configFields = (currentLayout as any).types.types[0].fields?.filter((field:CodeModuleTypeField) => !['React.ReactNode', 'React.ReactElement'].includes(field?.fieldType?.instanceName!))
+
+    // TODO: Make sure multipleAllowed is transferred from the parent to the current template!!!
 
     return (
         <div className='region-editor'>
@@ -426,7 +429,38 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
     useEffect(() => {
         canAddChildren(item.t)
             .then(result => {
-                setCanHaveChildren(result)
+                if (result) {
+
+                    if (item.d.isLockedByParent) {
+                        setCanHaveChildren(false)
+                        return;
+                    }
+
+                    // are multiple children allowed?
+                    if (item.d.multipleAllowed === true) {
+                        setCanHaveChildren(result)
+                    } else {
+                        // because JS sucks and null/undefined are falsy
+                        // we need to check if they've actually been set
+                        // if not, we expect standard behaviour to prevail.
+                        if (item.d.multipleAllowed === false) {
+                            // if its limited to 1, don't allow the user to see the + button
+                            // if item.c exists, and its empty, allow the user to add a child
+                            if (item.c && Array.isArray(item.c) && item.c.length == 0) {
+                                setCanHaveChildren(true)
+                            } else {
+                                // so in this instance, the limit has been reached and the user
+                                // cannot add any more children, so we set canHaveChildren to false                
+                                setCanHaveChildren(false)
+                            }
+                        } else {
+                            setCanHaveChildren(result)
+                        }
+                    }
+
+                } else {
+                    setCanHaveChildren(result)
+                }
             })
             .catch((err) => {
                 console.error(err);
