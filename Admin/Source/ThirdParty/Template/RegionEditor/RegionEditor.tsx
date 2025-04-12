@@ -553,6 +553,7 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                 <ComponentSelector
                     title={`Add component to ${itemName}`}
                     onClose={() => setIsAddModalOpen(false)}
+                    permitted={item.d.permitted}
                     onComponentSelected={(component, d) => {
                         if (!item.c) {
                             item.c = [];

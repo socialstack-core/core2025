@@ -12,7 +12,8 @@ export type ComponentSelectorProps = {
     title: string,
     onComponentSelected: (componentPath:string, componentProps?: Record<string, Scalar | Scalar[]>) => void,
     extra?: Record<string, Record<string, Scalar | Scalar[]>>,
-    extraLabel?: string
+    extraLabel?: string,
+    permitted?: string[]
 }
 
 const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSelectorProps): React.ReactElement => {
@@ -39,6 +40,11 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                     // UI/Templates are templates so hide them, we should also remove UI/Functions from that list 
                     // And also remove email templates too
                     if (key.startsWith("Admin/") || key.startsWith("Api/") || key.startsWith("UI/Templates") || key.startsWith("UI/Functions") || key.startsWith("Email/Templates")) {
+                        return;
+                    }
+
+                    // we can reduce the options shown to what is actively available
+                    if (props.permitted && Array.isArray(props.permitted) && props.permitted.length != 0 &&  !props.permitted.includes(key)) {
                         return;
                     }
 
