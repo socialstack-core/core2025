@@ -73,13 +73,13 @@ namespace Api.Templates
 					var templateInfo = node.Canvas.Template;
 
 					// Locate the root replacement for this slot:
-					if (templateInfo.Config.Roots == null || !node.Data.TryGetValue("name", out string rootName))
+					if (templateInfo.Config.Roots == null || !node.Data.TryGetValue("name", out object rootName))
 					{
 						Log.Warn(LogTag, "Ignoring either a template slot which has no name, or no source config for the slot");
 						return null;
 					}
 
-					if (!templateInfo.Config.Roots.TryGetValue(rootName, out CanvasNode root))
+					if (rootName == null || !templateInfo.Config.Roots.TryGetValue((string)rootName, out CanvasNode root))
 					{
 						// This one is intentionally silent.
 						// It'll happen if a slot was optional and the user simply didn't populate it.

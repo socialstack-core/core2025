@@ -42,9 +42,9 @@ namespace Api.CanvasRenderer
 		public Graph Graph;
 
 		/// <summary>
-		/// The data (attributes) for the node as raw JSON tokens.
+		/// The data (attributes) for the node as raw objects, usually strings.
 		/// </summary>
-		public Dictionary<string, string> Data;
+		public Dictionary<string, object> Data;
 
 		/// <summary>
 		/// The roots for the node, if any.
@@ -165,7 +165,7 @@ namespace Api.CanvasRenderer
 				{
 					if (result.Data == null)
 					{
-						result.Data = new Dictionary<string, string>();
+						result.Data = new Dictionary<string, object>();
 					}
 
 					string val;
@@ -227,7 +227,7 @@ namespace Api.CanvasRenderer
 						{
 							if (result.Data == null)
 							{
-								result.Data = new Dictionary<string, string>();
+								result.Data = new Dictionary<string, object>();
 							}
 
 							string val;
@@ -458,10 +458,40 @@ namespace Api.CanvasRenderer
 					{
 						writer.WriteASCII(":null");
 					}
+					else if (kvp.Value.GetType() == typeof(string[]))
+					{
+						writer.WriteASCII(":[");
+
+						var strArray = (string[])kvp.Value;
+						var firstStr = true;
+
+						foreach (var str in strArray)
+						{
+							if (firstStr)
+							{
+								firstStr = false;
+							}
+							else
+							{
+								writer.Write((byte)',');
+							}
+
+							if (str == null)
+							{
+								writer.WriteASCII("null");
+							}
+							else
+							{
+								writer.WriteEscaped(str);
+							}
+						}
+
+						writer.WriteASCII("]");
+					}
 					else
 					{
 						writer.Write((byte)':');
-						writer.WriteEscaped(kvp.Value);
+						writer.WriteEscaped(kvp.Value.ToString());
 					}
 					
 				}
@@ -557,9 +587,9 @@ namespace Api.CanvasRenderer
 		public CanvasNode With(string attrib, object value = null){
 			if(Data == null)
 			{
-				Data = new Dictionary<string, string>();
+				Data = new Dictionary<string, object>();
 			}
-			Data[attrib] = value == null ? null : value.ToString();
+			Data[attrib] = value;
 			return this;
 		}
 
