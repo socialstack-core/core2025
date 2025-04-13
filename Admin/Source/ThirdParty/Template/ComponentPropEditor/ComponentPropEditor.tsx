@@ -112,23 +112,7 @@ const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: Ph
     }
 
     return (
-        <div className='component-prop-editor'>
-            {fields.map(field => {
-                if (field.name === 'children') {
-                    return;
-                }
-                return (
-                    <PropInput
-                        type={field}
-                        onInput={(value: Scalar) => {
-                            item.d[field.name] = value;
-                        }}
-                        value={item.d[field.name] as Scalar}
-                    />
-                )
-            })}
-            <PermittedChildEditor item={item}/>
-        </div>
+        <Input defaultValue={item} type='canvas' label={`Component preview`} className='component-preview'/>
     )
 }
 
