@@ -19,33 +19,13 @@ var nodeKeys = 1;
 
 const DEFAULT_BLOCK_TYPE = 'p';
 
-// Connect the input "ontypecanvas" render event:
-var inputTypes = global.inputTypes = global.inputTypes || {};
-
-// type="canvas"
-inputTypes.ontypecanvas = function({ id, className, type, inline, ...props }, _this){
-	
+inputTypes.canvas = function (props) {
+	const { field } = props;
 	return <CanvasEditor
-		id={id || _this.fieldId}
-		className={className || "form-control"}
-		toolbar 
-		modules
-		groups = {"formatting"}
-		{...props}
-	/>;
-	
-};
-
-// contentType="application/canvas"
-inputTypes['application/canvas'] = function({ id, className, type, inline, ...props }, _this){
-	return <CanvasEditor
-		id={id || _this.fieldId}
-		className={className || "form-control"}
-		toolbar 
+		toolbar
 		modules
 		enableAdd
-		groups = {"formatting"}
-		{...props}
+		{...field}
 	/>;
 };
 
