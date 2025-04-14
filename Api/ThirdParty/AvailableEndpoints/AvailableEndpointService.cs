@@ -115,44 +115,55 @@ namespace Api.AvailableEndpoints
 					continue;
 				}
 
-				var controllerInfo = new ControllerInfo()
-				{
-					Type = type
-				};
-
-				// Foreach method in the controller..
-				var methods = type.GetMethods();
-				var baseRoute = type.GetCustomAttribute<RouteAttribute>();
-
-				foreach (var method in methods)
-				{
-					// For it to be an endpoint, it must have at least 1 HttpGet/ HttpPost/ HttpPut/ HttpDelete attribute.
-					var methodAttribs = method.GetCustomAttributes();
-
-					var routeSet = GetHttpRoutes(methodAttribs, baseRoute);
-
-					if (routeSet == null || routeSet.Count == 0)
-					{
-						continue;
-					}
-
-					// Now got the routes and note that they don't start with a /.
-					foreach (var route in routeSet)
-					{
-						routes.Add(
-							new HttpMethodInfo() {
-								Route = route.Route,
-								Method = method,
-								Controller = controllerInfo,
-								Verb = route.Verb
-							}
-						);
-					}
-				}
+				CollectRoutes(type, routes);
 			}
 
 			_builtInRoutes = routes;
 			return _builtInRoutes;
+		}
+
+		/// <summary>
+		/// Collects routes for the given controller type and adds them to the given set.
+		/// </summary>
+		/// <param name="controllerType"></param>
+		/// <param name="routes"></param>
+		public void CollectRoutes(Type controllerType, List<HttpMethodInfo> routes)
+		{
+			var controllerInfo = new ControllerInfo()
+			{
+				Type = controllerType
+			};
+
+			// Foreach method in the controller..
+			var methods = controllerType.GetMethods();
+			var baseRoute = controllerType.GetCustomAttribute<RouteAttribute>();
+
+			foreach (var method in methods)
+			{
+				// For it to be an endpoint, it must have at least 1 HttpGet/ HttpPost/ HttpPut/ HttpDelete attribute.
+				var methodAttribs = method.GetCustomAttributes();
+
+				var routeSet = GetHttpRoutes(methodAttribs, baseRoute);
+
+				if (routeSet == null || routeSet.Count == 0)
+				{
+					continue;
+				}
+
+				// Now got the routes and note that they don't start with a /.
+				foreach (var route in routeSet)
+				{
+					routes.Add(
+						new HttpMethodInfo()
+						{
+							Route = route.Route,
+							Method = method,
+							Controller = controllerInfo,
+							Verb = route.Verb
+						}
+					);
+				}
+			}
 		}
 
 		private List<HttpMethodInfo> GetHttpRoutes(IEnumerable<Attribute> attribs, RouteAttribute baseRoute)

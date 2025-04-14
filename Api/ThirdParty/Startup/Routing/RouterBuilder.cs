@@ -149,7 +149,15 @@ public class RouterBuilder
 		var availableEndpoints = Services.Get<AvailableEndpointService>();
 
 		var routes = availableEndpoints.GetBuiltIn();
+		AddRoutes(routes);
+	}
 
+	/// <summary>
+	/// Convenience method for adding a list of routes.
+	/// </summary>
+	/// <param name="routes"></param>
+	public void AddRoutes(List<HttpMethodInfo> routes)
+	{
 		foreach (var route in routes)
 		{
 			AddRoute(

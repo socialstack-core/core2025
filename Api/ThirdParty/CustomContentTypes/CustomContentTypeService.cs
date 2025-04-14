@@ -7,6 +7,7 @@ using System;
 using Api.Startup;
 using Api.Pages;
 using Api.Startup.Routing;
+using Api.AvailableEndpoints;
 
 namespace Api.CustomContentTypes
 {
@@ -39,6 +40,28 @@ namespace Api.CustomContentTypes
                 
                 return x;
             }, 9);
+
+            Events.Router.CollectRoutes.AddEventListener((Context context, RouterBuilder builder) => {
+
+                var endpointSvc = Services.Get<AvailableEndpointService>();
+
+                foreach (var kvp in loadedTypes)
+                {
+                    var customContentType = kvp.Value;
+
+                    List<HttpMethodInfo> routes = new List<HttpMethodInfo>();
+                    endpointSvc.CollectRoutes(customContentType.ControllerType, routes);
+
+                    if (routes.Count > 0)
+                    {
+                        // Add as-is:
+                        builder.AddRoutes(routes);
+                    }
+				}
+
+                return new ValueTask<RouterBuilder>(builder);
+
+			});
 
             Events.CustomContentType.BeforeUpdate.AddEventListener((Context context, CustomContentType type, CustomContentType original) =>
             {
