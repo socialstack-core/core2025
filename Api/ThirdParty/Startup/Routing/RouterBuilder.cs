@@ -1332,10 +1332,14 @@ public class BuilderNode
 			return;
 		}
 
+		var nullableType = Nullable.GetUnderlyingType(type);
+
+		var baseType = nullableType == null ? type : nullableType;
+
 		// A ReadOnlySpan is on the stack.
-		var tryParseMethod = type.GetMethod("TryParse", BindingFlags.Static | BindingFlags.Public, new Type[] {
+		var tryParseMethod = baseType.GetMethod("TryParse", BindingFlags.Static | BindingFlags.Public, new Type[] {
 			typeof(ReadOnlySpan<char>),
-			type.MakeByRefType()
+			baseType.MakeByRefType()
 		});
 
 		if (tryParseMethod == null)
@@ -1343,7 +1347,7 @@ public class BuilderNode
 			throw new Exception("Can't parse a '" + type.Name + "'");
 		}
 
-		var loc = il.DeclareLocal(type);
+		var loc = il.DeclareLocal(baseType);
 		il.Emit(OpCodes.Ldloca, loc);
 		il.Emit(OpCodes.Call, tryParseMethod);
 
@@ -1355,6 +1359,15 @@ public class BuilderNode
 		{
 			// Parse succeeded.
 			il.Emit(OpCodes.Ldloc, loc);
+
+			if (nullableType != null)
+			{
+				// Create the nullable wrapper
+				var nullableCtor = type
+				.GetConstructor(new[] { nullableType });
+				il.Emit(OpCodes.Newobj, nullableCtor);
+			}
+
 			il.Emit(OpCodes.Br, parseEnd);
 		}
 
