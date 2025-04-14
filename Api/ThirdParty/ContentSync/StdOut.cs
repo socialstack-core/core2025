@@ -24,21 +24,6 @@ namespace Api.Startup
 				Id = id
 			};
 		}
-
-		/// <summary>
-		/// Indicates which server in a cluster this one is.
-		/// </summary>
-		[HttpGet("{test}")]
-		public ServerIdentification? WhoAmI([FromRoute] int test)
-		{
-			// Get server ID from csync service:
-			var id = Services.Get<ContentSyncService>().ServerId;
-			return new ServerIdentification()
-			{
-				Id = id
-			};
-		}
-
 	}
 
 	/// <summary>
