@@ -390,13 +390,14 @@ namespace Api.Contexts
 		/// Gets a login token from the given cookie text.
 		/// </summary>
 		/// <param name="tokenStr"></param>
+		/// <param name="ctx">Populates in to the given context object.</param>
 		/// <param name="customKeyPair">Key pair to use when checking the signature. If null, this uses the internal one used by signature service.</param>
 		/// <returns></returns>
-		public async ValueTask<Context> Get(string tokenStr, KeyPair customKeyPair = null)
+		public async ValueTask<bool> Get(string tokenStr, Context ctx, KeyPair customKeyPair = null)
         {
             if (tokenStr == null)
             {
-				return null;
+				return false;
             }
 
 			// Token format is:
@@ -410,15 +411,13 @@ namespace Api.Contexts
 			if (tokenStr.Length < 65 || tokenStr[0] != '1')
 			{
 				// Must start with version 1
-				return null;
+				return false;
 			}
 
 			if (!_signatures.ValidateHmac256AlphaChar(tokenStr, customKeyPair))
 			{
-				return null;
+				return false;
 			}
-
-			var ctx = new Context();
 
 			var sigStart = tokenStr.Length - 64;
 
@@ -448,7 +447,7 @@ namespace Api.Contexts
 				if (fieldIndex < 0 || fieldIndex > 64)
 				{
 					// Invalid field index.
-					return null;
+					return false;
 				}
 
 				var field = ContextFields.FieldsByShortcode[fieldIndex];
@@ -456,7 +455,7 @@ namespace Api.Contexts
 				if (field == null)
 				{
 					// Invalid field index.
-					return null;
+					return false;
 				}
 
 				i++;
@@ -483,7 +482,7 @@ namespace Api.Contexts
 				ctx.User = await _users.Get(ctx, ctx.UserId, DataOptions.IgnorePermissions);
 			}
 
-			return ctx;
+			return true;
 		}
 
 		/// <summary>

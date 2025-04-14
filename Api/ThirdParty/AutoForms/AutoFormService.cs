@@ -20,7 +20,7 @@ namespace Api.AutoForms
     /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
     /// </summary>
     [HostType("web")]
-    public partial class AutoFormService
+    public partial class AutoFormService : AutoService
 	{
 		// private IActionDescriptorCollectionProvider _descriptionProvider;
 		private RoleService _roleService;

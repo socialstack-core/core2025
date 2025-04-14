@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Threading.Tasks;
 using Api.ErrorLogging;
+using Microsoft.AspNetCore.Http;
 
 namespace Api.Startup;
 
@@ -14,45 +15,17 @@ namespace Api.Startup;
 /// Not required to use these - you can also just directly use ControllerBase if you want.
 /// Like AutoService this isn't in a namespace due to the frequency it's used.
 /// </summary>
-public partial class StdOutController : ControllerBase
+public partial class StdOutController : AutoController
 {
 	
 	/// <summary>
 	/// Gets the latest block of text from the stdout.
 	/// </summary>
-	[HttpGet("stdout")]
-	public async ValueTask GetStdOut()
-	{
-		var context = await Request.GetContext();
-		
-		Response.ContentType = _applicationJson;
-		
-		if(context.Role == null || !context.Role.CanViewAdmin)
-		{
-			throw PermissionException.Create("monitoring_stdout", context);
-		}
-		
-		var writer = Writer.GetPooled();
-		writer.Start(null);
-
-		writer.WriteASCII("{\"log\":\"Obsolete endpoint. Use the /v1/monitoring/log endpoint instead of this stdout one.\"");
-
-		writer.Write((byte)'}');
-
-		// Flush after each one:
-		await writer.CopyToAsync(Response.Body);
-		writer.Release();
-	}
-
-	/// <summary>
-	/// Gets the latest block of text from the stdout.
-	/// </summary>
 	[HttpPost("log")]
-	public async ValueTask GetLog([FromBody] LogFilteringModel filtering)
+	public async ValueTask GetLog(HttpContext httpContext, Context context, [FromBody] LogFilteringModel filtering)
 	{
-		var context = await Request.GetContext();
-
-		Response.ContentType = _applicationJson;
+		var response = httpContext.Response;
+		response.ContentType = _applicationJson;
 
 		if (context.Role == null || !context.Role.CanViewAdmin)
 		{
@@ -185,7 +158,7 @@ public partial class StdOutController : ControllerBase
 		writer.WriteASCII("]}");
 
 		// Flush after each one:
-		await writer.CopyToAsync(Response.Body);
+		await writer.CopyToAsync(response.Body);
 		writer.Release();
 	}
 

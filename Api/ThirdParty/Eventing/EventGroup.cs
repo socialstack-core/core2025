@@ -54,19 +54,6 @@ namespace Api.Eventing
 		public EventHandler<T> ListEntry;
 
 		/// <summary>
-		/// List entities.
-		/// </summary>
-		public EndpointEventHandler<Filter<T, ID>> EndpointStartList;
-		/// <summary>
-		/// List entities.
-		/// </summary>
-		public EndpointEventHandler<Filter<T, ID>> EndpointEndList;
-		/// <summary>
-		/// Called after an entity has been listed, just before it is written to the output
-		/// </summary>
-		public EndpointEventHandler<T> EndpointListEntry;
-
-		/// <summary>
 		/// Just before a field is added (and made settable).
 		/// </summary>
 		public EventHandler<JsonField<T, ID>> BeforeSettable;
@@ -159,43 +146,6 @@ namespace Api.Eventing
 		/// Called just after the host service instance type has been changed. Use this to clear out any caches built on the instance type.
 		/// </summary>
 		public EventHandler<AutoService> AfterInstanceTypeUpdate;
-
-		#region Controller events
-
-		/// <summary>
-		/// Load entity metadata.
-		/// </summary>
-		public EndpointEventHandler<ID> EndpointStartLoad;
-		/// <summary>
-		/// Load entity metadata.
-		/// </summary>
-		public EndpointEventHandler<T> EndpointEndLoad;
-		/// <summary>
-		/// Create a new entity.
-		/// </summary>
-		public EndpointEventHandler<T> EndpointStartCreate;
-		/// <summary>
-		/// Create a new entity.
-		/// </summary>
-		public EndpointEventHandler<T> EndpointEndCreate;
-		/// <summary>
-		/// Delete an entity.
-		/// </summary>
-		public EndpointEventHandler<T> EndpointStartDelete;
-		/// <summary>
-		/// Delete an entity.
-		/// </summary>
-		public EndpointEventHandler<T> EndpointEndDelete;
-		/// <summary>
-		/// Update entity metadata.
-		/// </summary>
-		public EndpointEventHandler<T> EndpointStartUpdate;
-		/// <summary>
-		/// Update entity metadata.
-		/// </summary>
-		public EndpointEventHandler<T> EndpointEndUpdate;
-
-		#endregion
 
 		/// <summary>
 		/// Called when a remote entity was received via remote sync.

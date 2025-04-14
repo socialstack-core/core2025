@@ -39,7 +39,7 @@ export interface CanvasNode {
 
 	/**
 	 * Any roots of this canvas node. These are effectively any props which are to be further expanded. 
-	 * This allows the props set to guaranteed to be as-is.
+	 * This allows the props set to be guaranteed to be as-is.
 	 */
 	roots: Record<string, CanvasNode>,
 

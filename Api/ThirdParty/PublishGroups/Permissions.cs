@@ -4,7 +4,7 @@ using Api.Contexts;
 using Api.Permissions;
 using System.Threading.Tasks;
 
-namespace Api.Currency
+namespace Api.PublishGroups
 {
 	/// <summary>
 	/// Instances capabilities during the very earliest phases of startup.
@@ -28,17 +28,17 @@ namespace Api.Currency
 				Public role: Not logged in at all.
 				
 				// Allow public creation (as it's disabled by default):
-				Roles.Member.Grant("exchangeRate_create");
-				Roles.Public.Grant("exchangeRate_create");
-				Roles.Guest.Grant("exchangeRate_create");
+				Roles.Member.Grant("publishGroup_create");
+				Roles.Public.Grant("publishGroup_create");
+				Roles.Guest.Grant("publishGroup_create");
 				
 				// Remove public viewing (as it's enabled by default):
-				Roles.Guest.Revoke("exchangeRate_load", "exchangeRate_list");
-				Roles.Public.Revoke("exchangeRate_load", "exchangeRate_list");
-				Roles.Member.Revoke("exchangeRate_load", "exchangeRate_list");
+				Roles.Guest.Revoke("publishGroup_load", "publishGroup_list");
+				Roles.Public.Revoke("publishGroup_load", "publishGroup_list");
+				Roles.Member.Revoke("publishGroup_load", "publishGroup_list");
 				*/
-				
-				return new ValueTask<object>(source);
+
+                return new ValueTask<object>(source);
 			}, 20);
 		}
 	}

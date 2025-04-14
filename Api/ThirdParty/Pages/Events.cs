@@ -15,6 +15,11 @@ namespace Api.Eventing
 		/// All page entity events.
 		/// </summary>
 		public static PageEventGroup Page;
+
+		/// <summary>
+		/// Set of events for a permalink.
+		/// </summary>
+		public static EventGroup<Permalink> Permalink;
 	}
 
 	/// <summary>

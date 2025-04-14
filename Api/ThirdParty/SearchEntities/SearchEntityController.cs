@@ -17,10 +17,8 @@ namespace Api.SearchEntities
         /// Exposes the site search
         /// </summary>
         [HttpPost("query")]
-        public virtual async ValueTask<DocumentsResult> Query([FromBody] JObject filters)
+        public virtual async ValueTask<DocumentsResult> Query(Context context, [FromBody] JObject filters)
         {
-            var context = await Request.GetContext();
-
             if (context.Role == null || !context.Role.CanViewAdmin)
             {
                 throw PermissionException.Create("entity_search", context);
@@ -62,10 +60,8 @@ namespace Api.SearchEntities
         /// </summary>
         /// <returns></returns>
         [HttpGet("reset")]
-        public virtual async ValueTask<bool> Reset()
+        public virtual async ValueTask<bool> Reset(Context context)
         {
-            var context = await Request.GetContext();
-
             if (context.Role == null || !context.Role.CanViewAdmin)
             {
                 throw PermissionException.Create("entity_search_reset", context);
@@ -86,10 +82,8 @@ namespace Api.SearchEntities
         /// </summary>
         /// <returns></returns>
         [HttpGet("reindex")]
-        public virtual async ValueTask<bool> Index()
+        public virtual async ValueTask<bool> Index(Context context)
         {
-            var context = await Request.GetContext();
-
             if (context.Role == null || !context.Role.CanViewAdmin)
             {
                 throw PermissionException.Create("entity_search_index", context);

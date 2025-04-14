@@ -34,6 +34,21 @@ export type User = VersionedContent & {
 }
 
 /*
+  A context constructed primarily from a cookie value. 
+            Uses other locale hints such as Accept-Lang when the user doesn't specifically have one set in the cookie.
+*/
+export type Context = {
+    roleId: uint,
+    role?: Role,
+    siteDomainId: uint,
+    localeId: uint,
+    userId: uint,
+    user?: User,
+    ignorePermissions: boolean,
+    permitEditedUtcChange: boolean,
+}
+
+/*
   Used when someone has forgot their password
 */
 export type UserPasswordForgot = {
@@ -48,12 +63,28 @@ export type OptionalPassword = {
 }
 
 /*
-  Used when logging in. This is fully defined by the password auth service(s) that you have available.
-            The default one is Api.PasswordAuth
 */
 export type UserLogin = {
     emailOrUsername?: string,
     password?: string,
+}
+
+/*
+*/
+export type LoginResult = {
+    moreDetailRequired?: Record<string, string | number | boolean>,
+    cookieName?: string,
+    user?: User,
+    success: boolean,
+    loginData?: UserLogin,
+}
+
+/*
+  A soft kind of failure which can occur when more info is required.
+*/
+export type LoginResultOrContext = {
+    loginResult?: LoginResult,
+    context?: SessionResponse,
 }
 
 /**
@@ -75,7 +106,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
             Sends the user a new token to verify their email.
 
     */
-    public resendVerificationEmail = (body: UserPasswordForgot): Promise<void>  => {
+    public resendVerificationEmail = (context: SessionResponse, body: UserPasswordForgot): Promise<SessionResponse>  => {
         return getJson(this.apiUrl + '/sendverifyemail', body )
     }
 
@@ -84,7 +115,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
             Attempts to verify the users email. If a password is supplied, the users password is also set.
 
     */
-    public verifyUser = (userid: uint, token: string, newPassword: OptionalPassword): Promise<void>  => {
+    public verifyUser = (context: SessionResponse, userid: uint, token: string, newPassword: OptionalPassword): Promise<SessionResponse>  => {
         return getJson(this.apiUrl + '/verify/' + userid + '/' + token + '', 
         newPassword
         )
@@ -94,7 +125,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
       Gets the current context.
 
     */
-    public self = (): Promise<SessionResponse>  => {
+    public self = (context: SessionResponse): Promise<SessionResponse>  => {
         return getJson(this.apiUrl + '/self')
     }
 
@@ -102,7 +133,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
       Logs out this user account.
 
     */
-    public logout = (): Promise<SessionResponse>  => {
+    public logout = (httpContext: HttpContext, context: SessionResponse): Promise<SessionResponse>  => {
         return getJson(this.apiUrl + '/logout')
     }
 
@@ -111,7 +142,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
             Attempts to login. Returns either a Context or a LoginResult.
 
     */
-    public login = (body: UserLogin): Promise<SessionResponse>  => {
+    public login = (httpContext: HttpContext, context: SessionResponse, body: UserLogin[]): Promise<LoginResultOrContext>  => {
         return getJson(this.apiUrl + '/login', body )
     }
 
@@ -119,7 +150,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
       Impersonate a user by their ID. This is a hard cookie switch. You will loose all admin functionality to make the impersonation as accurate as possible.
 
     */
-    public impersonate = (id: uint): Promise<SessionResponse>  => {
+    public impersonate = (httpContext: HttpContext, context: SessionResponse, id: uint): Promise<SessionResponse>  => {
         return getJson(this.apiUrl + '/' + id + '/impersonate')
     }
 
@@ -127,7 +158,7 @@ export class UserApi extends AutoApi<User, UserIncludes>{
       Reverses an impersonation.
 
     */
-    public unpersonate = (): Promise<SessionResponse>  => {
+    public unpersonate = (httpContext: HttpContext): Promise<SessionResponse>  => {
         return getJson(this.apiUrl + '/unpersonate')
     }
 

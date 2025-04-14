@@ -783,14 +783,33 @@ namespace Api.CanvasRenderer
 		public byte[] Precompressed;
 
 		/// <summary>
-		/// The file's E-Tag.
+		/// The file's E-Tag. It is "hash" (the hash in quotes).
 		/// </summary>
-		public Microsoft.Net.Http.Headers.EntityTagHeaderValue Etag;
+		public string Etag;
+
+		private string _lastModdedUtcString;
+		private DateTime _lastModified;
 
 		/// <summary>
 		/// The last modified date.
 		/// </summary>
-		public DateTime LastModifiedUtc;
+		public DateTime LastModifiedUtc
+		{
+			get
+			{
+				return _lastModified;
+			}
+			set 
+			{
+				_lastModified = value;
+				_lastModdedUtcString = value.ToString("R");
+			}
+		}
+		
+		/// <summary>
+		/// The last modified date as an RFC1123 string.
+		/// </summary>
+		public string LastModifiedUtcString => _lastModdedUtcString;
 
 		/// <summary>
 		/// The hash of the file.

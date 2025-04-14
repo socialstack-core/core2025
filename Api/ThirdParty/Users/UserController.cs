@@ -35,11 +35,9 @@ namespace Api.Users
 		/// </summary>
 		/// <returns></returns>
 		[HttpGet("self")]
-		[Returns(typeof(Context))]
-		public async ValueTask Self()
+		public Context Self(Context context)
 		{
-			var context = await Request.GetContext();
-			await OutputContext(context);
+			return context;
 		}
 		
 		/// <summary>
@@ -52,52 +50,47 @@ namespace Api.Users
 		/// </summary>
 		/// <returns></returns>
         [HttpGet("logout")]
-		[Returns(typeof(Context))]
-        public async ValueTask Logout() {
-			var context = await Request.GetContext();
+        public async ValueTask<Context> Logout(HttpContext httpContext, Context context) {
+			var response = httpContext.Response;
 
 			var result = await ((UserEventGroup)(_service.EventGroup)).Logout.Dispatch(context, new LogoutResult());
 
 			if (result.SendContext)
 			{
 				// Send context only - don't change the cookie:
-				await OutputContext(context);
+				return context;
 			}
-			else
-			{
-				// Clear user:
-				context.User = null;
-				
-				// Regular empty cookie:
-				Response.Cookies.Append(
-					_contexts.CookieName,
-					"",
-					new Microsoft.AspNetCore.Http.CookieOptions()
-					{
-						Path = "/",
-						Domain = _contexts.GetDomain(context.LocaleId),
-						IsEssential = true,
-						Expires = ThePast
-					}
-				);
 
-				Response.Cookies.Append(
-					_contexts.CookieName,
-					"",
-					new Microsoft.AspNetCore.Http.CookieOptions()
-					{
-						Path = "/",
-						Expires = ThePast
-					}
-				);
+			// Clear user:
+			context.User = null;
 				
-				// Send a new context:
-				var newContext = new Context();
-				
-				newContext.LocaleId = context.LocaleId;
-				
-				await OutputContext(newContext);
-			}
+			// Regular empty cookie:
+			response.Cookies.Append(
+				_contexts.CookieName,
+				"",
+				new Microsoft.AspNetCore.Http.CookieOptions()
+				{
+					Path = "/",
+					Domain = _contexts.GetDomain(context.LocaleId),
+					IsEssential = true,
+					Expires = ThePast
+				}
+			);
+
+			response.Cookies.Append(
+				_contexts.CookieName,
+				"",
+				new Microsoft.AspNetCore.Http.CookieOptions()
+				{
+					Path = "/",
+					Expires = ThePast
+				}
+			);
+			
+			// Send a new context:
+			var newContext = new Context();
+			newContext.LocaleId = context.LocaleId;
+			return newContext;
         }
 
 		/// <summary>
@@ -117,12 +110,10 @@ namespace Api.Users
 		/// Attempts to login. Returns either a Context or a LoginResult.
 		/// </summary>
 		[HttpPost("login")]
-		[Returns(typeof(Context))]
-		public async ValueTask Login([FromBody] UserLogin body)
+		public async ValueTask<LoginResultOrContext> Login(HttpContext httpContext, Context context, [FromBody] UserLogin body)
 		{
-			var context = await Request.GetContext();
-
 			var result = await (_service as UserService).Authenticate(context, body);
+			var response = httpContext.Response;
 
 			if (result == null)
 			{
@@ -132,26 +123,29 @@ namespace Api.Users
 			if (!result.Success)
 			{
 				// Output the result message. 
-				// Fail message does not expose any content objects but does contain nested objects, so newtonsoft is ok here.
-				var json = JsonConvert.SerializeObject(result, jsonSettings);
-				var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-				await Response.Body.WriteAsync(bytes, 0, bytes.Length);
-				return;
+				return new LoginResultOrContext
+				{
+					LoginResult = result
+				};
 			}
 
 			// output the context:
-			await OutputContext(context);
+			return new LoginResultOrContext
+			{
+				Context = context
+			};
         }
 
 		/// <summary>
 		/// Impersonate a user by their ID. This is a hard cookie switch. You will loose all admin functionality to make the impersonation as accurate as possible.
 		/// </summary>
 		[HttpGet("{id}/impersonate")]
-		[Returns(typeof(Context))]
-		public async ValueTask Impersonate([FromRoute] uint id)
+		public async ValueTask<Context> Impersonate(HttpContext httpContext, Context context, [FromRoute] uint id)
 		{
+			var request = httpContext.Request;
+			var response = httpContext.Response;
+
 			// Firstly, are they an admin?
-			var context = await Request.GetContext();
 
 			if (context.Role == null || !context.Role.CanViewAdmin)
 			{
@@ -169,8 +163,8 @@ namespace Api.Users
 
 			var _loginTokens = Services.Get<ContextService>();
 
-			var cookie = Request.Cookies[_loginTokens.CookieName];
-			var impCookie = Request.Cookies[_loginTokens.ImpersonationCookieName];
+			var cookie = request.Cookies[_loginTokens.CookieName];
+			var impCookie = request.Cookies[_loginTokens.ImpersonationCookieName];
 
 			// If we were already impersonating, don't overwrite the existing impersonation cookie.
 			if (impCookie == null || impCookie.Length == 0)
@@ -178,7 +172,7 @@ namespace Api.Users
 				// Set impersonation backup cookie:
 				var expiry = DateTime.UtcNow.AddDays(120);
 
-				Response.Cookies.Append(
+				response.Cookies.Append(
 					_loginTokens.ImpersonationCookieName,
 					cookie,
 					new Microsoft.AspNetCore.Http.CookieOptions()
@@ -196,30 +190,32 @@ namespace Api.Users
 
 			// Update the context to the new user:
 			context.User = targetUser;
-
-			await OutputContext(context);
+			return context;
 		}
 
 		/// <summary>
 		/// Reverses an impersonation.
 		/// </summary>
 		[HttpGet("unpersonate")]
-		[Returns(typeof(Context))]
-		public async ValueTask Unpersonate()
+		public async ValueTask<Context> Unpersonate(HttpContext httpContext)
 		{
+			var request = httpContext.Request;
+			var response = httpContext.Response;
+
 			var _loginTokens = Services.Get<ContextService>();
 			
-			var impCookie = Request.Cookies[_loginTokens.ImpersonationCookieName];
+			var impCookie = request.Cookies[_loginTokens.ImpersonationCookieName];
 
 			if (impCookie == null || impCookie.Length == 0)
 			{
-				return;
+				return null;
 			}
-			
-			var context = await _loginTokens.Get(impCookie);
+
+			var context = new Context();
+			await _loginTokens.Get(impCookie, context);
 
 			// Remove the impersonation cookie:
-			Response.Cookies.Append(
+			response.Cookies.Append(
 				_loginTokens.ImpersonationCookieName,
 				"",
 				new Microsoft.AspNetCore.Http.CookieOptions()
@@ -235,8 +231,23 @@ namespace Api.Users
 			);
 
 			// Note that this will also generate a new token:
-			await OutputContext(context);
+			return context;
 		}
 
     }
+
+	/// <summary>
+	/// A soft kind of failure which can occur when more info is required.
+	/// </summary>
+	public struct LoginResultOrContext
+	{
+		/// <summary>
+		/// Set usually if more info is required, such as 2FA.
+		/// </summary>
+		public LoginResult LoginResult;
+		/// <summary>
+		/// Set if a login occurred fully.
+		/// </summary>
+		public Context Context;
+	}
 }

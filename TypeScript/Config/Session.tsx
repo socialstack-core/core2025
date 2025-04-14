@@ -1,5 +1,4 @@
 import { ApiContent } from 'UI/Functions/WebRequest';
-import { CurrencyLocale } from 'Api/CurrencyLocale';
 import { Role } from 'Api/Role';
 import { SiteDomain } from 'Api/SiteDomain';
 import { Locale } from 'Api/Locale';
@@ -20,11 +19,6 @@ declare global {
          * Use sparingly as overuse would of course make impersonation relatively meaningless.
          */
         realUser?: User
-
-		/**
-         * The current session CurrencyLocale
-         */
-        currencylocale?: CurrencyLocale
 
 		/**
          * The current session Role
@@ -48,11 +42,6 @@ declare global {
 
     }
     interface SessionResponse {
-
-		/**
-         * The pre-expanded CurrencyLocale
-         */
-        currencylocale?: ApiContent<CurrencyLocale>
 
 		/**
          * The pre-expanded Role

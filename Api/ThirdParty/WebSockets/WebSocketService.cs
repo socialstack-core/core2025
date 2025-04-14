@@ -198,12 +198,8 @@ namespace Api.WebSockets
 						var authToken = jToken.Value<string>();
 
 						// Load the context:
-						var ctx = await _contextService.Get(authToken);
-
-						if (ctx == null)
-						{
-							ctx = new Context();
-						}
+						var ctx = new Context();
+						await _contextService.Get(authToken, ctx);
 						await client.SetContext(ctx);
 						break;
 					case "+":

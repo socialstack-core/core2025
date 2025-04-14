@@ -11,7 +11,8 @@ import Modal from 'UI/Modal';
 import webRequest from 'UI/Functions/WebRequest';
 import * as fileRef from 'UI/FileRef';
 import Default from 'Admin/Layouts/Default';
-import MultiSelect from 'Admin/MultiSelect'
+import MultiSelect from 'Admin/MultiSelect';
+import uploadApi from 'Api/Upload';
 
 var fields = ['id', 'originalName'];
 var searchFields = ['originalName', 'alt', 'author', 'id'];
@@ -79,10 +80,10 @@ export default class MediaCenter extends React.Component {
     renderTags(combinedFilter) {
         var tagids = [];
         var tags = [];
-            
+
         return (
             <ul className='media-center__tags'>
-                <Loop raw over={'upload/list'} filter={combinedFilter} includes={'tags'} onResults={results => {
+                <Loop over={uploadApi} filter={combinedFilter} includes={uploadApi.includes.tags} onResults={results => {
                     results.map(media => {
                         media.tags.map(tag => {
                             if (!tagids.includes(tag.id)) {
@@ -592,7 +593,7 @@ export default class MediaCenter extends React.Component {
 
         var tags = this.renderTags(combinedFilter);
 
-        combinedFilter.pageSize = 60;
+        // combinedFilter.pageSize = 60;
 
         return <Default>
             <div className="admin-page">
@@ -629,7 +630,7 @@ export default class MediaCenter extends React.Component {
                         </>}
 
                         <div className="media-center__list">
-                            <Loop raw over={'upload/list'} filter={combinedFilter} includes={'tags'} paged onResults={results => {
+                            <Loop over={uploadApi} filter={combinedFilter} includes={uploadApi.includes.tags} paged onResults={results => {
                                 // Either changed page or loaded for first time - clear bulk selects if there is any.
                                 if (this.state.bulkSelections) {
                                     this.setState({ bulkSelections: null });

@@ -85,7 +85,7 @@ namespace Api.SiteDomains
                 return urlInfo;
             });
 
-            Events.Context.OnLoad.AddEventListener((Context context, HttpRequest request) =>
+            Events.Context.OnInitiate.AddEventListener((Context context, HttpRequest request) =>
             {
                 if (_multiDomain)
                 {

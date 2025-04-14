@@ -5,22 +5,19 @@ using Api.Permissions;
 using Api.Contexts;
 using Api.Eventing;
 
-namespace Api.Currency
+namespace Api.PublishGroups
 {
 	/// <summary>
-	/// Handles exchangeRates.
+	/// Handles publishGroupContents.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
-	public partial class ExchangeRateService : AutoService<ExchangeRate>
+	public partial class PublishGroupContentService : AutoService<PublishGroupContent>
     {
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public ExchangeRateService() : base(Events.ExchangeRate)
+		public PublishGroupContentService() : base(Events.PublishGroupContent)
         {
-			InstallAdminPages("ExchangeRates", "fa:fa-rocket", new string[] { "id", "name", "rate", "fromLocaleId", "toLocaleId" });
-
-			Cache();
 		}
 	}
     

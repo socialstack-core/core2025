@@ -20,13 +20,12 @@ namespace Api.NavMenus
 		/// Overriden endpoint 
 		/// </summary>
 		/// <param name="filters"></param>
-		/// <param name="includes"></param>
+		/// <param name="context"></param>
 		/// <returns></returns>
 		[HttpPost("list")]
-		public override async ValueTask List([FromBody] ListFilter filters, [FromQuery] string includes = null)
+		public override async ValueTask<ContentStream<AdminNavMenuItem, uint>?> List(Context context, [FromBody] ListFilter filters)
 		{
 			var service = _service as AdminNavMenuItemService;
-			var context = await Request.GetContext();
 			
 			var allItems = await service.Where().ListAll(context);
 			var userCanAccess = new List<AdminNavMenuItem>();
@@ -67,8 +66,7 @@ namespace Api.NavMenus
 				}
 			}
 
-			await OutputJson(context, userCanAccess, includes);
-			
+			return new ContentStream<AdminNavMenuItem, uint>(userCanAccess, service);
 		}
     }
 }

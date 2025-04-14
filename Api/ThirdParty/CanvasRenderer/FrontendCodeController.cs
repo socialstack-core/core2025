@@ -10,6 +10,7 @@ using System.Text;
 using Microsoft.Extensions.Primitives;
 using Api.SocketServerLibrary;
 using Api.Startup;
+using Api.Startup.Routing;
 
 namespace Api.CanvasRenderer
 {
@@ -17,7 +18,7 @@ namespace Api.CanvasRenderer
     /// Handles requests to /pack/* for frontend code files.
     /// </summary>
     [InternalApi]
-    public partial class FrontendCodeController : Controller
+    public partial class FrontendCodeController : AutoController
     {
 		private FrontendCodeService _codeService;
 
@@ -34,17 +35,13 @@ namespace Api.CanvasRenderer
 		/// Reloads a prebuilt UI
 		/// </summary>
 		[Route("/v1/monitoring/ui-reload")]
-		public async ValueTask Reload()
+		public async ValueTask<UIReloadResult> Reload()
 		{
-			_codeService.ReloadFromFilesystem();
+			var version = _codeService.ReloadFromFilesystem();
 
-			Response.ContentType = "application/json";
-
-			var writer = Writer.GetPooled();
-			writer.Start(null);
-			writer.WriteASCII("{\"success\":1}");
-			await writer.CopyToAsync(Response.Body);
-			writer.Release();
+			return new UIReloadResult() {
+				Version = version
+			};
 		}
 
 		/// <summary>
@@ -61,28 +58,26 @@ namespace Api.CanvasRenderer
 		/// The type metadata.
 		/// </summary>
 		[Route("/pack/type-meta.json")]
-		public async ValueTask<FileResult> GetTypeMeta()
+		public async ValueTask<FileContent?> GetTypeMeta()
 		{
 			var file = await _codeService.GetTypeMeta();
 			return ServeFile(file, "text/json; charset=UTF-8");
 		}
-
-		private FileResult ServeFile(FrontendFile file, string mime)
+		
+		private FileContent? ServeFile(FrontendFile file, string mime)
 		{
 			if (file.FileContent == null)
 			{
 				// 404
-				Response.StatusCode = 404;
 				return null;
 			}
 
 			if (file.Precompressed != null)
 			{
-				Response.Headers["Content-Encoding"] = "gzip";
-				return File(file.Precompressed, mime);
+				return new FileContent(file.Precompressed, mime, true);
 			}
 
-			return File(file.FileContent, mime);
+			return new FileContent(file.FileContent, mime);
 		}
 
 		/// <summary>
@@ -92,20 +87,8 @@ namespace Api.CanvasRenderer
 		/// </summary>
 		/// <returns></returns>
 		[Route("/pack/email-static/main.js")]
-		public async ValueTask<FileResult> GetEmailMainJs()
+		public async ValueTask<FileContent?> GetEmailMainJs([FromQuery] uint localeId = 1)
 		{
-			// Get locale ID from get arg called "lid". If it isn't specified, must use default locale 1.
-			// Note that it would not be up to this code to decide a suitable locale if it is not specified.
-			uint localeId = 1;
-
-			if (Request.Query.TryGetValue("lid", out StringValues value))
-			{
-				if(!uint.TryParse(value.ToString(), out localeId))
-				{
-					localeId = 1;
-				}
-			}
-
 			// Ask the service as it's almost always cached in there.
 			var file = await _codeService.GetEmailMainJs(localeId);
 			return ServeFile(file, "text/javascript; charset=UTF-8");
@@ -117,10 +100,10 @@ namespace Api.CanvasRenderer
 		/// </summary>
 		/// <returns></returns>
 		[Route("/pack/scss/{bundle}")]
-		public string GetGlobalScss(string bundle)
+		public FileContent GetGlobalScss(string bundle)
 		{
 			var file = _codeService.GetGlobalScss(bundle);
-			return file;
+			return new FileContent(Encoding.UTF8.GetBytes(file), "text/plain");
 		}
 #endif
 
@@ -131,37 +114,23 @@ namespace Api.CanvasRenderer
 		/// </summary>
 		/// <returns></returns>
 		[Route("/pack/main.js")]
-		public async ValueTask<FileResult> GetMainJs()
+		public async ValueTask<FileContent?> GetMainJs([FromQuery] uint localeId = 1)
 		{
-			// Get locale ID from get arg called "lid". If it isn't specified, must use default locale 1.
-			// Note that it would not be up to this code to decide a suitable locale if it is not specified.
-			uint localeId = 1;
-
-			if (Request.Query.TryGetValue("lid", out StringValues value))
-			{
-				if (!uint.TryParse(value.ToString(), out localeId))
-				{
-					localeId = 1;
-				}
-			}
-
 			// Ask the service as it's almost always cached in there.
 			var file = await _codeService.GetMainJs(localeId);
 
 			if (file.FileContent == null)
 			{
 				// 404
-				Response.StatusCode = 404;
 				return null;
 			}
 
 			if (file.Precompressed != null)
 			{
-				Response.Headers["Content-Encoding"] = "gzip";
-				return File(file.Precompressed, "text/javascript; charset=UTF-8", file.LastModifiedUtc, file.Etag);
+				return new FileContent(file.Precompressed, "text/javascript; charset=UTF-8", true, file.LastModifiedUtcString, file.Etag);
 			}
 
-			return File(file.FileContent, "text/javascript; charset=UTF-8", file.LastModifiedUtc, file.Etag);
+			return new FileContent(file.FileContent, "text/javascript; charset=UTF-8", false, file.LastModifiedUtcString, file.Etag);
 		}
 
 		/// <summary>
@@ -171,20 +140,8 @@ namespace Api.CanvasRenderer
 		/// </summary>
 		/// <returns></returns>
 		[Route("/en-admin/pack/main.js")]
-		public async ValueTask<FileResult> GetAdminMainJs()
+		public async ValueTask<FileContent?> GetAdminMainJs([FromQuery] uint localeId = 1)
 		{
-			// Get locale ID from get arg called "lid". If it isn't specified, must use default locale 1.
-			// Note that it would not be up to this code to decide a suitable locale if it is not specified.
-			uint localeId = 1;
-
-			if (Request.Query.TryGetValue("lid", out StringValues value))
-			{
-				if(!uint.TryParse(value.ToString(), out localeId))
-				{
-					localeId = 1;
-				}
-			}
-
 			// Ask the service as it's almost always cached in there.
 			var file = await _codeService.GetAdminMainJs(localeId);
 			return ServeFile(file, "text/javascript; charset=UTF-8");
@@ -197,7 +154,7 @@ namespace Api.CanvasRenderer
 		/// </summary>
 		/// <returns></returns>
 		[Route("/pack/main.css")]
-		public async ValueTask<FileResult> GetMainCss()
+		public async ValueTask<FileContent?> GetMainCss()
 		{
 			// Ask the service as it's almost always cached in there.
 			var file = await _codeService.GetMainCss(1);
@@ -205,17 +162,15 @@ namespace Api.CanvasRenderer
 			if (file.FileContent == null)
 			{
 				// 404
-				Response.StatusCode = 404;
 				return null;
 			}
 
 			if (file.Precompressed != null)
 			{
-				Response.Headers["Content-Encoding"] = "gzip";
-				return File(file.Precompressed, "text/css; charset=UTF-8", file.LastModifiedUtc, file.Etag);
+				return new FileContent(file.Precompressed, "text/css; charset=UTF-8", true, file.LastModifiedUtcString, file.Etag);
 			}
 			
-			return File(file.FileContent, "text/css; charset=UTF-8", file.LastModifiedUtc, file.Etag);
+			return new FileContent(file.FileContent, "text/css; charset=UTF-8", false, file.LastModifiedUtcString, file.Etag);
 		}
 		/// <summary>
 		/// Gets the main.css file for the admin area (site locale 1). The URL should be of the form /en-admin/pack/main.css?loc=1&amp;v=123123123123&amp;h=ma83md83jd7hdur8
@@ -224,12 +179,23 @@ namespace Api.CanvasRenderer
 		/// </summary>
 		/// <returns></returns>
 		[Route("/en-admin/pack/main.css")]
-		public async ValueTask<FileResult> GetAdminMainCss()
+		public async ValueTask<FileContent?> GetAdminMainCss()
 		{
 			// Ask the service as it's almost always cached in there.
 			var file = await _codeService.GetAdminMainCss(1);
 			return ServeFile(file, "text/css; charset=UTF-8");
 		}
+	}
+
+	/// <summary>
+	/// Output from a UI reload.
+	/// </summary>
+	public struct UIReloadResult
+	{
+		/// <summary>
+		/// UI version.
+		/// </summary>
+		public long Version;
 	}
 
 }

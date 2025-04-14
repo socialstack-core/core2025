@@ -93,7 +93,7 @@ public enum DataOptions : int
 /// </summary>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="ID">ID type (usually int)</typeparam>
-public partial class AutoService<T, ID> : AutoService 
+public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID>
 	where T: Content<ID>, new()
 	where ID: struct, IConvertible, IEquatable<ID>, IComparable<ID>
 {
@@ -841,6 +841,25 @@ public partial class AutoService<T, ID> : AutoService
 
 			return _emptyFilter;
 		}
+	}
+
+	/// <summary>
+	/// Starts streaming results for the given filter. 
+	/// Usually use Where and then one if its convenience functions instead.
+	/// </summary>
+	/// <param name="filter"></param>
+	/// <param name="release">Release the filter afterwards.</param>
+	/// <returns>Total, if filter.IncludeTotal is set. Otherwise its meaning is undefined.</returns>
+	public ContentStream<T, ID> GetResults(Filter<T, ID> filter, bool release = true)
+	{
+		var res = new ContentStream<T, ID>() {
+			Source = this,
+			ServiceForType = this,
+			Filter = filter,
+			ReleaseFilter = release
+		};
+
+		return res;
 	}
 
 	/// <summary>

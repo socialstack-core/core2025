@@ -39,6 +39,11 @@ namespace Api.Swagger
             // Also hook up the after app configuration
             WebServerStartupInfo.OnConfigureApplication += (IApplicationBuilder app) =>
             {
+                // SS core has a custom routing engine & swagger needs to be registered with it instead of 
+                // via MVC routing.
+                System.Console.WriteLine("Swagger disabled (revisit required)");
+                return;
+
                 //restrict access to admin panel users 
                 app.UseMiddleware<SwaggerAuthenticationMiddleware>();
 

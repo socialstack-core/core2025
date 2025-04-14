@@ -937,62 +937,12 @@ namespace Api.SearchElastic
                 return null;
             }
 
-            List<Tag> tags;
+            var f = _tagService.Where("Categories=?", DataOptions.IgnorePermissions);
+            f.Sort("Name");
+            f.PageSize = 500;
+            f.Bind(category.Id);
 
-            // Need to get tags that respect the users CurrencyLocale
-            if (ctx.LocaleId != ctx.CurrencyLocaleId && ctx.CurrencyLocaleId > 0)
-            {
-                var f = _tagService.Where("Categories=? AND IsPrice=?", DataOptions.IgnorePermissions);
-                f.Sort("Name");
-                f.PageSize = 500;
-                f.Bind(category.Id);
-                f.Bind(false);
-                tags = await f.ListAll(ctx);
-
-                var currencyContext = new Context(ctx.Role)
-                {
-                    LocaleId = ctx.CurrencyLocaleId
-                };
-
-                var fl = _tagService.Where("Categories=? AND IsPrice=?", DataOptions.IgnorePermissions);
-                fl.Sort("Name");
-                fl.PageSize = 500;
-                fl.Bind(category.Id);
-                fl.Bind(true);
-                var priceTagsByLocale = await fl.ListAll(ctx);
-
-                var fcl = _tagService.Where("Categories=? AND IsPrice=?", DataOptions.IgnorePermissions);
-                fcl.Sort("Name");
-                fcl.PageSize = 500;
-                fcl.Bind(category.Id);
-                fcl.Bind(true);
-                var priceTagsByCurrencyLocale = await fcl.ListAll(currencyContext);
-
-                if (priceTagsByLocale != null && priceTagsByLocale.Any() && priceTagsByCurrencyLocale != null && priceTagsByCurrencyLocale.Any())
-                {
-                    foreach (var priceTag in priceTagsByLocale)
-                    {
-                        var currencyLocaleTag = priceTagsByCurrencyLocale.FirstOrDefault(clt => clt.Id == priceTag.Id);
-
-                        if (currencyLocaleTag != null)
-                        {
-                            // Make sure the label reflects the users currency locale i.e. show $ values instead of £ values
-                            priceTag.Description = !string.IsNullOrEmpty(currencyLocaleTag.Description) ? currencyLocaleTag.Description : currencyLocaleTag.Name;
-                        }
-
-                        tags.Add(priceTag);
-                    }
-                }
-            }
-            else
-            {
-                var f = _tagService.Where("Categories=?", DataOptions.IgnorePermissions);
-                f.Sort("Name");
-                f.PageSize = 500;
-                f.Bind(category.Id);
-
-                tags = await f.ListAll(ctx);
-            }
+            var tags = await f.ListAll(ctx);
 
             if (tags == null || !tags.Any())
             {

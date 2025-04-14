@@ -5,9 +5,21 @@ using Api.SocketServerLibrary;
 using Api.Startup;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+
+/// <summary>
+/// The base of all controllers. Don't use ASP.NET controllers as they will not run!
+/// This is because the serverside renderer and the websocket engine mount your 
+/// controller methods directly, and thus no actual request happens. This also is used to enforce  
+/// field visibility rules always as your controller methods can safely just return content objects.
+/// </summary>
+public class AutoController
+{
+	
+}
 
 /// <summary>
 /// A convenience controller for defining common endpoints like create, list, delete etc. Requires an AutoService of the same type to function.
@@ -28,7 +40,7 @@ public partial class AutoController<T> : AutoController<T, uint>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="ID"></typeparam>
 [ApiController]
-public partial class AutoController<T,ID> : ControllerBase
+public partial class AutoController<T,ID> : AutoController
 	where T : Content<ID>, new()
 	where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 {
@@ -59,102 +71,14 @@ public partial class AutoController<T,ID> : ControllerBase
 	}
 
 	/// <summary>
-	/// Json header
-	/// </summary>
-	protected readonly static string _applicationJson = "application/json";
-
-	/// <summary>
-	/// Outputs the given content object set whilst considering the field visibility rules of the role in the context.
-	/// To avoid an IEnumerable allocation, also consider using the non-alloc mechanism inside this function directly on high traffic usage.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="content"></param>
-	/// <param name="includes"></param>
-	/// <param name="withTotal"></param>
-	/// <returns></returns>
-	protected async ValueTask OutputJson(Context context, IEnumerable<T> content, string includes, bool withTotal = false)
-	{
-		if (content == null)
-		{
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-			return;
-		}
-
-		Response.ContentType = _applicationJson;
-
-		var writer = Writer.GetPooled();
-		writer.Start(null);
-		await _service.ToJson(context, content, async (Context context, IEnumerable<T> data, Func<T, int, ValueTask> onResult) => {
-			int i = 0;
-
-			foreach (var entry in data)
-			{
-				await onResult(entry, i++);
-			}
-
-			return i;
-		}, writer, Response.Body, includes, withTotal);
-		writer.Release();
-	}
-
-	/// <summary>
-	/// Outputs the given content object whilst considering the field visibility rules of the role in the context.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="content"></param>
-	/// <param name="includes"></param>
-	/// <returns></returns>
-	protected async ValueTask OutputJson(Context context, T content, string includes)
-	{
-		if (content == null)
-		{
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-			return;
-		}
-
-		Response.ContentType = _applicationJson;
-
-		var writer = Writer.GetPooled();
-		writer.Start(null);
-		await _service.ToJson(context, content, writer, Response.Body, includes);
-		writer.Release();
-	}
-
-	/// <summary>
-	/// Outputs a context update.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <returns></returns>
-	protected async ValueTask OutputContext(Context context)
-	{
-		// Regenerate the contextual token:
-		context.SendToken(Response);
-
-		Response.ContentType = _applicationJson;
-		await Services.Get<ContextService>().ToJson(context, Response.Body);
-	}
-
-	/// <summary>
 	/// GET /v1/entityTypeName/2/
 	/// Returns the data for 1 entity.
 	/// </summary>
 	[HttpGet("{id}")]
-	public virtual async ValueTask Load([FromRoute] ID id, [FromQuery] string includes = null)
+	public virtual async ValueTask<T> Load(Context context, [FromRoute] ID id)
 	{
-		var context = await Request.GetContext();
-
-		id = await _service.EventGroup.EndpointStartLoad.Dispatch(context, id, Response);
-		
 		var result = await _service.Get(context, id);
-		result = await _service.EventGroup.EndpointEndLoad.Dispatch(context, result, Response);
-
-		await OutputJson(context, result, includes);
+		return result;
     }
 
 	/// <summary>
@@ -162,33 +86,17 @@ public partial class AutoController<T,ID> : ControllerBase
 	/// Deletes an entity
 	/// </summary>
 	[HttpDelete("{id}")]
-    public virtual async ValueTask Delete([FromRoute] ID id, [FromQuery] string includes = null)
+    public virtual async ValueTask<T> Delete(Context context, [FromRoute] ID id)
 	{
-		var context = await Request.GetContext();
 		var result = await _service.Get(context, id);
-		result = await _service.EventGroup.EndpointStartDelete.Dispatch(context, result, Response);
-
-		if (result == null)
-		{
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-			return;
-		}
 
 		if (result == null || !await _service.Delete(context, result))
 		{
 			// The handlers have blocked this one from happening, or it failed
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-			return;
+			return null;
 		}
 
-		result = await _service.EventGroup.EndpointEndDelete.Dispatch(context, result, Response);
-		await OutputJson(context, result, includes);
+		return result;
 	}
 
 	/// <summary>
@@ -197,15 +105,12 @@ public partial class AutoController<T,ID> : ControllerBase
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("recache")]
-	public virtual async ValueTask Recache()
+	public virtual async ValueTask Recache(Context context)
 	{
-		var context = await Request.GetContext();
-
 		if (context.Role == null || !context.Role.CanViewAdmin)
 		{
 			throw PermissionException.Create("recache", context);
 		}
-
 
 		await _service.Recache();
 	}
@@ -216,9 +121,9 @@ public partial class AutoController<T,ID> : ControllerBase
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("list")]
-	public virtual async ValueTask ListAll([FromQuery] string includes = null)
+	public virtual ValueTask<ContentStream<T, ID>?> ListAll(Context context)
 	{
-		await List(null, includes);
+		return List(context, null);
 	}
 
 	/// <summary>
@@ -228,37 +133,18 @@ public partial class AutoController<T,ID> : ControllerBase
 	/// </summary>
 	/// <returns></returns>
 	[HttpPost("list")]
-	public virtual async ValueTask List([FromBody] ListFilter filters, [FromQuery] string includes = null)
+	public virtual ValueTask<ContentStream<T, ID>?> List(Context context, [FromBody] ListFilter filters)
 	{
-		var context = await Request.GetContext();
-
 		var filter = _service.LoadFilter(filters) as Filter<T, ID>;
-		filter = await _service.EventGroup.EndpointStartList.Dispatch(context, filter, Response);
-
+		
 		if (filter == null)
 		{
 			// A handler rejected this request.
-			Response.StatusCode = 404;
-			return;
+			return new ValueTask<ContentStream<T, ID>?>((ContentStream<T, ID>?)null);
 		}
 
-		Response.ContentType = _applicationJson;
-		var writer = Writer.GetPooled();
-		writer.Start(null);
-		await _service.ToJson(context, filter, async (Context ctx, Filter<T, ID> filt, Func<T, int, ValueTask> onResult) => {
-
-			return await _service.GetResults(ctx, filt, async (Context ctx2, T result, int index, object src, object srcB) => {
-
-				var _onResult = src as Func<T, int, ValueTask>;
-				result = await _service.EventGroup.EndpointListEntry.Dispatch(ctx2, result, Response);
-				await _onResult(result, index);
-			}, onResult, null);
-
-		}, writer, Response.Body, includes, filter.IncludeTotal);
-		writer.Release();
-
-		filter = await _service.EventGroup.EndpointEndList.Dispatch(context, filter, Response);
-		filter.Release();
+		var streamer = _service.GetResults(filter);
+		return new ValueTask<ContentStream<T, ID>?>(streamer);
 	}
 
     /// <summary>
@@ -266,10 +152,8 @@ public partial class AutoController<T,ID> : ControllerBase
     /// Creates a new entity. Returns the ID. Includes everything by default.
     /// </summary>
     [HttpPost]
-	public virtual async ValueTask Create([FromBody] JObject body, [FromQuery] string includes = null)
+	public virtual async ValueTask<T> Create(Context context, [FromBody] JObject body)
 	{
-		var context = await Request.GetContext();
-
 		// Start building up our object.
 		// Most other fields, particularly custom extensions, are handled by autoform.
 		var entity = (T)Activator.CreateInstance(_service.InstanceType);
@@ -283,63 +167,20 @@ public partial class AutoController<T,ID> : ControllerBase
 		}
 		
 		// Set the actual fields now:
-		var notes = await SetFieldsOnObject(entity, context, body, JsonFieldGroup.Default);
+		await SetFieldsOnObject(entity, context, body, JsonFieldGroup.Default);
 
 		// Not permitted to create with a specified ID via the API. Ensure it's 0:
 		entity.SetId(default);
-
-		// Fire off a create event:
-		entity = await _service.EventGroup.EndpointStartCreate.Dispatch(context, entity, Response) as T;
-
-		if (entity == null)
-		{
-			// A handler rejected this request.
-			if (notes != null)
-			{
-				Request.Headers["Api-Notes"] = notes;
-			}
-
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-
-			return;
-		}
 
 		entity = await _service.CreatePartial(context, entity, DataOptions.Default);
 		
 		if(entity == null)
 		{
-			// A handler rejected this request.
-			if (notes != null)
-			{
-				Request.Headers["Api-Notes"] = notes;
-			}
-
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-
-			return;
+			return null;
 		}
 		
 		// Set post ID fields:
-		var secondaryNotes = await SetFieldsOnObject(entity, context, body, JsonFieldGroup.AfterId);
-
-		if (secondaryNotes != null)
-		{
-			if (notes == null)
-			{
-				notes = secondaryNotes;
-			}
-			else
-			{
-				notes += ", " + secondaryNotes;
-			}
-
-		}
+		await SetFieldsOnObject(entity, context, body, JsonFieldGroup.AfterId);
 
 		// If it has an on object, create the mapping entry now if we have read visibility of the target:
 		var on = body["on"];
@@ -406,31 +247,10 @@ public partial class AutoController<T,ID> : ControllerBase
 
 		if (entity == null)
 		{
-			// It was blocked or went wrong, typically because of a bad request.
-			Response.StatusCode = 400;
-
-			if (notes != null)
-			{
-				Request.Headers["Api-Notes"] = notes;
-			}
-
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-
-			return;
-		}
-		
-		if (notes != null)
-		{
-			Request.Headers["Api-Notes"] = notes;
+			return null;
 		}
 
-		// Fire off after create evt:
-		entity = await _service.EventGroup.EndpointEndCreate.Dispatch(context, entity, Response);
-
-		await OutputJson(context, entity, includes == null ? "*" : includes);
+		return entity;
 	}
 
 	/// <summary>
@@ -442,12 +262,10 @@ public partial class AutoController<T,ID> : ControllerBase
 	/// <param name="context"></param>
 	/// <param name="body"></param>
 	/// <param name="fieldGroup"></param>
-	protected async ValueTask<string> SetFieldsOnObject(T target, Context context, JObject body, JsonFieldGroup fieldGroup = JsonFieldGroup.Any)
+	protected async ValueTask SetFieldsOnObject(T target, Context context, JObject body, JsonFieldGroup fieldGroup = JsonFieldGroup.Any)
 	{
         // Get the JSON meta which will indicate exactly which fields are editable by this user (role):
 		var availableFields = await _service.GetTypedJsonStructure(context);
-
-		string notes = null;
 
 		foreach (var property in body.Properties())
 		{
@@ -461,24 +279,12 @@ public partial class AutoController<T,ID> : ControllerBase
 
 			if (field == null)
 			{
-				// Tell the callee that this field was ignored.
-				if (notes != null)
-				{
-					notes += ", " + property.Name + " was ignored (doesn't exist or no permission)";
-				}
-				else
-				{
-					notes = property.Name + " was ignored (doesn't exist or no permission)";
-				}
-
 				continue;
 			}
 
 			// Try setting the value now:
 			await field.SetFieldValue(context, target, property.Value);
 		}
-
-		return notes;
 	}
 	
 	/// <summary>
@@ -486,33 +292,18 @@ public partial class AutoController<T,ID> : ControllerBase
 	/// Updates an entity with the given ID. Includes everything by default.
 	/// </summary>
 	[HttpPost("{id}")]
-	public virtual async ValueTask Update([FromRoute] ID id, [FromBody] JObject body, [FromQuery] string includes = null)
+	public virtual async ValueTask<T> Update(Context context, [FromRoute] ID id, [FromBody] JObject body)
 	{
-		var context = await Request.GetContext();
-		
 		var originalEntity = await _service.Get(context, id);
 		
 		if (originalEntity == null)
 		{
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-
-			return;
+			return null;
 		}
-
-		// Run the request update event (using the original object to be updated):
-		originalEntity = await _service.EventGroup.EndpointStartUpdate.Dispatch(context, originalEntity, Response) as T;
 
 		if (originalEntity == null)
 		{
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-
-			return;
+			return null;
 		}
 
 		var entityToUpdate = await _service.StartUpdate(context, originalEntity);
@@ -520,16 +311,11 @@ public partial class AutoController<T,ID> : ControllerBase
 		if (entityToUpdate == null)
 		{
 			// Can't start update (no permission, typically - it throws in that scenario).
-			return;
+			return null;
 		}
 
 		// In this case the entity ID is definitely known, so we can run all fields at the same time:
-		var notes = await SetFieldsOnObject(entityToUpdate, context, body, JsonFieldGroup.Any);
-
-		if (notes != null)
-		{
-			Request.Headers["Api-Notes"] = notes;
-		}
+		await SetFieldsOnObject(entityToUpdate, context, body, JsonFieldGroup.Any);
 
 		// Make sure it's still the original ID:
 		entityToUpdate.SetId(id);
@@ -538,17 +324,10 @@ public partial class AutoController<T,ID> : ControllerBase
 
 		if (entityToUpdate == null)
 		{
-			if (Response.StatusCode == 200)
-			{
-				Response.StatusCode = 404;
-			}
-
-			return;
+			return null;
 		}
 
-		// Run the request updated event:
-		entityToUpdate = await _service.EventGroup.EndpointEndUpdate.Dispatch(context, entityToUpdate, Response) as T;
-		await OutputJson(context, entityToUpdate, includes == null ? "*" : includes);
+		return entityToUpdate;
 	}
 
 }

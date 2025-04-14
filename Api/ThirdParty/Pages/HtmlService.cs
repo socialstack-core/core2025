@@ -2210,16 +2210,19 @@ svg {
 		}
 
 		/// <summary>
-		/// Generates the base HTML for the given site relative url.
+		/// Performs the main routing and generates HTML when needed.
 		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="request"></param>
-		/// <param name="response"></param>
-		/// <param name="updateContext"></param>
-		/// <param name="isAdmin"></param>
+		/// <param name="httpContext">The http context</param>
+		/// <param name="context">The main API context</param>
 		/// <returns></returns>
-		public async ValueTask BuildPage(Context context, HttpRequest request, HttpResponse response, bool updateContext = false, bool isAdmin = false)
+		public async ValueTask RouteRequest(HttpContext httpContext, Context context)
 		{
+			HttpRequest request = httpContext.Request;
+			HttpResponse response = httpContext.Response;
+
+			// The context is not authenticated yet. This is because a large 
+			// group of requests do not need to be authenticated at all and so we can do that only when necessary.
+			
 			string path = request.Path;
 			Microsoft.AspNetCore.Http.QueryString searchQuery = request.QueryString;
 
@@ -2256,13 +2259,14 @@ svg {
 				}
 			}
 
+			// Route the URL through the URL tree.
+
 			var pageAndTokens = await _pages.GetPage(context, request.Host.Value, path, searchQuery, true);
 
 			bool pullFromCache = (
 				!_config.DisablePageCache &&
 				_config.CacheMaxAge > 0 &&
 				_config.CacheAnonymousPages &&
-				!isAdmin &&
 				context.UserId == 0 &&
 				context.RoleId == 6
 			);
@@ -2324,7 +2328,7 @@ svg {
 
 			await Events.Page.BeforeNavigate.Dispatch(context, pageAndTokens.Page, path);
 
-			if (updateContext && context.UserId != 0)
+			if (context.UserId != 0)
 			{
 				// Update the token:
 				context.SendToken(response);

@@ -2,6 +2,7 @@ using Api.Contexts;
 using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 using System;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Api.Startup
 {
-	public partial class StdOutController : ControllerBase
+	public partial class StdOutController : AutoController
 	{
 		
 		/// <summary>
@@ -19,15 +20,15 @@ namespace Api.Startup
 		/// </summary>
 		/// <returns></returns>
 		[HttpPost("query")]
-		public async ValueTask RunQuery([FromBody] MonitoringQueryModel queryBody)
+		public async ValueTask RunQuery(HttpContext httpContext, Context context, [FromBody] MonitoringQueryModel queryBody)
 		{
 			// Super admin (developer role) only.
-			var context = await Request.GetContext();
-
 			if (context.Role == null || !context.Role.CanViewAdmin || context.Role.Id != 1)
 			{
 				throw PermissionException.Create("monitoring_query", context);
 			}
+
+			var response = httpContext.Response;
 
 			var db = Services.Get<MySQLDatabaseService>();
 
@@ -120,7 +121,7 @@ namespace Api.Startup
 						writer.Write((byte)']');
 
 						// Flush:
-						await writer.CopyToAsync(Response.Body);
+						await writer.CopyToAsync(response.Body);
 						writer.Reset(null);
 					}
 
@@ -155,7 +156,7 @@ namespace Api.Startup
 			writer.Write((byte)'}');
 
 			// Flush after each one:
-			await writer.CopyToAsync(Response.Body);
+			await writer.CopyToAsync(response.Body);
 			writer.Release();
 		}
 

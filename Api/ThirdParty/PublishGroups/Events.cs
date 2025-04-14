@@ -1,4 +1,4 @@
-using Api.Currency;
+using Api.PublishGroups;
 using Api.Permissions;
 using System.Collections.Generic;
 
@@ -11,8 +11,13 @@ namespace Api.Eventing
 	public partial class Events
 	{
 		/// <summary>
-		/// Set of events for an exchangeRate.
+		/// Set of events for a publishGroup.
 		/// </summary>
-		public static EventGroup<ExchangeRate> ExchangeRate;
+		public static EventGroup<PublishGroup> PublishGroup;
+		
+		/// <summary>
+		/// Set of events for a publishGroupContent.
+		/// </summary>
+		public static EventGroup<PublishGroupContent> PublishGroupContent;
 	}
 }

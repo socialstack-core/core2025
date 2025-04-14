@@ -322,9 +322,21 @@ public partial class AutoService<T, ID>
     /// <summary>
     /// Serialises the given object into the given stream (usually a response stream). By using this method, it will consider the fields a user is permitted to see (based on the role in the context)
     /// and also may use a per-object cache which contains string segments.
-    /// addResultWrap will wrap the object with {"result":...}. It is assumed true if includes is not null.
     /// </summary>
-    public async ValueTask ToJson(Context context, T entity, Writer writer, Stream targetStream = null, string includes = null, bool addResultWrap = true)
+    public async ValueTask ToJson(Context context, T entity, Stream targetStream, string includes)
+    {
+        var writer = Writer.GetPooled();
+        writer.Start(null);
+        await ToJson(context, entity, writer, targetStream, includes, true);
+        writer.Release();
+    }
+
+	/// <summary>
+	/// Serialises the given object into the given stream (usually a response stream). By using this method, it will consider the fields a user is permitted to see (based on the role in the context)
+	/// and also may use a per-object cache which contains string segments.
+	/// addResultWrap will wrap the object with {"result":...}. It is assumed true if includes is not null.
+	/// </summary>
+	public async ValueTask ToJson(Context context, T entity, Writer writer, Stream targetStream = null, string includes = null, bool addResultWrap = true)
     {
         // Get the json structure:
         var jsonStructure = await GetTypedJsonStructure(context);

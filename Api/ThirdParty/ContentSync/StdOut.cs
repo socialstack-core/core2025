@@ -9,19 +9,32 @@ using System.Threading.Tasks;
 
 namespace Api.Startup
 {
-	public partial class StdOutController : ControllerBase
+	public partial class StdOutController : AutoController
 	{
 		
-		
 		/// <summary>
-		/// Forces a GC run. Convenience for testing for memory leaks.
+		/// Indicates which server in a cluster this one is.
 		/// </summary>
 		[HttpGet("whoami")]
-		public ServerIdentification WhoAmI()
+		public ServerIdentification? WhoAmI()
 		{
 			// Get server ID from csync service:
 			var id = Services.Get<ContentSyncService>().ServerId;
 			return new ServerIdentification() {
+				Id = id
+			};
+		}
+
+		/// <summary>
+		/// Indicates which server in a cluster this one is.
+		/// </summary>
+		[HttpGet("{test}")]
+		public ServerIdentification? WhoAmI([FromRoute] int test)
+		{
+			// Get server ID from csync service:
+			var id = Services.Get<ContentSyncService>().ServerId;
+			return new ServerIdentification()
+			{
 				Id = id
 			};
 		}

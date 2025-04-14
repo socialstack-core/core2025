@@ -12,6 +12,7 @@ using Api.Translate;
 using Api.Eventing;
 using System.IO;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 
 /// <summary>
 /// A convenience controller for defining common endpoints like create, list, delete etc. Requires an AutoService of the same type to function.
@@ -27,11 +28,8 @@ public partial class AutoController<T, ID>
     /// </summary>
     /// <returns></returns>
     [HttpPut("list.pot")]
-    public virtual async Task<object> ListPOTUpdate()
+    public virtual async ValueTask<object> ListPOTUpdate(HttpContext httpContext, Context context)
     {
-        // Get context:
-        var context = await Request.GetContext();
-
         // Admin and developer only:
         if (!context.Role.CanViewAdmin)
         {
@@ -45,7 +43,7 @@ public partial class AutoController<T, ID>
 
         // The po data is passed via the request stream
         // have to read it all here as po parser fails when using raw request stream
-        var bodyData = await new StreamReader(Request.Body, Encoding.Default).ReadToEndAsync();
+        var bodyData = await new StreamReader(httpContext.Request.Body, Encoding.Default).ReadToEndAsync();
 
         if (string.IsNullOrWhiteSpace(bodyData))
         {
@@ -134,9 +132,9 @@ public partial class AutoController<T, ID>
     /// <param name="ignoreFields"></param>
     /// <returns></returns>
     [HttpGet("list.pot")]
-    public virtual async ValueTask ListPOT([FromQuery] string includes = null, [FromQuery] string ignoreFields = null)
+    public virtual async ValueTask ListPOT(HttpContext httpContext, Context context, [FromQuery] string includes = null, [FromQuery] string ignoreFields = null)
     {
-        await ListPOT(null, includes, ignoreFields);
+        await ListPOT(httpContext, context, null, includes, ignoreFields);
     }
 
     /// <summary>
@@ -149,19 +147,18 @@ public partial class AutoController<T, ID>
     /// <param name="ignoreFields"></param>
     /// <returns></returns>
     [HttpPost("list.pot")]
-    public virtual async ValueTask ListPOT([FromBody] JObject filters, [FromQuery] string includes = null, [FromQuery] string ignoreFields = null)
+    public virtual async ValueTask ListPOT(
+        HttpContext httpContext, Context context, [FromBody] JObject filters, 
+        [FromQuery] string includes = null, [FromQuery] string ignoreFields = null)
     {
         var typeName = typeof(T).Name;
 
-        var context = await Request.GetContext();
-
         var filter = _service.LoadFilter(filters) as Filter<T, ID>;
-        filter = await _service.EventGroup.EndpointStartPotList.Dispatch(context, filter, Response);
-
+        
         if (filter == null)
         {
-            // A handler rejected this request
-            Response.StatusCode = 404;
+			// A handler rejected this request
+			httpContext.Response.StatusCode = 404;
             return;
         }
 
@@ -197,8 +194,8 @@ public partial class AutoController<T, ID>
             }
         }
 
-        Response.ContentType = "text/plain";
-        Response.Headers.Add("Content-Disposition", "attachment; filename=\"" + typeName + ".pot\"");
+		httpContext.Response.ContentType = "text/plain";
+		httpContext.Response.Headers.Add("Content-Disposition", "attachment; filename=\"" + typeName + ".pot\"");
 
         var translationServiceConfig = Services.Get<TranslationService>().GetConfig<TranslationServiceConfig>();
 
@@ -252,7 +249,7 @@ public partial class AutoController<T, ID>
             }
 
             // Output to body:
-            await writer.CopyToAsync(Response.Body);
+            await writer.CopyToAsync(httpContext.Response.Body);
             writer.Reset(null);
         }
 

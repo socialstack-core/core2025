@@ -34,6 +34,21 @@ export type Upload = VersionedContent & {
 }
 
 /*
+  A context constructed primarily from a cookie value. 
+            Uses other locale hints such as Accept-Lang when the user doesn't specifically have one set in the cookie.
+*/
+export type Context = {
+    roleId: uint,
+    role?: Role,
+    siteDomainId: uint,
+    localeId: uint,
+    userId: uint,
+    user?: User,
+    ignorePermissions: boolean,
+    permitEditedUtcChange: boolean,
+}
+
+/*
   The post body when uploading a file.
 */
 export type FileUploadBody = {
@@ -74,7 +89,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Upload a file with efficient support for huge ones.
 
     */
-    public upload = (body: FileUploadBody): Promise<void>  => {
+    public upload = (context: SessionResponse, body: FileUploadBody): Promise<Upload>  => {
         return getJson(this.apiUrl + '/create', body )
     }
 
@@ -82,7 +97,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Uploads a transcoded file. The body of the client request is expected to be a tar of the files, using a directory called "output" at its root.
 
     */
-    public transcodedTar = (id: uint, token: string): Promise<void>  => {
+    public transcodedTar = (httpContext: HttpContext, context: SessionResponse, id: uint, token: string): Promise<void>  => {
         return getJson(this.apiUrl + '/transcoded/' + id + '?token=' + token + '')
     }
 
@@ -90,16 +105,16 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       List any active media items
 
     */
-    public active = (includes: string): Promise<void>  => {
-        return getJson(this.apiUrl + '/active?includes=' + includes + '')
+    public active = (context: SessionResponse): Promise<ApiList<Upload>>  => {
+        return getJson(this.apiUrl + '/active')
     }
 
     /**
       List any active media refs
 
     */
-    public activePost = (includes: string): Promise<void>  => {
-        return getJson(this.apiUrl + '/active?includes=' + includes + '')
+    public activePost = (context: SessionResponse): Promise<void>  => {
+        return getJson(this.apiUrl + '/active')
     }
 
     /**
@@ -109,7 +124,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       @param {idRange} - Api.AvailableEndpoints.XmlDocMember
 
     */
-    public fileConsistency = (regenBefore: string, idRange: string): Promise<void>  => {
+    public fileConsistency = (context: SessionResponse, regenBefore: string, idRange: string): Promise<void>  => {
         return getJson(this.apiUrl + '/file-consistency?regenBefore=' + regenBefore + '&idRange=' + idRange + '')
     }
 
@@ -117,7 +132,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Replace any existing refs with new ones
 
     */
-    public replace = (sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>>  => {
+    public replace = (context: SessionResponse, sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>>  => {
         return getJson(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
     }
 
@@ -125,7 +140,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Update alt names based on image data
 
     */
-    public updateAlts = (): Promise<void>  => {
+    public updateAlts = (context: SessionResponse): Promise<void>  => {
         return getJson(this.apiUrl + '/update-alts')
     }
 
@@ -133,7 +148,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Upgrade refs such that any ref fields hold the latest version of a specified ref.
 
     */
-    public updateRefs = (update: boolean): Promise<ApiList<MediaRef>>  => {
+    public updateRefs = (context: SessionResponse, update: boolean): Promise<ApiList<MediaRef>>  => {
         return getJson(this.apiUrl + '/update-refs?update=' + update + '')
     }
 
@@ -141,7 +156,7 @@ export class UploadApi extends AutoApi<Upload, UploadIncludes>{
       Preview any media refs changes
 
     */
-    public preview = (uploadRef: string): Promise<ApiList<MediaRef>>  => {
+    public preview = (context: SessionResponse, uploadRef: string): Promise<ApiList<MediaRef>>  => {
         return getJson(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
     }
 

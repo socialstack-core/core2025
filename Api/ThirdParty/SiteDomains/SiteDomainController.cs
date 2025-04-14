@@ -23,14 +23,10 @@ namespace Api.SiteDomains
         /// Gets the primary site domain mapping via it's code
         /// </summary>
         [HttpGet("code/{code}")]
-        public virtual async ValueTask GetByCode([FromRoute] string code)
+        public virtual async ValueTask<SiteDomain> GetByCode(Context context, [FromRoute] string code)
         {
-            var context = await Request.GetContext();
-
             var siteDomain = _siteDomainService.GetByCode(code);
-
-            await OutputJson(context, siteDomain, "");
-
-        }
+            return siteDomain;
+		}
     }
 }

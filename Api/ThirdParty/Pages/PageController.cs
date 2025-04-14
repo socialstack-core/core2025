@@ -5,6 +5,7 @@ using Api.Startup;
 using Api.CanvasRenderer;
 using Api.Eventing;
 using Api.SocketServerLibrary;
+using Microsoft.AspNetCore.Http;
 
 namespace Api.Pages
 {
@@ -29,14 +30,19 @@ namespace Api.Pages
         }
 
 		/// <summary>
-		/// Attempts to get the page state of a page given the url and the version.
+		/// Attempts to get the page state of a page given the url and the version. Not available to the SSR or websocket APIs.
 		/// </summary>
+		/// <param name="httpContext"></param>
+		/// <param name="context"></param>
 		/// <param name="pageDetails"></param>
 		/// <returns></returns>
 		[HttpPost("state")]
         [Returns(typeof(PageStateResult))]
-		public async ValueTask PageState([FromBody] PageDetails pageDetails)
+		public async ValueTask PageState(HttpContext httpContext, Context context, [FromBody] PageDetails pageDetails)
         {
+            var request = httpContext.Request;
+            var response = httpContext.Response;
+
             if (_htmlService == null)
             {
                 _htmlService = Services.Get<HtmlService>();
@@ -46,11 +52,9 @@ namespace Api.Pages
             // Version check - are they out of date?
             if (pageDetails.version < _frontendService.Version)
             {
-                await Response.Body.WriteAsync(_oldVersion);
+                await response.Body.WriteAsync(_oldVersion);
                 return;
             }
-
-			var context = await Request.GetContext();
 
 			// If services have not finished starting up yet, wait.
 			var svcWaiter = Services.StartupWaiter;
@@ -61,7 +65,7 @@ namespace Api.Pages
 			}
 
 			// we first need to get the pageAndTokens
-			var pageAndTokens = await _pageService.GetPage(context, Request.Host.Value, pageDetails.Url, Microsoft.AspNetCore.Http.QueryString.Empty, true);
+			var pageAndTokens = await _pageService.GetPage(context, request.Host.Value, pageDetails.Url, Microsoft.AspNetCore.Http.QueryString.Empty, true);
 
             if (pageAndTokens.RedirectTo != null)
             {
@@ -72,15 +76,15 @@ namespace Api.Pages
                 writer.WriteASCII("{\"redirect\":");
                 writer.WriteEscaped(pageAndTokens.RedirectTo);
                 writer.Write((byte)'}');
-                await writer.CopyToAsync(Response.Body);
+                await writer.CopyToAsync(response.Body);
                 writer.Release();
                 return;
             }
         
             await Events.Page.BeforeNavigate.Dispatch(context, pageAndTokens.Page, pageDetails.Url);
 
-            Response.ContentType = "application/json";
-			await _htmlService.RenderState(context, pageAndTokens, Response, pageDetails.Url);
+            response.ContentType = "application/json";
+			await _htmlService.RenderState(context, pageAndTokens, response, pageDetails.Url);
 		}
 
         /// <summary>
