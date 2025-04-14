@@ -765,36 +765,40 @@ public class BuilderNode
 		// PathLocal holds a ReadOnlySpan<char> with the path in it.
 		// TokenMarker (in tokenMarkerLoc) tells us which region of this path to select via .Slice
 
+		// path.
+		il.Emit(OpCodes.Ldloca, pathLocal);
+
+		// Start:
+		il.Emit(OpCodes.Ldloc, tokenMarkerLoc);
+		il.Emit(OpCodes.Ldfld, typeof(TokenMarker).GetField(nameof(TokenMarker.Start)));
+
+		// Length:
+		il.Emit(OpCodes.Ldloc, tokenMarkerLoc);
+		il.Emit(OpCodes.Ldfld, typeof(TokenMarker).GetField(nameof(TokenMarker.Length)));
+
+		// path.Slice(start, length);
+		il.Emit(OpCodes.Callvirt,
+			typeof(ReadOnlySpan<char>)
+			.GetMethod(
+				nameof(ReadOnlySpan<char>.Slice),
+				BindingFlags.Public | BindingFlags.Instance,
+				new Type[] {
+						typeof(int),
+						typeof(int)
+				}
+			)
+		);
+		
 		if (valueType == typeof(string))
 		{
-			il.Emit(OpCodes.Ldstr, "Incomplete bind pattern for strings, wip!");
+			var ctor = typeof(string).GetConstructor(new Type[] {
+				typeof(ReadOnlySpan<char>)
+			});
+
+			il.Emit(OpCodes.Newobj, ctor);
 		}
 		else
 		{
-			// path.
-			il.Emit(OpCodes.Ldloca, pathLocal);
-
-			// Start:
-			il.Emit(OpCodes.Ldloc, tokenMarkerLoc);
-			il.Emit(OpCodes.Ldfld, typeof(TokenMarker).GetField(nameof(TokenMarker.Start)));
-
-			// Length:
-			il.Emit(OpCodes.Ldloc, tokenMarkerLoc);
-			il.Emit(OpCodes.Ldfld, typeof(TokenMarker).GetField(nameof(TokenMarker.Length)));
-
-			// path.Slice(start, length);
-			il.Emit(OpCodes.Callvirt, 
-				typeof(ReadOnlySpan<char>)
-				.GetMethod(
-					nameof(ReadOnlySpan<char>.Slice), 
-					BindingFlags.Public | BindingFlags.Instance, 
-					new Type[] {
-						typeof(int),
-						typeof(int)
-					}
-				)
-			);
-
 			// Emit the parse.
 			EmitParseValueFromSpan(valueType, il);
 		}
@@ -1182,6 +1186,7 @@ public class BuilderNode
 					{
 						var getRequest = typeof(HttpContext).GetProperty("Request").GetGetMethod();
 						var getQuery = typeof(HttpRequest).GetProperty("Query").GetGetMethod();
+						var tryGetValue = typeof(IQueryCollection).GetMethod("TryGetValue");
 
 						// context.Request.Query.TryGetValue(name, out stringValues queryStr);
 
@@ -1189,7 +1194,7 @@ public class BuilderNode
 						il.Emit(OpCodes.Ldarg_1);
 						il.Emit(OpCodes.Callvirt, getRequest);
 						il.Emit(OpCodes.Callvirt, getQuery);
-
+						
 						// The name:
 						il.Emit(OpCodes.Ldstr, parameter.Name);
 
@@ -1197,7 +1202,7 @@ public class BuilderNode
 						var svTarget = il.DeclareLocal(typeof(Microsoft.Extensions.Primitives.StringValues));
 
 						il.Emit(OpCodes.Ldloca, svTarget);
-						il.Emit(OpCodes.Callvirt, getQuery);
+						il.Emit(OpCodes.Callvirt, tryGetValue);
 
 						var isNullRoute = il.DefineLabel();
 						var afterBoth = il.DefineLabel();
@@ -1211,7 +1216,7 @@ public class BuilderNode
 							var getItemMethod = typeof(Microsoft.Extensions.Primitives.StringValues).GetMethod("get_Item");
 							var countProp = typeof(Microsoft.Extensions.Primitives.StringValues).GetProperty("Count").GetGetMethod();
 
-							// ReadOnlySpan<char> span = sv[sv.Count - 1];
+							// string str = sv[sv.Count - 1];
 							il.Emit(OpCodes.Ldloca, svTarget);
 
 							// sv.Count - 1
@@ -1257,6 +1262,7 @@ public class BuilderNode
 						}
 
 						il.MarkLabel(afterBoth);
+
 					}
 					else
 					{
@@ -1312,7 +1318,7 @@ public class BuilderNode
 						 && m.GetParameters()[0].ParameterType.IsGenericType
 						 && m.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(ReadOnlySpan<>));
 
-			il.Emit(OpCodes.Call, sequenceEq);
+			il.Emit(OpCodes.Call, sequenceEq.MakeGenericMethod(new Type[] { typeof(char) }));
 
 			// A bool is now on the stack
 			return;
