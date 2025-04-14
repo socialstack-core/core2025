@@ -1,15 +1,11 @@
 ﻿using Api.Contexts;
-using Api.Database;
 using Api.Eventing;
-using Api.Permissions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
 using Api.Startup;
 using Api.CanvasRenderer;
-using Api.Users;
-using Api.Emails;
 using System.Reflection;
 
 namespace Api.Pages
@@ -20,6 +16,7 @@ namespace Api.Pages
 	/// </summary>
 	[LoadPriority(9)]
 	[HostType("web")]
+	[CustomCreatePage("Admin/Page/Create")]
 	public partial class PageService : AutoService<Page>
 	{
 		/// <summary>
