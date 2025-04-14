@@ -30,7 +30,7 @@ namespace Api.PasswordResetRequests
 		/// Check if token exists and has not expired yet.
 		/// </summary>
 		[HttpGet("token/{token}")]
-		public async ValueTask<object> CheckTokenExists(Context context, string token)
+		public async ValueTask<object> CheckTokenExists(Context context, [FromRoute] string token)
 		{
 			var svc = (_service as PasswordResetRequestService);
 
@@ -63,7 +63,7 @@ namespace Api.PasswordResetRequests
 		/// Attempts to login with a submitted new password.
 		/// </summary>
 		[HttpPost("login/{token}")]
-		public async ValueTask<Context> LoginWithToken(HttpContext httpContext, Context context, string token, [FromBody] NewPassword newPassword)
+		public async ValueTask<Context> LoginWithToken(HttpContext httpContext, Context context, [FromRoute] string token, [FromBody] NewPassword newPassword)
 		{
 			var svc = (_service as PasswordResetRequestService);
 
@@ -164,7 +164,7 @@ namespace Api.PasswordResetRequests
 		/// Admin link generation.
 		/// </summary>
 		[HttpGet("{id}/generate")]
-		public async ValueTask<object> Generate(Context context, uint id)
+		public async ValueTask<object> Generate(Context context, [FromRoute] uint id)
 		{
 			// must be admin/ super admin. Nobody else can do this for very clear security reasons.
 			if (context.Role != Roles.Developer && context.Role != Roles.Admin)

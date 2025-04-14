@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Api.Startup.Routing;
@@ -39,13 +41,24 @@ public class RouteNode
 /// <param name="httpContext"></param>
 /// <param name="basicContext"></param>
 /// <param name="boundState"></param>
+/// <param name="body"></param>
 /// <returns></returns>
-public delegate ValueTask<OutputType> TerminalMethod<State, OutputType>(
-	TerminalNode<State, OutputType> node, 
+public delegate ValueTask<OutputType> TerminalMethod<State, OutputType, BodyType>(
+	TerminalNode<State, OutputType, BodyType> node, 
 	HttpContext httpContext, 
 	Context basicContext, 
-	State boundState
+	State boundState,
+	BodyType body
 ) where State : struct;
+
+/// <summary>
+/// A request handler for loading the body, if there is one.
+/// </summary>
+/// <param name="httpRequest"></param>
+/// <returns></returns>
+public delegate ValueTask<BodyType> TerminalBodyLoader<BodyType>(
+	HttpRequest httpRequest
+);
 
 /// <summary>
 /// A request handler for a terminal. These are frequently generative.
@@ -54,12 +67,14 @@ public delegate ValueTask<OutputType> TerminalMethod<State, OutputType>(
 /// <param name="httpContext"></param>
 /// <param name="basicContext"></param>
 /// <param name="boundState"></param>
+/// <param name="body"></param>
 /// <returns></returns>
-public delegate ValueTask TerminalVoidMethod<State>(
-	TerminalVoidNode<State> node, 
+public delegate ValueTask TerminalVoidMethod<State, BodyType>(
+	TerminalVoidNode<State, BodyType> node, 
 	HttpContext httpContext, 
 	Context basicContext, 
-	State boundState
+	State boundState,
+	BodyType body
 ) where State : struct;
 
 /// <summary>
@@ -70,8 +85,8 @@ public delegate ValueTask TerminalVoidMethod<State>(
 /// <param name="context"></param>
 /// <param name="toSerialise"></param>
 /// <returns></returns>
-public delegate ValueTask TerminalSerialiser<State, OutputType>(
-	TerminalNode<State, OutputType> node,
+public delegate ValueTask TerminalSerialiser<State, OutputType, BodyType>(
+	TerminalNode<State, OutputType, BodyType> node,
 	HttpResponse httpResponse,
 	Context context,
 	OutputType toSerialise
@@ -102,6 +117,29 @@ public class TerminalNode : ArrayIntermediateNode
 		},
 		Formatting = Formatting.None
 	};
+
+	/// <summary>
+	/// Used by the body loader when there is no body present. It usually gets optimised out completely.
+	/// </summary>
+	/// <param name="request"></param>
+	/// <returns></returns>
+	public static ValueTask<EmptyTerminalState> ReadNothing(HttpRequest request)
+	{
+		return new ValueTask<EmptyTerminalState>(new EmptyTerminalState());
+	}
+
+	/// <summary>
+	/// Deserialises the given type from the given http request.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="request"></param>
+	/// <returns></returns>
+	public static async ValueTask<T> ReadJsonBodyAsync<T>(HttpRequest request)
+	{
+		using var reader = new StreamReader(request.Body, Encoding.UTF8, leaveOpen: true);
+		var body = await reader.ReadToEndAsync();
+		return JsonConvert.DeserializeObject<T>(body);
+	}
 
 	/// <summary>
 	/// The instance of the controller if there is one.
@@ -192,7 +230,7 @@ public class TerminalNode : ArrayIntermediateNode
 /// <summary>
 /// A node at the end of a route.
 /// </summary>
-public class TerminalNode<State, OutputType> : TerminalNode
+public class TerminalNode<State, OutputType, BodyType> : TerminalNode
 	where State : struct
 {
 	/// <summary>
@@ -203,12 +241,17 @@ public class TerminalNode<State, OutputType> : TerminalNode
 	/// <summary>
 	/// The method to run.
 	/// </summary>
-	public readonly TerminalMethod<State, OutputType> Method;
+	public readonly TerminalMethod<State, OutputType, BodyType> Method;
+	
+	/// <summary>
+	/// The body loader.
+	/// </summary>
+	public readonly TerminalBodyLoader<BodyType> BodyLoader;
 	
 	/// <summary>
 	/// Serialises the output.
 	/// </summary>
-	public readonly TerminalSerialiser<State, OutputType> Serialise;
+	public readonly TerminalSerialiser<State, OutputType, BodyType> Serialise;
 
 	/// <summary>
 	/// True if the full context is required.
@@ -220,6 +263,7 @@ public class TerminalNode<State, OutputType> : TerminalNode
 	/// </summary>
 	/// <param name="children"></param>
 	/// <param name="exactMatch"></param>
+	/// <param name="bodyLoader"></param>
 	/// <param name="binder">Binds values from the src.</param>
 	/// <param name="method">Runs the actual endpoint using any bound values.</param>
 	/// <param name="serialiser">Serialises the output.</param>
@@ -231,8 +275,9 @@ public class TerminalNode<State, OutputType> : TerminalNode
 		IntermediateNode[] children, 
 		string exactMatch,
 		TerminalBinderMethod<State> binder, 
-		TerminalMethod<State, OutputType> method,
-		TerminalSerialiser<State, OutputType> serialiser, 
+		TerminalMethod<State, OutputType, BodyType> method,
+		TerminalBodyLoader<BodyType> bodyLoader,
+		TerminalSerialiser<State, OutputType, BodyType> serialiser, 
 		object controllerInstance = null, 
 		object svc = null,
 		bool requireFullContext = false,
@@ -240,6 +285,7 @@ public class TerminalNode<State, OutputType> : TerminalNode
 	) : base(children, exactMatch, controllerInstance, svc, fullRoute)
 	{
 		Method = method;
+		BodyLoader = bodyLoader;
 		Binder = binder;
 		Serialise = serialiser;
 		RequireFullContext = requireFullContext;
@@ -266,7 +312,11 @@ public class TerminalNode<State, OutputType> : TerminalNode
 			basicContext = await httpContext.Request.GetContext(basicContext);
 		}
 
-		var output = await Method(this, httpContext, basicContext, state);
+		// Load the body:
+		BodyType body = await BodyLoader(httpContext.Request);
+
+		// Run the endpoint:
+		var output = await Method(this, httpContext, basicContext, state, body);
 
 		// Serialise the output:
 		await Serialise(this, httpContext.Response, basicContext, output);
@@ -279,7 +329,7 @@ public class TerminalNode<State, OutputType> : TerminalNode
 /// <summary>
 /// A node at the end of a route.
 /// </summary>
-public class TerminalVoidNode<State> : TerminalNode
+public class TerminalVoidNode<State, BodyType> : TerminalNode
 	where State : struct
 {
 	/// <summary>
@@ -302,8 +352,13 @@ public class TerminalVoidNode<State> : TerminalNode
 	/// <summary>
 	/// The method to run.
 	/// </summary>
-	public readonly TerminalVoidMethod<State> Method;
+	public readonly TerminalVoidMethod<State, BodyType> Method;
 
+	/// <summary>
+	/// The body loader.
+	/// </summary>
+	public readonly TerminalBodyLoader<BodyType> BodyLoader;
+	
 	/// <summary>
 	/// True if the full context is required.
 	/// </summary>
@@ -314,6 +369,7 @@ public class TerminalVoidNode<State> : TerminalNode
 	/// </summary>
 	/// <param name="children"></param>
 	/// <param name="exactMatch"></param>
+	/// <param name="bodyLoader"></param>
 	/// <param name="binder">Binds values from the src.</param>
 	/// <param name="method">Runs the actual endpoint using any bound values.</param>
 	/// <param name="controllerInstance"></param>
@@ -323,12 +379,14 @@ public class TerminalVoidNode<State> : TerminalNode
 		IntermediateNode[] children,
 		string exactMatch,
 		TerminalBinderMethod<State> binder,
-		TerminalVoidMethod<State> method,
+		TerminalVoidMethod<State, BodyType> method,
+		TerminalBodyLoader<BodyType> bodyLoader,
 		object controllerInstance = null,
 		bool requireFullContext = false,
 		string fullRoute = null
 	) : base(children, exactMatch, controllerInstance, null, fullRoute)
 	{
+		BodyLoader = bodyLoader;
 		Method = method;
 		Binder = binder;
 		RequireFullContext = requireFullContext;
@@ -355,7 +413,8 @@ public class TerminalVoidNode<State> : TerminalNode
 			basicContext = await httpContext.Request.GetContext(basicContext);
 		}
 
-		await Method(this, httpContext, basicContext, state);
+		BodyType body = await BodyLoader(httpContext.Request);
+		await Method(this, httpContext, basicContext, state, body);
 		return true;
 	}
 }

@@ -51,7 +51,7 @@ namespace Api.Users
 		/// Attempts to verify the users email. If a password is supplied, the users password is also set.
 		/// </summary>
 		[HttpPost("verify/{userid}/{token}")]
-		public async ValueTask<Context> VerifyUser(Context context, uint userid, string token, [FromBody] OptionalPassword newPassword)
+		public async ValueTask<Context> VerifyUser(Context context, [FromRoute] uint userid, [FromRoute] string token, [FromBody] OptionalPassword newPassword)
 		{
 			var user = await (_service as UserService).Where("Id=?", DataOptions.IgnorePermissions).Bind(userid).Last(context);
 

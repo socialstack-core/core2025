@@ -30,45 +30,6 @@ namespace Api.Uploader
         {
         }
 
-		/// <summary>
-		/// Upload a file.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="body"></param>
-		/// <returns></returns>
-		[HttpPost("create")]
-        public async ValueTask<Upload> Upload(Context context, [FromForm] FileUploadBody body)
-        {
-            // body = await Events.Upload.Create.Dispatch(context, body, Response) as FileUploadBody;
-
-            var fileName = body.File.FileName;
-
-            if (string.IsNullOrEmpty(fileName) || fileName.IndexOf('.') == -1)
-            {
-                throw new PublicException("Content-Name header should be a filename with the type.", "invalid_name");
-            }
-
-            // Write to a temporary path first:
-            var tempFile = System.IO.Path.GetTempFileName();
-
-            // Save the content now:
-            var fileStream = new FileStream(tempFile, FileMode.OpenOrCreate);
-
-            await body.File.CopyToAsync(fileStream);
-            fileStream.Close();
-
-            // Upload the file:
-            var upload = await (_service as UploadService).Create(
-                context,
-                fileName,
-                tempFile,
-                null,
-                body.IsPrivate
-            );
-
-            return upload;
-        }
-
         /// <summary>
         /// Upload a file with efficient support for huge ones.
         /// </summary>

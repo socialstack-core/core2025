@@ -253,6 +253,11 @@ public class BuilderNode
 	/// A generated invoke method.
 	/// </summary>
 	private object _constructedMethod;
+	
+	/// <summary>
+	/// A generated invoke method.
+	/// </summary>
+	private object _constructedBodyLoader;
 
 	/// <summary>
 	/// A generated invoke method.
@@ -385,6 +390,8 @@ public class BuilderNode
 			return ConstructedTerminal;
 		}
 
+		var bodyType = GetBodyType();
+
 		if (_constructedMethod == null)
 		{
 			Validate();
@@ -394,7 +401,8 @@ public class BuilderNode
 			if (IsVoidNode())
 			{
 				BuildBinder();
-				BuildVoidTerminalMethod();
+				BuildBodyLoader(bodyType);
+				BuildVoidTerminalMethod(bodyType);
 
 				// Close the type and set the values now.
 				var mainType = TypeBuilder.CreateType();
@@ -403,10 +411,10 @@ public class BuilderNode
 				
 				_constructedMethod = mainType.GetMethod("TerminalInvoke")
 					.CreateDelegate(
-						typeof(TerminalVoidMethod<>)
-							.MakeGenericType(_terminalStateType)
+						typeof(TerminalVoidMethod<,>)
+							.MakeGenericType(_terminalStateType, bodyType)
 					);
-
+				
 				_constructedBinder = mainType.GetMethod("TerminalBinder")
 					.CreateDelegate(
 						typeof(TerminalBinderMethod<>)
@@ -416,9 +424,10 @@ public class BuilderNode
 			else
 			{
 				BuildBinder();
+				BuildBodyLoader(bodyType);
 
-				var outputType = BuildTerminalMethod();
-				BuildSerialiser(outputType);
+				var outputType = BuildTerminalMethod(bodyType);
+				BuildSerialiser(outputType, bodyType);
 
 				// Close the type and set the values now.
 				var mainType = TypeBuilder.CreateType();
@@ -427,8 +436,8 @@ public class BuilderNode
 
 				_constructedMethod = mainType.GetMethod("TerminalInvoke")
 					.CreateDelegate(
-						typeof(TerminalMethod<,>)
-							.MakeGenericType(_terminalStateType, outputType)
+						typeof(TerminalMethod<,,>)
+							.MakeGenericType(_terminalStateType, outputType, bodyType)
 					);
 
 				_constructedBinder = mainType.GetMethod("TerminalBinder")
@@ -441,8 +450,8 @@ public class BuilderNode
 
 				_constructedSerialiser = serialiserMethod
 					.CreateDelegate(
-						typeof(TerminalSerialiser<,>)
-						.MakeGenericType(_terminalStateType, outputType)
+						typeof(TerminalSerialiser<,,>)
+						.MakeGenericType(_terminalStateType, outputType, bodyType)
 					);
 			}
 		}
@@ -452,13 +461,14 @@ public class BuilderNode
 		if (IsVoidNode())
 		{
 			// It's a void node.
-			var voidNodeType = typeof(TerminalVoidNode<>).MakeGenericType(_terminalStateType);
+			var voidNodeType = typeof(TerminalVoidNode<,>).MakeGenericType(_terminalStateType, bodyType);
 
 			var voidObj = Activator.CreateInstance(voidNodeType, new object[] {
 				BuildChildren(),
 				IsToken ? null : Text,
 				_constructedBinder,
 				_constructedMethod,
+				_constructedBodyLoader,
 				ControllerInstance,
 				_requiresFullContext,
 				FullRoute
@@ -478,13 +488,14 @@ public class BuilderNode
 		}
 
 		// Spawn the type:
-		var fullNodeType = typeof(TerminalNode<,>).MakeGenericType(_terminalStateType, nonAsyncReturnType);
+		var fullNodeType = typeof(TerminalNode<,,>).MakeGenericType(_terminalStateType, nonAsyncReturnType, bodyType);
 
 		var obj = Activator.CreateInstance(fullNodeType, new object[] {
 			BuildChildren(),
 			IsToken ? null : Text,
 			_constructedBinder,
 			_constructedMethod,
+			_constructedBodyLoader,
 			_constructedSerialiser,
 			ControllerInstance,
 			SingularContentService,
@@ -571,6 +582,31 @@ public class BuilderNode
 
 		return false;
 	}
+	
+	private Type GetBodyType()
+	{
+		if (HttpVerb == "GET" || HttpVerb == "DELETE")
+		{
+			return typeof(EmptyTerminalState);
+		}
+
+		// POST or PUT
+
+		var parameters = TerminalMethod.GetParameters();
+
+		for (var i = 0; i < parameters.Length; i++)
+		{
+			var p = parameters[i];
+			var fromBody = p.GetCustomAttribute<FromBodyAttribute>();
+
+			if (fromBody != null)
+			{
+				return p.ParameterType;
+			}
+		}
+
+		return typeof(EmptyTerminalState);
+	}
 
 	private static int ModuleCounter = 1;
 
@@ -583,6 +619,29 @@ public class BuilderNode
 		Builder = assemblyBuilder.DefineDynamicModule("$Route_Module");
 		TypeBuilder = Builder.DefineType("RouteMethods", System.Reflection.TypeAttributes.Public | System.Reflection.TypeAttributes.Class);
 		ModuleCounter++;
+	}
+
+	private void BuildBodyLoader(Type bodyType)
+	{
+		if (bodyType == typeof(EmptyTerminalState))
+		{
+			_constructedBodyLoader = typeof(TerminalNode)
+				.GetMethod(nameof(TerminalNode.ReadNothing))
+				.CreateDelegate(
+					typeof(TerminalBodyLoader<EmptyTerminalState>)
+				);
+		}
+		else
+		{
+			_constructedBodyLoader = typeof(TerminalNode).GetMethod("ReadJsonBodyAsync").MakeGenericMethod(new Type[] {
+				bodyType
+			})
+			.CreateDelegate(
+				typeof(TerminalBodyLoader<>)
+					.MakeGenericType(bodyType)
+			);
+		}
+
 	}
 
 	private void BuildBinder()
@@ -814,7 +873,7 @@ public class BuilderNode
 		il.Emit(OpCodes.Stfld, targetField);
 	}
 
-	private void BuildVoidTerminalMethod()
+	private void BuildVoidTerminalMethod(Type bodyType)
 	{
 		var stateType = GetTerminalStateType();
 
@@ -824,18 +883,19 @@ public class BuilderNode
 			CallingConventions.Standard,
 			typeof(ValueTask),
 			new Type[] {
-				typeof(TerminalVoidNode<>).MakeGenericType(stateType),
+				typeof(TerminalVoidNode<,>).MakeGenericType(stateType, bodyType),
 				typeof(HttpContext),
 				typeof(Context),
-				stateType
+				stateType,
+				bodyType
 			}
 		);
 
 		var il = methodBuilder.GetILGenerator();
-		EmitInvokeTerminalMethod(il);
+		EmitInvokeTerminalMethod(il, bodyType);
 	}
 
-	private Type BuildTerminalMethod()
+	private Type BuildTerminalMethod(Type bodyType)
 	{
 		var outputType = TerminalMethod.ReturnType;
 
@@ -852,22 +912,23 @@ public class BuilderNode
 			CallingConventions.Standard,
 			typeof(ValueTask<>).MakeGenericType(outputType),
 			new Type[] {
-				typeof(TerminalNode<,>).MakeGenericType(stateType, outputType),
+				typeof(TerminalNode<,,>).MakeGenericType(stateType, outputType, bodyType),
 				typeof(HttpContext),
 				typeof(Context),
-				stateType
+				stateType,
+				bodyType
 			}
 		);
 
 		var il = methodBuilder.GetILGenerator();
-		EmitInvokeTerminalMethod(il);
+		EmitInvokeTerminalMethod(il, bodyType);
 		return outputType;
 	}
 
-	private void BuildSerialiser(Type outputType)
+	private void BuildSerialiser(Type outputType, Type bodyType)
 	{
 		var stateType = GetTerminalStateType();
-		var terminalNodeType = typeof(TerminalNode<,>).MakeGenericType(stateType, outputType);
+		var terminalNodeType = typeof(TerminalNode<,,>).MakeGenericType(stateType, outputType, bodyType);
 
 		var methodBuilder = TypeBuilder.DefineMethod(
 			"TerminalSerialiser",
@@ -1137,7 +1198,7 @@ public class BuilderNode
 		il.Emit(OpCodes.Newobj, valueTaskCtor);
 	}
 
-	private void EmitInvokeTerminalMethod(ILGenerator il)
+	private void EmitInvokeTerminalMethod(ILGenerator il, Type bodyType)
 	{
 		var parameters = TerminalMethod.GetParameters();
 
@@ -1202,7 +1263,7 @@ public class BuilderNode
 						il.Emit(OpCodes.Ldarg_1);
 						il.Emit(OpCodes.Callvirt, getRequest);
 						il.Emit(OpCodes.Callvirt, getQuery);
-						
+
 						// The name:
 						il.Emit(OpCodes.Ldstr, parameter.Name);
 
@@ -1270,11 +1331,24 @@ public class BuilderNode
 						}
 
 						il.MarkLabel(afterBoth);
-
+					}
+					else if (HttpVerb == "GET" || HttpVerb == "DELETE")
+					{
+						throw new Exception(
+							"Unable to bind a body parameter '" + parameter.Name + "' for a get/delete endpoint as it has no body. " +
+							"The parameter is on " + TerminalMethod.Name + " in " + TerminalMethod.DeclaringType.Name
+						);
+					}
+					else if (parameter.ParameterType == bodyType)
+					{
+						il.Emit(OpCodes.Ldarg, 4);
 					}
 					else
 					{
-						// Body TBD!
+						throw new Exception(
+							"Unable to bind parameter '" + parameter.Name + "' - you might be missing a [FromRoute] or [FromQuery]. " +
+							"The parameter is on " + TerminalMethod.Name + " in " +TerminalMethod.DeclaringType.Name
+						);
 					}
 				}
 				else

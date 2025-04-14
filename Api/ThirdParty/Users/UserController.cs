@@ -94,18 +94,6 @@ namespace Api.Users
         }
 
 		/// <summary>
-		/// Json serialization settings for canvases
-		/// </summary>
-		private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
-		{
-			ContractResolver = new DefaultContractResolver
-			{
-				NamingStrategy = new CamelCaseNamingStrategy()
-			},
-			Formatting = Formatting.None
-		};
-
-		/// <summary>
 		/// POST /v1/user/login/
 		/// Attempts to login. Returns either a Context or a LoginResult.
 		/// </summary>
