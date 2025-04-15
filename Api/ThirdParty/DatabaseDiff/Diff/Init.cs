@@ -686,7 +686,7 @@ namespace Api.Database
 
 			var existingSchema = await LoadSchema();
 			
-			if(existingSchema == null)
+			if(existingSchema == null || service.IsTypeProxy)
 			{
 				return;
 			}
