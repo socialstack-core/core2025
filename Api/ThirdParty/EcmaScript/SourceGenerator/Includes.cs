@@ -9,13 +9,13 @@ namespace Api.EcmaScript
     {
         public static void CreateIncludeClass(Type entityType, Script script)
         {
-            Console.WriteLine($"Adding includes class to {script.FileName} from entity {entityType.Name}");
 
             var def = new ClassDefinition() {
                 Name = entityType.Name + "Includes",
                 Extends = "ApiIncludes"
             };
 
+            // TODO: Build out again
 
             script.AddChild(def);
         }
