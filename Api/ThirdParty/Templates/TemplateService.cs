@@ -10,6 +10,7 @@ using Api.CanvasRenderer;
 using Newtonsoft.Json.Linq;
 using Api.Templates;
 using Api.Startup;
+using Api.Pages;
 
 namespace Api.Templates
 {
@@ -26,6 +27,9 @@ namespace Api.Templates
 		/// </summary>
 		public TemplateService() : base(Events.Template)
         {
+
+			InitEvents();
+
 			InstallAdminPages("Templates", "fa:fa-file-medical", new string[] { "id", "title", "key" });
 			Cache();
 
@@ -95,14 +99,34 @@ namespace Api.Templates
 
 		}
 
-		/// <summary>
-		/// Loads a template.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="template"></param>
-		/// <param name="templateConfig"></param>
-		/// <returns></returns>
-		public async ValueTask<TemplateDetails> LoadTemplate(Context context, Template template, CanvasNode templateConfig)
+        private void InitEvents()
+        {
+            Events.Page.BeforeAdminPageInstall.AddEventListener(async (Context context, Page page, CanvasNode canvasNode, Type type, AdminPageType pageType) => {
+				
+				if (type == typeof(Template) && pageType == AdminPageType.Single)
+				{
+					// clear out any children.
+					canvasNode.Content = [];
+					canvasNode.Module = "Admin/Template/SinglePage";
+				}
+
+				return page;
+			}, 2);
+        }
+
+        // protected void InstallAdminPages(string navMenuLabel, string navMenuIconRef, string[] fields, ChildAdminPageOptions childAdminPage = null, string visibilityJson = null)
+        // {
+
+        // }
+
+        /// <summary>
+        /// Loads a template.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="template"></param>
+        /// <param name="templateConfig"></param>
+        /// <returns></returns>
+        public async ValueTask<TemplateDetails> LoadTemplate(Context context, Template template, CanvasNode templateConfig)
 		{
 			// Load the JSON.
 			var json = Newtonsoft.Json.JsonConvert.DeserializeObject(template.BodyJson) as JToken;
