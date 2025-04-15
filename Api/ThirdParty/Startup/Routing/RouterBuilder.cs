@@ -1372,7 +1372,7 @@ public class BuilderNode
 		// If the terminal method itself did not return a ValueTask, wrap it now.
 		var retType = TerminalMethod.ReturnType;
 
-		if (retType != typeof(void) && !(retType.IsGenericType && retType.GetGenericTypeDefinition() == typeof(ValueTask<>)))
+		if (retType != typeof(void) && retType != typeof(ValueTask) && !(retType.IsGenericType && retType.GetGenericTypeDefinition() == typeof(ValueTask<>)))
 		{
 			il.Emit(OpCodes.Newobj, typeof(ValueTask<>).MakeGenericType(retType).GetConstructor(new[] { retType }));
 		}

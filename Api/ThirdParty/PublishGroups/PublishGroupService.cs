@@ -110,7 +110,14 @@ namespace Api.PublishGroups
 				}
 
 				// Locate the draft with the specified content ID and publish it.
-				// (tbd!)
+				var revisionService = contentService.GetRevisions();
+
+				if (revisionService == null)
+				{
+					continue;
+				}
+
+				await revisionService.PublishGenericId(context, content.RevisionId);
 			}
 
 		}

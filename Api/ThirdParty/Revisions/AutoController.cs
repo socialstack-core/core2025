@@ -5,7 +5,7 @@ using Api.Permissions;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Api.Startup;
-using Api.SocketServerLibrary;
+using Api.Users;
 
 /// <summary>
 /// A convenience controller for defining common endpoints like create, list, delete etc. Requires an AutoService of the same type to function.
@@ -28,7 +28,7 @@ public partial class AutoController<T, ID>
 			return null;
 		}
 
-		var result = await _service.Get(context, id);
+		var result = await revisions.Get(context, id);
 		return result;
 	}
 
@@ -100,6 +100,7 @@ public partial class AutoController<T, ID>
 	/// Updates an entity revision with the given RevisionId.
 	/// </summary>
 	[HttpPost("revision/{id}")]
+	[Receives(typeof(PartialContent))]
 	public virtual async ValueTask<T> UpdateRevision(Context context, [FromRoute] ID id, [FromBody] JObject body)
 	{
 		var revisions = _service.Revisions;
@@ -108,41 +109,19 @@ public partial class AutoController<T, ID>
 		{
 			return null;
 		}
-		
-		var entity = await revisions.Get(context, id);
 
-		if (entity == null)
-		{
-			return null;
-		}
-
-		var entityToUpdate = await revisions.StartUpdate(context, entity);
-
-		if (entityToUpdate == null)
-		{
-			// Can't start update (no permission, typically).
-			return null;
-		}
-
-		// In this case the entity ID is definitely known, so we can run all fields at the same time:
-		await SetFieldsOnObject(entityToUpdate, context, body, JsonFieldGroup.Any);
-
-		// Make sure it's the original ID:
-		entityToUpdate.SetId(id);
-
-		entity = await revisions.FinishUpdate(context, entityToUpdate, entity);
+		var entity = await UpdateInternal(revisions, context, id, body);
 		return entity;
 	}
 	
-	/*
 	/// <summary>
 	/// GET /v1/entityTypeName/publish/1
 	/// Publishes the given revision as the new live entry.
 	/// </summary>
 	[HttpGet("publish/{id}")]
-	public virtual async ValueTask PublishRevision([FromRoute] ID id)
+	public virtual async ValueTask<T> PublishRevision(Context context, [FromRoute] ID id)
 	{
-		await PublishRevision(id, null);
+		return await PublishRevision(context, id, null);
 	}
 	
 	/// <summary>
@@ -150,16 +129,19 @@ public partial class AutoController<T, ID>
 	/// Publishes the given posted object as an extension to the given revision (if body is not null).
 	/// </summary>
 	[HttpPost("publish/{id}")]
-	public virtual ValueTask PublishRevision([FromRoute] ID id, [FromBody] JObject body)
+	[Receives(typeof(PartialContent))]
+	public virtual async ValueTask<T> PublishRevision(Context context, [FromRoute] ID id, [FromBody] JObject body)
 	{
 		var revisions = _service.Revisions;
 
 		if (revisions == null)
 		{
-			return new ValueTask();
+			return null;
 		}
 
-		throw new PublicException("Publishing is incomplete", "incomplete");
+		var entity = await UpdateInternal(revisions, context, id, body);
+		entity = await revisions.PublishRevision(context, entity);
+		return entity;
 	}
 	
 	/// <summary>
@@ -167,18 +149,23 @@ public partial class AutoController<T, ID>
 	/// Creates a draft.
 	/// </summary>
 	[HttpPost("draft")]
-	public virtual ValueTask CreateDraft([FromBody] JObject body)
+	[Receives(typeof(PartialContent))]
+	public virtual async ValueTask<T> CreateDraft(Context context, [FromBody] JObject body)
 	{
 		var revisions = _service.Revisions;
 
 		if (revisions == null)
 		{
-			Response.StatusCode = 404;
-			return new ValueTask();
+			return null;
 		}
 
-		throw new PublicException("Drafts are incomplete", "incomplete");
-	}
-	*/
+		return await CreateInternal(revisions, context, body, (Context ctx, T entity) => {
+			var vc = entity as VersionedContent<ID>;
 
+			if (vc != null)
+			{
+				vc.IsDraft = true;
+			}
+		});
+	}
 }

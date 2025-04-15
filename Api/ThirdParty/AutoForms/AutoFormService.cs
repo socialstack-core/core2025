@@ -127,7 +127,7 @@ namespace Api.AutoForms
 			var revisionsSupported = Services.Get("RevisionService") != null;
 
 			// For each AutoService..
-			foreach (var serviceKvp in Services.AutoServices)
+			foreach (var serviceKvp in Services.All)
 			{
 				if (serviceKvp.Value.IsMapping)
 				{

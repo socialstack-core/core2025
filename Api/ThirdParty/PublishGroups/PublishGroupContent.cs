@@ -11,7 +11,7 @@ namespace Api.PublishGroups
 	/// <summary>
 	/// Content within a publish group.
 	/// </summary>
-	[HasVirtualField("content", "ContentType", "ContentId")]
+	// [HasVirtualField("content", "ContentType", "RevisionId")] Can't do this - RevisionId is a revision ID.
 	public partial class PublishGroupContent : Content<uint>
 	{
 		/// <summary>
@@ -19,9 +19,9 @@ namespace Api.PublishGroups
 		/// </summary>
 		public string ContentType;
 		/// <summary>
-		/// The ID of the included content. Uses the latest draft of this content and publishes it (if there is one).
+		/// The ID of the revision record that would get published.
 		/// </summary>
-		public ulong ContentId;
+		public ulong RevisionId;
 		/// <summary>
 		/// The ID of the publish group that this belongs to.
 		/// </summary>

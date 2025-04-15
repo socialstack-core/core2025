@@ -431,83 +431,89 @@ namespace Api.Startup
         /// <param name="service"></param>
         public static async ValueTask StateChange(bool startup, object service)
         {
-            var serviceType = service.GetType();
+			var autoService = service as AutoService;
 
+			if (autoService == null)
+			{
+				throw new Exception("Attempted to register a non-autoService (" + service.GetType() + ")");
+			}
+
+            // The type itself.
+			var serviceType = service.GetType();
+
+            // The 
             var autoServiceType = GetAutoServiceType(service.GetType());
-            var autoService = service as AutoService;
-
+            
             if (startup)
             {
                 // If it's an AutoService, add it to the lookups:
-                if (autoService != null)
+                var svcName = autoService.ServicedType == null ?
+                    serviceType.Name.ToLower() :
+                    (autoService.EntityName + "service");
+
+				All[serviceType] = autoService;
+
+                AllByName[
+                    svcName
+                ] = autoService;
+
+                var ctx = new Contexts.Context()
                 {
-                    All[serviceType] = autoService;
-                    AllByName[
-                        autoService.InstanceType == null ?
-                        serviceType.Name.ToLower() :
-                        (autoService.InstanceType.Name.ToLower() + "service")
-                    ] = autoService;
+                    IgnorePermissions = true
+                };
 
-                    var ctx = new Contexts.Context()
-                    {
-                        IgnorePermissions = true
-                    };
+                await Events.Service.BeforeCreate.Dispatch(ctx, autoService);
 
-                    await Events.Service.BeforeCreate.Dispatch(ctx, autoService);
-
-                    if (autoServiceType != null)
-                    {
-                        AutoServices[autoServiceType] = autoService;
-                    }
-
-                    if (autoService.ServicedType != null)
-                    {
-                        ServicedTypes[autoService.ServicedType] = autoService;
-                        var contentId = Api.Database.ContentTypes.GetId(autoService.ServicedType);
-                        ServiceByContentType[contentId] = autoService;
-                        Api.Database.ContentTypes.StateChange(true, autoService, autoService.ServicedType);
-                    }
-
-                    // Load the content fields. This is important to make sure e.g. ListAs is loaded and available as a global field.
-                    autoService.GetContentFields();
-
-                    await Events.Service.AfterCreate.Dispatch(ctx, autoService);
+                if (autoServiceType != null && !autoService.IsTypeProxy)
+                {
+                    AutoServices[autoServiceType] = autoService;
                 }
+
+                if (autoService.ServicedType != null && !autoService.IsTypeProxy)
+                {
+                    ServicedTypes[autoService.ServicedType] = autoService;
+                    var contentId = Api.Database.ContentTypes.GetId(autoService.ServicedType);
+                    ServiceByContentType[contentId] = autoService;
+                    Api.Database.ContentTypes.StateChange(true, autoService, autoService.ServicedType);
+                }
+
+                // Load the content fields. This is important to make sure e.g. ListAs is loaded and available as a global field.
+                autoService.GetContentFields();
+
+                await Events.Service.AfterCreate.Dispatch(ctx, autoService);
             }
             else
             {
                 // Shutdown - deregister this service.
                 All.Remove(serviceType, out _);
 
-                if (autoService != null)
+				var svcName = autoService.ServicedType == null ?
+					serviceType.Name.ToLower() :
+					(autoService.EntityName + "service");
+
+				AllByName.Remove(svcName, out _);
+
+                var ctx = new Contexts.Context()
                 {
-                    var serviceName = autoService.InstanceType == null ? serviceType.Name.ToLower() :
-                        (autoService.InstanceType.Name.ToLower() + "service");
+                    IgnorePermissions = true
+                };
 
-                    AllByName.Remove(serviceName, out _);
+                await Events.Service.BeforeDelete.Dispatch(ctx, autoService);
 
-                    var ctx = new Contexts.Context()
-                    {
-                        IgnorePermissions = true
-                    };
-
-                    await Events.Service.BeforeDelete.Dispatch(ctx, autoService);
-
-                    if (autoServiceType != null)
-                    {
-                        AutoServices.Remove(autoServiceType, out _);
-                    }
-
-                    if (autoService.ServicedType != null)
-                    {
-                        ServicedTypes.Remove(autoService.ServicedType, out _);
-                        var contentId = Database.ContentTypes.GetId(autoService.ServicedType);
-                        ServiceByContentType.Remove(contentId, out _);
-                        Api.Database.ContentTypes.StateChange(false, autoService, autoService.ServicedType);
-                    }
-
-                    await Events.Service.AfterDelete.Dispatch(ctx, autoService);
+                if (autoServiceType != null && !autoService.IsTypeProxy)
+                {
+                    AutoServices.Remove(autoServiceType, out _);
                 }
+
+                if (autoService.ServicedType != null && !autoService.IsTypeProxy)
+                {
+                    ServicedTypes.Remove(autoService.ServicedType, out _);
+                    var contentId = Database.ContentTypes.GetId(autoService.ServicedType);
+                    ServiceByContentType.Remove(contentId, out _);
+                    Api.Database.ContentTypes.StateChange(false, autoService, autoService.ServicedType);
+                }
+
+                await Events.Service.AfterDelete.Dispatch(ctx, autoService);
             }
         }
 

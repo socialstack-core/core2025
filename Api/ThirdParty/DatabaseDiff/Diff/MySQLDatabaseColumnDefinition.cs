@@ -170,19 +170,60 @@ namespace Api.Database
 				);
 			}
 		}
-		
+
 		/// <summary>
-		/// Gets e.g. "varchar(200) not null" - the data type as universal SQL.
+		/// Gets the type description as an SQL string.
 		/// </summary>
 		/// <returns></returns>
 		public string TypeAsSql()
 		{
-			return DataType.Trim() + (((DataType == "varchar" || DataType == "varbinary") && MaxCharacters.HasValue) ? "(" + MaxCharacters + ")" : "") +
-				(((DataType == "decimal") && MaxCharacters.HasValue) ? "(" + MaxCharacters2 + ", " + MaxCharacters + ")" : "") +
-				(IsUnsigned ? " unsigned" : "") + (IsNullable ? " null" : " not null") 
-				+ ((DataType == "datetime" && !IsNullable) ? " DEFAULT '1970-01-01 00:00:00'":"")
-				+ (IsAutoIncrement ? " auto_increment" : "");
+			string sqlType = DataType.Trim();
+			if ((DataType == "varchar" || DataType == "varbinary") && MaxCharacters.HasValue)
+			{
+				sqlType += "(" + MaxCharacters + ")";
+			}
+			else if (DataType == "decimal" && MaxCharacters.HasValue && MaxCharacters2.HasValue)
+			{
+				sqlType += "(" + MaxCharacters2 + ", " + MaxCharacters + ")";
+			}
+
+			sqlType += IsUnsigned ? " unsigned" : "";
+			sqlType += IsNullable ? " null" : " not null";
+
+			if (!IsAutoIncrement)
+			{
+				sqlType += " DEFAULT " + GetDefaultValueForType();
+			}
+
+			sqlType += IsAutoIncrement ? " auto_increment" : "";
+
+			return sqlType;
 		}
+
+		private string GetDefaultValueForType()
+		{
+			if (IsNullable)
+			{
+				// Includes the string types.
+				return "null";
+			}
+
+			return DataType switch
+			{
+				"bit" => "0",
+				"tinyint" => "0",
+				"int" => "0",
+				"smallint" => "0",
+				"bigint" => "0",
+				"float" => "0",
+				"datetime" => "'1970-01-01 00:00:00'",
+				"date" => "'1970-01-01'",
+				"double" => "0",
+				"decimal" => "0",
+				_ => "0" // fallback
+			};
+		}
+
 
 		/// <summary>
 		/// Generates alter table SQL for this column.
