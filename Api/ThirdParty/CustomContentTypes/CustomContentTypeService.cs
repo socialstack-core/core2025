@@ -394,7 +394,7 @@ namespace Api.CustomContentTypes
         /// <summary>
         /// Raw controller types for custom types, mapped by CustomContentType.Id -> the constructed result.
         /// </summary>
-        private Dictionary<uint, ConstructedCustomContentType> loadedTypes;
+        private Dictionary<uint, ConstructedCustomContentType> loadedTypes = [];
 
         /// <summary>
         /// Creates a service etc for the given system type and activates it. Invoked via reflection with a runtime compiled type.
