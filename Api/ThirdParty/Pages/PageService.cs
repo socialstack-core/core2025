@@ -16,7 +16,6 @@ namespace Api.Pages
 	/// </summary>
 	[LoadPriority(9)]
 	[HostType("web")]
-	[CustomCreatePage("Admin/Page/Create")]
 	public partial class PageService : AutoService<Page>
 	{
 		/// <summary>

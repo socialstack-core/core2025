@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Api.EcmaScript.TypeScript
 {
@@ -49,11 +50,19 @@ namespace Api.EcmaScript.TypeScript
         /// <returns>The TypeScript method definition as a formatted string.</returns>
         public string CreateSource()
         {
+            string[] asNormalFunctionNames = [
+                "constructor",
+                "list",
+                "load",
+                "create", 
+                "update",
+                "delete"
+            ];
             var src = GetTsDocumentation();
 
             src += "".PadLeft(4) + $"{Modifier} {Name}";
 
-            var isConstructor = Name == "constructor";
+            var isConstructor = asNormalFunctionNames.Contains(Name);
 
 			if (isConstructor)
             {

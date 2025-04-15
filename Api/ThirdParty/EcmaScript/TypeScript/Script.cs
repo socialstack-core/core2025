@@ -38,6 +38,14 @@ namespace Api.EcmaScript.TypeScript
         /// <param name="import"></param>
         public void AddImport(Import import)
         {
+
+            var childTypeClash = Children.OfType<TypeDefinition>().Where(child => import.Symbols.Contains(child.Name));
+
+            if (childTypeClash.Any())
+            {
+                return;
+            }
+
             var existing = Imports.Where(i => i.From == import.From);
 
             if (existing.Any())
@@ -58,6 +66,9 @@ namespace Api.EcmaScript.TypeScript
                 }
                 return;
             }
+            
+            
+
             Imports.Add(import);
         }
 
@@ -67,6 +78,12 @@ namespace Api.EcmaScript.TypeScript
         /// <param name="typeDefinition"></param>
         public void AddTypeDefinition(TypeDefinition typeDefinition)
         {
+            
+            if (typeDefinition.Name.Contains('`'))
+            {
+                return;
+            }
+            
             var existing = Children.Where(i => i is TypeDefinition definition && definition.Name == typeDefinition.Name);
 
             if (existing.Any()) 
