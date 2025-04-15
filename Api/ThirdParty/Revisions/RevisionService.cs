@@ -10,17 +10,18 @@ using Api.Users;
 namespace Api.Revisions
 {
 	/// <summary>
-	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+	/// A typeless revision service.
 	/// </summary>
-	public partial class RevisionService : AutoService
+	public partial interface RevisionService
     {
 		/// <summary>
-		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+		/// Generic publishing by ulong ID.
 		/// </summary>
-		public RevisionService()
-        {
-			// Exists as a convenient way to check if revisions are supported.
-		}
+		/// <param name="context"></param>
+		/// <param name="id"></param>
+		/// <param name="options"></param>
+		/// <returns></returns>
+		ValueTask<object> PublishGenericId(Context context, ulong id, DataOptions options = DataOptions.Default);
 	}
 
 	/// <summary>
@@ -28,7 +29,7 @@ namespace Api.Revisions
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <typeparam name="ID"></typeparam>
-	public class RevisionService<T, ID> : AutoService<T, ID>
+	public class RevisionService<T, ID> : AutoService<T, ID>, RevisionService
 		where T : Content<ID>, new()
 		where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 	{
@@ -44,6 +45,40 @@ namespace Api.Revisions
 		public RevisionService(AutoService<T, ID> parent) : base(new EventGroup<T, ID>(), null, parent.EntityName + "_revisions")
 		{
 			Parent = parent;
+		}
+
+		/// <summary>
+		/// Gets the revision service on this autoservice, if there is one.
+		/// </summary>
+		/// <returns></returns>
+		public override RevisionService GetRevisions()
+		{
+			return this;
+		}
+
+		/// <summary>
+		/// Publish a revision by a generic revision ID.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="id"></param>
+		/// <param name="options"></param>
+		/// <returns></returns>
+		public async ValueTask<object> PublishGenericId(Context context, ulong id, DataOptions options = DataOptions.Default)
+		{
+			return await Publish(context, ConvertId(id), options);
+		}
+
+		/// <summary>
+		/// Publish a revision by a revision ID.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="id"></param>
+		/// <param name="options"></param>
+		/// <returns></returns>
+		public async ValueTask<T> Publish(Context context, ID id, DataOptions options = DataOptions.Default)
+		{
+			var content = await Get(context, id);
+			return await PublishRevision(context, content, options);
 		}
 
 		/// <summary>

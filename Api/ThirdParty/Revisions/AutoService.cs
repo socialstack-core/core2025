@@ -43,4 +43,27 @@ public partial class AutoService<T, ID>{
 	/// </summary>
 	public RevisionService<T, ID> Revisions;
 
+	/// <summary>
+	/// Gets the revision service on this autoservice, if there is one.
+	/// </summary>
+	/// <returns></returns>
+	public override RevisionService GetRevisions()
+	{
+		return Revisions;
+	}
+
+}
+
+public partial class AutoService
+{
+
+	/// <summary>
+	/// Gets the revision service on this autoservice, if there is one.
+	/// </summary>
+	/// <returns></returns>
+	public virtual RevisionService GetRevisions()
+	{
+		return null;
+	}
+
 }
