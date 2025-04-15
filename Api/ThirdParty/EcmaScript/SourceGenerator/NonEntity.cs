@@ -45,7 +45,7 @@ namespace Api.EcmaScript
                 else
                 {
                     var isNullable = IsTypeNullable(field.FieldType);
-                    nonEntity.AddProperty(LcFirst(field.Name) + (isNullable ? "?" : ""), OnField(field.FieldType, containingScript, currentDepth));
+                    nonEntity.AddProperty(LcFirst(field.Name) + (isNullable ? "?" : ""), OnField(field.FieldType, containingScript, currentDepth + 1));
                 }
             }
 

@@ -16,27 +16,17 @@ namespace Api.EcmaScript
                 FileName = "TypeScript/Api/Content.tsx"
             };
 
-            // ==== CONTENT.CS ==== \\
-            var contentType = new TypeDefinition() {
-                Name = "Content"
-            };
-            contentType.AddTsDocLine("* The base content type for all content.");
-            contentType.AddProperty("id", "uint");
-            contentType.AddProperty("type", "string | null");
-            content.AddChild(contentType);
+            SourceGenerator.EnsureScript(content);
 
-            // ===== VERSIONEDCONTENT.CS ===== \\
-            var versionedContent = new TypeDefinition() {
-                Name = "VersionedContent",
-                Inheritence = ["UserCreatedContent"]
-            };
-            versionedContent.AddTsDocLine("* The base content type for all content.");
-            versionedContent.AddProperty("revisionId?", "uint");
-            content.AddChild(versionedContent);
-
-            var generatedSource = content.CreateSource();
-            container.Add(content.FileName, generatedSource);
-			File.WriteAllText(content.FileName, generatedSource);
+            content.AddTypeDefinition(
+                SourceGenerator.OnGenericTypeDefinition(typeof(Api.Database.Content<uint>), content)
+            );
+            content.AddTypeDefinition(
+                SourceGenerator.OnGenericTypeDefinition(typeof(UserCreatedContent<uint>), content)
+            );
+            content.AddTypeDefinition(
+                SourceGenerator.OnGenericTypeDefinition(typeof(VersionedContent<uint>), content)
+            );
         }
 
         private void CreateBaseApi(SourceFileContainer container)
@@ -87,6 +77,11 @@ namespace Api.EcmaScript
             container.Add(filePath, generatedSource);
             File.WriteAllText(filePath, generatedSource);
         }
+        /// <summary>
+        /// Converts C# names to TS names.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static string LcFirst(string value)
         {
             return string.Concat(value[0].ToString().ToLower(), value.AsSpan(1, value.Length - 1)); 
