@@ -18,6 +18,7 @@ using Api.Pages;
 using Api.Startup;
 using Api.Uploader;
 using Api.Users;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Newtonsoft.Json;
@@ -43,6 +44,14 @@ namespace Api.EcmaScript
         private readonly AvailableEndpointService endpointService;
 
         private Script IncludesScript;
+
+        /// <summary>
+        /// A list of types to ignore when converting method parameters to TS
+        /// </summary>  
+        private static readonly Type[] methodParamIgnoreTypes = [
+            typeof(HttpContext),
+            typeof(Context)
+        ];
 
 
         /// <summary>
@@ -858,6 +867,8 @@ namespace Api.EcmaScript
         {
             List<ClassMethodArgument> Arguments = [];
 
+            
+
             // make sure the variables are converted to JS variables
             var details = GetEndpointUrl(method);
 
@@ -881,10 +892,18 @@ namespace Api.EcmaScript
 
             foreach(var param in method.GetParameters())
             {
+                var paramType = param.ParameterType;
+
+                if (methodParamIgnoreTypes.Contains(paramType))
+                {
+                    continue;
+                }
+                
                 if (details.Contains($"{{{param.Name}}}"))
                 {
                     details = details.Replace($"{{{param.Name}}}", "' + " + param.Name + " + '");
                 }
+
                 var arg = new ClassMethodArgument() {
                     Name = param.Name,
                     Type = GetTypeConversion(param.ParameterType)
