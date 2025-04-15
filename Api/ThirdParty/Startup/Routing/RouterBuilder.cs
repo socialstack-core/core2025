@@ -1109,7 +1109,8 @@ public class BuilderNode
 			il.Emit(OpCodes.Ldarg_1); // HttpResponse.Body
 			il.Emit(OpCodes.Callvirt, getBody);
 
-			il.Emit(OpCodes.Ldnull); // includes
+			il.Emit(OpCodes.Ldarg_1); // A *HttpResponse*.
+			il.Emit(OpCodes.Call, typeof(TerminalNode).GetMethod(nameof(TerminalNode.GetIncludesString)));
 
 			il.Emit(OpCodes.Callvirt, writeJson); // write now
 			
@@ -1156,9 +1157,9 @@ public class BuilderNode
 			il.Emit(OpCodes.Ldarg_1); // Response.Body
 			il.Emit(OpCodes.Callvirt, getBody);
 
-			// Includes (TBD)
-			il.Emit(OpCodes.Ldnull);
-
+			il.Emit(OpCodes.Ldarg_1); // A *HttpResponse*.
+			il.Emit(OpCodes.Call, typeof(TerminalNode).GetMethod(nameof(TerminalNode.GetIncludesString)));
+			
 			// Call ToJson(ctx, theObject, stream, includes)
 			il.Emit(OpCodes.Callvirt, toJsonMethod);
 			return;

@@ -161,7 +161,7 @@ public class ListStreamSource<T, ID> : ContentStreamSource<T, ID>
 		
 		for(var i=0;i<Content.Count;i++)
 		{
-			await onResult(context, Content[i], Content.Count, srcA, srcB);
+			await onResult(context, Content[i], i, srcA, srcB);
 		}
 
 		return Content.Count;

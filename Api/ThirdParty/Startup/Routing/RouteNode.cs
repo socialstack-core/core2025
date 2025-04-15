@@ -1,5 +1,6 @@
 using Api.Contexts;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
@@ -139,6 +140,23 @@ public class TerminalNode : ArrayIntermediateNode
 		using var reader = new StreamReader(request.Body, Encoding.UTF8, leaveOpen: true);
 		var body = await reader.ReadToEndAsync();
 		return JsonConvert.DeserializeObject<T>(body);
+	}
+	
+	/// <summary>
+	/// Gets the common includes string from the query string.
+	/// </summary>
+	/// <param name="response"></param>
+	/// <returns></returns>
+	public static string GetIncludesString(HttpResponse response)
+	{
+		var request = response.HttpContext.Request;
+
+		if (!request.Query.TryGetValue("includes", out StringValues sv))
+		{
+			return null;
+		}
+
+		return sv[sv.Count - 1];
 	}
 
 	/// <summary>
