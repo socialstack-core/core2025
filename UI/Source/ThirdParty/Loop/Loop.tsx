@@ -117,7 +117,7 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 
 	const [results, setResults] = useApi<T[] | null>(() => {
 		return load();
-	}, [filterStr, props.paged, props.over]);
+	}, [filterStr, props.paged, props.over, props.source, props.includes]);
 
 	useEffect(() => {
 		var onContentUpdate = (e: CustomEvent<ContentChangeDetail>) => {
