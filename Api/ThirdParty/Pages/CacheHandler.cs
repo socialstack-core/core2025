@@ -70,7 +70,6 @@ namespace Api.ThirdParty.Pages
             where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
         {
 			if (service.EntityName.EndsWith("_PersonalRoomServers") || service.EntityName.Contains("ClusteredServer")
-				|| service.EntityName.Contains("ItineraryContactForm") || service.EntityName.Contains("StandardContactForm") // Temp hack to stop cache purge on form submission
 				|| typeof(T) == typeof(Uploader.Upload))
 			{
 				// Websocket rooms. Created when logged in people arrive and depart on the site.
