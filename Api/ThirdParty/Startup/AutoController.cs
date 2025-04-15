@@ -171,6 +171,7 @@ public partial class AutoController<T,ID> : AutoController
 	/// Creates a new entity. Returns the ID. Includes everything by default.
 	/// </summary>
 	[HttpPost]
+	[Receives(typeof(PartialContent))]
 	public virtual async ValueTask<T> Create(Context context, [FromBody] JObject body)
 	{
 		return await CreateInternal(_service, context, body);
@@ -333,6 +334,7 @@ public partial class AutoController<T,ID> : AutoController
 	/// Updates an entity with the given ID. Includes everything by default.
 	/// </summary>
 	[HttpPost("{id}")]
+	[Receives(typeof(PartialContent))]
 	public virtual async ValueTask<T> Update(Context context, [FromRoute] ID id, [FromBody] JObject body)
 	{
 		return await UpdateInternal(_service, context, id, body);

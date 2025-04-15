@@ -5,9 +5,16 @@ namespace Api.Startup;
 
 
 /// <summary>
+/// General base class for PartialContent.
+/// </summary>
+public class PartialContent {
+	
+}
+
+/// <summary>
 /// Content which is both partially set and can have virtual fields.
 /// </summary>
-public class PartialContent<T, ID> 
+public class PartialContent<T, ID> : PartialContent
 	where ID : struct 
 	where T:Content<ID>, new()
 {

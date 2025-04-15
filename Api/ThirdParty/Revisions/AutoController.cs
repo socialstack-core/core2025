@@ -5,7 +5,6 @@ using Api.Permissions;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Api.Startup;
-using Api.SocketServerLibrary;
 using Api.Users;
 
 /// <summary>
@@ -101,6 +100,7 @@ public partial class AutoController<T, ID>
 	/// Updates an entity revision with the given RevisionId.
 	/// </summary>
 	[HttpPost("revision/{id}")]
+	[Receives(typeof(PartialContent))]
 	public virtual async ValueTask<T> UpdateRevision(Context context, [FromRoute] ID id, [FromBody] JObject body)
 	{
 		var revisions = _service.Revisions;
@@ -129,6 +129,7 @@ public partial class AutoController<T, ID>
 	/// Publishes the given posted object as an extension to the given revision (if body is not null).
 	/// </summary>
 	[HttpPost("publish/{id}")]
+	[Receives(typeof(PartialContent))]
 	public virtual async ValueTask<T> PublishRevision(Context context, [FromRoute] ID id, [FromBody] JObject body)
 	{
 		var revisions = _service.Revisions;
@@ -148,6 +149,7 @@ public partial class AutoController<T, ID>
 	/// Creates a draft.
 	/// </summary>
 	[HttpPost("draft")]
+	[Receives(typeof(PartialContent))]
 	public virtual async ValueTask<T> CreateDraft(Context context, [FromBody] JObject body)
 	{
 		var revisions = _service.Revisions;
