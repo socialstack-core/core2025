@@ -7,6 +7,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Api.Startup;
 using Microsoft.AspNetCore.Http;
+using Azure;
+using LetsEncrypt.Client.Json;
 
 namespace Api.Users
 {
@@ -94,11 +96,24 @@ namespace Api.Users
         }
 
 		/// <summary>
+		/// Json serialization settings for canvases
+		/// </summary>
+		private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+		{
+			ContractResolver = new DefaultContractResolver
+			{
+				NamingStrategy = new CamelCaseNamingStrategy()
+			},
+			Formatting = Formatting.None
+		};
+
+		/// <summary>
 		/// POST /v1/user/login/
 		/// Attempts to login. Returns either a Context or a LoginResult.
 		/// </summary>
 		[HttpPost("login")]
-		public async ValueTask<LoginResultOrContext> Login(HttpContext httpContext, Context context, [FromBody] UserLogin body)
+		[Returns(typeof(Context))]
+		public async ValueTask Login(HttpContext httpContext, Context context, [FromBody] UserLogin body)
 		{
 			var result = await (_service as UserService).Authenticate(context, body);
 			var response = httpContext.Response;
@@ -111,18 +126,16 @@ namespace Api.Users
 			if (!result.Success)
 			{
 				// Output the result message. 
-				return new LoginResultOrContext
-				{
-					LoginResult = result
-				};
+				// Fail message does not expose any content objects but does contain nested objects, so newtonsoft is ok here.
+				var json = JsonConvert.SerializeObject(result, jsonSettings);
+				var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+				await httpContext.Response.Body.WriteAsync(bytes, 0, bytes.Length);
+				return;
 			}
 
 			// output the context:
-			return new LoginResultOrContext
-			{
-				Context = context
-			};
-        }
+			await OutputContext(httpContext, context);
+		}
 
 		/// <summary>
 		/// Impersonate a user by their ID. This is a hard cookie switch. You will loose all admin functionality to make the impersonation as accurate as possible.
@@ -224,18 +237,4 @@ namespace Api.Users
 
     }
 
-	/// <summary>
-	/// A soft kind of failure which can occur when more info is required.
-	/// </summary>
-	public struct LoginResultOrContext
-	{
-		/// <summary>
-		/// Set usually if more info is required, such as 2FA.
-		/// </summary>
-		public LoginResult LoginResult;
-		/// <summary>
-		/// Set if a login occurred fully.
-		/// </summary>
-		public Context Context;
-	}
 }

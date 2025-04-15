@@ -3,6 +3,8 @@ using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
 using Api.Startup;
+using Azure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Stripe;
@@ -18,7 +20,24 @@ using System.Threading.Tasks;
 /// </summary>
 public class AutoController
 {
-	
+
+	/// <summary>
+	/// Outputs a context update.
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <param name="context"></param>
+	/// <returns></returns>
+	protected async ValueTask OutputContext(HttpContext httpContext, Context context)
+	{
+		var response = httpContext.Response;
+
+		// Regenerate the contextual token:
+		context.SendToken(response);
+
+		response.ContentType = "application/json";
+		await Services.Get<ContextService>().ToJson(context, response.Body);
+	}
+
 }
 
 /// <summary>
