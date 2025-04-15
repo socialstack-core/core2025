@@ -1584,6 +1584,22 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 	}
 
 	/// <summary>
+	/// Performs an update on the given entity, setting it to the specified object.
+	/// </summary>
+	public virtual async ValueTask<T> UpdateExact(Context context, T entityToUpdate, DataOptions options = DataOptions.Default)
+	{
+		if (options != DataOptions.IgnorePermissions)
+		{
+			// Perform the permission test now:
+			await EventGroup.BeforeUpdate.TestCapability(context, entityToUpdate);
+		}
+
+		var originalEntity = await Get(context, entityToUpdate.Id, options);
+		await FinishUpdate(context, entityToUpdate, originalEntity, options);
+		return entityToUpdate;
+	}
+
+	/// <summary>
 	/// For simpler usage, see Update. This is for advanced non-allocating updates. Returns the object that you MUST apply your changes to.
 	/// </summary>
 	/// <param name="context"></param>
