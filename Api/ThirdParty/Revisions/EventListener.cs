@@ -8,6 +8,7 @@ using Api.Startup;
 using Api.Users;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Stripe;
 
 
 namespace Api.Revisions
@@ -145,10 +146,18 @@ namespace Api.Revisions
 			
 			var methodInfo = GetType().GetMethod(nameof(SetupForRevisions));
 
-			Events.Service.AfterCreate.AddEventListener((Context ctx, AutoService svc) => {
+			Events.Service.AfterCreate.AddEventListener(async (Context ctx, AutoService svc) => {
 				if (svc == null || svc.ServicedType == null)
 				{
-					return new ValueTask<AutoService>(svc);
+					return svc;
+				}
+
+				// Do nothing if this is a revision service itself.
+				var svcType = svc.GetType();
+
+				if (svcType.IsGenericType && svcType.GetGenericTypeDefinition() == typeof(RevisionService<,>))
+				{
+					return svc;
 				}
 
 				var eventGroup = svc.GetEventGroup();
@@ -163,12 +172,15 @@ namespace Api.Revisions
 						idType
 					});
 
-					setupType.Invoke(this, new object[] {
+					var valTask = (ValueTask)setupType.Invoke(this, new object[] {
+						ctx,
 						svc
 					});
+
+					await valTask;
 				}
 
-				return new ValueTask<AutoService>(svc);
+				return svc;
 			});
 		}
 
@@ -216,11 +228,21 @@ namespace Api.Revisions
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <typeparam name="ID"></typeparam>
+		/// <param name="context"></param>
 		/// <param name="autoService"></param>
-		public void SetupForRevisions<T, ID>(AutoService<T, ID> autoService)
+		public async ValueTask SetupForRevisions<T, ID>(Context context, AutoService<T, ID> autoService)
 			where T : VersionedContent<ID>, new()
 			where ID: struct, IConvertible, IEquatable<ID>, IComparable<ID>
 		{
+			// Spawn the revisions service:
+			autoService.Revisions = new RevisionService<T, ID>(autoService);
+
+			// Tell the system that this service has started. The main side effect we're after here
+			// is for whichever data service is in use to mount it.
+			// Note that this is itself called from AfterCreate, so our handler explicitly looks out for & then no-ops 
+			// when it spots the revisions on revisions situation.
+			await Services.StateChange(true, autoService.Revisions);
+
 			var contentType = autoService.InstanceType;
 			var evtGroup = autoService.EventGroup;
 

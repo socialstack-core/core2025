@@ -166,16 +166,31 @@ public partial class AutoController<T,ID> : AutoController
 		return new ValueTask<ContentStream<T, ID>?>(streamer);
 	}
 
-    /// <summary>
-    /// POST /v1/entityTypeName/
-    /// Creates a new entity. Returns the ID. Includes everything by default.
-    /// </summary>
-    [HttpPost]
+	/// <summary>
+	/// POST /v1/entityTypeName/
+	/// Creates a new entity. Returns the ID. Includes everything by default.
+	/// </summary>
+	[HttpPost]
 	public virtual async ValueTask<T> Create(Context context, [FromBody] JObject body)
+	{
+		return await CreateInternal(_service, context, body);
+	}
+
+	/// <summary>
+	/// Creates a new entity using the given service, such that revisions can reuse this code directly. 
+	/// Returns the ID. Includes everything by default.
+	/// </summary>
+	/// <param name="service"></param>
+	/// <param name="context"></param>
+	/// <param name="body"></param>
+	/// <param name="setFields"></param>
+	/// <returns></returns>
+	/// <exception cref="PublicException"></exception>
+	protected virtual async ValueTask<T> CreateInternal(AutoService<T, ID> service, Context context, JObject body, Action<Context, T> setFields = null)
 	{
 		// Start building up our object.
 		// Most other fields, particularly custom extensions, are handled by autoform.
-		var entity = (T)Activator.CreateInstance(_service.InstanceType);
+		var entity = (T)Activator.CreateInstance(service.InstanceType);
 
 		// If it's user created we'll set the user ID now:
 		var userCreated = (entity as Api.Users.UserCreatedContent<ID>);
@@ -186,12 +201,18 @@ public partial class AutoController<T,ID> : AutoController
 		}
 		
 		// Set the actual fields now:
-		await SetFieldsOnObject(entity, context, body, JsonFieldGroup.Default);
+		await SetFieldsOnObject(service, entity, context, body, JsonFieldGroup.Default);
+
+		// Set any additional fields if necessary:
+		if (setFields != null)
+		{
+			setFields(context, entity);
+		}
 
 		// Not permitted to create with a specified ID via the API. Ensure it's 0:
 		entity.SetId(default);
 
-		entity = await _service.CreatePartial(context, entity, DataOptions.Default);
+		entity = await service.CreatePartial(context, entity, DataOptions.Default);
 		
 		if(entity == null)
 		{
@@ -199,7 +220,7 @@ public partial class AutoController<T,ID> : AutoController
 		}
 		
 		// Set post ID fields:
-		await SetFieldsOnObject(entity, context, body, JsonFieldGroup.AfterId);
+		await SetFieldsOnObject(service, entity, context, body, JsonFieldGroup.AfterId);
 
 		// If it has an on object, create the mapping entry now if we have read visibility of the target:
 		var on = body["on"];
@@ -230,7 +251,7 @@ public partial class AutoController<T,ID> : AutoController
 						if (map == null)
 						{
 							// "this" service is the one which has a ListAs:
-							mapName = _service.GetContentFields().PrimaryMapName;
+							mapName = service.GetContentFields().PrimaryMapName;
 
 							if (string.IsNullOrEmpty(mapName))
 							{
@@ -254,7 +275,7 @@ public partial class AutoController<T,ID> : AutoController
 						}
 
 						// Create map from srcObject -> entity via the map called MapName. First though, get the mapping service:
-						var mappingService = await MappingTypeEngine.GetOrGenerate(svc, _service, mapName);
+						var mappingService = await MappingTypeEngine.GetOrGenerate(svc, service, mapName);
 						await mappingService.CreateMapping(context, srcObject, entity, DataOptions.IgnorePermissions);
 					}
 				}
@@ -262,7 +283,7 @@ public partial class AutoController<T,ID> : AutoController
 		}
 
 		// Complete the call (runs AfterCreate):
-		entity = await _service.CreatePartialComplete(context, entity);
+		entity = await service.CreatePartialComplete(context, entity);
 
 		if (entity == null)
 		{
@@ -277,14 +298,15 @@ public partial class AutoController<T,ID> : AutoController
 	/// Note that there's 2 sets of fields - a primary set, then also a secondary set which are set only after the ID of the object is known.
 	/// E.g. during create, the object is instanced, initial fields are set, it's then actually created, and then the after ID set is run.
 	/// </summary>
+	/// <param name="service"></param>
 	/// <param name="target"></param>
 	/// <param name="context"></param>
 	/// <param name="body"></param>
 	/// <param name="fieldGroup"></param>
-	protected async ValueTask SetFieldsOnObject(T target, Context context, JObject body, JsonFieldGroup fieldGroup = JsonFieldGroup.Any)
+	protected async ValueTask SetFieldsOnObject(AutoService<T, ID> service, T target, Context context, JObject body, JsonFieldGroup fieldGroup = JsonFieldGroup.Any)
 	{
         // Get the JSON meta which will indicate exactly which fields are editable by this user (role):
-		var availableFields = await _service.GetTypedJsonStructure(context);
+		var availableFields = await service.GetTypedJsonStructure(context);
 
 		foreach (var property in body.Properties())
 		{
@@ -305,7 +327,7 @@ public partial class AutoController<T,ID> : AutoController
 			await field.SetFieldValue(context, target, property.Value);
 		}
 	}
-	
+
 	/// <summary>
 	/// POST /v1/entityTypeName/1/
 	/// Updates an entity with the given ID. Includes everything by default.
@@ -313,19 +335,28 @@ public partial class AutoController<T,ID> : AutoController
 	[HttpPost("{id}")]
 	public virtual async ValueTask<T> Update(Context context, [FromRoute] ID id, [FromBody] JObject body)
 	{
-		var originalEntity = await _service.Get(context, id);
+		return await UpdateInternal(_service, context, id, body);
+	}
+
+	/// <summary>
+	/// Updates an object using a specific service, such that e.g. 
+	/// revisions can use a different one whilst reusing the bulk of this functionality.
+	/// </summary>
+	/// <param name="service"></param>
+	/// <param name="context"></param>
+	/// <param name="id"></param>
+	/// <param name="body"></param>
+	/// <returns></returns>
+	protected async ValueTask<T> UpdateInternal(AutoService<T, ID> service, Context context, ID id, JObject body)
+	{
+		var originalEntity = await service.Get(context, id);
 		
 		if (originalEntity == null)
 		{
 			return null;
 		}
 
-		if (originalEntity == null)
-		{
-			return null;
-		}
-
-		var entityToUpdate = await _service.StartUpdate(context, originalEntity);
+		var entityToUpdate = await service.StartUpdate(context, originalEntity);
 
 		if (entityToUpdate == null)
 		{
@@ -334,17 +365,12 @@ public partial class AutoController<T,ID> : AutoController
 		}
 
 		// In this case the entity ID is definitely known, so we can run all fields at the same time:
-		await SetFieldsOnObject(entityToUpdate, context, body, JsonFieldGroup.Any);
+		await SetFieldsOnObject(service, entityToUpdate, context, body, JsonFieldGroup.Any);
 
 		// Make sure it's still the original ID:
 		entityToUpdate.SetId(id);
 
-		entityToUpdate = await _service.FinishUpdate(context, entityToUpdate, originalEntity);
-
-		if (entityToUpdate == null)
-		{
-			return null;
-		}
+		entityToUpdate = await service.FinishUpdate(context, entityToUpdate, originalEntity);
 
 		return entityToUpdate;
 	}

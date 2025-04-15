@@ -38,32 +38,9 @@ public partial class AutoService<T, ID>{
 		return _isRevisionType.Value;
 	}
 
-	// private RevisionService<T, ID> _revs;
-
 	/// <summary>
-	/// The revision service (null if this type doesn't support them).
+	/// The revision service (null if this type doesn't support them or hasn't been setup yet).
 	/// </summary>
-	public RevisionService<T, ID> Revisions
-	{
-		get
-		{
-			// Revisions temporarily disabled
-			return null;
-
-			/*
-			if (!IsRevisionType())
-			{
-				return null;
-			}
-
-			if (_revs == null)
-			{
-				_revs = new RevisionService<T, ID>(this);
-			}
-
-			return _revs;
-			*/
-		}
-	}
+	public RevisionService<T, ID> Revisions;
 
 }
