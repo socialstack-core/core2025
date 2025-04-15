@@ -62,6 +62,23 @@ namespace Api.EcmaScript.TypeScript
         }
 
         /// <summary>
+        /// Adds a type definition, checking if it already exists.
+        /// </summary>
+        /// <param name="typeDefinition"></param>
+        public void AddTypeDefinition(TypeDefinition typeDefinition)
+        {
+            var existing = Children.Where(i => i is TypeDefinition definition && definition.Name == typeDefinition.Name);
+
+            if (existing.Any()) 
+            {
+                // prevent dupes.
+                return;
+            }
+
+            Children.Add(typeDefinition);
+        }
+
+        /// <summary>
         /// Add a single source line of code.
         /// </summary>
         /// <param name="sloc"></param>

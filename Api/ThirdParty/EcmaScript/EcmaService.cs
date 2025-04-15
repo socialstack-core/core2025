@@ -542,7 +542,7 @@ namespace Api.EcmaScript
                     }
                     
                     IncludesScript.AddChild(includeClass);
-                    script.AddChild(typeDef);
+                    script.AddTypeDefinition(typeDef);
                 }
 
                 // === End of entity conversion === \\
@@ -654,6 +654,16 @@ namespace Api.EcmaScript
 
                 var returnType = GetTrueMethodReturnType(method);
 
+                if (IsNullableType(returnType))
+                {
+                    returnType = Nullable.GetUnderlyingType(returnType);
+                }
+
+                if (returnType == null)
+                {
+                    continue;
+                }
+
                 if (
                     returnType == typeof(Context) ||
                     returnType == typeof(object) || 
@@ -703,7 +713,7 @@ namespace Api.EcmaScript
 
                             if (!script.Children.Where(obj => obj.GetType() == typeof(TypeDefinition) && (obj as TypeDefinition).Name == listEntityType.Name).Any())
                             {
-                                script.AddChild(CreateNonEntityType(listEntityType));
+                                script.AddTypeDefinition(CreateNonEntityType(listEntityType));
                             }
                         }
                     }
@@ -725,7 +735,7 @@ namespace Api.EcmaScript
                         }
 
                         AddFieldsToType(returnType, def, script);
-                        script.AddChild(def);
+                        script.AddTypeDefinition(def);
                     }
                 }
 
@@ -779,6 +789,7 @@ namespace Api.EcmaScript
 
         private TypeDefinition CreateNonEntityType(Type listEntityType)
         {
+
             var type = new TypeDefinition() {
                 Name = listEntityType.Name
             };
