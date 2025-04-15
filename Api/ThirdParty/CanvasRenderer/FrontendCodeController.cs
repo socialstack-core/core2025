@@ -35,7 +35,7 @@ namespace Api.CanvasRenderer
 		/// Reloads a prebuilt UI
 		/// </summary>
 		[Route("/v1/monitoring/ui-reload")]
-		public async ValueTask<UIReloadResult> Reload()
+		public UIReloadResult Reload()
 		{
 			var version = _codeService.ReloadFromFilesystem();
 
@@ -100,7 +100,7 @@ namespace Api.CanvasRenderer
 		/// </summary>
 		/// <returns></returns>
 		[Route("/pack/scss/{bundle}")]
-		public FileContent GetGlobalScss(string bundle)
+		public FileContent GetGlobalScss([FromRoute] string bundle)
 		{
 			var file = _codeService.GetGlobalScss(bundle);
 			return new FileContent(Encoding.UTF8.GetBytes(file), "text/plain");
