@@ -195,9 +195,16 @@ namespace Api.EcmaScript
         {
             ContextGenerator.SaveToFile("TypeScript/Config/Session.tsx");
 			InitTypeConversions();
-            CreateBaseApi(container);
-            InitTsScripts(container);
-
+            try
+            {
+                CreateBaseApi(container);
+                InitTsScripts(container);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.Write(e.StackTrace);
+            }
             container.Add(IncludesScript.FileName, IncludesScript.CreateSource());
         }
 

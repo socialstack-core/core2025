@@ -22,7 +22,7 @@ namespace Api.EcmaScript
             
             var ecmaService = Services.Get<EcmaService>();
 
-            foreach(var method in controller.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+            foreach(var method in controller.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 if (!IsEndpoint(method))
                 {

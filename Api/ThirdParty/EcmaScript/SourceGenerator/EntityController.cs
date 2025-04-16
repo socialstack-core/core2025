@@ -47,7 +47,8 @@ namespace Api.EcmaScript
             var ctor = new ClassMethod() {
                 Name = "constructor",
                 Injected = [
-                    "super('" + baseUrl + "')"
+                    "super('" + baseUrl + "')" , 
+                    "this.includes = new " + GetCleanTypeName(entityType) + "Includes();"
                 ]
             };
 

@@ -39,6 +39,10 @@ namespace Api.EcmaScript.TypeScript
         /// </summary>
         public List<string> Documentation = [];
 
+        /// <summary>
+        /// Adds a method, if the method 
+        /// </summary>
+        /// <param name="method"></param>
         public void AddMethod(ClassMethod method)
         {
             var existing = Children.OfType<ClassMethod>()
@@ -51,9 +55,22 @@ namespace Api.EcmaScript.TypeScript
                 {
                     Children.Remove(existingMethod);
                     Children.Add(method);
+
+                    
+                    if (method.Injected.Count == 0)
+                    {
+                        throw new Exception($"Method {method.Name} of class {Name} has no body");
+                    }
                 }
+
                 return;
             }
+
+            if (method.Injected.Count == 0)
+            {
+                throw new Exception($"Method {method.Name} of class {Name} has no body");
+            }
+
             Children.Add(method);
         }
 

@@ -19,8 +19,7 @@ namespace Api.EcmaScript
 
             if (endpointUrl is null) 
             {
-                endpointUrl = baseUrl;
-                return;
+                endpointUrl = "";
             }
             var hasBodyParam = false;
             string bodyParamName = null;
@@ -78,7 +77,14 @@ namespace Api.EcmaScript
 
             if (hasBodyParam)
             {
-                classMethod.Injected = ["return getJson(this.apiUrl + '/" + endpointUrl + "', " + bodyParamName + " )"];
+                if (endpointUrl.Length == 0)
+                {
+                    classMethod.Injected = ["return getJson(this.apiUrl, " + bodyParamName + " )"];
+                }
+                else
+                {
+                    classMethod.Injected = ["return getJson(this.apiUrl + '/" + endpointUrl + "', " + bodyParamName + " )"];
+                }
             }
             else
             {
