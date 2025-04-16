@@ -22,16 +22,14 @@ namespace Api.AutoForms
     [HostType("web")]
     public partial class AutoFormService : AutoService
 	{
-		// private IActionDescriptorCollectionProvider _descriptionProvider;
 		private RoleService _roleService;
 
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public AutoFormService(/**IActionDescriptorCollectionProvider descriptionProvider,**/ RoleService roleService)
+		public AutoFormService(RoleService roleService)
 		{
-			// _descriptionProvider = descriptionProvider;
 			_roleService = roleService;
 
 			contentCache = new AutoFormCache(PopulateContentCache, roleService);
@@ -129,24 +127,31 @@ namespace Api.AutoForms
 			// For each AutoService..
 			foreach (var serviceKvp in Services.All)
 			{
-				if (serviceKvp.Value.IsMapping)
+				if (serviceKvp.Value.IsMapping || serviceKvp.Value.IsTypeProxy || serviceKvp.Value.InstanceType == null)
 				{
-					// Omit mapping services
+					// Omit mapping services and proxies (like revisions subservices)
 					continue;
 				}
 
-				var fieldStructure = await serviceKvp.Value.GetJsonStructure(context);
+				try
+				{
+					var fieldStructure = await serviceKvp.Value.GetJsonStructure(context);
 
-				var formType = serviceKvp.Value.InstanceType;
-				var formMeta = GetFormInfo(fieldStructure);
+					var formType = serviceKvp.Value.InstanceType;
+					var formMeta = GetFormInfo(fieldStructure);
 
-				// Must inherit revisionRow and 
-				// the revision module must be installed
-				formMeta.SupportsRevisions = revisionsSupported && Api.Database.ContentTypes.IsAssignableToGenericType(serviceKvp.Value.InstanceType, typeof(VersionedContent<>));
+					// Must inherit revisionRow and 
+					// the revision module must be installed
+					formMeta.SupportsRevisions = revisionsSupported && Api.Database.ContentTypes.IsAssignableToGenericType(serviceKvp.Value.InstanceType, typeof(VersionedContent<>));
 
-				var name = formType.Name.ToLower();
-				formMeta.Endpoint = "v1/" + name;
-				cache[name] = formMeta;
+					var name = formType.Name.ToLower();
+					formMeta.Endpoint = "v1/" + name;
+					cache[name] = formMeta;
+				}
+				catch (Exception e)
+				{
+					Log.Error(LogTag, e);
+				}
 			}
 		}
 

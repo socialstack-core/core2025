@@ -300,7 +300,7 @@ namespace Api.SearchEntities
             foreach (var kvp in Services.All)
             {
                 // don't process updates to the control table
-                if (this.EntityName == kvp.Value.EntityName)
+                if (this.EntityName == kvp.Value.EntityName || kvp.Value.IsTypeProxy)
                 {
                     continue;
                 }
