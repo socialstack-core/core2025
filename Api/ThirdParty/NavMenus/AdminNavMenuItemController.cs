@@ -48,6 +48,9 @@ namespace Api.NavMenus
 				foreach(var permission in permissionRule.RequiredPermissions) 
 				{
 					isGranted = await role.IsGranted(
+
+						// TODO: Fix this abomination 
+
 						capabilities.First(
 							capability => capability.Name == permission
 						),

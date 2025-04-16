@@ -1,5 +1,6 @@
 
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -128,7 +129,123 @@ namespace Api.EcmaScript
 
         }
 
-        
+        private void AddRevisionFunctionality(ClassDefinition classDefinition)
+        {
+            // this is fairly simple, just a load method
+            var loadRevision = new ClassMethod() {
+                Name = "loadRevision",
+                Arguments = [
+                    new ClassMethodArgument() {
+                        Name = "id", 
+                        Type = "uint"
+                    }
+                ],
+                Injected = [
+                    "return getOne(this.apiUrl + '/revision/' + id)"
+                ],
+                ReturnType = "Promise<EntityType>"
+            };
+
+            classDefinition.Children.Add(loadRevision);
+
+            // delete revision.
+            var deleteRevision = new ClassMethod() {
+                Name = "deleteRevision",
+                Arguments = [
+                    new ClassMethodArgument() {
+                        Name = "id", 
+                        Type = "uint"
+                    }
+                ],
+                Injected = [
+                    "return getOne(this.apiUrl + '/revision/' + id, {}, { method: 'DELETE' })"
+                ],
+                ReturnType = "Promise<EntityType>"
+            };
+
+            classDefinition.Children.Add(deleteRevision);
+
+            // revision list.
+
+            var listRevision = new ClassMethod
+            {
+                Name = "listRevision",
+                ReturnType = "Promise<ApiList<EntityType>>",
+                Arguments = [
+                    new ClassMethodArgument() {
+                        Name = "where",
+                        Type = "Partial<Record<keyof(EntityType), string | number | boolean>>",
+                        DefaultValue = "{}"
+                    }
+                ], 
+                Injected = [
+                    "return getList(this.apiUrl + '/revision/list', { where }, { method: 'POST' })"
+                ]
+            };
+
+            classDefinition.Children.Add(listRevision);
+
+            // update revision.
+
+            var updateRevision = new ClassMethod() {
+                Name = "updateRevision", 
+                ReturnType = "Promise<EntityType>",
+                Arguments = [
+                    new ClassMethodArgument() {
+                        Name = "revisionId", 
+                        Type = "uint"
+                    },
+                    new ClassMethodArgument() {
+                        Name = "entity", 
+                        Type = "EntityType"
+                    }
+                ] , 
+                Injected = [
+                    "return getOne(this.apiUrl + '/revision/' + entity.id, entity)"
+                ]
+            };
+
+            classDefinition.Children.Add(updateRevision);
+
+            // publish revision
+
+            var publishRevision = new ClassMethod() {
+                Name = "publishRevision",
+                ReturnType = "Promise<EntityType>",
+                Arguments = [
+                    new ClassMethodArgument() {
+                        Name = "id",
+                        Type = "uint"
+                    } , 
+                    new ClassMethodArgument() {
+                        Name = "entity",
+                        Type = "EntityType"
+                    }
+                ] , 
+                Injected = [
+                    "return getOne(this.apiUrl + '/publish/' + id, entity)"
+                ]
+            };
+
+            classDefinition.Children.Add(publishRevision);
+
+            var createDraft = new ClassMethod() {
+                Name = "createDraft", 
+                ReturnType = "Promise<EntityType>",
+                Arguments = [
+                    new ClassMethodArgument() {
+                        Name = "entity",
+                        Type = "EntityType"
+                    }
+                ],
+                Injected = [
+                    "return getOne(this.apiUrl + '/draft', entity)"
+                ]
+            };
+
+            classDefinition.Children.Add(createDraft);
+
+        }
 
         private void AddBaseIncludeFunctionality()
         {

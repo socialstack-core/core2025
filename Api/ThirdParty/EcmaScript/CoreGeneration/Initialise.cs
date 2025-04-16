@@ -49,11 +49,15 @@ namespace Api.EcmaScript
                 From = "Api/Content",
                 Symbols = ["Content", "VersionedContent", "UserCreatedContent"]
             });
+            apiScript.AddImport(new() {
+                Symbols = ["ApiIncludes"],
+                From = "./Includes"
+            });
 
             // ===== AutoAPI ===== \\
             var baseControllerClass = new ClassDefinition { 
                 Name = "AutoApi",
-                GenericTemplate = "EntityType extends Content, IncludeSet extends ApiIncludes"
+                GenericTemplate = "EntityType extends Content<uint>, IncludeSet extends ApiIncludes"
             };
             var apiUrl = new ClassProperty
             {
@@ -67,6 +71,7 @@ namespace Api.EcmaScript
 
             AddCrudFunctionality(baseControllerClass);
             AddBaseIncludeFunctionality();
+            AddRevisionFunctionality(baseControllerClass);
 
             apiScript.AddChild(baseControllerClass);
 
