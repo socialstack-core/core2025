@@ -7,6 +7,7 @@ declare global {
 		email: DefaultInputType;
 		url: DefaultInputType;
 		hidden: DefaultInputType;
+		number: DefaultInputType;
 	}
 }
 
@@ -22,12 +23,13 @@ interface DefaultProps {
  * @returns
  */
 const Default: React.FC<DefaultProps> = (props) => {
-	const { config, field } = props;
+	const { config, field, type } = props;
 	const { helpFieldId, validationFailure, icon, onInputRef } = config;
 	const { className, onChange, ...attribs } = field;
 
 	const fieldMarkup = (
 		<input
+			type={type}
 			ref={(el) => onInputRef && onInputRef(el as HTMLElement)}
 			className={(className || "form-control") + (validationFailure ? ' is-invalid' : '')}
 			aria-describedby={helpFieldId}
@@ -49,5 +51,6 @@ const Default: React.FC<DefaultProps> = (props) => {
 window.inputTypes['text'] = (props: CustomInputTypeProps<"text">) => <Default type="text" field={props.field} config={props} />;
 window.inputTypes['url'] = (props: CustomInputTypeProps<"url">) => <Default type="url" field={props.field} config={props} />;
 window.inputTypes['email'] = (props: CustomInputTypeProps<"email">) => <Default type="email" field={props.field} config={props} />;
+window.inputTypes['number'] = (props: CustomInputTypeProps<"number">) => <Default type="number" field={props.field} config={props} />;
 window.inputTypes['hidden'] = (props: CustomInputTypeProps<"hidden">) => <Default type="hidden" field={props.field} config={props} />;
 export default Default;

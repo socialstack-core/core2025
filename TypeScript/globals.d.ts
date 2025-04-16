@@ -165,6 +165,11 @@ declare global {
 	 * Called before pages are loaded.
 	 */
 	var beforePageLoad: ((url: string) => Promise<void>) | null;
+	
+	/**
+	 * The module manager, which holds a set of the UMD modules.
+	 */
+	var __mm: Record<string, any>;
 }
 
 export {};

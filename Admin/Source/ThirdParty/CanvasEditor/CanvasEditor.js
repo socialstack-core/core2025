@@ -2,6 +2,7 @@ import Alert from 'UI/Alert';
 import Input from 'UI/Input';
 import Graph from 'Admin/CanvasEditor/GraphEditor/Graph';
 import Collapsible from 'UI/Collapsible';
+import Loading from 'UI/Loading';
 import { ErrorCatcher } from 'UI/Canvas';
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import ModuleSelector from 'Admin/CanvasEditor/ModuleSelector'
@@ -15,6 +16,8 @@ import PanelledEditor from 'Admin/Layouts/PanelledEditor';
 import CanvasState from './CanvasState';
 import { getRootInfo } from './Utils';
 import { createLinkDecorator } from 'Admin/CanvasEditor/Link';
+import { getAll as getAllPropTypes } from 'Admin/Functions/GetPropTypes';
+import { useEffect } from 'react';
 var nodeKeys = 1;
 
 const DEFAULT_BLOCK_TYPE = 'p';
@@ -256,12 +259,23 @@ function applyCustomNodeUpdate(node) {
 }
 
 export default function CanvasEditor (props) {
-	var [canvasState, setCanvasState] = React.useState(() => {
-		var state = new CanvasState(extendedBlockRenderMap);
-		state = state.load(props.value || props.defaultValue);
-		return state;
-	});
-	
+	var [canvasState, setCanvasState] = React.useState(null);
+
+	useEffect(() => {
+
+		getAllPropTypes()
+		.then(propTypeInfo => {
+			var state = new CanvasState(extendedBlockRenderMap, propTypeInfo);
+			state = state.load(props.value || props.defaultValue);
+			setCanvasState(state);
+		});
+
+	}, []);
+
+	if (!canvasState) {
+		return <Loading />;
+	}
+
 	var snapshotState = (snap) => {
 		
 		// Create a snapshot if one is not being provided:
@@ -980,7 +994,7 @@ class CanvasEditorCore extends React.Component {
 				}}>
 					{this.state.rightClick && this.renderContextMenu()}
 					<ModuleSelector 
-						closeModal = {() => this.closeModal()} 
+						onClose = {() => this.closeModal()} 
 						selectOpenFor = {this.state.selectOpenFor} 
 						groups = {this.props.groups}
 						onSelected = {module => {
@@ -1018,24 +1032,25 @@ class CanvasEditorCore extends React.Component {
 							
 							var pubName = module.publicName;
 							
-							var module = {
+							var moduleNode = {
 								type: module.moduleClass,
 								parent: insertInto,
+								typePropTypes: module.props,
 								props: {}
 							}
 							
 							if(pubName == "UI/Text"){
-								module.type = "richtext";
-								module.editorState = EditorState.createEmpty(decorator);
+								moduleNode.type = "richtext";
+								moduleNode.editorState = EditorState.createEmpty(decorator);
 							}else{
-								module.typeName = pubName;
+								moduleNode.typeName = pubName;
 							}
 							
 							// Build the root set
 							var roots = {};
 							
 							// Does the type have any roots that need adding?
-							var rootSet = getRootInfo(module.type);
+							var rootSet = getRootInfo(module.props);
 
 							for(var i=0;i<rootSet.length;i++){
 								var rootInfo = rootSet[i];
@@ -1050,12 +1065,12 @@ class CanvasEditorCore extends React.Component {
 							}
 							
 							if(Object.keys(roots).length){
-								module.roots = roots;
+								moduleNode.roots = roots;
 							}
 							
-							this.props.canvasState.addNode(module, insertInto, insertIndex, selectOpenFor.isReplace);
+							this.props.canvasState.addNode(moduleNode, insertInto, insertIndex, selectOpenFor.isReplace);
 
-						applyCustomNodeUpdate(module);
+							applyCustomNodeUpdate(moduleNode);
 
 							this.props.snapshotState();
 							this.closeModal();

@@ -1,35 +1,37 @@
 import Input from 'UI/Input';
+import Loading from 'UI/Loading';
 import {niceName} from './Utils';
 import getAutoForm, {getAllContentTypes} from 'Admin/Functions/GetAutoForm';
 import {collectModules} from '../ModuleSelector/Utils';
+import {useEffect, useState} from 'react';
 
-
-var availableModuleGroups = null;
 
 export default function ComponentSelect(props){
 	
-	if(!availableModuleGroups){
-		availableModuleGroups = collectModules().standard;
+	const [componentSet, setComponentSet] = useState();
+	
+	useEffect(() => {
+		
+		collectModules(props.componentGroups)
+		.then(set => {
+			setComponentSet(set);
+		});
+		
+	}, [props.componentGroups]);
+	
+	if(!componentSet){
+		return <Loading />;
 	}
 	
 	var options = [<option key={'_'} value={''}>Select one..</option>];
 	
-	availableModuleGroups.forEach(moduleGroup => {
-		var groupOptions = moduleGroup.modules.map(module => {
-			
-			return <option key={module.name} value={module.publicName}>{niceName(module.name)}</option>;
-			
-		});
+	var groupOptions = componentSet.modules.map(module => {
 		
-		if(!moduleGroup.name){
-			// UI group hides its name
-			options = options.concat(groupOptions);
-		}else{
-			options.push(<optgroup key={moduleGroup.name} label={moduleGroup.name}>
-				{groupOptions}
-			</optgroup>);
-		}
+		return <option key={module.name} value={module.publicName}>{niceName(module.name)}</option>;
+		
 	});
+	
+	options = options.concat(groupOptions);
 	
 	return <Input type='select' name={props.name} value={props.value} defaultValue={props.value} onChange={props.onChange}>
 		{options}

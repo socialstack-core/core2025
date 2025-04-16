@@ -47,7 +47,12 @@ export interface CodeModuleType {
      */
     extends?: CodeModuleType[];
 
-    types?: UnionType[]
+    types?: UnionType[];
+
+    /**
+     * Literal value if it is a literal.
+     */
+    value?: string;
 }
 
 export type UnionType = {
@@ -105,6 +110,196 @@ function expandVariable(type: CodeModuleType) {
     }
 
     return type;
+}
+
+/**
+ * True if the given prop represents a suitable JSX node. Primarily that is React.reactNode and any unions of it.
+ * @param prop
+ * @param type
+ */
+export function isJsx(prop: PropTypeMeta) {
+    var propType = prop.type;
+    return containsIdentifier(propType, 'React.reactNode') || containsIdentifier(propType, 'reactNode');
+}
+
+export function containsIdentifier(type: CodeModuleType, identifier: string) : boolean {
+    if (type.name == 'union') {
+        return !!(type.types?.find(type => containsIdentifier(type, identifier)));
+    }
+
+    if (type.name == 'identifier' && type.instanceName == identifier) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * If the given proptype is a (or refers to) a union of constants, returns an array of those constants. 
+ * Null or undefined are ignored if they are present.
+ * Returns null if it contains any non-constant entry.
+ * @param prop
+ * @param module
+ */
+export function getConstantUnion(prop: PropTypeMeta, module: CodeModuleMeta) {
+    var propType = prop.type;
+
+    if (propType.name == 'identifier' && propType.instanceName) {
+        // Lookup the identifier in the module, and pretend we received that type.
+        var localType = getLocalType(propType.instanceName, module);
+
+        if (!localType) {
+            return null;
+        }
+
+        propType = localType;
+    }
+
+    if (propType.name == 'union' && propType.types) {
+        var result : string[] = [];
+
+        for (var i = 0; i < propType.types.length; i++) {
+            var childType = propType.types[i];
+
+            if (isNullOrUndefined(childType)) {
+                continue;
+            }
+
+            var constant = getConstantValueString(childType);
+
+            if (!constant) {
+                return null;
+            }
+
+            result.push(constant);
+        }
+
+        return result;
+    }
+
+    var constant = getConstantValueString(propType);
+
+    if (constant) {
+        return [constant];
+    }
+
+    return null;
+}
+
+/**
+ * If the prop refers to a content type, the name of the content type is returned - otherwise null.
+ * Note that this does not work with identifiers: you must provide resolved identifiers only (which GetPropTypes does automatically anyway).
+ * @param type
+ */
+export function getContentPropType(propType: PropTypeMeta): string | null {
+    return getAsContentType(propType.type);
+}
+
+/**
+ * If this is a content type, the name is returned - otherwise null.
+ * Note that this does not work with identifiers: you must provide resolved identifiers only (which GetPropTypes does automatically anyway).
+ * @param type
+ */
+export function getAsContentType(type: CodeModuleType): string | null {
+    if (type.name == 'type' || type.name == 'interface') {
+
+        // Must ultimately extend Content or VersionedContent.
+        if (isExtensionOf(type, 'Content') || isExtensionOf(type, 'VersionedContent')) {
+            return type.instanceName ? type.instanceName : null;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * True if the given propType is a FileRef.
+ * @param type
+ */
+export function isRefPropType(propType: PropTypeMeta): boolean {
+    return isRefType(propType.type);
+}
+
+export function isRefType(type: CodeModuleType): boolean {
+    if (type.name == 'identifier' && type.instanceName == 'FileRef') {
+        return true;
+    }
+    return false;
+}
+
+export function isNumericPropType(propType: PropTypeMeta): boolean {
+    return isNumericType(propType.type);
+}
+
+export function isNumericType(type: CodeModuleType): boolean {
+    if (
+        type.name == 'number' ||
+        type.name == 'identifier' && (
+            type.instanceName == 'sbyte' ||  type.instanceName == 'byte' || 
+            type.instanceName == 'short' || type.instanceName == 'ushort' ||
+            type.instanceName == 'int' || type.instanceName == 'uint' ||
+            type.instanceName == 'long' || type.instanceName == 'ulong' ||
+            type.instanceName == 'float' || type.instanceName == 'double')
+   ) {
+        return true;
+    }
+
+    return false;
+}
+
+export function isBooleanPropType(propType: PropTypeMeta): boolean {
+    return isBooleanType(propType.type);
+}
+
+export function isBooleanType(type: CodeModuleType): boolean {
+    if (type.name == 'boolean' || type.name == 'bool') {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * True if the given type is an extension of the named type.
+ */
+export function isExtensionOf(type: CodeModuleType, typeName: string) {
+    if (type.extends == null) {
+        return false;
+    }
+
+    for (var i = 0; i < type.extends.length; i++) {
+        var extOf = type.extends[i];
+
+        if (extOf.instanceName == typeName) {
+            return true;
+        }
+
+        if (isExtensionOf(extOf, typeName)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function isNullOrUndefined(type: CodeModuleType) : boolean {
+    return type.name == 'null' || type.name == 'undefined';
+}
+
+export function getConstantValueString(type: CodeModuleType): string | null {
+    if (type.name.startsWith('literal:')) {
+        return type.value ? type.value : null;
+    }
+
+    return null;
+}
+
+/**
+ * locates a type by name from the given module, or null if it was not present in it.
+ * @param name
+ * @param module
+ */
+export function getLocalType(name: string, module: CodeModuleMeta) {
+    return module.types.find(type => type.instanceName == name);
 }
 
 function setupModuleMeta(meta: TypeMeta, moduleName: string, module : CodeModuleMeta) {

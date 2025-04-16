@@ -10,11 +10,15 @@ const rightAlignmentClass = "right-align";
 
 export default class CanvasState{
 	
-	constructor(blockRenderMap){
+	constructor(blockRenderMap, propTypeInfo){
 		this.propertyTab = 1;
 		this.showRightPanel = true;
 		this.showLeftPanel = true;
 		this.extendedBlockRenderMap = blockRenderMap;
+		this.propTypeInfo = propTypeInfo;
+
+
+		console.log(propTypeInfo);
 	}
 	
 	load(value){
@@ -244,6 +248,7 @@ export default class CanvasState{
 			if(type.indexOf('/') != -1){
 				result.typeName = type;
 				result.type = require(type).default;
+				result.typePropTypes = this.propTypeInfo.codeModules[type];
 				var editable = result.type.editable;
 				
 				if(node.t){
@@ -295,7 +300,7 @@ export default class CanvasState{
 				}
 				
 				// Does the type have any roots that need adding?
-				var rootSet = getRootInfo(result.type);
+				var rootSet = getRootInfo(result.typePropTypes);
 				
 				for(var i=0;i<rootSet.length;i++){
 					var rootInfo = rootSet[i];
@@ -1089,7 +1094,7 @@ export default class CanvasState{
 			snapshot.previous = latest.previous;
 		}
 		
-		var newState = new CanvasState(this.extendedBlockRenderMap);
+		var newState = new CanvasState(this.extendedBlockRenderMap, this.propTypeInfo);
 		newState.rootRef = this.rootRef;
 		newState.selectedNode = this.selectedNode;
 		newState.graphState = this.graphState;

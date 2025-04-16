@@ -2,7 +2,6 @@ import Loop from 'UI/Loop';
 import Modal from 'UI/Modal';
 import {niceName, getNodeTypes} from './Utils';
 import getAutoForm, {getAllContentTypes} from 'Admin/Functions/GetAutoForm';
-import {collectModules} from '../ModuleSelector/Utils';
 
 
 

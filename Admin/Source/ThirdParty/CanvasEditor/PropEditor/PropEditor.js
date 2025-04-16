@@ -3,9 +3,13 @@ import Loop from 'UI/Loop';
 import Alert from 'UI/Alert';
 import Graph from 'Admin/CanvasEditor/GraphEditor/Graph';
 import getContentTypes from 'UI/Functions/GetContentTypes';
-import ArrayBuilder from 'Admin/CanvasEditor/PropEditor/ArrayBuilder';
-import ArrayEditor from 'Admin/CanvasEditor/PropEditor/ArrayEditor';
+// import ArrayBuilder from 'Admin/CanvasEditor/PropEditor/ArrayBuilder';
+// import ArrayEditor from 'Admin/CanvasEditor/PropEditor/ArrayEditor';
 import webRequest from 'UI/Functions/WebRequest';
+import {
+	isJsx, getConstantUnion, getContentPropType,
+	isNumericPropType, isBooleanPropType, isRefPropType
+} from 'Admin/Functions/GetPropTypes';
 
 var TEXT = '#text';
 
@@ -105,22 +109,18 @@ export default class PropEditor extends React.Component {
 		}else{
 			var dataValues = {...contentNode.props};
 			
-			var props = contentNode.type && contentNode.type.propTypes ? contentNode.type.propTypes : undefined;
-			var defaultProps = contentNode.type && contentNode.type.defaultProps ? contentNode.type.defaultProps : {};
-			
-			
-			if(props){
-				for(var fieldName in props){
+			var codeModuleMeta = contentNode.typePropTypes;
+			var pt = codeModuleMeta?.propTypes;
+
+			if (pt){
+				for(var fieldName in pt){
 					if(this.specialField(fieldName)){
 						continue;
 					}
 
-					var propType = props[fieldName];
-					if(!propType.type){
-						propType = {type: propType};
-					}
-					
-					if(propType.type == "jsx") {
+					var propType = pt[fieldName];
+
+					if (isJsx(propType)) {
 						continue;
 					}
 					
@@ -131,7 +131,7 @@ export default class PropEditor extends React.Component {
 						value = dataValues[fieldName];
 					}
 					
-					var val = { propType, defaultValue: defaultProps[fieldName], value};
+					var val = { propType, codeModuleMeta, defaultValue: undefined, value};
 					dataFields[fieldName] = val;
 					atLeastOneDataField = true;
 				}
@@ -162,11 +162,17 @@ export default class PropEditor extends React.Component {
 	getContentDropdown(typeName, field, filterFunc, filter){
 		if(!__contentCacheByType[typeName]){
 			__contentCacheByType[typeName] = [];
-			
-			webRequest(typeName.toLowerCase() + '/list', filter).then(result => {
-				__contentCacheByType[typeName] = result.json.results;
-				this.setState({});
-			});
+
+			var api = require('Api/' + typeName).default;
+
+			if (api != null) {
+				// It's an ApiEndpoints instance
+				api.list(filter).then(response => {
+					__contentCacheByType[typeName] = response.results;
+					this.setState({});
+				});
+			}
+
 		}
 		
 		var set = __contentCacheByType[typeName];
@@ -216,6 +222,7 @@ export default class PropEditor extends React.Component {
 			var inputType = 'text';
 			var inputContent = undefined;
 			var propType = fieldInfo.propType;
+			var codeModuleMeta = fieldInfo.codeModuleMeta;
 			
 			{/*
 			if(fieldInfo.value && fieldInfo.value.type && fieldInfo.value.type != 'module'){
@@ -261,46 +268,33 @@ export default class PropEditor extends React.Component {
 			}*/}
 			
 			var extraProps = {};
-			
-			if(fieldName.endsWith("Ref")){
+
+			var constantUnion = getConstantUnion(propType, codeModuleMeta);
+			var contentTypeName = getContentPropType(propType, codeModuleMeta);
+
+			if (fieldName.endsWith("Ref") || isRefPropType(propType)){
 				inputType = 'file';
 				label = label.substring(0, label.length-3);
-			}else if(Array.isArray(propType.type)){
+			} else if (constantUnion){
 				inputType = 'select';
-				inputContent = propType.type.map(entry => {
-					var value = entry;
-					var name = entry;
-
-					if (entry && typeof entry == "object") {
-						value = entry.value;
-						name = entry.name;
-					}
-
+				inputContent = constantUnion.map(entry => {
 					return (
-						<option value={value}>{name}</option>
+						<option value={entry}>{entry}</option>
 					);
 				})
 				inputContent.unshift(<option disabled value="">{`Pick a value`}</option>);
-			}else if(propType.type == 'id' || propType.type == 'contentField'){
+			} else if (contentTypeName){
 				inputType = 'select';
-				inputContent = this.getContentDropdown(propType.content || propType.contentType, propType.field || 'id', propType.filterFunction, propType.filter);
+				inputContent = this.getContentDropdown(contentTypeName, 'id');
 				inputContent.unshift(<option disabled value="">{`Pick some content`}</option>);
-			}else if(propType.type == 'contentType'){
-				inputType = 'select';
-				inputContent = this.getContentTypeDropdown();
-				inputContent.unshift(<option disabled value="">{`Pick a content type`}</option>);
-			}else if(propType.type == 'array'){
-				if (propType.fields) {
-					inputType = ArrayBuilder;
-				} else {
-					inputType = ArrayEditor;
-				}
-			}else if(propType.type == 'string'){
-				inputType = 'text';
+			}else if(isNumericPropType(propType)){
+				inputType = 'number';
+			} else if (isBooleanPropType(propType)) {
+				inputType = 'checkbox';
 			}else{
-				inputType = propType.type;
+				inputType = 'text';
 			}
-			
+
 			// The value might be e.g. a url ref.
 			var val = fieldInfo.value;
 			
@@ -334,8 +328,6 @@ export default class PropEditor extends React.Component {
 
 					if (inputType == 'checkbox' || inputType == "bool" || inputType == "boolean") {
 						value = !!e.target.checked;
-					} else if (inputType?.name == 'ArrayBuilder') {
-						value = e.target.groupData;
 					}
 
 					this.updateField(targetNode, fieldInfo, value);
@@ -344,8 +336,6 @@ export default class PropEditor extends React.Component {
 
 					if (inputType == 'checkbox' || inputType == "bool" || inputType == "boolean") {
 						value = !!e.target.checked;
-					} else if (inputType?.name == 'ArrayBuilder') {
-						value = e.target.groupData;
 					}
 
 					this.updateField(targetNode, fieldInfo, value);
