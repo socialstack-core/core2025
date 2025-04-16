@@ -16,9 +16,6 @@ export default class CanvasState{
 		this.showLeftPanel = true;
 		this.extendedBlockRenderMap = blockRenderMap;
 		this.propTypeInfo = propTypeInfo;
-
-
-		console.log(propTypeInfo);
 	}
 	
 	load(value){

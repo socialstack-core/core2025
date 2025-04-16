@@ -446,10 +446,6 @@ function loadCache() {
             for (var k in json.codeModules) {
                 var module = json.codeModules[k];
                 setupModuleMeta(json, k, module);
-
-                if (k == 'UI/Image') {
-                    console.log(module);
-                }
             }
             _cache = json;
             return json;
