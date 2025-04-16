@@ -55,7 +55,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
     */
     public constructor (){
         super('upload')
-        this.includes = new UploadIncludes
+        this.includes = new UploadIncludes();
     }
 
     /**

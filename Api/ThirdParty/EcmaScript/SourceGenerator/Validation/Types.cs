@@ -28,7 +28,7 @@ namespace Api.EcmaScript
                 foreach (var property in type.Properties)
                 {
                     var originalType = property.Value;
-                    var cleanType = StripGenerics(originalType);
+                    var cleanType = StripGenerics(originalType).Replace("[]", "");
 
                     if (ShouldIgnoreType(cleanType, script, ecmaService))
                     {
@@ -93,12 +93,12 @@ namespace Api.EcmaScript
                 }
 
                 var gennedType = OnNonEntity(elementType, script, 0);
-                script.AddChild(gennedType);
+                script.AddTypeDefinition(gennedType);
                 return $"{gennedType.Name}[]";
             }
 
             var generatedType = OnNonEntity(type, script, 0);
-            script.AddChild(generatedType);
+            script.AddTypeDefinition(generatedType);
             return generatedType.Name;
         }
 

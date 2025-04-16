@@ -24,7 +24,7 @@ export class RedirectApi extends AutoController<Redirect, uint, RedirectIncludes
     */
     public constructor (){
         super('redirect')
-        this.includes = new RedirectIncludes
+        this.includes = new RedirectIncludes();
     }
 
 }

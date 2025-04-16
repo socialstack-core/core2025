@@ -29,7 +29,7 @@ export class RoleApi extends AutoController<Role, uint, RoleIncludes>{
     */
     public constructor (){
         super('role')
-        this.includes = new RoleIncludes
+        this.includes = new RoleIncludes();
     }
 
 }

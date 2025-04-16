@@ -33,17 +33,18 @@ namespace Api.EcmaScript
             {
                 var typeName = fieldType.Name.Split('`')[0]; // remove `1, `2, etc.
                 var genericArgs = fieldType.GetGenericArguments();
-                    var resolvedArgs = string.Join(", ", genericArgs.Select(arg => OnField(arg, script)));
+                var resolvedArgs = string.Join(", ", genericArgs.Select(arg => OnField(arg, script)));
                     
                 
                 if (IsList(fieldType))
                 {
                     return $"{resolvedArgs}[]";
                 } else {
-                    if (typeName == "Dictionary")
+                    if (typeName == "Dictionary" || typeName == "IReadOnlyDictionary")
                     {
                         typeName = "Record";
                     }
+                    
                     return $"{typeName}<{resolvedArgs}>";
                 }
             }

@@ -58,7 +58,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
     */
     public constructor (){
         super('user')
-        this.includes = new UserIncludes
+        this.includes = new UserIncludes();
     }
 
     /**

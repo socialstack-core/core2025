@@ -29,7 +29,7 @@ export class DomainCertificateApi extends AutoController<DomainCertificate, uint
     */
     public constructor (){
         super('domainCertificate')
-        this.includes = new DomainCertificateIncludes
+        this.includes = new DomainCertificateIncludes();
     }
 
 }
