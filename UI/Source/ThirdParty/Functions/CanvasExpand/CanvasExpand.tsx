@@ -134,7 +134,11 @@ function convertToNodesFromCanvas(node : any, onContentNode? : (node : CanvasNod
 		if(type.indexOf('/') != -1){
 			result.typeName = type;
 			result.type = require(type).default;
-			result.props = node.d || node.data;
+			var data = node.d || node.data;
+			
+			if(data){
+				result.props = {...data};
+			}
 			
 			// Build the roots set.
 			var roots : Record<string, CanvasNode> = {};
