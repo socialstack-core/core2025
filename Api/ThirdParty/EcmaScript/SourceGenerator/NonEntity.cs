@@ -16,18 +16,13 @@ namespace Api.EcmaScript
         public static TypeDefinition OnNonEntity(Type nonEntityType, Script containingScript, int currentDepth = 0)
         {
 
-            if (nonEntityType.Name == "HttpContext")
-            {
-                var exc = new Exception();
-
-                throw exc;
-            }
             // ensure the script passed is registered.
             EnsureScript(containingScript);
 
             // create a non-entity.
             var nonEntity = new TypeDefinition() {
-                Name = GetResolvedTypeName(nonEntityType)
+                Name = GetResolvedTypeName(nonEntityType),
+                FromType = nonEntityType
             };
 
             foreach(var field in nonEntityType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))

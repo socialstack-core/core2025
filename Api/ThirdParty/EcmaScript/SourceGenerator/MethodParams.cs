@@ -1,6 +1,7 @@
 
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Api.Contexts;
@@ -21,6 +22,7 @@ namespace Api.EcmaScript
         public static void AddMethodParams(MethodInfo method, ClassMethod classMethod,  Script script)
         {
             var ecmaService = Services.Get<EcmaService>();
+            
 
             foreach(var param in method.GetParameters())
             {
@@ -75,9 +77,11 @@ namespace Api.EcmaScript
                 }
                 else
                 {
+                    var containingScript = GetScriptByContainingTypeDefinition(type.Name);
+
                     script.AddImport(new() {
                         Symbols = [type.Name],
-                        From = "./" + type.Name
+                        From = "./" + Path.GetFileName(containingScript.FileName).Replace(".tsx", "")
                     });
                 }
 
@@ -91,4 +95,4 @@ namespace Api.EcmaScript
         }
 
     }
-}
+}   

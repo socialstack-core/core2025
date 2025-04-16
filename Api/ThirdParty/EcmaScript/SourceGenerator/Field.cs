@@ -19,7 +19,6 @@ namespace Api.EcmaScript
 
         public static string OnField(Type fieldType, Script script, int currentDepth = 0)
         {
-
             var ecmaService = Services.Get<EcmaService>();
 
             // if there's an underlying type, grab it.
@@ -70,7 +69,7 @@ namespace Api.EcmaScript
                     });
                 }
                 else {
-                    if (currentDepth < 3)
+                    if (currentDepth < 2)
                     {
                         // this part is potentially hazardous. 
                         OnNonEntity(fieldType, script, currentDepth + 1);

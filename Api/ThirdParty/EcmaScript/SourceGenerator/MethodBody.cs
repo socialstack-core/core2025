@@ -23,6 +23,7 @@ namespace Api.EcmaScript
                 return;
             }
             var hasBodyParam = false;
+            string bodyParamName = null;
 
             // first iterate any params that are injected via url params
             foreach(var param in method.GetParameters())
@@ -58,9 +59,10 @@ namespace Api.EcmaScript
                 {
                     endpointUrl = endpointUrl.Replace($"{{{param.Name}}}", "' + " + param.Name + " + '");
                 }
-                if (param.Name == "body")
+                if (param.GetCustomAttribute<FromBodyAttribute>() is not null)
                 {
                     hasBodyParam = true;
+                    bodyParamName = param.Name;
                 }
                 if (param.GetCustomAttribute<FromQueryAttribute>() != null)
                 {
@@ -76,7 +78,7 @@ namespace Api.EcmaScript
 
             if (hasBodyParam)
             {
-                classMethod.Injected = ["return getJson(this.apiUrl + '/" + endpointUrl + "', body )"];
+                classMethod.Injected = ["return getJson(this.apiUrl + '/" + endpointUrl + "', " + bodyParamName + " )"];
             }
             else
             {

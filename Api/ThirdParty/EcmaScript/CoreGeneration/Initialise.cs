@@ -42,45 +42,13 @@ namespace Api.EcmaScript
             apiScript.FileName = "TypeScript/Api/ApiEndpoints.tsx";
 
             apiScript.AddImport(new() {
-                From = "UI/Functions/WebRequest",
-                Symbols = ["getOne", "getList", "ApiList"]
-            });
-            apiScript.AddImport(new() {
-                From = "Api/Content",
-                Symbols = ["Content", "VersionedContent", "UserCreatedContent"]
-            });
-            apiScript.AddImport(new() {
                 Symbols = ["ApiIncludes"],
                 From = "./Includes"
             });
 
-            // ===== AutoAPI ===== \\
-            var baseControllerClass = new ClassDefinition { 
-                Name = "AutoApi",
-                GenericTemplate = "EntityType extends Content<uint>, IncludeSet extends ApiIncludes"
-            };
-            var apiUrl = new ClassProperty
-            {
-                Visibility = "protected",
-                PropertyName = "apiUrl",
-                PropertyType = "string"
-            };
-            baseControllerClass.Children.Add(apiUrl);
-
-            // add CRUD methods to controller.
-
-            AddCrudFunctionality(baseControllerClass);
-            AddBaseIncludeFunctionality();
-            AddRevisionFunctionality(baseControllerClass);
-
-            apiScript.AddChild(baseControllerClass);
-
-            // === SAVING TS FILE === \\
-
-            var filePath = "TypeScript/Api/ApiEndpoints.tsx";
-			var generatedSource = apiScript.CreateSource();
-            container.Add(filePath, generatedSource);
-            File.WriteAllText(filePath, generatedSource);
+            apiScript.AddChild(
+                SourceGenerator.OnGenericControllerClass(typeof(AutoController<,>), apiScript)
+            );
         }
         /// <summary>
         /// Converts C# names to TS names.

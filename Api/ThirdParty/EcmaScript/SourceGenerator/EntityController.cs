@@ -20,11 +20,12 @@ namespace Api.EcmaScript
 
             var definition = new ClassDefinition() {
                 Name = GetCleanTypeName(entityType) + "Api",
-                Extends = "AutoApi<" + GetCleanTypeName(entityType) + ", " + GetCleanTypeName(entityType) + "Includes>"
+                // TODO: change uint with the PK field type.
+                Extends = "AutoController<" + GetCleanTypeName(entityType) + ", uint, " + GetCleanTypeName(entityType) + "Includes>"
             };
 
             script.AddImport(new() {
-                Symbols = ["AutoApi"],
+                Symbols = ["AutoController"],
                 From = "./ApiEndpoints"
             });
 

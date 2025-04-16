@@ -16,6 +16,11 @@ namespace Api.EcmaScript.TypeScript
         public string Name;
 
         /// <summary>
+        /// Where type does this come from
+        /// </summary>
+        public Type FromType;
+
+        /// <summary>
         /// The generic type template if the type has generics.
         /// </summary>
         public string GenericTemplate;

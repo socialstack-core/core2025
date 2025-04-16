@@ -39,6 +39,24 @@ namespace Api.EcmaScript.TypeScript
         /// </summary>
         public List<string> Documentation = [];
 
+        public void AddMethod(ClassMethod method)
+        {
+            var existing = Children.OfType<ClassMethod>()
+                                   .Where(child => child.Name == method.Name);
+            if (existing.Any())
+            {
+                var existingMethod = existing.First();
+
+                if (method.Arguments.Count > existingMethod.Arguments.Count)
+                {
+                    Children.Remove(existingMethod);
+                    Children.Add(method);
+                }
+                return;
+            }
+            Children.Add(method);
+        }
+
         /// <summary>
         /// Outputs the documentation for the current method.
         /// </summary>

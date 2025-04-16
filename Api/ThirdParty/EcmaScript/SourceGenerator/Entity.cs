@@ -29,7 +29,8 @@ namespace Api.EcmaScript
             // create a non-entity.
             var entity = new TypeDefinition() {
                 Name = GetResolvedTypeName(entityType),
-                Inheritence = [GetCleanTypeName(entityType.BaseType)]
+                FromType = entityType, 
+                Inheritence = [GetCleanTypeName(entityType.BaseType) + "<uint>"]
             };
 
             containingScript.AddImport(new() {

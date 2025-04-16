@@ -83,6 +83,14 @@ namespace Api.EcmaScript.TypeScript
             {
                 return;
             }
+            if (
+                typeDefinition.Name == "T" || 
+                typeDefinition.Name == "ID"
+            )
+            {
+                // these are generic type names.
+                return;
+            }
             
             var existing = Children.Where(i => i is TypeDefinition definition && definition.Name == typeDefinition.Name);
 

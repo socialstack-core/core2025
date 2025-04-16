@@ -34,6 +34,7 @@ namespace Api.EcmaScript
 
             var typeDefinition = new TypeDefinition() {
                 Name = GetCleanTypeName(t),
+                FromType = t,
                 GenericTemplate = genericStr
             };
 

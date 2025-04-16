@@ -1,27 +1,14 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Api.AutoForms;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
 using Api.Contexts;
-using Api.Database;
 using Api.EcmaScript.TypeScript;
 using Api.Eventing;
-using Api.Pages;
-using Api.Startup;
-using Api.Uploader;
-using Api.Users;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Api.EcmaScript
@@ -100,6 +87,12 @@ namespace Api.EcmaScript
         private void InitTsScripts(SourceFileContainer sourceContainer)
         {
             var allEndpointsByModule = endpointService.ListByModule();
+
+            IncludesScript.AddChild(
+                new ClassDefinition() {
+                    Name = "ApiIncludes"
+                }
+            );
 
             SourceGenerator.EnsureScript(IncludesScript);
             
@@ -186,6 +179,8 @@ namespace Api.EcmaScript
                 }
 
             }
+
+            SourceGenerator.Validate();
 
             SourceGenerator.scripts.ForEach(script => {
                 var source = script.CreateSource();
