@@ -1,5 +1,3 @@
-
-
 using System;
 using System.IO;
 using System.Linq;
@@ -13,29 +11,32 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
-
-        public static readonly Type[] ignoreParamTypes = [
+        // Types to be ignored when processing method parameters
+        public static readonly Type[] ignoreParamTypes = {
             typeof(HttpContext),
             typeof(Context)
-        ];
+        };
 
-        public static void AddMethodParams(MethodInfo method, ClassMethod classMethod,  Script script)
+        public static void AddMethodParams(MethodInfo method, ClassMethod classMethod, Script script)
         {
             var ecmaService = Services.Get<EcmaService>();
-            
 
-            foreach(var param in method.GetParameters())
+            // Iterate over method parameters
+            foreach (var param in method.GetParameters())
             {
                 var type = GetResolvedType(param.ParameterType);
 
+                // Skip ignored types like HttpContext or Context
                 if (ignoreParamTypes.Contains(type))
                 {
                     continue;
                 }
 
+                // Handle ContentStream<,> type
                 if (type == typeof(ContentStream<,>))
                 {
-                    classMethod.Arguments.Add(new() {
+                    classMethod.Arguments.Add(new ClassMethodArgument
+                    {
                         Name = param.Name,
                         Type = "Record<string, any>",
                         DefaultValue = "{}"
@@ -43,33 +44,35 @@ namespace Api.EcmaScript
                     continue;
                 }
 
+                // Handle mapped types from TypeConversions
                 if (ecmaService.TypeConversions.TryGetValue(type, out string mappedType))
                 {
-                    classMethod.Arguments.Add(new() {
+                    classMethod.Arguments.Add(new ClassMethodArgument
+                    {
                         Name = param.Name,
                         Type = mappedType,
-                        DefaultValue = param.DefaultValue.ToString()
+                        DefaultValue = param.DefaultValue?.ToString() ?? "undefined"
                     });
                     continue;
                 }
 
-                // this is not a mapped type, so it will be either an entity, or a undiscovered type.
-
+                // This is an undiscovered type, either an entity or unknown type
                 if (!TypeDefinitionExists(type.Name))
                 {
                     if (IsEntity(type))
                     {
-                        // add the import
-                        script.AddImport(new() {
-                            Symbols = [type.Name],
-                            From = "./" + type.Name
+                        // Add import for entities
+                        script.AddImport(new Import
+                        {
+                            Symbols = [ type.Name ],
+                            From = $"./{type.Name}"
                         });
                     }
                     else
                     {
+                        // Handle unknown types by generating them
                         if (!ecmaService.TypeConversions.ContainsKey(type))
                         {
-                            // needs to be created. 
                             var newType = OnNonEntity(type, script);
                             script.AddTypeDefinition(newType);
                         }
@@ -77,22 +80,23 @@ namespace Api.EcmaScript
                 }
                 else
                 {
+                    // Type is already defined, add import from the existing script
                     var containingScript = GetScriptByContainingTypeDefinition(type.Name);
-
-                    script.AddImport(new() {
-                        Symbols = [type.Name],
-                        From = "./" + Path.GetFileName(containingScript.FileName).Replace(".tsx", "")
+                    script.AddImport(new Import
+                    {
+                        Symbols = [ type.Name ],
+                        From = $"./{Path.GetFileName(containingScript.FileName).Replace(".tsx", "")}"
                     });
                 }
 
-                classMethod.Arguments.Add(new() {
+                // Add parameter to the method
+                classMethod.Arguments.Add(new ClassMethodArgument
+                {
                     Name = param.Name,
                     Type = type.Name,
-                    DefaultValue = param.DefaultValue.ToString()
+                    DefaultValue = param.DefaultValue?.ToString() ?? "undefined"
                 });
             }
-
         }
-
     }
-}   
+}

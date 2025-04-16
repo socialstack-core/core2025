@@ -1,4 +1,3 @@
-
 using System;
 using System.Reflection;
 using Api.AvailableEndpoints;
@@ -8,15 +7,13 @@ using Api.Startup;
 namespace Api.EcmaScript
 {
     /// <summary>
-    /// The new &amp; vastly improved source generation engine.
-    /// made to be a lot more maintainable, and easy to identify errors.
+    /// The new & vastly improved source generation engine.
+    /// Made to be a lot more maintainable and easier to identify errors.
     /// </summary>
     public static partial class SourceGenerator
     {
-
         public static TypeDefinition OnEntity(Type entityType, Script containingScript, ModuleEndpoints module)
         {
-            // ensure the script passed is registered.
             EnsureScript(containingScript);
 
             if (!IsEntity(entityType))
@@ -25,53 +22,57 @@ namespace Api.EcmaScript
             }
 
             var ecmaService = Services.Get<EcmaService>();
+            var baseTypeName = GetCleanTypeName(entityType.BaseType);
 
-            // create a non-entity.
-            var entity = new TypeDefinition() {
+            var typeDefinition = new TypeDefinition
+            {
                 Name = GetResolvedTypeName(entityType),
-                FromType = entityType, 
-                Inheritence = [GetCleanTypeName(entityType.BaseType) + "<uint>"]
+                FromType = entityType,
+                Inheritence = [baseTypeName + "<uint>"]
             };
 
-            containingScript.AddImport(new() {
-                Symbols = [GetCleanTypeName(entityType.BaseType)],
+            containingScript.AddImport(new()
+            {
+                Symbols = [baseTypeName],
                 From = "./Content"
             });
 
-            foreach(var field in module.GetAutoService().GetContentFields().List)
+            foreach (var field in module.GetAutoService().GetContentFields().List)
             {
-                if (field.FieldInfo is not null)
-                {
-                    if (field.FieldInfo.DeclaringType != entityType)
-                    {
-                        continue;
-                    }
-
-                    var isNullable = IsTypeNullable(field.FieldInfo.FieldType);
-
-                    entity.AddProperty(LcFirst(field.FieldInfo.Name) + (isNullable ? '?' : ""), OnField(field.FieldInfo.FieldType, containingScript));
-                }
-                else if (field.PropertyInfo is not null)
-                {
-                    if (field.PropertyInfo.DeclaringType != entityType)
-                    {
-                        continue;
-                    }
-                    
-                    var isNullable = IsTypeNullable(field.PropertyInfo.PropertyType);
-                    
-                    entity.AddProperty(LcFirst(field.PropertyInfo.Name) + (isNullable ? '?' : ""), OnField(field.PropertyInfo.PropertyType, containingScript));
-                }
+                AddEntityFieldOrProperty(field, entityType, containingScript, typeDefinition);
             }
 
             var docs = ecmaService.GetTypeDocumentation(entityType);
-
             if (docs is not null)
             {
-                entity.AddTsDocLine(docs.Summary.Trim());
+                typeDefinition.AddTsDocLine(docs.Summary.Trim());
             }
 
-            return entity;
+            return typeDefinition;
+        }
+
+        private static void AddEntityFieldOrProperty(ContentField field, Type entityType, Script script, TypeDefinition typeDefinition)
+        {
+            MemberInfo member = field.FieldInfo ?? (MemberInfo)field.PropertyInfo;
+            if (member == null || member.DeclaringType != entityType)
+            {
+                return;
+            }
+
+            Type memberType = member switch
+            {
+                FieldInfo fi => fi.FieldType,
+                PropertyInfo pi => pi.PropertyType,
+                _ => null
+            };
+
+            if (memberType == null) return;
+
+            bool isNullable = IsTypeNullable(memberType);
+            string memberName = LcFirst(member.Name) + (isNullable ? '?' : "");
+            string typeString = OnField(memberType, script);
+
+            typeDefinition.AddProperty(memberName, typeString);
         }
     }
 }

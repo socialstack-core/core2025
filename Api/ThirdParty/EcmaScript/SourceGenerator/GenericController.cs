@@ -1,64 +1,80 @@
 using System;
 using System.Linq;
-using Api.EcmaScript.TypeScript;
 using System.Reflection;
+using Api.EcmaScript.TypeScript;
 
 namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
-
         public static ClassDefinition OnGenericControllerClass(Type t, Script script)
         {
+            var typeName = GetCleanTypeName(t);
+            var genericArgs = string.Join(", ", t.GetGenericArguments().Select(arg => arg.Name));
 
-            var definition = new ClassDefinition
+            var classDef = new ClassDefinition
             {
-                Name = GetCleanTypeName(t),
-                GenericTemplate = string.Join(", ",
-                    t.GetGenericArguments().Select(arg => arg.Name)
-                ) + ", ApiIncludes"
+                Name = typeName,
+                GenericTemplate = $"{genericArgs}, ApiIncludes"
             };
 
-            var includesProperty = new ClassProperty() {
-                PropertyName = "includes?", 
-                PropertyType = "ApiIncludes",
-                DefaultValue = "undefined"
-            };
+            AddImportsForGenericController(script);
+            AddApiUrlProperty(classDef);
+            AddIncludesProperty(classDef);
+            AddConstructor(classDef);
+            AddControllerMethods(t, classDef, null, script);
 
-            definition.Children.Add(includesProperty);
+            return classDef;
+        }
 
-            script.AddImport(new Import() {
-                Symbols = ["getJson"],
+        private static void AddImportsForGenericController(Script script)
+        {
+            script.AddImport(new Import
+            {
+                Symbols = ["getOne", "getJson"],
                 From = "UI/Functions/WebRequest"
             });
-            
-            var apiUrlProperty = new ClassProperty() {
+        }
+
+        private static void AddIncludesProperty(ClassDefinition classDef)
+        {
+            classDef.Children.Add(new ClassProperty
+            {
+                PropertyName = "includes?",
+                PropertyType = "ApiIncludes",
+                DefaultValue = "undefined"
+            });
+        }
+
+        private static void AddApiUrlProperty(ClassDefinition classDef)
+        {
+            classDef.Children.Add(new ClassProperty
+            {
                 PropertyName = "apiUrl",
                 PropertyType = "string"
-            };
+            });
+        }
 
-            var ctor = new ClassMethod() {
+        private static void AddConstructor(ClassDefinition classDef)
+        {
+            var ctor = new ClassMethod
+            {
                 Name = "constructor",
-                Arguments = [
-                    new ClassMethodArgument() {
+                Arguments =
+                [
+                    new ClassMethodArgument
+                    {
                         Name = "apiUrl",
                         Type = "string"
                     }
-                ] , 
-                Injected = [
+                ],
+                Injected =
+                [
                     "this.apiUrl = apiUrl"
                 ]
             };
 
-            definition.Children.Add(apiUrlProperty);
-
-            definition.AddMethod(ctor);
-
-            AddControllerMethods(t, definition, null, script);
-
-            return definition;
-
+            classDef.AddMethod(ctor);
         }
-
     }
 }

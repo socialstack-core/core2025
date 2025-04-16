@@ -3,7 +3,7 @@
 import {VersionedContent} from './Content'
 import {AutoController} from './ApiEndpoints'
 import {RoleIncludes, ApiIncludes} from './Includes'
-import {getJson} from 'UI/Functions/WebRequest'
+import {getOne, getList} from 'UI/Functions/WebRequest'
 
 // Module
 /*

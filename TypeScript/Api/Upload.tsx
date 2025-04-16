@@ -3,7 +3,7 @@
 import {VersionedContent} from './Content'
 import {AutoController} from './ApiEndpoints'
 import {UploadIncludes, ApiIncludes} from './Includes'
-import {ApiList, getJson} from 'UI/Functions/WebRequest'
+import {ApiList, getOne, getList} from 'UI/Functions/WebRequest'
 
 // Module
 /*
@@ -63,7 +63,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public upload = (): Promise<Upload>  => {
-        return getJson(this.apiUrl + '/create')
+        return getOne(this.apiUrl + '/create')
     }
 
     /**
@@ -71,7 +71,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public active = (): Promise<ApiList<Upload>>  => {
-        return getJson(this.apiUrl + '/active')
+        return getList(this.apiUrl + '/active')
     }
 
     /**
@@ -79,7 +79,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public replace = (sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>>  => {
-        return getJson(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
+        return getList(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
     }
 
     /**
@@ -87,7 +87,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public updateRefs = (update: boolean): Promise<ApiList<MediaRef>>  => {
-        return getJson(this.apiUrl + '/update-refs?update=' + update + '')
+        return getList(this.apiUrl + '/update-refs?update=' + update + '')
     }
 
     /**
@@ -95,7 +95,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public preview = (uploadRef: string): Promise<ApiList<MediaRef>>  => {
-        return getJson(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
+        return getList(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
     }
 
 }

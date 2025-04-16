@@ -46,6 +46,11 @@ namespace Api.EcmaScript
                 From = "./Includes"
             });
 
+            apiScript.AddImport(new() {
+                Symbols = ["getOne", "getList"],
+                From = "UI/Functions/WebRequest"
+            });
+
             apiScript.AddChild(
                 SourceGenerator.OnGenericControllerClass(typeof(AutoController<,>), apiScript)
             );

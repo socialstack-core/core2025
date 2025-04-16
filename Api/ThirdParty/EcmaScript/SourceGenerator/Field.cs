@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,95 +5,94 @@ using System.Linq;
 using System.Reflection;
 using Api.EcmaScript.TypeScript;
 using Api.Startup;
-using ImageMagick.Drawing;
 
 namespace Api.EcmaScript
 {
     /// <summary>
-    /// The new &amp; vastly improved source generation engine.
-    /// made to be a lot more maintainable, and easy to identify errors.
+    /// The new & vastly improved source generation engine.
+    /// Made to be a lot more maintainable and easy to identify errors.
     /// </summary>
     public static partial class SourceGenerator
     {
-
         public static string OnField(Type fieldType, Script script, int currentDepth = 0)
         {
             var ecmaService = Services.Get<EcmaService>();
 
-            // if there's an underlying type, grab it.
-            var ulType = Nullable.GetUnderlyingType(fieldType); 
-            if (ulType != null)
-            {
-                fieldType = ulType;
-            }
-        
-            // if its a dictionary, output it as a Record with the same params.
+            // Unwrap nullable
+            fieldType = Nullable.GetUnderlyingType(fieldType) ?? fieldType;
+
+            // Handle generic types (e.g., List<T>, Dictionary<K,V>)
             if (fieldType.IsGenericType)
             {
-                var typeName = fieldType.Name.Split('`')[0]; // remove `1, `2, etc.
-                var genericArgs = fieldType.GetGenericArguments();
-                var resolvedArgs = string.Join(", ", genericArgs.Select(arg => OnField(arg, script)));
-                    
-                
-                if (IsList(fieldType))
-                {
-                    return $"{resolvedArgs}[]";
-                } else {
-                    if (typeName == "Dictionary" || typeName == "IReadOnlyDictionary")
-                    {
-                        typeName = "Record";
-                    }
-                    
-                    return $"{typeName}<{resolvedArgs}>";
-                }
+                return GetGenericFieldTypeString(fieldType, script);
             }
 
-            
-            // first check if its been mapped already.
-            if (ecmaService.TypeConversions.TryGetValue(fieldType, out string replaceType))
+            // Check if mapped directly by type conversion
+            if (ecmaService.TypeConversions.TryGetValue(fieldType, out var mappedType))
             {
-                return replaceType;
+                return mappedType;
             }
-            // now we need to check whether the type actually exists.
 
-            if (!TypeDefinitionExists(fieldType.Name))
+            var fieldTypeName = fieldType.Name;
+
+            // If the type doesn't exist yet, try to create or import it
+            if (!TypeDefinitionExists(fieldTypeName))
             {
-                // then we need to create it.
-
-                if (IsEntity(fieldType))
-                {
-                    // it will be added elsewhere.
-                    script.AddImport(new() {
-                        Symbols = [fieldType.Name],
-                        From = "./" + fieldType.Name
-                    });
-                }
-                else {
-                    if (currentDepth < 2)
-                    {
-                        // this part is potentially hazardous. 
-                        OnNonEntity(fieldType, script, currentDepth + 1);
-                    }
-                }
-
-                return fieldType.Name;
-
+                return TryImportCustomType(fieldType, script, currentDepth);
             }
-            else
+
+            // If it exists but isn't in this script, import it
+            var containerScript = GetScriptByContainingTypeDefinition(fieldTypeName);
+            if (containerScript?.FileName != script.FileName)
             {
-                var existingTypeContainer = GetScriptByContainingTypeDefinition(fieldType.Name);
-
-                if (existingTypeContainer.FileName != script.FileName)
+                script.AddImport(new()
                 {
-                    // import it
-                    script.AddImport(new() {
-                        Symbols = [fieldType.Name],
-                        From = "./" + fieldType.Name
-                    });
-                }
+                    Symbols = [fieldTypeName],
+                    From = "./" + fieldTypeName
+                });
             }
 
-            return fieldType.Name;
+            return fieldTypeName;
+        }
+
+        private static string GetGenericFieldTypeString(Type fieldType, Script script)
+        {
+            var typeName = fieldType.Name.Split('`')[0];
+            var genericArgs = fieldType.GetGenericArguments();
+            var resolvedArgs = string.Join(", ", genericArgs.Select(arg => OnField(arg, script)));
+
+            if (IsList(fieldType))
+            {
+                return $"{resolvedArgs}[]";
+            }
+
+            if (typeName == "Dictionary" || typeName == "IReadOnlyDictionary")
+            {
+                typeName = "Record";
+            }
+
+            return $"{typeName}<{resolvedArgs}>";
+        }
+
+        private static string TryImportCustomType(Type fieldType, Script script, int currentDepth)
+        {
+            var fieldTypeName = fieldType.Name;
+
+            if (IsEntity(fieldType))
+            {
+                script.AddImport(new()
+                {
+                    Symbols = [fieldTypeName],
+                    From = "./" + fieldTypeName
+                });
+            }
+            else if (currentDepth < 2)
+            {
+                // Safeguard depth to prevent recursion loops
+                OnNonEntity(fieldType, script, currentDepth + 1);
+            }
+
+            return fieldTypeName;
         }
     }
 }

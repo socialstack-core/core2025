@@ -1,4 +1,3 @@
-
 using System;
 using System.Linq;
 using System.Reflection;
@@ -7,62 +6,78 @@ using Api.EcmaScript.TypeScript;
 namespace Api.EcmaScript
 {
     /// <summary>
-    /// The new &amp; vastly improved source generation engine.
-    /// made to be a lot more maintainable, and easy to identify errors.
+    /// The improved source generation engine.
+    /// Designed for maintainability and easy error identification.
     /// </summary>
     public static partial class SourceGenerator
     {
-
         public static TypeDefinition OnNonEntity(Type nonEntityType, Script containingScript, int currentDepth = 0)
         {
-
-            // ensure the script passed is registered.
+            // Ensure the script is registered.
             EnsureScript(containingScript);
 
-            // create a non-entity.
-            var nonEntity = new TypeDefinition() {
+            // Create a non-entity definition.
+            var nonEntity = new TypeDefinition
+            {
                 Name = GetResolvedTypeName(nonEntityType),
                 FromType = nonEntityType
             };
 
-            foreach(var field in nonEntityType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-            {
-                if (field.DeclaringType != nonEntityType) 
-                {
-                    continue;
-                }
+            // Process fields and properties of the non-entity type.
+            ProcessFields(nonEntityType, nonEntity, containingScript, currentDepth);
+            ProcessProperties(nonEntityType, nonEntity, containingScript, currentDepth);
 
+            return nonEntity;
+        }
+
+        /// <summary>
+        /// Process fields for a given non-entity type.
+        /// </summary>
+        private static void ProcessFields(Type nonEntityType, TypeDefinition nonEntity, Script containingScript, int currentDepth)
+        {
+            foreach (var field in nonEntityType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                // Skip if the field is not declared by the current type.
+                if (field.DeclaringType != nonEntityType)
+                    continue;
+
+                // Handle self-reference or regular field.
                 if (field.FieldType == nonEntityType)
                 {
-                    // its a self ref
-                    nonEntity.AddProperty(LcFirst(field.Name) + '?', nonEntityType.Name);                    
+                    nonEntity.AddProperty(LcFirst(field.Name) + "?", nonEntityType.Name);
                 }
                 else
                 {
                     var isNullable = IsTypeNullable(field.FieldType);
-                    nonEntity.AddProperty(LcFirst(field.Name) + (isNullable ? "?" : ""), OnField(field.FieldType, containingScript, currentDepth + 1));
+                    var fieldType = OnField(field.FieldType, containingScript, currentDepth + 1);
+                    nonEntity.AddProperty(LcFirst(field.Name) + (isNullable ? "?" : ""), fieldType);
                 }
             }
+        }
 
-            foreach(var field in nonEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+        /// <summary>
+        /// Process properties for a given non-entity type.
+        /// </summary>
+        private static void ProcessProperties(Type nonEntityType, TypeDefinition nonEntity, Script containingScript, int currentDepth)
+        {
+            foreach (var property in nonEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
-                if (field.DeclaringType != nonEntityType) 
-                {
+                // Skip if the property is not declared by the current type.
+                if (property.DeclaringType != nonEntityType)
                     continue;
-                }
-                if (field.PropertyType == nonEntityType)
+
+                // Handle self-reference or regular property.
+                if (property.PropertyType == nonEntityType)
                 {
-                    // its a self ref
-                    nonEntity.AddProperty(LcFirst(field.Name) + '?', nonEntityType.Name);  
+                    nonEntity.AddProperty(LcFirst(property.Name) + "?", nonEntityType.Name);
                 }
                 else
                 {
-                    var isNullable = IsTypeNullable(field.PropertyType);
-                    nonEntity.AddProperty(LcFirst(field.Name) + (isNullable ? "?" : ""), OnField(field.PropertyType, containingScript, currentDepth + 1));
+                    var isNullable = IsTypeNullable(property.PropertyType);
+                    var propertyType = OnField(property.PropertyType, containingScript, currentDepth + 1);
+                    nonEntity.AddProperty(LcFirst(property.Name) + (isNullable ? "?" : ""), propertyType);
                 }
             }
-
-            return nonEntity;
         }
     }
 }

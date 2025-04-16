@@ -23,7 +23,7 @@ declare global {
 	/**
 	 * Signed integer (4 bytes).
 	 */
-	type int = number & { __type: "int" };
+	type int = number | number & { __type: "int" };
 
 	/**
 	 * Unsigned integer (8 bytes).

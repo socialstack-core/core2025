@@ -3,7 +3,7 @@
 import {VersionedContent} from './Content'
 import {AutoController} from './ApiEndpoints'
 import {UserIncludes, ApiIncludes} from './Includes'
-import {getJson} from 'UI/Functions/WebRequest'
+import {getOne, getList} from 'UI/Functions/WebRequest'
 
 // Module
 /*
@@ -67,7 +67,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public resendVerificationEmail = (body: UserPasswordForgot): Promise<SessionResponse>  => {
-        return getJson(this.apiUrl + '/sendverifyemail', body )
+        return getOne(this.apiUrl + '/sendverifyemail', body)
     }
 
     /**
@@ -76,7 +76,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public verifyUser = (userid: uint, token: string, newPassword: OptionalPassword): Promise<SessionResponse>  => {
-        return getJson(this.apiUrl + '/verify/' + userid + '/' + token + '', newPassword )
+        return getOne(this.apiUrl + '/verify/' + userid + '/' + token + '', newPassword)
     }
 
     /**
@@ -84,7 +84,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public self = (): Promise<SessionResponse>  => {
-        return getJson(this.apiUrl + '/self')
+        return getOne(this.apiUrl + '/self')
     }
 
     /**
@@ -92,7 +92,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public logout = (): Promise<SessionResponse>  => {
-        return getJson(this.apiUrl + '/logout')
+        return getOne(this.apiUrl + '/logout')
     }
 
     /**
@@ -101,7 +101,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public login = (body: UserLogin): Promise<SessionResponse>  => {
-        return getJson(this.apiUrl + '/login', body )
+        return getOne(this.apiUrl + '/login', body)
     }
 
     /**
@@ -109,7 +109,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public impersonate = (id: uint): Promise<SessionResponse>  => {
-        return getJson(this.apiUrl + '/' + id + '/impersonate')
+        return getOne(this.apiUrl + '/' + id + '/impersonate')
     }
 
     /**
@@ -117,7 +117,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public unpersonate = (): Promise<SessionResponse>  => {
-        return getJson(this.apiUrl + '/unpersonate')
+        return getOne(this.apiUrl + '/unpersonate')
     }
 
 }

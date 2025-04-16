@@ -125,6 +125,10 @@ namespace Api.EcmaScript
                 {
                     return true;
                 }
+                if (genericDef == typeof(ContentStream<,>))
+                {
+                    return true;
+                }
             }
             return false;
         }

@@ -1,7 +1,7 @@
 /* * * * * * * | Auto Generated Script, do not edit | * * * * * * * */
 // Imports
 import {ApiIncludes} from './Includes'
-import {getJson} from 'UI/Functions/WebRequest'
+import {getOne, getList, getJson, ApiList} from 'UI/Functions/WebRequest'
 
 // Module
 /*
@@ -18,9 +18,9 @@ export type ListFilter = {
 /**
 */
 export class AutoController<T, ID, ApiIncludes>{
-    public includes?: ApiIncludes = undefined;
-
     public apiUrl: string;
+
+    public includes?: ApiIncludes = undefined;
 
     /**
 
@@ -35,7 +35,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public loadRevision = (id: ID): Promise<T>  => {
-        return getJson(this.apiUrl + '/revision/' + id + '')
+        return getOne(this.apiUrl + '/revision/' + id + '')
     }
 
     /**
@@ -44,7 +44,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public deleteRevision = (id: ID): Promise<T>  => {
-        return getJson(this.apiUrl + '/revision/' + id + '')
+        return getOne(this.apiUrl + '/revision/' + id + '')
     }
 
     /**
@@ -53,8 +53,8 @@ export class AutoController<T, ID, ApiIncludes>{
             See the filter documentation for more details on what you can request here.
 
     */
-    public revisionList = (filters: ListFilter): Promise<Record<string, string | boolean | number>>  => {
-        return getJson(this.apiUrl + '/revision/list', filters )
+    public revisionList = (filters: ListFilter): Promise<ApiList<T>>  => {
+        return getList(this.apiUrl + '/revision/list', filters)
     }
 
     /**
@@ -63,7 +63,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public updateRevision = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
-        return getJson(this.apiUrl + '/revision/' + id + '', body )
+        return getOne(this.apiUrl + '/revision/' + id + '', body)
     }
 
     /**
@@ -72,7 +72,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public publishRevision = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
-        return getJson(this.apiUrl + '/publish/' + id + '', body )
+        return getOne(this.apiUrl + '/publish/' + id + '', body)
     }
 
     /**
@@ -81,7 +81,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public createDraft = (body: Record<string, string | number | boolean>): Promise<T>  => {
-        return getJson(this.apiUrl + '/draft', body )
+        return getOne(this.apiUrl + '/draft', body)
     }
 
     /**
@@ -90,7 +90,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public load (id: ID): Promise<T> {
-        return getJson(this.apiUrl + '/' + id + '')
+        return getOne(this.apiUrl + '/' + id + '')
     }
 
     /**
@@ -99,7 +99,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public delete (id: ID): Promise<T> {
-        return getJson(this.apiUrl + '/' + id + '')
+        return getOne(this.apiUrl + '/' + id + '')
     }
 
     /**
@@ -107,8 +107,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Lists all entities of this type available to this user.
 
     */
-    public listAll = (): Promise<Record<string, string | boolean | number>>  => {
-        return getJson(this.apiUrl + '/list')
+    public listAll = (): Promise<ApiList<T>>  => {
+        return getList(this.apiUrl + '/list')
     }
 
     /**
@@ -117,8 +117,8 @@ export class AutoController<T, ID, ApiIncludes>{
             See the filter documentation for more details on what you can request here.
 
     */
-    public list (filters: ListFilter): Promise<Record<string, string | boolean | number>> {
-        return getJson(this.apiUrl + '/list', filters )
+    public list (filters: ListFilter): Promise<ApiList<T>> {
+        return getList(this.apiUrl + '/list', filters)
     }
 
     /**
@@ -127,7 +127,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public create (body: Record<string, string | number | boolean>): Promise<T> {
-        return getJson(this.apiUrl, body )
+        return getOne(this.apiUrl, body)
     }
 
     /**
@@ -136,7 +136,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public update (id: ID, body: Record<string, string | number | boolean>): Promise<T> {
-        return getJson(this.apiUrl + '/' + id + '', body )
+        return getOne(this.apiUrl + '/' + id + '', body)
     }
 
     /**
@@ -145,7 +145,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public listPOTUpdate = (): Promise<Object>  => {
-        return getJson(this.apiUrl + '/list.pot')
+        return getOne(this.apiUrl + '/list.pot')
     }
 
 }
