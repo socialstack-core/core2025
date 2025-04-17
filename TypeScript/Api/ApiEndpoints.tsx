@@ -35,7 +35,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public loadRevision = (id: ID): Promise<T>  => {
-        return getOne(this.apiUrl + '/revision/' + id + '', {}, { method: 'GET' })
+        return getOne(this.apiUrl + '/revision/' + id + '');
     }
 
     /**
@@ -44,7 +44,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public deleteRevision = (id: ID): Promise<T>  => {
-        return getOne(this.apiUrl + '/revision/' + id + '', {}, { method: 'DELETE' })
+        return getOne(this.apiUrl + '/revision/' + id + '');
     }
 
     /**
@@ -54,7 +54,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public revisionList = (filters: ListFilter): Promise<ApiList<T>>  => {
-        return getList(this.apiUrl + '/revision/list', filters, { method: 'POST' })
+        return getList(this.apiUrl + '/revision/list', filters)
     }
 
     /**
@@ -62,8 +62,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Updates an entity revision with the given RevisionId.
 
     */
-    public updateRevision = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
-        return getOne(this.apiUrl + '/revision/' + id + '', body, { method: 'POST' })
+    public updateRevision = (id: ID, body: Partial<T>): Promise<T>  => {
+        return getOne(this.apiUrl + '/revision/' + id + '', body)
     }
 
     /**
@@ -71,8 +71,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Publishes the given posted object as an extension to the given revision (if body is not null).
 
     */
-    public publishRevision = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
-        return getOne(this.apiUrl + '/publish/' + id + '', body, { method: 'POST' })
+    public publishRevision = (id: ID, body: Partial<T>): Promise<T>  => {
+        return getOne(this.apiUrl + '/publish/' + id + '', body)
     }
 
     /**
@@ -80,8 +80,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Creates a draft.
 
     */
-    public createDraft = (body: Record<string, string | number | boolean>): Promise<T>  => {
-        return getOne(this.apiUrl + '/draft', body, { method: 'POST' })
+    public createDraft = (body: Partial<T>): Promise<T>  => {
+        return getOne(this.apiUrl + '/draft', body)
     }
 
     /**
@@ -90,7 +90,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public load = (id: ID): Promise<T>  => {
-        return getOne(this.apiUrl + '/' + id + '', {}, { method: 'GET' })
+        return getOne(this.apiUrl + '/' + id + '');
     }
 
     /**
@@ -99,7 +99,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public delete = (id: ID): Promise<T>  => {
-        return getOne(this.apiUrl + '/' + id + '', {}, { method: 'DELETE' })
+        return getOne(this.apiUrl + '/' + id + '');
     }
 
     /**
@@ -108,7 +108,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public listAll = (): Promise<ApiList<T>>  => {
-        return getList(this.apiUrl + '/list', {}, { method: 'GET' })
+        return getList(this.apiUrl + '/list');
     }
 
     /**
@@ -118,7 +118,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public list = (filters: ListFilter): Promise<ApiList<T>>  => {
-        return getList(this.apiUrl + '/list', filters, { method: 'POST' })
+        return getList(this.apiUrl + '/list', filters)
     }
 
     /**
@@ -126,8 +126,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Creates a new entity. Returns the ID. Includes everything by default.
 
     */
-    public create = (body: Record<string, string | number | boolean>): Promise<T>  => {
-        return getOne(this.apiUrl, body, { method: 'POST' })
+    public create = (body: Partial<T>): Promise<T>  => {
+        return getOne(this.apiUrl, body)
     }
 
     /**
@@ -135,8 +135,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Updates an entity with the given ID. Includes everything by default.
 
     */
-    public update = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
-        return getOne(this.apiUrl + '/' + id + '', body, { method: 'POST' })
+    public update = (id: ID, body: Partial<T>): Promise<T>  => {
+        return getOne(this.apiUrl + '/' + id + '', body)
     }
 
     /**
@@ -145,7 +145,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public listPOTUpdate = (): Promise<Object>  => {
-        return getOne(this.apiUrl + '/list.pot', {}, { method: 'PUT' })
+        return getOne(this.apiUrl + '/list.pot');
     }
 
 }
@@ -153,8 +153,8 @@ export class AutoController<T, ID, ApiIncludes>{
 /*
 */
 export type FilterSortConfig = {
-    hasValue: boolean,
-    value: FilterSortConfig,
+    field?: string,
+    direction?: string,
 }
 
 

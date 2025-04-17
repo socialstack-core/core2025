@@ -78,6 +78,15 @@ namespace Api.EcmaScript
 
         private static string ProcessMemberType(Type type, Script script, EcmaService ecmaService)
         {
+            if (IsTypeNullable(type))
+            {
+                var underlying = Nullable.GetUnderlyingType(type);
+
+                if (underlying is not null)
+                {
+                    type = underlying;
+                }
+            }
             if (IsEntity(type))
             {
                 return type.Name;

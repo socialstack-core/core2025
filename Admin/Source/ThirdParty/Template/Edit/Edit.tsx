@@ -27,7 +27,7 @@ const EditTemplate: React.FC = (props: any): React.ReactNode => {
 
     useEffect(() => {
         if (!template) {
-            TemplateApi.load(id)
+            TemplateApi.load(id as int)
                        .then((tpl: Template) => setTemplate(tpl))
                        .catch(() => console.error('Failed to load template'))
         }
@@ -39,7 +39,7 @@ const EditTemplate: React.FC = (props: any): React.ReactNode => {
 
     return (
         <TemplateEditor
-            formAction={TemplateApi.update}
+            formAction={values => TemplateApi.update(id as int, values)}
             existing={template}
         />
     )
