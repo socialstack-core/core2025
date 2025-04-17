@@ -506,9 +506,9 @@ export default class Uploader extends React.Component {
 			label = `Processing ...`;
 		}
 		
-		var parsedRef = fileRef.parse(ref);
-		var canShowImage = parsedRef.isImage();
-		var canShowVideo = parsedRef.isVideo(false);
+		var parsedRef = hasRef ? fileRef.parse(ref) : undefined;
+		var canShowImage = hasRef ?parsedRef.isImage() : false;
+		var canShowVideo = hasRef ? parsedRef.isVideo(false) : false;
 		var labelStyle = {};
 		var uploaderClasses = ['uploader'];
 		var uploaderLabelClasses = ['uploader__label'];

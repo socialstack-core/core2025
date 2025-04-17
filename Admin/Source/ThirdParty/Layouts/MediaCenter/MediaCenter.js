@@ -78,14 +78,14 @@ export default class MediaCenter extends React.Component {
     }
 
     renderTags(combinedFilter) {
-        var tagids = [];
-        var tags = [];
-
         return (
             <ul className='media-center__tags'>
                 <Loop over={uploadApi} filter={combinedFilter} includes={uploadApi.includes.tags} onResults={results => {
+                    var tagids = [];
+                    var tags = [];
+
                     results.map(media => {
-                        media.tags.map(tag => {
+                        media.tags?.map(tag => {
                             if (!tagids.includes(tag.id)) {
                                 tagids.push(tag.id);
                                 tags.push(tag);
@@ -303,11 +303,7 @@ export default class MediaCenter extends React.Component {
         // get the item IDs:
         var ids = Object.keys(this.state.bulkSelections);
 
-        var deletes = ids.map(id => webRequest(
-            'upload/' + id,
-            null,
-            { method: 'delete' }
-        ));
+        var deletes = ids.map(id => uploadApi.delete(id));
 
         Promise.all(deletes).then(response => {
 
@@ -349,15 +345,15 @@ export default class MediaCenter extends React.Component {
 
     saveUpload() {
 
-        webRequest("upload/" + this.state.uploadId,
+        uploadApi.update(this.state.uploadId,
             {
                 'focalX': this.state.focalX,
                 'focalY': this.state.focalY,
                 'alt': this.state.alt,
                 'author': this.state.author,
                 'tags': this.state.tags ? this.state.tags.map(obj => obj.id) : null
-            },
-            { method: 'post' }).then(() => {
+            }
+        ).then(() => {
                 this.setState({
                     uploadModal: false
                 });
@@ -367,7 +363,7 @@ export default class MediaCenter extends React.Component {
 
     renderUploadModal() {
         var isNewMedia = this.state.uploadModal === true;
-		var parsedRef = fileRef.parse(this.state.uploadModal);
+        var parsedRef = isNewMedia ? undefined : fileRef.parse(this.state.uploadModal);
         var url = isNewMedia ? undefined : fileRef.getUrl(parsedRef);
         var isImage = isNewMedia ? undefined : parsedRef.isImage();
         var isVideo = isNewMedia ? undefined : parsedRef.isVideo();

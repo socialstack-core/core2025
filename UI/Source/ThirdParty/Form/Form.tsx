@@ -116,6 +116,7 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 			setLoading(false);
 			setFailed(error);
 			setSuccess(false);
+			console.error(e);
 			onFailed && onFailed(error);
 		}
 	

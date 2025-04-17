@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'UI/Router';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
+import Icon from 'UI/Icon';
 import Input from 'UI/Input';
 import Form from 'UI/Form';
 import pageApi, { Page } from 'Api/Page';
@@ -243,11 +244,8 @@ export default function Sitemap(props) {
 			}
 
 			var largeIcon = 'fa-file';
-
-			if (title.startsWith('/en-admin')) {
-				largeIcon = 'fa-cog';
-			}
-
+			var isAdmin = title.startsWith('/en-admin');
+			
 			/* when available, add buttons={[cloneBranchButton]} to <Collapsible />
 			var cloneBranchButton = {
 				icon: 'far fa-fw fa-copy',
@@ -262,7 +260,7 @@ export default function Sitemap(props) {
 			return <>
 				<Collapsible compact expanderLeft title={title}
 					open={isRoot} alwaysOpen={isRoot} className="sitemap-expander"
-					icon={largeIcon}>
+					icon={isAdmin ? <Icon type='fa-cog'/> : <Icon type='fa-file'/>}>
 					{renderNodeChildren(node)}
 				</Collapsible>
 			</>;
@@ -308,7 +306,7 @@ export default function Sitemap(props) {
 					}
 
 					var optionsButton = {
-						icon: 'fa fa-edit',
+						icon: <Icon type='fa-edit' />,
 						text: `Edit`,
 						showLabel: true,
 						variant: 'secondary',
@@ -317,14 +315,14 @@ export default function Sitemap(props) {
 					};
 
 					var isPage = page.type == "Page";
-					var largeIcon = page.url == '/' ? 'fa-home' : 'fa-file';
+					var largeIcon = page.url == '/' ? <Icon type='fa-home'/> : <Icon type='fa-file'/>;
 
 					let allowLaunch = !hasParameter;
 					let allowClone = true;
 					let allowRemove = true;
 
 					if (pageUrl.startsWith('/en-admin')) {
-						largeIcon = 'fa-cog';
+						largeIcon = <Icon type='fa-cog'/>;
 						//allowLaunch = false;
 						//allowClone = false;
 						allowRemove = false;
@@ -332,7 +330,7 @@ export default function Sitemap(props) {
 
 					if (allowLaunch) {
 						optionsButton.children.push({
-							icon: 'far fa-fw fa-external-link',
+							icon: <Icon type='fa-external-link' regular fixedWidth/>,
 							text: `Launch`,
 							onClick: window.location.origin + pageUrl,
 							target: '_blank'
@@ -341,7 +339,7 @@ export default function Sitemap(props) {
 
 					if (allowClone) {
 						optionsButton.children.push({
-							icon: 'far fa-fw fa-copy',
+							icon: <Icon type='fa-copy' regular fixedWidth/>,
 							text: `Save as ...`,
 							onClick: cloneClick
 						});
@@ -364,7 +362,7 @@ export default function Sitemap(props) {
 							separator: true
 						});
 						optionsButton.children.push({
-							icon: 'far fa-fw fa-trash',
+							icon: <Icon type='fa-trash' regular fixedWidth/>,
 							text: `Remove`,
 							onClick: removeClick
 						});

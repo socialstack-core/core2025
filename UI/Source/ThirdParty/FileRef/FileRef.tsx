@@ -14,7 +14,7 @@ export function getUrl(ref : FileRefIsh, options? : FileRefOptions) {
         options = {};
     }
 
-    return r ? r.handler(r, options) : null;
+    return r ? r.handler(r, options) : undefined;
 }
 
 /**
