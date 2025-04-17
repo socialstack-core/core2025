@@ -1,4 +1,5 @@
 import Link from 'UI/Link';
+import { getUrl } from 'UI/FileRef';
 
 export type ImageSize      = "original" | number | string; // add more as necessary
 export type ImageAlignment = "None" | "Left" | "Right" | "Center";
@@ -55,7 +56,10 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
         classNames.push("image-wide");
     }
 
+    var imgUrl = getUrl(props.fileRef);
+
     if (!props.linkUrl) {
+        
         return (
             <div 
                 className={classNames.join(" ")}
@@ -65,7 +69,7 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
                 data-aos-duration={props.animationDuration || 400}
             >
                 <img
-                    src={props.fileRef}
+                    src={imgUrl}
                     alt={props.title}
                     width={width}
                     height={height}
@@ -82,7 +86,7 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
                 onClick={props.onClick} 
             >
                 <img
-                    src={props.fileRef}
+                    src={imgUrl}
                     alt={props.title}
                     width={width}
                     height={height}
