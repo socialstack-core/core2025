@@ -1,12 +1,14 @@
 import Collapsible from 'UI/Collapsible';
 import Default from 'Admin/Layouts/Default';
-import webRequest from 'UI/Functions/WebRequest';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'UI/Router';
 import Modal from 'UI/Modal';
+import Icon from 'UI/Icon';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Search from 'UI/Search';
 import Canvas from 'UI/Canvas';
+import navMenuItemApi from 'Api/NavMenuItem';
+import navMenuApi from 'Api/NavMenu';
 
 export default function NavMenuMap(props) {
 	const [menuMap, setMenuMap] = useState(false);
@@ -24,8 +26,8 @@ export default function NavMenuMap(props) {
 	function reloadMenus() {
 		setIsLoading(true);
 
-		webRequest('navmenuitem/list').then(menuItemResp => {
-			let menuItems = menuItemResp.json.results.sort((a, b) => a.order - b.order);
+		navMenuItemApi.list().then(menuItemResp => {
+			let menuItems = menuItemResp.results.sort((a, b) => a.order - b.order);
 
 			menuItems.forEach(menuItem => {
 
@@ -35,8 +37,8 @@ export default function NavMenuMap(props) {
 
 			});
 
-			webRequest('navmenu/list').then(menuResp => {
-				let menus = menuResp.json.results.sort((a, b) => a.order - b.order);
+			navMenuApi.list().then(menuResp => {
+				let menus = menuResp.results.sort((a, b) => a.order - b.order);
 
 				menus.forEach(menu => {
 					menu.children = menuItems.filter(m => m.menuKey == menu.key);
@@ -183,7 +185,7 @@ export default function NavMenuMap(props) {
 		}
 
 		var newButton = {
-			icon: 'fa fa-plus-circle',
+			icon: <Icon type='fa-plus-circle' />,
 			text: `New`,
 			showLabel: true,
 			variant: 'secondary',
@@ -191,7 +193,7 @@ export default function NavMenuMap(props) {
 		};
 
 		var optionsButton = {
-			icon: 'fa fa-edit',
+			icon: <Icon type='fa-edit' />,
 			text: `Edit`,
 			showLabel: true,
 			variant: 'secondary',
@@ -202,7 +204,7 @@ export default function NavMenuMap(props) {
 		// potential future enhancement: allow menu items to be cloned
 		/*
 		optionsButton.children.push({
-			icon: 'far fa-fw fa-copy',
+			icon: <Icon type='fa-copy' regular fixedWidth />,
 			text: `Save as ...`,
 			onClick: cloneClick
 		});
@@ -214,7 +216,7 @@ export default function NavMenuMap(props) {
 		//	separator: true
 		//});
 		optionsButton.children.push({
-			icon: 'far fa-fw fa-trash',
+			icon: <Icon type='fa-trash' regular fixedWidth />,
 			text: `Remove`,
 			onClick: removeClick
 		});
@@ -222,7 +224,7 @@ export default function NavMenuMap(props) {
 		return <>
 			<Collapsible compact expanderLeft title={topLevelMenu ? node.name : undefined} json={topLevelMenu ? undefined : node.bodyJson} subtitle={node.target}
 				buttons={topLevelMenu ? [newButton, optionsButton] : [optionsButton]} className="menumap-expander" defaultClick={hasChildren ? undefined : editClick}
-				icon={topLevelMenu ? 'fa-list-alt' : 'fa-chevron-right'} hidden={node.exclude}>
+				icon={topLevelMenu ? <Icon type='fa-list-alt' /> : <Icon type='fa-chevron-right' />} hidden={node.exclude}>
 				{node.children.length && node.children.map(child => {
 					return renderNode(child);
 				})}
@@ -232,13 +234,15 @@ export default function NavMenuMap(props) {
 	}
 
 	function removeMenu(menu) {
-		webRequest(
-			menu.type == 'NavMenu' ? `navmenu/${menu.id}` : `navmenuitem/${menu.id}`,
-			null,
-			{ method: 'delete' }
-		).then(response => {
-			window.location.reload();
-		});
+		if (menu.type == 'NavMenu') {
+			navMenuApi.delete(menu.id).then(response => {
+				window.location.reload();
+			});
+		} else {
+			navMenuItemApi.delete(menu.id).then(response => {
+				window.location.reload();
+			});
+		}
 	}
 
 	function getMenuDescription(menu) {
