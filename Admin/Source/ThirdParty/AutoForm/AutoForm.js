@@ -1193,7 +1193,7 @@ class AutoFormInternal extends React.Component {
 								</Input>
 							</div>
 						}
-						<Form id={this.formId} autoComplete="off" locale={locale} action={isEdit ? api.update : api.create}
+						<Form id={this.formId} autoComplete="off" locale={locale} action={isEdit ? values => api.update(parsedId, values) : api.create}
 							onValues={onValues} onFailed={onFailed} onSuccess={onSuccess}>
 							{this.props.renderFormFields ? this.props.renderFormFields(this.state) : this.renderFormFields()}
 							{isEdit && <input type="hidden" name="id" value={parsedId} />}
