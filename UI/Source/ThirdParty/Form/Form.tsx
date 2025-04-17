@@ -132,6 +132,7 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 			ref={formRef}
 			method={"post"}
 			{...attribs}
+			action={''}
 		>
 			{failed && <Alert variant='danger'>{failed.message}</Alert>}
 			{children}
