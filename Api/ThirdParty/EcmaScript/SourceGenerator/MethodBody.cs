@@ -101,7 +101,8 @@ namespace Api.EcmaScript
             if (bodyParam != null)
             {
                 return [ 
-                    $"return {caller}({urlPart}, {bodyParam.Name}, {{ method: '{requestMethod}' }})"
+                    // body param doesn't need a method POST
+                    $"return {caller}({urlPart}, {bodyParam.Name})"
                 ];
             }
 
@@ -117,9 +118,7 @@ namespace Api.EcmaScript
                 injected.AddRange(multipleParams.Select(p => $"{p.Name},"));
                 injected.Add("})");
                 return injected;
-            }
-
-            if (multipleParams.Count == 1)
+            } else if (multipleParams.Count == 1)
             {
                 return
                 [
@@ -128,8 +127,12 @@ namespace Api.EcmaScript
                     "}, { method: '" + requestMethod + "' })"
                 ];
             }
+            else
+            {
 
-            return [$"return {caller}({urlPart}, {{ method: '{requestMethod}' }})"];
+            }
+
+            return [$"return {caller}({urlPart}, null, {{ method: '{requestMethod}' }})"];
         }
 
         private static void AddMethodDocs(EcmaService ecmaService, MethodInfo method, ClassMethod classMethod)
