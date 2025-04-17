@@ -101,8 +101,7 @@ namespace Api.EcmaScript
 
             if (bodyParam != null)
             {
-                return [
-                    debug ? "console.log(this);" : "", 
+                return [ 
                     $"return {caller}({urlPart}, {bodyParam.Name})"
                 ];
             }
@@ -114,7 +113,6 @@ namespace Api.EcmaScript
             if (multipleParams.Count > 1)
             {
                 var injected = new List<string> {
-                    debug ? "console.log(this);" : "",  
                     $"return getOne({urlPart}, {{" 
                 };
                 injected.AddRange(multipleParams.Select(p => $"{p.Name},"));
@@ -126,14 +124,13 @@ namespace Api.EcmaScript
             {
                 return
                 [
-                    debug ? "console.log(this);" : "", 
                     $"return {caller}({urlPart}, {{",
                     multipleParams[0].Name,
                     "})"
                 ];
             }
 
-            return [debug ? "console.log(this);" : "",  $"return {caller}({urlPart})"];
+            return [$"return {caller}({urlPart})"];
         }
 
         private static void AddMethodDocs(EcmaService ecmaService, MethodInfo method, ClassMethod classMethod)

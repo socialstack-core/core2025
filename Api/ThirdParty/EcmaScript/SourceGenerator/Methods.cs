@@ -107,11 +107,27 @@ namespace Api.EcmaScript
                 // Special case for handling ContentStream<,> return type
                 if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                 {
-                    apiMethod = new ClassMethod
+                    var generics = returnType.GetGenericArguments();
+
+                    if (generics.Length == 0)
                     {
-                        Name = LcFirst(method.Name),
-                        ReturnType = "Promise<Record<string, string | boolean | number>>"
-                    };
+                        apiMethod = new ClassMethod
+                        {
+                            Name = LcFirst(method.Name),
+                            ReturnType = $"Promise<Record<string, string | number | boolean>>"
+                        };    
+                    }
+                    else
+                    {
+                        var actualType = generics[0];
+                        
+                        apiMethod = new ClassMethod
+                        {
+                            Name = LcFirst(method.Name),
+                            ReturnType = $"Promise<{actualType.Name}>"
+                        };
+                    }
+                    
                 }
                 else
                 {
