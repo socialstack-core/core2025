@@ -934,10 +934,9 @@ class CanvasEditorCore extends React.Component {
 					<p>{error.e.message}</p>
 				</Alert>}
 				<Input 
-					inputRef={ir=>this.ir=ir}
+					onInputRef={ir=>this.ir=ir}
 					name={name}
-					type="textarea"
-					contentType="application/json"
+					type="json"
 					className="form-control json-preview"
 					defaultValue={this.sourceModeValue}
 				/>

@@ -366,11 +366,9 @@ class AutoFormInternal extends React.Component {
 		if (!content || !mainCanvas) {
 			return;
 		}
-		if (!mainCanvas.d) {
-			return;
-		}
+		
 		// Ensure the main canvas node gets populated.
-		var data = mainCanvas.d;
+		var data = mainCanvas.data;
 		data.currentContent = content;
 		data.canvasContext = this.getCanvasContext(content);
 
@@ -1063,7 +1061,7 @@ class AutoFormInternal extends React.Component {
 			}
 
 			return <>
-				<Form id={this.formId} autoComplete="off" locale={locale} action={isEdit ? api.update : api.create}
+				<Form id={this.formId} autoComplete="off" locale={locale} action={isEdit ? values => api.update(parsedId, values) : api.create}
 					onValues={onValues} onFailed={onFailed} onSuccess={onSuccess}>
 					<CanvasEditor
 						fullscreen

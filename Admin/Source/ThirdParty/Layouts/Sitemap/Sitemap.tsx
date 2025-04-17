@@ -455,7 +455,7 @@ export default function Sitemap(props) {
 										clonedPage.title = response.title;
 										clonedPage.description = response.description;
 
-										webRequest("page", clonedPage, {}).then(response => {
+										pageApi.create(clonedPage).then(response => {
 											setShowCloneModal(false);
 											reloadPages();
 										});
