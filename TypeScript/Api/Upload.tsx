@@ -63,8 +63,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public upload = (): Promise<Upload>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/create')
+        return getOne(this.apiUrl + '/create', {}, { method: 'PUT' })
     }
 
     /**
@@ -72,8 +71,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public active = (): Promise<ApiList<Upload>>  => {
-        console.log(this);
-        return getList(this.apiUrl + '/active')
+        return getList(this.apiUrl + '/active', {}, { method: 'GET' })
     }
 
     /**
@@ -81,8 +79,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public replace = (sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>>  => {
-        console.log(this);
-        return getList(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
+        return getList(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '', {}, { method: 'GET' })
     }
 
     /**
@@ -90,8 +87,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public updateRefs = (update: boolean): Promise<ApiList<MediaRef>>  => {
-        console.log(this);
-        return getList(this.apiUrl + '/update-refs?update=' + update + '')
+        return getList(this.apiUrl + '/update-refs?update=' + update + '', {}, { method: 'GET' })
     }
 
     /**
@@ -99,8 +95,7 @@ export class UploadApi extends AutoController<Upload, uint, UploadIncludes>{
 
     */
     public preview = (uploadRef: string): Promise<ApiList<MediaRef>>  => {
-        console.log(this);
-        return getList(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
+        return getList(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '', {}, { method: 'GET' })
     }
 
 }

@@ -67,8 +67,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public resendVerificationEmail = (body: UserPasswordForgot): Promise<SessionResponse>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/sendverifyemail', body)
+        return getOne(this.apiUrl + '/sendverifyemail', body, { method: 'POST' })
     }
 
     /**
@@ -77,8 +76,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public verifyUser = (userid: uint, token: string, newPassword: OptionalPassword): Promise<SessionResponse>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/verify/' + userid + '/' + token + '', newPassword)
+        return getOne(this.apiUrl + '/verify/' + userid + '/' + token + '', newPassword, { method: 'POST' })
     }
 
     /**
@@ -86,8 +84,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public self = (): Promise<SessionResponse>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/self')
+        return getOne(this.apiUrl + '/self', {}, { method: 'GET' })
     }
 
     /**
@@ -95,8 +92,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public logout = (): Promise<SessionResponse>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/logout')
+        return getOne(this.apiUrl + '/logout', {}, { method: 'GET' })
     }
 
     /**
@@ -105,8 +101,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public login = (body: UserLogin): Promise<SessionResponse>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/login', body)
+        return getOne(this.apiUrl + '/login', body, { method: 'POST' })
     }
 
     /**
@@ -114,8 +109,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public impersonate = (id: uint): Promise<SessionResponse>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/' + id + '/impersonate')
+        return getOne(this.apiUrl + '/' + id + '/impersonate', {}, { method: 'GET' })
     }
 
     /**
@@ -123,8 +117,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public unpersonate = (): Promise<SessionResponse>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/unpersonate')
+        return getOne(this.apiUrl + '/unpersonate', {}, { method: 'GET' })
     }
 
 }

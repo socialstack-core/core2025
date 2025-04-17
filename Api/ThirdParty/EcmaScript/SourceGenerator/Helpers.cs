@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
+using Api.Database;
 using Api.EcmaScript.TypeScript;
 using Api.Startup;
 using Api.Users;
@@ -262,5 +263,42 @@ namespace Api.EcmaScript
             // Return null or a default string if no URL is found
             return null;
         }
+
+        private static bool IsContentType(Type type)
+        {
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Content<>))
+            {
+                return true;
+            }
+    
+            var baseType = type.BaseType;
+    
+            if (baseType == null)
+            {
+                return false;
+            }
+    
+            return IsContentType(baseType);
+        }
+
+        private static string GetHttpMethodFromAttribute(MethodInfo method)
+        {
+            var attrs = method.GetCustomAttributes();
+
+            foreach (var attr in attrs)
+            {
+                var typeName = attr.GetType().Name;
+
+                if (typeName == nameof(HttpPostAttribute)) return "POST";
+                if (typeName == nameof(HttpPutAttribute)) return "PUT";
+                if (typeName == nameof(HttpPatchAttribute)) return "PATCH";
+                if (typeName == nameof(HttpDeleteAttribute)) return "DELETE";
+                if (typeName == nameof(HttpGetAttribute)) return "GET";
+            }
+
+            // Default to GET if nothing is specified
+            return "GET";
+        }
+
     }
 }

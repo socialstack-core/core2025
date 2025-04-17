@@ -25,7 +25,7 @@ namespace Api.EcmaScript
 
             var caller = ResolveCaller(method);
 
-            classMethod.Injected = GenerateCall(caller, endpointUrl, bodyParam, parameters);
+            classMethod.Injected = GenerateCall(caller, endpointUrl, bodyParam, parameters, GetHttpMethodFromAttribute(method));
 
             AddMethodDocs(ecmaService, method, classMethod);
         }
@@ -94,15 +94,14 @@ namespace Api.EcmaScript
             return (genericArgs.Length > 0 && IsList(genericArgs[0])) ? "getList" : "getOne";
         }
 
-        private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams)
+        private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod)
         {
             var urlPart = string.IsNullOrEmpty(endpointUrl) ? "this.apiUrl" : $"this.apiUrl + '/{endpointUrl}'";
-            var debug = true;
 
             if (bodyParam != null)
             {
                 return [ 
-                    $"return {caller}({urlPart}, {bodyParam.Name})"
+                    $"return {caller}({urlPart}, {bodyParam.Name}, {{ method: '{requestMethod}' }})"
                 ];
             }
 
@@ -126,11 +125,11 @@ namespace Api.EcmaScript
                 [
                     $"return {caller}({urlPart}, {{",
                     multipleParams[0].Name,
-                    "})"
+                    "}, { method: '" + requestMethod + "' })"
                 ];
             }
 
-            return [$"return {caller}({urlPart})"];
+            return [$"return {caller}({urlPart}, {{}}, {{ method: '{requestMethod}' }})"];
         }
 
         private static void AddMethodDocs(EcmaService ecmaService, MethodInfo method, ClassMethod classMethod)

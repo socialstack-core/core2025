@@ -35,8 +35,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public loadRevision = (id: ID): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/revision/' + id + '')
+        return getOne(this.apiUrl + '/revision/' + id + '', {}, { method: 'GET' })
     }
 
     /**
@@ -45,8 +44,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public deleteRevision = (id: ID): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/revision/' + id + '')
+        return getOne(this.apiUrl + '/revision/' + id + '', {}, { method: 'DELETE' })
     }
 
     /**
@@ -56,8 +54,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public revisionList = (filters: ListFilter): Promise<ApiList<T>>  => {
-        console.log(this);
-        return getList(this.apiUrl + '/revision/list', filters)
+        return getList(this.apiUrl + '/revision/list', filters, { method: 'POST' })
     }
 
     /**
@@ -66,8 +63,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public updateRevision = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/revision/' + id + '', body)
+        return getOne(this.apiUrl + '/revision/' + id + '', body, { method: 'POST' })
     }
 
     /**
@@ -76,8 +72,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public publishRevision = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/publish/' + id + '', body)
+        return getOne(this.apiUrl + '/publish/' + id + '', body, { method: 'POST' })
     }
 
     /**
@@ -86,8 +81,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public createDraft = (body: Record<string, string | number | boolean>): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/draft', body)
+        return getOne(this.apiUrl + '/draft', body, { method: 'POST' })
     }
 
     /**
@@ -96,8 +90,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public load = (id: ID): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/' + id + '')
+        return getOne(this.apiUrl + '/' + id + '', {}, { method: 'GET' })
     }
 
     /**
@@ -106,8 +99,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public delete = (id: ID): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/' + id + '')
+        return getOne(this.apiUrl + '/' + id + '', {}, { method: 'DELETE' })
     }
 
     /**
@@ -116,8 +108,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public listAll = (): Promise<ApiList<T>>  => {
-        console.log(this);
-        return getList(this.apiUrl + '/list')
+        return getList(this.apiUrl + '/list', {}, { method: 'GET' })
     }
 
     /**
@@ -127,8 +118,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public list = (filters: ListFilter): Promise<ApiList<T>>  => {
-        console.log(this);
-        return getList(this.apiUrl + '/list', filters)
+        return getList(this.apiUrl + '/list', filters, { method: 'POST' })
     }
 
     /**
@@ -137,8 +127,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public create = (body: Record<string, string | number | boolean>): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl, body)
+        return getOne(this.apiUrl, body, { method: 'POST' })
     }
 
     /**
@@ -147,8 +136,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public update = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/' + id + '', body)
+        return getOne(this.apiUrl + '/' + id + '', body, { method: 'POST' })
     }
 
     /**
@@ -157,8 +145,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public listPOTUpdate = (): Promise<Object>  => {
-        console.log(this);
-        return getOne(this.apiUrl + '/list.pot')
+        return getOne(this.apiUrl + '/list.pot', {}, { method: 'PUT' })
     }
 
 }
