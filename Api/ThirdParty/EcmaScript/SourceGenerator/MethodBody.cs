@@ -127,12 +127,8 @@ namespace Api.EcmaScript
                     "}, { method: '" + requestMethod + "' })"
                 ];
             }
-            else
-            {
-
-            }
-
-            return [$"return {caller}({urlPart}, null, {{ method: '{requestMethod}' }})"];
+            
+            return [$"return {caller}({urlPart});"];
         }
 
         private static void AddMethodDocs(EcmaService ecmaService, MethodInfo method, ClassMethod classMethod)
