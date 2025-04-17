@@ -6,6 +6,7 @@ using Api.Contexts;
 using Api.EcmaScript.TypeScript;
 using Api.Startup;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json.Linq;
 
 namespace Api.EcmaScript
 {
@@ -17,7 +18,7 @@ namespace Api.EcmaScript
             typeof(Context)
         };
 
-        public static void AddMethodParams(MethodInfo method, ClassMethod classMethod, Script script)
+        public static void AddMethodParams(MethodInfo method, ClassMethod classMethod, Script script, bool acceptsPartial = false)
         {
             var ecmaService = Services.Get<EcmaService>();
 
@@ -25,6 +26,15 @@ namespace Api.EcmaScript
             foreach (var param in method.GetParameters())
             {
                 var type = GetResolvedType(param.ParameterType);
+
+                if (acceptsPartial && type == typeof(JObject))
+                {
+                    classMethod.Arguments.Add(new ClassMethodArgument() {
+                        Name = param.Name,
+                        Type = "Partial<T>"
+                    });
+                    continue;
+                }
 
                 // Skip ignored types like HttpContext or Context
                 if (ignoreParamTypes.Contains(type))

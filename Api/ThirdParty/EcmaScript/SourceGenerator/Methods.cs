@@ -28,6 +28,28 @@ namespace Api.EcmaScript
                     continue;
                 }
 
+                var recieves = method.GetCustomAttribute<ReceivesAttribute>();
+
+                if (recieves is not null)
+                {
+                    // this is a marker that it can accept the target entity only having for instance 1 field.
+
+                    var classMethod = new ClassMethod() {
+                        Name = method.Name,
+                        ReturnType = "Promise<T>"
+                    };
+
+                    // Add the method parameters
+                    AddMethodParams(method, classMethod, script, true);
+
+                    // Add the method body
+                    AddMethodBody(method, classMethod, script, baseUrl);
+
+                    // Add the method to the class
+                    target.AddMethod(classMethod);
+                    continue;
+                }
+
                 Type returnType = null;
 
                 // Handle the custom Returns attribute for return type
