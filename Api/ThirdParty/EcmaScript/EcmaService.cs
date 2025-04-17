@@ -90,7 +90,27 @@ namespace Api.EcmaScript
 
             IncludesScript.AddChild(
                 new ClassDefinition() {
-                    Name = "ApiIncludes"
+                    Name = "ApiIncludes",
+                    Children = [
+                        new ClassProperty() {
+                            PropertyName = "text",
+                            PropertyType = "string",
+                            DefaultValue = ""
+                        },
+                        new ClassMethod() {
+                            Name = "constructor",
+                            Arguments = [
+                                new ClassMethodArgument() {
+                                    Name = "text",
+                                    Type = "string",
+                                    DefaultValue = ""
+                                }
+                            ],
+                            Injected = [
+                                "this.text = text"
+                            ]
+                        }
+                    ]
                 }
             );
 

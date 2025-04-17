@@ -1,7 +1,11 @@
 
 
 using System;
+using System.Linq;
+using System.Reflection;
+using Api.AvailableEndpoints;
 using Api.EcmaScript.TypeScript;
+using Api.Startup;
 
 namespace Api.EcmaScript
 {
@@ -10,12 +14,34 @@ namespace Api.EcmaScript
         public static void CreateIncludeClass(Type entityType, Script script)
         {
 
+            var aes = Services.Get<AvailableEndpointService>();
+
+            var modules = aes.ListByModule().Where(mod => mod.GetContentType() == entityType);
+
+            if (!modules.Any())
+            {
+                return;
+            }
+
+            var module = modules.First();
+
             var def = new ClassDefinition() {
                 Name = entityType.Name + "Includes",
                 Extends = "ApiIncludes"
             };
 
-            // TODO: Build out again
+            var virtuals = entityType.GetCustomAttributes<HasVirtualFieldAttribute>();
+
+            foreach(var virtualField in virtuals)
+            {
+                def.Children.Add(new ClassGetter() {
+                    Name = virtualField.FieldName,
+                    ReturnType = virtualField.Type.Name + "Includes",
+                    Source = [
+                        "return new " + virtualField.Type.Name + "Includes(this.text);"
+                    ]
+                });
+            }
 
             script.AddChild(def);
         }
