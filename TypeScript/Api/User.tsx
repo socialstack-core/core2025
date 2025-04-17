@@ -58,7 +58,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
     */
     public constructor (){
         super('user')
-        this.includes = new UserIncludes();
+        this.includes = new UserIncludes('');
     }
 
     /**
@@ -67,6 +67,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public resendVerificationEmail = (body: UserPasswordForgot): Promise<SessionResponse>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/sendverifyemail', body)
     }
 
@@ -76,6 +77,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public verifyUser = (userid: uint, token: string, newPassword: OptionalPassword): Promise<SessionResponse>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/verify/' + userid + '/' + token + '', newPassword)
     }
 
@@ -84,6 +86,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public self = (): Promise<SessionResponse>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/self')
     }
 
@@ -92,6 +95,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public logout = (): Promise<SessionResponse>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/logout')
     }
 
@@ -101,6 +105,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public login = (body: UserLogin): Promise<SessionResponse>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/login', body)
     }
 
@@ -109,6 +114,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public impersonate = (id: uint): Promise<SessionResponse>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/' + id + '/impersonate')
     }
 
@@ -117,6 +123,7 @@ export class UserApi extends AutoController<User, uint, UserIncludes>{
 
     */
     public unpersonate = (): Promise<SessionResponse>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/unpersonate')
     }
 

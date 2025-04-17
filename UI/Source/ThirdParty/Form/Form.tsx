@@ -5,11 +5,15 @@ import Loading from 'UI/Loading';
 import Input from 'UI/Input';
 import { useState, useEffect, useRef } from 'react'; 
 
+
+export type Identifiable<FieldType> = FieldType & { id: number | string }
+export type CreateAction<ResponseType, FieldType> = (fields: Identifiable<FieldType>) => Promise<ResponseType>;
+export type UpdateAction<ResponseType, FieldType> = (id: number | string, fields: Identifiable<FieldType>) => Promise<ResponseType>;
 /**
  * Props for the Form component.
  */
 interface FormProps<ResponseType, FieldType> extends React.HTMLAttributes<HTMLFormElement> {
-	action: (fields: FieldType) => Promise<ResponseType>,
+	action: CreateAction<ResponseType, Identifiable<FieldType>> | UpdateAction<ResponseType, Identifiable<FieldType>>,
 	resetOnSubmit?:boolean,
 	failedMessage?: React.ReactNode,
 	loadingMessage?: string,
@@ -18,8 +22,15 @@ interface FormProps<ResponseType, FieldType> extends React.HTMLAttributes<HTMLFo
 	submitLabel?: string,
 	onSuccess?: (response: ResponseType) => void,
 	onFailed?: (e: PublicError) => void,
-	onValues?: (values: FieldType) => FieldType | Promise<FieldType>,
+	onValues?: (values: Identifiable<FieldType>) => Identifiable<FieldType> | Promise<Identifiable<FieldType>>,
 	onSubmitted?: (values: FieldType) => void
+}
+
+interface CreateFormProps<ResponseType, FieldType> extends FormProps<ResponseType, FieldType> {
+	action: CreateAction<ResponseType, Identifiable<FieldType>>
+}
+interface UpdateFormProps<ResponseType, FieldType> extends FormProps<ResponseType,  FieldType> {
+	action: UpdateAction<ResponseType, Identifiable<FieldType>>
 }
 
 /**
@@ -29,7 +40,6 @@ interface FormProps<ResponseType, FieldType> extends React.HTMLAttributes<HTMLFo
  */
 const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<ResponseType, FieldType>) => {
 	const {
-		action,
 		children,
 		failedMessage,
 		loadingMessage,
@@ -43,6 +53,8 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 		onValues,
 		...attribs
 	} = props;
+
+	let { action } = props;
 
 	const formRef = useRef<HTMLFormElement>(null);
 	const [loading, setLoading] = useState(false);
@@ -61,7 +73,7 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 	
 		try {
 			const rawVals = await submitForm(e);
-			let values = rawVals as FieldType;
+			let values = rawVals as Identifiable<FieldType>;
 	
 			if (onValues) {
 				const result = onValues(values);
@@ -69,8 +81,19 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 			}
 	
 			onSubmitted && onSubmitted(values);
-	
-			const response = await action(values);
+			
+			let response;
+			
+			// is this necessary? absolutely
+			// try implementing this any other way
+			// typescript WILL HAUNT YOU.
+			if (values.id) {
+				const asUpdateProps = action as UpdateAction<ResponseType, FieldType>;
+				response = await asUpdateProps(values.id, values);
+			} else {
+				const asCreateProps = action as CreateAction<ResponseType, FieldType>;
+				response = await asCreateProps(values);
+			}
 	
 			if (resetOnSubmit) {
 				formRef.current?.reset();

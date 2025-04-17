@@ -35,6 +35,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public loadRevision = (id: ID): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/revision/' + id + '')
     }
 
@@ -44,6 +45,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public deleteRevision = (id: ID): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/revision/' + id + '')
     }
 
@@ -54,6 +56,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public revisionList = (filters: ListFilter): Promise<ApiList<T>>  => {
+        console.log(this);
         return getList(this.apiUrl + '/revision/list', filters)
     }
 
@@ -63,6 +66,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public updateRevision = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/revision/' + id + '', body)
     }
 
@@ -72,6 +76,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public publishRevision = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/publish/' + id + '', body)
     }
 
@@ -81,6 +86,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public createDraft = (body: Record<string, string | number | boolean>): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/draft', body)
     }
 
@@ -89,7 +95,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Returns the data for 1 entity.
 
     */
-    public load (id: ID): Promise<T> {
+    public load = (id: ID): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/' + id + '')
     }
 
@@ -98,7 +105,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Deletes an entity
 
     */
-    public delete (id: ID): Promise<T> {
+    public delete = (id: ID): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/' + id + '')
     }
 
@@ -108,6 +116,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public listAll = (): Promise<ApiList<T>>  => {
+        console.log(this);
         return getList(this.apiUrl + '/list')
     }
 
@@ -117,7 +126,8 @@ export class AutoController<T, ID, ApiIncludes>{
             See the filter documentation for more details on what you can request here.
 
     */
-    public list (filters: ListFilter): Promise<ApiList<T>> {
+    public list = (filters: ListFilter): Promise<ApiList<T>>  => {
+        console.log(this);
         return getList(this.apiUrl + '/list', filters)
     }
 
@@ -126,7 +136,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Creates a new entity. Returns the ID. Includes everything by default.
 
     */
-    public create (body: Record<string, string | number | boolean>): Promise<T> {
+    public create = (body: Record<string, string | number | boolean>): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl, body)
     }
 
@@ -135,7 +146,8 @@ export class AutoController<T, ID, ApiIncludes>{
             Updates an entity with the given ID. Includes everything by default.
 
     */
-    public update (id: ID, body: Record<string, string | number | boolean>): Promise<T> {
+    public update = (id: ID, body: Record<string, string | number | boolean>): Promise<T>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/' + id + '', body)
     }
 
@@ -145,6 +157,7 @@ export class AutoController<T, ID, ApiIncludes>{
 
     */
     public listPOTUpdate = (): Promise<Object>  => {
+        console.log(this);
         return getOne(this.apiUrl + '/list.pot')
     }
 

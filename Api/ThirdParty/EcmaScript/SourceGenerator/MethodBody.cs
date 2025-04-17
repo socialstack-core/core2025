@@ -97,10 +97,14 @@ namespace Api.EcmaScript
         private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams)
         {
             var urlPart = string.IsNullOrEmpty(endpointUrl) ? "this.apiUrl" : $"this.apiUrl + '/{endpointUrl}'";
+            var debug = true;
 
             if (bodyParam != null)
             {
-                return [$"return {caller}({urlPart}, {bodyParam.Name})"];
+                return [
+                    debug ? "console.log(this);" : "", 
+                    $"return {caller}({urlPart}, {bodyParam.Name})"
+                ];
             }
 
             var multipleParams = allParams
@@ -109,7 +113,10 @@ namespace Api.EcmaScript
 
             if (multipleParams.Count > 1)
             {
-                var injected = new List<string> { $"return getOne({urlPart}, {{" };
+                var injected = new List<string> {
+                    debug ? "console.log(this);" : "",  
+                    $"return getOne({urlPart}, {{" 
+                };
                 injected.AddRange(multipleParams.Select(p => $"{p.Name},"));
                 injected.Add("})");
                 return injected;
@@ -119,13 +126,14 @@ namespace Api.EcmaScript
             {
                 return
                 [
+                    debug ? "console.log(this);" : "", 
                     $"return {caller}({urlPart}, {{",
                     multipleParams[0].Name,
                     "})"
                 ];
             }
 
-            return [$"return {caller}({urlPart})"];
+            return [debug ? "console.log(this);" : "",  $"return {caller}({urlPart})"];
         }
 
         private static void AddMethodDocs(EcmaService ecmaService, MethodInfo method, ClassMethod classMethod)

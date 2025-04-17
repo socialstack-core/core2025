@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Api.EcmaScript.TypeScript;
 using Api.Startup;
@@ -71,7 +72,7 @@ namespace Api.EcmaScript
                 Injected =
                 [
                     $"super('{baseUrl}')",
-                    $"this.includes = new {includesName}();"
+                    $"this.includes = new {includesName}('');"
                 ]
             };
 
