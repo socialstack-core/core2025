@@ -8,7 +8,6 @@ import Search from 'UI/Search';
 import Uploader from 'UI/Uploader';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
-import webRequest from 'UI/Functions/WebRequest';
 import * as fileRef from 'UI/FileRef';
 import Default from 'Admin/Layouts/Default';
 import MultiSelect from 'Admin/MultiSelect';

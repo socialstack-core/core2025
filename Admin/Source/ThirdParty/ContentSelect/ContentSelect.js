@@ -1,4 +1,3 @@
-import webRequest from 'UI/Functions/WebRequest';
 import Input from 'UI/Input';
 import Search from 'UI/Search';
 import AutoForm from 'Admin/AutoForm';
@@ -39,12 +38,14 @@ export default class ContentSelect extends React.Component {
 	}
 	
 	load(props, first){
+		var api = require('Api/' + props.contentType).default;
+		
 		if(props.search){
 			var value = props.value || props.defaultValue;
 			if(value){
-				webRequest(props.contentType.toLowerCase() + '/' + value).then(response => {
+				api.load(value).then(response => {
 					this.setState({
-						searchSelected: response ? response.json : null
+						searchSelected: response
 					});
 				});
 			}else if(!first){
@@ -53,8 +54,8 @@ export default class ContentSelect extends React.Component {
 				});
 			}
 		}else{
-			webRequest(props.contentType.toLowerCase() + '/list').then(response => {
-				var all = response.json.results;
+			api.listAll().then(response => {
+				var all = response.results;
 				if (!props.hideDefaultValue) {
 					all.unshift(null);
 				}

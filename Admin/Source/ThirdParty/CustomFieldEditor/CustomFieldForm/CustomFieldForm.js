@@ -1,7 +1,7 @@
 import Form from 'UI/Form';
 import Input from 'UI/Input';
 import CustomFieldSelectForm from 'Admin/CustomFieldEditor/CustomFieldSelectForm';
-import webRequest from 'UI/Functions/WebRequest';
+import customContentTypeApi from 'Api/CustomContentType';
 
 export default class CustomFieldForm extends React.Component {
 	constructor(props) {
@@ -38,8 +38,7 @@ export default class CustomFieldForm extends React.Component {
 	}
 
 	componentDidMount() {
-		webRequest("customContentType/allcustomtypesplus").then(resp => {
-			var types = resp.json;
+		customContentTypeApi.getAllTypesPlus().then(types => {
 			this.setState({ types: types });
 		});
 	}

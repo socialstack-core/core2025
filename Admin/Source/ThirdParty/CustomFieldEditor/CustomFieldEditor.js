@@ -1,7 +1,7 @@
 import Loop from 'UI/Loop';
 import CustomFieldForm from 'Admin/CustomFieldEditor/CustomFieldForm';
 import Modal from 'UI/Modal';
-import webRequest from 'UI/Functions/WebRequest';
+import customContentTypeFieldApi from 'Api/CustomContentTypeField';
 
 export default class CustomFieldEditor extends React.Component {
 	constructor(props) {
@@ -112,7 +112,7 @@ export default class CustomFieldEditor extends React.Component {
 			return;
 		}
 		
-		webRequest("customContentTypeField/" + id, undefined, { method: "delete" }).then(() => {
+		customContentTypeFieldApi.delete(id).then(() => {
 			this.setState({ showConfirmDeleteModal: false });
 		}).catch(e => {
 			console.error(e);
@@ -131,7 +131,7 @@ export default class CustomFieldEditor extends React.Component {
 				{`Fields`}
 			</label>
 			<Loop asTable live
-				over='customContentTypeField'
+				over={customContentTypeFieldApi}
 				filter={
 					{
 						where: {

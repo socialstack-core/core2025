@@ -1,7 +1,7 @@
 import TestComponent from './TestComponent';
 import ThemePreview from './ThemePreview';
 import Loading from 'UI/Loading';
-import webRequest from 'UI/Functions/WebRequest';
+import configurationApi from 'Api/Configuration';
 import PanelledEditor from 'Admin/Layouts/PanelledEditor';
 import {calculateSpecifity, compareSpecifity} from './Specifity';
 import { ErrorCatcher } from 'UI/Canvas';
@@ -313,9 +313,9 @@ export default function ThemeEditor(props){
 	React.useEffect(() => {
 		
 		// Get all themes:
-		webRequest('configuration/list').then(response => {
+		configurationApi.list().then(response => {
 			
-			var configs = response.json.results;
+			var configs = response.results;
 			
 			// filter to just themes:
 			var themeConfigs = configs.filter(config => config.key && config.key.toLowerCase() == 'theme');

@@ -402,17 +402,12 @@ class AutoFormInternal extends React.Component {
 		var prom; // :Promise<WhateverTheContentTypeIs>
 
 		if (this.state.revisionId) {
-			// prom = api.deleteRevision() <-- but needs to only be present if revisions module is 
-			// installed, meaning we need to be able to extend AutoForm.
+			prom = api.deleteRevision();
 		} else {
-			// prom = api.delete()
+			prom = api.delete(this.props.id);
 		}
-
-		webRequest(
-			this.state.revisionId ? (this.props.endpoint + '/revision/' + this.state.revisionId) : (this.props.endpoint + '/' + this.props.id),
-			null,
-			{ method: 'delete' }
-		).then(response => {
+		
+		prom.then(response => {
 			if (this.props.onActionComplete) {
 				this.props.onActionComplete(null);
 				return;

@@ -1,5 +1,4 @@
 import Search from 'UI/Search';
-import webRequest from 'UI/Functions/WebRequest';
 import Modal from 'UI/Modal';
 import Canvas from 'UI/Canvas';
 import Image from 'UI/Image';
@@ -43,12 +42,14 @@ export default class MultiSelect extends React.Component {
 				query: "Id=[?]",
 				args: [this.state.value.map(e => e.id)]
 			}
-
-			webRequest(this.props.contentType + '/list', filter).then(response => {
+			
+			var api = require('Api/' + this.props.contentType).default;
+			
+			api.list(filter).then(response => {
 				
 				// Loading the values and preserving order:
 				var idLookup = {};
-				response.json.results.forEach(r => {idLookup[r.id+''] = r;});
+				response.results.forEach(r => {idLookup[r.id+''] = r;});
 				
 				this.setState({
 					mustLoad: false,
