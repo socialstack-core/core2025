@@ -25,7 +25,7 @@ namespace Api.EcmaScript
 
             var caller = ResolveCaller(method);
 
-            classMethod.Injected = GenerateCall(caller, endpointUrl, bodyParam, parameters, GetHttpMethodFromAttribute(method));
+            classMethod.Injected = GenerateCall(caller, endpointUrl, bodyParam, parameters, GetHttpMethodFromAttribute(method), classMethod);
 
             AddMethodDocs(ecmaService, method, classMethod);
         }
@@ -94,16 +94,25 @@ namespace Api.EcmaScript
             return (genericArgs.Length > 0 && IsList(genericArgs[0])) ? "getList" : "getOne";
         }
 
-        private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod)
+        private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod, ClassMethod classMethod)
         {
             var urlPart = string.IsNullOrEmpty(endpointUrl) ? "this.apiUrl" : $"this.apiUrl + '/{endpointUrl}'";
+            List<string> inject = [];
 
             if (bodyParam != null)
             {
-                return [ 
-                    // body param doesn't need a method POST
+                inject.Add( 
                     $"return {caller}({urlPart}, {bodyParam.Name})"
-                ];
+                );
+
+                if (classMethod.ReturnType == "Promise<SessionResponse>")
+                {
+                    inject.Add(".then((s: SessionResponse) => {");
+                    inject.Add("\tsetSession(s);");
+                    inject.Add("\treturn s;");
+                    inject.Add("})");
+                }
+                return inject;
             }
 
             var multipleParams = allParams
@@ -112,23 +121,48 @@ namespace Api.EcmaScript
 
             if (multipleParams.Count > 1)
             {
-                var injected = new List<string> {
-                    $"return getOne({urlPart}, {{" 
-                };
-                injected.AddRange(multipleParams.Select(p => $"{p.Name},"));
-                injected.Add("})");
-                return injected;
+                
+                inject.Add($"return getOne({urlPart}, {{"); 
+                
+                inject.AddRange(multipleParams.Select(p => $"{p.Name},"));
+                inject.Add("})");
+
+                if (classMethod.ReturnType == "Promise<SessionResponse>")
+                {
+                    inject.Add(".then((s: SessionResponse) => {");
+                    inject.Add("\tsetSession(s);");
+                    inject.Add("\treturn s;");
+                    inject.Add("})");
+                }
+
+                return inject;
             } else if (multipleParams.Count == 1)
             {
-                return
-                [
-                    $"return {caller}({urlPart}, {{",
-                    multipleParams[0].Name,
-                    "}, { method: '" + requestMethod + "' })"
-                ];
+                inject.Add($"return {caller}({urlPart}, {{");
+                inject.Add(multipleParams[0].Name);
+                inject.Add("}, { method: '" + requestMethod + "' })");
+
+                if (classMethod.ReturnType == "Promise<SessionResponse>")
+                {
+                    inject.Add(".then((s: SessionResponse) => {");
+                    inject.Add("\tsetSession(s);");
+                    inject.Add("\treturn s;");
+                    inject.Add("})");
+                }
+                return inject;
             }
             
-            return [$"return {caller}({urlPart});"];
+            inject.Add($"return {caller}({urlPart})");
+
+            if (classMethod.ReturnType == "Promise<SessionResponse>")
+            {
+                inject.Add(".then((s: SessionResponse) => {");
+                inject.Add("\tsetSession(s);");
+                inject.Add("\treturn s;");
+                inject.Add("})");
+            }
+
+            return inject;
         }
 
         private static void AddMethodDocs(EcmaService ecmaService, MethodInfo method, ClassMethod classMethod)

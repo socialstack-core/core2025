@@ -22,6 +22,15 @@ namespace Api.EcmaScript
         {
             var ecmaService = Services.Get<EcmaService>();
 
+            
+            if (classMethod.ReturnType == "Promise<SessionResponse>")
+            {
+                classMethod.Arguments.Add(new ClassMethodArgument() {
+                    Name = "setSession", 
+                    Type = "(s: SessionResponse) => Session"
+                });
+            }
+
             // Iterate over method parameters
             foreach (var param in method.GetParameters())
             {
