@@ -7,6 +7,7 @@ import Modal from "UI/Modal";
 import { useSession } from "UI/Session";
 import ComponentGroupApi, { ComponentGroup } from "Api/ComponentGroup";
 import { ApiList } from "UI/Functions/WebRequest";
+import ComponentGroupRenderer from "./ComponentGroup";
 
 
 export type ComponentSelectorProps = {
@@ -54,9 +55,19 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                     // if the JSON is invalid, prevent an error.
                     setAllowedComponents(Array.isArray(parsed) ? parsed : []);
 
+                    console.log(allowedComponents);
+
                     console.error("The allowedComponentsJson property is invalid, expected string[]", group);
                 }
-                
+                else
+                {
+                    console.error('Incorrect response for component group')
+                    setAllowedComponents([]);
+                }
+            })
+            .catch((err) => {
+                console.error('An error occured', err);
+                setAllowedComponents([]);
             })
         }
     }, [allowedComponents])
@@ -80,7 +91,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                     }
 
                     // we can reduce the options shown to what is actively available
-                    if (props.permitted && Array.isArray(props.permitted) && props.permitted.length != 0 &&  !props.permitted.includes(key)) {
+                    if (props.permitted && Array.isArray(props.permitted) && props.permitted.length != 0 && !props.permitted.includes(key)) {
                         return;
                     }
 
@@ -147,6 +158,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
 
                                             if (!allowedComponents.includes(componentName))
                                             {
+                                                console.log('Skipped')
                                                 // omit the item
                                                 return;
                                             }
@@ -168,7 +180,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                         )}
                         {Object.keys(components).map(group => {
                             return (
-                                <ComponentGroup 
+                                <ComponentGroupRenderer 
                                     filter={filter} 
                                     onComponentSelected={(name) => {
                                         props.onComponentSelected(name)

@@ -1,6 +1,8 @@
 using System;
 using Api.AutoForms;
 using Api.Database;
+using Api.Permissions;
+using Api.Startup;
 using Api.Translate;
 using Api.Users;
 
@@ -11,6 +13,7 @@ namespace Api.Components
 	/// <summary>
 	/// A ComponentGroup
 	/// </summary>
+	[HasVirtualField("Role", typeof(Role), "Id")]
 	public partial class ComponentGroup : VersionedContent<uint>
 	{
         /// <summary>

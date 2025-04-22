@@ -7,7 +7,7 @@ type ComponentGroupProps = {
     filter: string | undefined
 }
 
-const ComponentGroup: React.FC<ComponentGroupProps> = (props: ComponentGroupProps): React.ReactElement => {
+const ComponentGroupRenderer: React.FC<ComponentGroupProps> = (props: ComponentGroupProps): React.ReactElement => {
 
     const { group, groupName, filter } = props;
 
@@ -39,4 +39,4 @@ const ComponentGroup: React.FC<ComponentGroupProps> = (props: ComponentGroupProp
 
 }
 
-export default ComponentGroup;
+export default ComponentGroupRenderer;
