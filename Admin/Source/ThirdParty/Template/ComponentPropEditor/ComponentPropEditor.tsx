@@ -10,7 +10,8 @@ import { sortComponentOrder } from "../Functions";
 
 export type ComponentPropEditorProps = {
     item: TreeComponentItem
-    modules?: Record<string, CodeModuleMeta>
+    modules?: Record<string, CodeModuleMeta>,
+    onChange?: (item: TreeComponentItem) => void
 }
 
 /*
@@ -56,7 +57,11 @@ const ComponentPropEditor: React.FC<ComponentPropEditorProps> = (props:Component
     // as mentioned above getAll is cached, so we probably wont even see the fancy loader above, unless
     // the user is running this on a toaster. 
 
-    return <PhysicalComponentPropEditor {...props} tsInfo={codeModule}/>
+    return <PhysicalComponentPropEditor 
+                {...props} 
+                tsInfo={codeModule} 
+                onChange={props.onChange}
+            />
 }
 
 const NonPhysicalPropEditor: React.FC<ComponentPropEditorProps> = (props: ComponentPropEditorProps): React.ReactElement => {
@@ -103,7 +108,7 @@ export type PhysicalComponentProps = ComponentPropEditorProps & {
 
 const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: PhysicalComponentProps): React.ReactElement => {
 
-    const { tsInfo, item } = props;
+    const { tsInfo, item, onChange } = props;
 
     const fields = getPropsForComponent(tsInfo);
 
@@ -111,9 +116,52 @@ const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: Ph
         return <Alert variant="danger">{`There was an issue reading this component`}</Alert>
     }
 
+    const value = JSON.stringify(item);
+
     return (
-        <Input defaultValue={item} type='canvas' label={`Component preview`} className='component-preview'/>
+        <Input
+            defaultValue={value}
+            type='canvas' 
+            onChange={(ev:any) => {
+
+                if (!ev)
+                {
+                    return;
+                }
+
+                var changeSet: any[] = ev.node.content;
+
+                if (changeSet.length == 0)
+                {
+                    // do nothing
+                    return;
+                }
+                var edited = changeSet.find(child => child.typeName == item.t);
+
+                if (!edited)
+                {
+                    return;
+                }
+                onChange && onChange(canvasNodeToTreeComponent(item,edited))
+            }} 
+            label={`Component preview`} 
+            className='component-preview'
+        />
     )
+}
+
+const canvasNodeToTreeComponent = (item: TreeComponentItem, node: any):TreeComponentItem => {
+    
+    const newConfig:TreeComponentItem = {
+        t: item.t,
+        d: node.props,
+        c: []
+    };
+    
+    Object.assign(newConfig.d, node.props);
+    Object.assign(newConfig.d, item.d)
+
+    return newConfig;
 }
 
 type PermittedChildEditorProps = {

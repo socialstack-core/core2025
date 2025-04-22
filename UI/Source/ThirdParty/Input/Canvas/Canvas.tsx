@@ -8,9 +8,7 @@ declare global {
             id?: string,
             onChange?: (e: React.FormEvent<HTMLInputElement>) => void,
             onBlur?: (e: React.FocusEvent) => void,
-            defaultValue: {
-                t: string
-            }
+            defaultValue: string
         }
     }
 }

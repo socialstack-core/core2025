@@ -241,6 +241,7 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 			field={field}
 			inputRef={inputRef}
 			onInputRef={setRef}
+			onChange={props.onChange}
 		/>;
 	}
 

@@ -29,6 +29,8 @@ inputTypes.canvas = function (props) {
 		modules
 		enableAdd
 		{...field}
+		onInputRef={props.onInputRef}
+		onChange={props.onChange}
 	/>;
 };
 
@@ -271,6 +273,10 @@ export default function CanvasEditor (props) {
 		});
 
 	}, []);
+
+	useEffect(() => {
+		props.onChange && props.onChange(canvasState)
+	}, [canvasState])
 
 	if (!canvasState) {
 		return <Loading />;
@@ -913,7 +919,7 @@ class CanvasEditorCore extends React.Component {
 		var {error} = this.state;
 		var {fullscreen, canvasState} = this.props;
 		var node = canvasState.node;
-		
+
 		var { toolbar, name } = this.props;
 		
 		if(canvasState.sourceMode){
@@ -956,12 +962,17 @@ class CanvasEditorCore extends React.Component {
 				{this.renderRootNode(node, canvasState)}
 			</div>
 			<input ref={ir=>{
+				
+				ir = this.props.onInputRef && this.props.onInputRef(ir);
+
 				this.mainIr=ir;
 				if(ir){
 					ir.onGetValue=(val, ele)=>{
+
+						this.props.onGetValue && this.props.onGetValue(val, ele);
+
 						if(ele == ir){
 							var canvasState = this.props.canvasState;
-							
 							if(canvasState.graphState){
 								// The graph view is open. Update its value into the canvas state first.
 								// We don't have a reference to the hidden input field though, so we'll use its class to find it.
@@ -980,7 +991,6 @@ class CanvasEditorCore extends React.Component {
 									return cs.toCanvasJson(true);
 								}
 							}
-							
 							return canvasState.toCanvasJson(true);
 						}
 					};

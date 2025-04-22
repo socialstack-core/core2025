@@ -58,7 +58,7 @@ const TemplateConfig: React.FC<TemplateConfigProps> = (props: TemplateConfigProp
             if (chosenLayout.name.length != 0) {
                 where.baseTemplate = chosenLayout.name;
             }
-            TemplateApi.list(where)
+            TemplateApi.list({ query: "BaseTemplate = ?", args: [chosenLayout.name] })
                        .then((possibleOptions: ApiList<Template>) => {
                             
                             // pass in a list of possible templates that share the same base template.

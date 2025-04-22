@@ -351,7 +351,13 @@ const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelE
 
                                 emitChange();
                             }} 
-                            onChange={emitChange}
+                            onChange={(overriding?: TreeComponentItem) => {
+                                if (overriding)
+                                {
+                                    config.components![idx] = overriding;
+                                    emitChange();
+                                }
+                            }}
                             item={component}
                         />
                     )
@@ -580,6 +586,9 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                 >
                     <ComponentPropEditor
                         item={item}
+                        onChange={(t) => {
+                            props.onChange(t);
+                        }}
                     />
                 </Modal>
             )}
