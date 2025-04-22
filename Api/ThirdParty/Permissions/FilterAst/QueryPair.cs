@@ -5,6 +5,7 @@ using Api.Startup;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Api.Permissions
@@ -801,7 +802,40 @@ namespace Api.Permissions
 			else
 			{
 				var t = v.GetType();
-				if (!argInfo.ArgType.IsAssignableFrom(t))
+				var argType = argInfo.ArgType;
+				var nullableUnderlying = Nullable.GetUnderlyingType(argType);
+
+				// Common numeric conversion.
+				// This happens because the JSON parser exclusively outputs long and double.
+				if (t == typeof(long))
+				{
+					if (nullableUnderlying == null)
+					{
+						ConvertFromLong((long)v, argType, argInfo.ConstructedField);
+					}
+					else
+					{
+						ConvertFromLongNullable((long)v, nullableUnderlying, argInfo.ConstructedField);
+					}
+
+					_arg++;
+					return this;
+				}
+				else if (t == typeof(double))
+				{
+					if (nullableUnderlying == null)
+					{
+						ConvertFromDouble((double)v, argType, argInfo.ConstructedField);
+					}
+					else
+					{
+						ConvertFromDoubleNullable((double)v, nullableUnderlying, argInfo.ConstructedField);
+					}
+
+					_arg++;
+					return this;
+				}
+				else if (!argType.IsAssignableFrom(t))
 				{
 					Fail(t);
 				}
@@ -810,6 +844,202 @@ namespace Api.Permissions
 			argInfo.ConstructedField.SetValue(this, v);
 			_arg++;
 			return this;
+		}
+
+		private void ConvertFromLong(long v, Type targetType, FieldInfo target)
+		{
+			switch (Type.GetTypeCode(targetType))
+			{
+				case TypeCode.Boolean:
+					target.SetValue(this, (bool)(v != 0));
+					break;
+				case TypeCode.Char:
+					target.SetValue(this, (char)(v));
+					break;
+				case TypeCode.SByte:
+					target.SetValue(this, (sbyte)(v));
+					break;
+				case TypeCode.Byte:
+					target.SetValue(this, (byte)(v));
+					break;
+				case TypeCode.Int16:
+					target.SetValue(this, (short)(v));
+					break;
+				case TypeCode.UInt16:
+					target.SetValue(this, (ushort)(v));
+					break;
+				case TypeCode.Int32:
+					target.SetValue(this, (int)(v));
+					break;
+				case TypeCode.UInt32:
+					target.SetValue(this, (uint)(v));
+					break;
+				case TypeCode.Int64:
+					target.SetValue(this, v);
+					break;
+				case TypeCode.UInt64:
+					target.SetValue(this, (ulong)(v));
+					break;
+				case TypeCode.Single:
+					target.SetValue(this, (float)(v));
+					break;
+				case TypeCode.Double:
+					target.SetValue(this, (double)(v));
+					break;
+				case TypeCode.String:
+					target.SetValue(this, v.ToString());
+					break;
+				default:
+					Fail(targetType);
+					break;
+			}
+		}
+		
+		private void ConvertFromLongNullable(long v, Type targetType, FieldInfo target)
+		{
+			switch (Type.GetTypeCode(targetType))
+			{
+				case TypeCode.Boolean:
+					target.SetValue(this, (bool?)(v != 0));
+					break;
+				case TypeCode.Char:
+					target.SetValue(this, (char?)(v));
+					break;
+				case TypeCode.SByte:
+					target.SetValue(this, (sbyte?)(v));
+					break;
+				case TypeCode.Byte:
+					target.SetValue(this, (byte?)(v));
+					break;
+				case TypeCode.Int16:
+					target.SetValue(this, (short?)(v));
+					break;
+				case TypeCode.UInt16:
+					target.SetValue(this, (ushort?)(v));
+					break;
+				case TypeCode.Int32:
+					target.SetValue(this, (int?)(v));
+					break;
+				case TypeCode.UInt32:
+					target.SetValue(this, (uint?)(v));
+					break;
+				case TypeCode.Int64:
+					target.SetValue(this, (long?)(v));
+					break;
+				case TypeCode.UInt64:
+					target.SetValue(this, (ulong?)(v));
+					break;
+				case TypeCode.Single:
+					target.SetValue(this, (float?)(v));
+					break;
+				case TypeCode.Double:
+					target.SetValue(this, (double?)(v));
+					break;
+				case TypeCode.String:
+					target.SetValue(this, v.ToString());
+					break;
+				default:
+					Fail(targetType);
+					break;
+			}
+		}
+		
+		private void ConvertFromDouble(double v, Type targetType, FieldInfo target)
+		{
+			switch (Type.GetTypeCode(targetType))
+			{
+				case TypeCode.Boolean:
+					target.SetValue(this, (bool)(v != 0));
+					break;
+				case TypeCode.Char:
+					target.SetValue(this, (char)(v));
+					break;
+				case TypeCode.SByte:
+					target.SetValue(this, (sbyte)(v));
+					break;
+				case TypeCode.Byte:
+					target.SetValue(this, (byte)(v));
+					break;
+				case TypeCode.Int16:
+					target.SetValue(this, (short)(v));
+					break;
+				case TypeCode.UInt16:
+					target.SetValue(this, (ushort)(v));
+					break;
+				case TypeCode.Int32:
+					target.SetValue(this, (int)(v));
+					break;
+				case TypeCode.UInt32:
+					target.SetValue(this, (uint)(v));
+					break;
+				case TypeCode.Int64:
+					target.SetValue(this, v);
+					break;
+				case TypeCode.UInt64:
+					target.SetValue(this, (ulong)(v));
+					break;
+				case TypeCode.Single:
+					target.SetValue(this, (float)(v));
+					break;
+				case TypeCode.Double:
+					target.SetValue(this, (double)(v));
+					break;
+				case TypeCode.String:
+					target.SetValue(this, v.ToString());
+					break;
+				default:
+					Fail(targetType);
+					break;
+			}
+		}
+		
+		private void ConvertFromDoubleNullable(double v, Type targetType, FieldInfo target)
+		{
+			switch (Type.GetTypeCode(targetType))
+			{
+				case TypeCode.Boolean:
+					target.SetValue(this, (bool?)(v != 0));
+					break;
+				case TypeCode.Char:
+					target.SetValue(this, (char?)(v));
+					break;
+				case TypeCode.SByte:
+					target.SetValue(this, (sbyte?)(v));
+					break;
+				case TypeCode.Byte:
+					target.SetValue(this, (byte?)(v));
+					break;
+				case TypeCode.Int16:
+					target.SetValue(this, (short?)(v));
+					break;
+				case TypeCode.UInt16:
+					target.SetValue(this, (ushort?)(v));
+					break;
+				case TypeCode.Int32:
+					target.SetValue(this, (int?)(v));
+					break;
+				case TypeCode.UInt32:
+					target.SetValue(this, (uint?)(v));
+					break;
+				case TypeCode.Int64:
+					target.SetValue(this, (long?)(v));
+					break;
+				case TypeCode.UInt64:
+					target.SetValue(this, (ulong?)(v));
+					break;
+				case TypeCode.Single:
+					target.SetValue(this, (float?)(v));
+					break;
+				case TypeCode.Double:
+					target.SetValue(this, (double?)(v));
+					break;
+				case TypeCode.String:
+					target.SetValue(this, v.ToString());
+					break;
+				default:
+					Fail(targetType);
+					break;
+			}
 		}
 
 		/// <summary>
