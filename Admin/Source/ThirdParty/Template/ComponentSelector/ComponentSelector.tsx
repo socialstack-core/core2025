@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Alert from "UI/Alert";
 import Input from "UI/Input";
 import Modal from "UI/Modal";
-import ComponentGroup from "./ComponentGroup";
+import { useSession } from "UI/Session";
+import ComponentGroupApi, { ComponentGroup } from "Api/ComponentGroup";
+import { ApiList } from "UI/Functions/WebRequest";
 
 
 export type ComponentSelectorProps = {
@@ -18,12 +20,46 @@ export type ComponentSelectorProps = {
 
 const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSelectorProps): React.ReactElement => {
 
+    const { session } = useSession();
 
     // this holds all the components that follow certain criteria.
     const [components, setComponents] = useState<Record<string, Record<string, CodeModuleMeta>> | null>(null)
 
+    // if allowed components is empty, no rules limiting the allowed components have been 
+    // created, therefore can use them all.
+    const [allowedComponents, setAllowedComponents] = useState<string[]>();
+
     // allow components to be filtered
     const [filter, setFilter] = useState<string>()
+
+    useEffect(() => {
+        if (!allowedComponents)
+        {
+            ComponentGroupApi.list({
+                query: "Role = ?",
+                args: [session.role.id]
+            })
+            .then((result: ApiList<ComponentGroup>) => {
+                if (result.totalResults == 0)
+                {
+                    setAllowedComponents([]);
+                    return;
+                }
+                // this can be the only one.
+                const group = result.results[0];
+
+                if (group.allowedComponents)
+                {
+                    var parsed = JSON.parse(group.allowedComponents!);
+                    // if the JSON is invalid, prevent an error.
+                    setAllowedComponents(Array.isArray(parsed) ? parsed : []);
+
+                    console.error("The allowedComponentsJson property is invalid, expected string[]", group);
+                }
+                
+            })
+        }
+    }, [allowedComponents])
 
     useEffect(() => {
         // we need the components available to actually choose one. 
@@ -103,6 +139,18 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                                 <div className='group-content'>
                                     {Object.keys(extra).map(componentName => {
                                         const componentProps = extra[componentName];
+
+                                        if (allowedComponents && allowedComponents.length != 0)
+                                        {
+                                            // there's some rules in place, lets see if the current
+                                            // user can access each component.
+
+                                            if (!allowedComponents.includes(componentName))
+                                            {
+                                                // omit the item
+                                                return;
+                                            }
+                                        }
 
                                         return (
                                             <div title={componentName} className='group-item' onClick={() => props.onComponentSelected(componentName, componentProps)}>
