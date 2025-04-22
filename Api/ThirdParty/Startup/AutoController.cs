@@ -3,11 +3,9 @@ using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
 using Api.Startup;
-using Azure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
-using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -119,19 +117,35 @@ public partial class AutoController<T,ID> : AutoController
 	}
 
 	/// <summary>
-	/// GET /v1/entityTypeName/recache
-	/// Repopulates the cache for this service (if it is cached, and if you are an admin).
+	/// GET /v1/entityTypeName/cache/invalidate/{id}
+	/// Repopulates the referenced item for this service (if it is cached, and if you are an admin).
 	/// </summary>
 	/// <returns></returns>
-	[HttpGet("recache")]
-	public virtual async ValueTask Recache(Context context)
+	[HttpGet("cache/invalidate/{id}")]
+	public virtual async ValueTask InvalidateCachedItem(Context context, [FromRoute] ID id)
 	{
 		if (context.Role == null || !context.Role.CanViewAdmin)
 		{
-			throw PermissionException.Create("recache", context);
+			throw PermissionException.Create("cache/invalidate", context);
 		}
 
-		await _service.Recache();
+		await _service.InvalidateCachedItem(id);
+	}
+	
+	/// <summary>
+	/// GET /v1/entityTypeName/cache/invalidate
+	/// Repopulates the cache for this service (if it is cached, and if you are an admin).
+	/// </summary>
+	/// <returns></returns>
+	[HttpGet("cache/invalidate")]
+	public virtual async ValueTask InvalidateCache(Context context)
+	{
+		if (context.Role == null || !context.Role.CanViewAdmin)
+		{
+			throw PermissionException.Create("cache/invalidate", context);
+		}
+
+		await _service.InvalidateCache();
 	}
 
 	/// <summary>

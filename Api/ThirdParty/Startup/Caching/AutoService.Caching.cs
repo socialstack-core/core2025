@@ -4,6 +4,7 @@ using Api.Startup;
 using System;
 using System.Threading.Tasks;
 using Api.Translate;
+using System.Collections.Generic;
 
 /// <summary>
 /// A general use service which manipulates an entity type. In the global namespace due to its common use.
@@ -98,32 +99,143 @@ public partial class AutoService<T, ID> {
             Log.Ok(LogTag, InstanceType.Name + " - cached");
 		}
 
-		await SetupCache();
+		await PopulateCache(true);
 	}
 
-	/*
 	/// <summary>
-	/// Dumps some metadata about the cache
+	/// Reloads a particular cached item.
 	/// </summary>
 	/// <returns></returns>
-	public async ValueTask DumpCacheMeta(Microsoft.AspNetCore.Http.HttpResponse response)
+	public async ValueTask InvalidateCachedItem(ID id)
 	{
+		if (_cacheConfig == null)
+		{
+			throw new PublicException("Not a cached service - no cache to invalidate", "no_cache");
+		}
 
+		await InvalidateCachedItems(new List<ID>() { id });
 	}
-	*/
-
+	
 	/// <summary>
-	/// Sets up the cache.
+	/// Invalidates a particular set of cached items.
 	/// </summary>
 	/// <returns></returns>
-	public async ValueTask Recache()
+	public async ValueTask InvalidateCachedItems(List<ID> ids)
+	{
+		if (_cacheConfig == null)
+		{
+			throw new PublicException("Not a cached service - no cache to invalidate", "no_cache");
+		}
+
+		var localeSet = ContentTypes.Locales;
+		var cacheSet = _cacheSet;
+
+		var primaryLocaleCache = cacheSet.Caches[0];
+
+		if (localeSet == null || cacheSet == null)
+		{
+			// They weren't cached anyway: we're still going through the startup process.
+			return;
+		}
+
+		// Get the set of objects, for each supported locale:
+		for (var i = 0; i < localeSet.Length; i++)
+		{
+			var locale = localeSet[i];
+
+			if (locale == null)
+			{
+				continue;
+			}
+
+			var cache = cacheSet.Caches[i];
+
+			var ctx = new Context()
+			{
+				LocaleId = locale.Id
+			};
+
+			// Get the *raw* entries (for primary locale, it makes no difference).
+			var items = await Where("Id=[?]", DataOptions.NoCacheIgnorePermissions | DataOptions.RawFlag)
+				.Bind(ids)
+				.ListAll(ctx);
+
+			Dictionary<ID, T> objLookup = null;
+
+			if (ids.Count > 5)
+			{
+				objLookup = new Dictionary<ID, T>();
+			
+				// For larger item clusters, we'll use an ID based lookup.
+				foreach (var item in items)
+				{
+					objLookup[item.Id] = item;
+				}
+			}
+
+			// It's possible that they don't exist anymore in which case
+			// the items set is going to not return the target object.
+			foreach(var id in ids)
+			{
+				T raw = null;
+
+				if (objLookup != null)
+				{
+					objLookup.TryGetValue(id, out raw);
+				}
+				else
+				{
+					foreach (var item in items)
+					{
+						if (item.Id.Equals(id))
+						{
+							raw = item;
+							break;
+						}
+					}
+				}
+
+				if (raw == null)
+				{
+					// It's been deleted - remove from the cache
+					cache.Remove(ctx, id);
+				}
+				else
+				{
+					// Update the cached entity.
+					if (i == 0)
+					{
+						// Primary - raw and target are the same object.
+						cache.Add(ctx, raw, raw);
+					}
+					else
+					{
+						// Secondary locale. The target object is a clone of the raw object, 
+						// but then with any unset fields from the primary locale.
+						var entity = (T)Activator.CreateInstance(InstanceType);
+
+						PopulateTargetEntityFromRaw(entity, raw, primaryLocaleCache.Get(raw.GetId()));
+
+						cache.Add(ctx, entity, raw);
+					}
+				}
+			}
+		}
+	}
+
+
+	/// <summary>
+	/// Reloads the whole cache from the db.
+	/// </summary>
+	/// <returns></returns>
+	public async ValueTask InvalidateCache()
 	{
 		if (_cacheConfig == null)
 		{
 			throw new PublicException("Not a cached service - no cache to reload", "no_cache");
 		}
 
-		await SetupCache();
+		await PopulateCache(false);
 	}
 
 	/// <summary>
@@ -161,9 +273,14 @@ public partial class AutoService<T, ID> {
 		}
 	}
 
-	private async ValueTask SetupCache()
+	/// <summary>
+	/// Populates the cache.
+	/// </summary>
+	/// <param name="stopIfAlreadyPopulated"></param>
+	/// <returns></returns>
+	public async ValueTask PopulateCache(bool stopIfAlreadyPopulated = false)
 	{
-		if (_cacheSet != null)
+		if (stopIfAlreadyPopulated && _cacheSet != null)
 		{
 			// Cache setup elsewhere.
 			return;
@@ -187,10 +304,11 @@ public partial class AutoService<T, ID> {
 			};
 		}
 
-		_cacheSet = new CacheSet<T, ID>(GetContentFields(), EntityName);
+		var cacheSet = new CacheSet<T, ID>(GetContentFields(), EntityName);
 
 		if (localeSet.Length == 0)
 		{
+			_cacheSet = cacheSet;
 			return;
 		}
 
@@ -204,10 +322,10 @@ public partial class AutoService<T, ID> {
 				continue;
 			}
 
-			_cacheSet.RequireCacheForLocale(locale.Id);
+			cacheSet.RequireCacheForLocale(locale.Id);
 		}
 
-		var primaryLocaleCache = _cacheSet.Caches[0];
+		var primaryLocaleCache = cacheSet.Caches[0];
 
 		// Get everything, for each supported locale:
 		for (var i = 0; i < localeSet.Length; i++)
@@ -219,7 +337,7 @@ public partial class AutoService<T, ID> {
 				continue;
 			}
 
-			var cache = _cacheSet.Caches[i];
+			var cache = cacheSet.Caches[i];
 
 			var ctx = new Context()
 			{
@@ -250,6 +368,8 @@ public partial class AutoService<T, ID> {
 				
 			}
 		}
+
+		_cacheSet = cacheSet;
 
 		if (_cacheConfig.OnCacheLoaded != null)
 		{
