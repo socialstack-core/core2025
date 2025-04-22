@@ -121,29 +121,15 @@ const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: Ph
     return (
         <Input
             defaultValue={value}
-            type='canvas' 
-            onChange={(ev:any) => {
+            type='canvas'
+            key={value}
+            onCanvasChange={(source:string) => {
+                var edited = JSON.parse(source);
 
-                if (!ev)
-                {
-                    return;
-                }
+                console.log({ edited, item })
 
-                var changeSet: any[] = ev.node.content;
-
-                if (changeSet.length == 0)
-                {
-                    // do nothing
-                    return;
-                }
-                var edited = changeSet.find(child => child.typeName == item.t);
-
-                if (!edited)
-                {
-                    return;
-                }
                 onChange && onChange(canvasNodeToTreeComponent(item,edited))
-            }} 
+            }}
             label={`Component preview`} 
             className='component-preview'
         />
@@ -154,11 +140,10 @@ const canvasNodeToTreeComponent = (item: TreeComponentItem, node: any):TreeCompo
     
     const newConfig:TreeComponentItem = {
         t: item.t,
-        d: node.props,
+        d: node.c.d ?? {},
         c: []
     };
     
-    Object.assign(newConfig.d, node.props);
     Object.assign(newConfig.d, item.d)
 
     return newConfig;

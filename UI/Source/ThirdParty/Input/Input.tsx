@@ -23,6 +23,7 @@ type InputProps<T extends keyof InputPropsRegistry> = InputPropsRegistry[T] & {
 	onInputRef?: (el: HTMLElement) => void;
 	onBlur?: (e: React.FocusEvent) => void;
 	onChange?: (e: React.ChangeEvent) => void;
+	onCanvasChange?: (source: string) => void;
 };
 
 /**
@@ -232,17 +233,35 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 		field.onChange = onChangeWithVal;
 		field.onBlur = onBlurWithVal;
 
-		return <Handler
-			validationFailure={validationFailure}
-			helpFieldId={helpFieldId}
-			label={label}
-			help={help}
-			icon={icon}
-			field={field}
-			inputRef={inputRef}
-			onInputRef={setRef}
-			onChange={props.onChange}
-		/>;
+		if (type == 'canvas'){
+
+			Handler = inputTypes['canvas'] as React.FC<CustomInputTypeProps<T> & { onCanvasChange?: (source: string) => void }>
+
+			return <Handler
+				validationFailure={validationFailure}
+				helpFieldId={helpFieldId}
+				label={label}
+				help={help}
+				icon={icon}
+				field={field}
+				inputRef={inputRef}
+				onInputRef={setRef}
+				onChange={props.onChange}
+				onCanvasChange={props.onCanvasChange}
+			/>;
+		} else {
+			return <Handler
+				validationFailure={validationFailure}
+				helpFieldId={helpFieldId}
+				label={label}
+				help={help}
+				icon={icon}
+				field={field}
+				inputRef={inputRef}
+				onInputRef={setRef}
+				onChange={props.onChange}
+			/>;
+		}
 	}
 
 	if (inline) {

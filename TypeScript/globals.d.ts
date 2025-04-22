@@ -117,6 +117,7 @@ declare global {
 		onInputRef?: (el: HTMLElement) => void;
 		onBlur?: (e: React.FocusEvent) => void;
 		onChange?: (e: React.ChangeEvent) => void;
+		onCanvasChange?: (source: string) => void;
 	};
 
 	/**

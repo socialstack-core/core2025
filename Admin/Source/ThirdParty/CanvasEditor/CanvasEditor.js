@@ -30,6 +30,7 @@ inputTypes.canvas = function (props) {
 		enableAdd
 		{...field}
 		onInputRef={props.onInputRef}
+		onCanvasChange={props.onCanvasChange}
 	/>;
 };
 
@@ -288,13 +289,21 @@ export default function CanvasEditor (props) {
 		return newState;
 	};
 
-	var ceCore = <CanvasEditorCore {...props} onSetShowSource={(state) => {
-		setCanvasState(canvasState.setShowSourceState(state));
-	}} fullscreen={props.fullscreen} canvasState={canvasState} snapshotState={snapshotState}
-		onSelectNode={(e, node) => {
-			e.stopPropagation();
-			setCanvasState(canvasState.selectNode(canvasState.selectedNode == node ? null : node));
-		}} />;
+	var ceCore = (
+		<CanvasEditorCore 
+			{...props} 
+			onSetShowSource={(state) => {
+				setCanvasState(canvasState.setShowSourceState(state));
+			}} 
+			fullscreen={props.fullscreen} 
+			canvasState={canvasState} 
+			snapshotState={snapshotState}
+			onSelectNode={(e, node) => {
+				e.stopPropagation();
+				setCanvasState(canvasState.selectNode(canvasState.selectedNode == node ? null : node));
+			}} 
+		/>
+	);
 
 	var ctx = {};
 	
@@ -327,6 +336,7 @@ export default function CanvasEditor (props) {
 						applyCustomNodeUpdate(canvasState.selectedNode);
 
 							setCanvasState(canvasState.addStateSnapshot());
+							this.props.onCanvasChange && this.props.onCanvasChange(canvasState.toCanvasJson(true))
 						}} setGraphState={
 							targetState=>{
 								setCanvasState(canvasState.setGraphState(targetState));
@@ -564,6 +574,10 @@ class CanvasEditorCore extends React.Component {
 										displayName,
 										"toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=400"
 									);
+
+									cfgWin.onblur = () => {
+										this.props.onCanvasChange && this.props.onCanvasChange(this.props.canvasState.toCanvasJson(true))
+									}
 									
 									this.cfgWindow = {
 										window: cfgWin
@@ -809,6 +823,7 @@ class CanvasEditorCore extends React.Component {
 				}} onStateChange={(newState) => {
 					node.editorState = newState;
 					this.props.snapshotState();
+					this.props.onCanvasChange && this.props.onCanvasChange(canvasState.toCanvasJson(true))
 				}}/>
 			</div>;
 		} else if (node.graph) {
