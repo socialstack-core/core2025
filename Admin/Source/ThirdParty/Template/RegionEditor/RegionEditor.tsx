@@ -550,8 +550,7 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
                         />
                     )
                 })}
-
-                {item.c && item.c.map((child) => {
+                {Array.isArray(item.c) && item.c.map((child) => {
                     return (
                         <ChildRegionEditor 
                             deleteFunc={() => {

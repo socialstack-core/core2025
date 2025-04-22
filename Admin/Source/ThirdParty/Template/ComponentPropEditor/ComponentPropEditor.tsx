@@ -116,7 +116,7 @@ const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: Ph
         return <Alert variant="danger">{`There was an issue reading this component`}</Alert>
     }
 
-    const value = JSON.stringify(item);
+    const value = JSON.stringify(stripIllegalAttributes(item));
 
     return (
         <Input
@@ -125,8 +125,8 @@ const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: Ph
             key={value}
             onCanvasChange={(source:string) => {
                 var edited = JSON.parse(source);
-
-                console.log({ edited, item })
+                
+                reconcileEditorProperties(item, edited);
 
                 onChange && onChange(canvasNodeToTreeComponent(item,edited))
             }}
@@ -136,12 +136,73 @@ const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: Ph
     )
 }
 
+const stripIllegalAttributes = (item: TreeComponentItem) => {
+    const stripped:TreeComponentItem = {
+        t: item.t,
+        d: {},
+        c: []
+    };
+
+    Object.keys(item.d).forEach(key => {
+        if (key.startsWith('$'))
+        {
+            return;
+        }
+        stripped.d[key] = item.d[key]
+    })
+
+    if (Array.isArray(item.c))
+    {
+        item.c?.forEach(child => {
+            stripped.c!.push(stripIllegalAttributes(child));
+        })
+    } else {
+        item.c = []
+    }
+
+    return stripped;
+}
+
+const reconcileEditorProperties = (originalItem: TreeComponentItem, newItem: TreeComponentItem) => {
+
+    if (!Array.isArray(newItem.c)) {
+        newItem = newItem.c as unknown as TreeComponentItem;
+    }
+    if (originalItem.d)
+    {
+        if (!newItem.d)
+        {
+            newItem.d = {};
+        }
+        Object.keys(originalItem.d).forEach(key => {
+            if (key.startsWith('$'))
+            {
+                newItem.d[key] = originalItem.d[key];
+            }
+        })
+
+        if (originalItem.d.multipleAllowed) {
+            newItem.d.multipleAllowed = originalItem.d.multipleAllowed;
+        }
+        if (originalItem.d.permitted) {
+            newItem.d.permitted = originalItem.d.permitted;
+        }
+    }
+
+    if (Array.isArray(originalItem.c) && Array.isArray(newItem.c)) {
+        newItem.c.forEach((newItemChild, idx) => {
+            reconcileEditorProperties(originalItem.c![idx], newItemChild); 
+        })
+    }
+
+}
+
 const canvasNodeToTreeComponent = (item: TreeComponentItem, node: any):TreeComponentItem => {
     
     const newConfig:TreeComponentItem = {
         t: item.t,
-        d: node.c.d ?? {},
-        c: []
+        d: node.d ?? {},
+        c: Array.isArray(node.c) ? node.c : [node.c]
     };
     
     Object.assign(newConfig.d, item.d)
