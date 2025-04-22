@@ -30,7 +30,6 @@ inputTypes.canvas = function (props) {
 		enableAdd
 		{...field}
 		onInputRef={props.onInputRef}
-		onChange={props.onChange}
 	/>;
 };
 
@@ -273,10 +272,6 @@ export default function CanvasEditor (props) {
 		});
 
 	}, []);
-
-	useEffect(() => {
-		props.onChange && props.onChange(canvasState)
-	}, [canvasState])
 
 	if (!canvasState) {
 		return <Loading />;
