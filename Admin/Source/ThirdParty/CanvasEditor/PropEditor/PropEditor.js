@@ -5,7 +5,6 @@ import Graph from 'Admin/CanvasEditor/GraphEditor/Graph';
 import getContentTypes from 'UI/Functions/GetContentTypes';
 // import ArrayBuilder from 'Admin/CanvasEditor/PropEditor/ArrayBuilder';
 // import ArrayEditor from 'Admin/CanvasEditor/PropEditor/ArrayEditor';
-import webRequest from 'UI/Functions/WebRequest';
 import {
 	isJsx, getConstantUnion, getContentPropType,
 	isNumericPropType, isBooleanPropType, isRefPropType

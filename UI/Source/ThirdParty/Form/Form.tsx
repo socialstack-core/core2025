@@ -69,7 +69,7 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 			}
 	
 			onSubmitted && onSubmitted(values);
-	
+
 			const response = await action(values);
 	
 			if (resetOnSubmit) {
@@ -89,7 +89,7 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 					message: `Unable to send this form - please check your answers`,
 					detail: e
 				};
-	
+			console.error(e);
 			setLoading(false);
 			setFailed(error);
 			setSuccess(false);
@@ -99,7 +99,8 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 		return false;
 	};
 	
-	
+
+	let failureMessage = failed ? (failed.message || failedMessage) : undefined;
 	var showFormResponse = !!(loadingMessage || submitLabel || failedMessage);
 	var submitDisabled = loading || (submitEnabled !== undefined && submitEnabled != true);
 	
@@ -110,16 +111,15 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 			method={"post"}
 			{...attribs}
 		>
-			{failed && <Alert variant='danger'>{failed.message}</Alert>}
 			{children}
 			{showFormResponse && (
 				<div className="form-response">
 					<Spacer />
 					{
-						failed && failedMessage && (
+						failureMessage && (
 							<div className="form-failed">
 								<Alert variant="danger">
-									{failedMessage}
+									{failureMessage}
 								</Alert>
 								<Spacer />
 							</div>
