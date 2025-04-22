@@ -106,32 +106,49 @@ namespace Api.EcmaScript
 
         private static bool IsList(Type t)
         {
+            return GetListOfType(t) != null;
+        }
+
+        private static Type GetListOfType(Type t)
+        {
             // If it's a nullable type (e.g., int?), resolve the underlying type
             var underlyingNullable = Nullable.GetUnderlyingType(t);
             if (underlyingNullable != null)
             {
-                t = underlyingNullable;
+                return GetListOfType(underlyingNullable);
             }
 
-            // If it's Task<T> or ValueTask<T>, resolve the inner type
             if (t.IsGenericType)
             {
                 var genericDef = t.GetGenericTypeDefinition();
-                
+                var argZero = t.GetGenericArguments()[0];
+
+				// If it's Task<T> or ValueTask<T>, resolve the inner type
+				if (genericDef == typeof(Task<>) || genericDef == typeof(ValueTask<>))
+                {
+                    return GetListOfType(argZero);
+                }
+
                 if (genericDef == typeof(IEnumerable<>))
                 {
-                    return true;
+                    return argZero;
                 }
                 if (genericDef == typeof(List<>))
                 {
-                    return true;
+                    return argZero;
                 }
                 if (genericDef == typeof(ContentStream<,>))
                 {
-                    return true;
+                    return argZero;
                 }
             }
-            return false;
+
+            if (t.IsArray)
+            {
+                return t.GetElementType();
+            }
+
+            return null;
         }
 
 

@@ -60,7 +60,10 @@ namespace Api.EcmaScript
             {
                 return "";
             }
-
+			
+			// All API routes are lowercased:
+			route = route.ToLower();
+			
             return route.StartsWith("v1/") ? route[3..] : route;
         }
 
