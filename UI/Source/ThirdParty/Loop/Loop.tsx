@@ -118,7 +118,11 @@ function mapWhere(where: any, args: any[]) {
 /**
  * Converts where and on into a query formatted filter.
  * */
-export function mapWhereToQuery(data: any): ListFilter {
+export function mapWhereToQuery(data: any): ListFilter | null {
+
+	if (!data) {
+		return null;
+	}
 
 	// Data exists - does it have a where style filter?
 	if (data.where) {
