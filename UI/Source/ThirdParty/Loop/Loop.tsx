@@ -1,7 +1,7 @@
 import { ApiList } from 'UI/Functions/WebRequest';
 import Failure from 'UI/Failed';
 import Paginator from 'UI/Paginator';
-import { AutoApi, ApiIncludes } from 'Api/ApiEndpoints';
+import { AutoApi, ApiIncludes, ListFilter } from 'Api/ApiEndpoints';
 import { Content } from 'Api/Content';
 import { ContentChangeDetail } from 'UI/Functions/ContentChange';
 import useApi from 'UI/Functions/UseApi';
@@ -25,10 +25,158 @@ export interface Filter<T> {
 	where: Partial<Record<keyof (T), string | number | boolean>>
 }
 
+function mapWhere(where: any, args: any[]) {
+
+	var str = '';
+	if (Array.isArray(where)) {
+		for (var i = 0; i < where.length; i++) {
+			if (str) {
+				str += where[i].and ? ' and ' : ' or ';
+			}
+			str += '(' + mapWhere(where[i], args) + ')';
+		}
+	} else {
+		for (var k in where) {
+			if (k == 'and' || k == 'op') {
+				continue;
+			}
+			var v = where[k];
+			if (v === undefined) {
+				continue;
+			}
+
+			if (str != '') { str += ' and '; }
+
+			if (Array.isArray(v)) {
+				str += k + ' contains [?]'; // contains on an array is the same as containsAll. Different from containsAny and containsNone.
+				args.push(v);
+			} else if (v !== null && typeof v === 'object') {
+				for (var f in v) {
+
+					switch (f) {
+						case "startsWith":
+							str += k + " sw ?";
+							args.push(v[f]);
+							break;
+						case "contains":
+							str += k + " contains " + (Array.isArray(v[f]) ? '[?]' : '?');
+							args.push(v[f]);
+							break;
+						case "containsNone":
+						case "containsAny":
+						case "containsAll":
+							str += k + " " + f + " [?]";
+							args.push(v[f]);
+							break;
+						case "endsWith":
+							str += k + " endsWith ?";
+							args.push(v[f]);
+							break;
+						case "geq":
+						case "greaterThanOrEqual":
+							str += k + ">=?";
+							args.push(v[f]);
+							break;
+						case "greaterThan":
+							str += k + ">?";
+							args.push(v[f]);
+							break;
+						case "lessThan":
+							str += k + "<?";
+							args.push(v[f]);
+							break;
+						case "leq":
+						case "lessThanOrEqual":
+							str += k + "<=?";
+							args.push(v[f]);
+							break;
+						case "not":
+							str += k + "!=" + (Array.isArray(v[f]) ? '[?]' : '?');
+							args.push(v[f]);
+							break;
+
+						case "name":
+						case "equals":
+							str += k + "=" + (Array.isArray(v[f]) ? '[?]' : '?');
+							args.push(v[f]);
+							break;
+						default:
+							break;
+					}
+
+				}
+			} else {
+				str += k + '=?';
+				args.push(v);
+			}
+		}
+	}
+
+	return str;
+}
+
+/**
+ * Converts where and on into a query formatted filter.
+ * */
+export function mapWhereToQuery(data: any): ListFilter {
+
+	// Data exists - does it have a where style filter?
+	if (data.where) {
+		var where = data.where;
+		var d2 = { ...data };
+		delete d2.where;
+		var args = [];
+		var str = '';
+
+		if (where.from && where.from.type && where.from.id) {
+			str = 'From(' + where.from.type + ',?,' + where.from.map + ')';
+			args.push(where.from.id);
+			delete where.from;
+		} else {
+			str = '';
+		}
+
+		var q = mapWhere(where, args);
+
+		if (q) {
+			if (str) {
+				// "From()" can only be combined with an and:
+				str += ' and ' + q;
+			} else {
+				str = q;
+			}
+		}
+
+		d2.query = str;
+		d2.args = args;
+		data = d2;
+	}
+
+	// this is done on list calls.
+	if (data.on && data.on.type && data.on.id) {
+		var on = data.on;
+		var d2 = { ...data };
+		delete d2.on;
+		var onStatement = 'On(' + data.on.type + ',?' + (data.on.map ? ',"' + data.on.map + '"' : '') + ')';
+		if (d2.query) {
+			d2.query = '(' + d2.query + ') and ' + onStatement;
+		} else {
+			d2.query = onStatement;
+		}
+		if (!d2.args) {
+			d2.args = [];
+		}
+		d2.args.push(data.on.id);
+		data = d2;
+	}
+
+	return data;
+}
+
 /**
  * Props for the Loop component.
  */
-export interface LoopProps<T extends Content, I extends ApiIncludes> {
+export interface LoopProps<T extends Content<uint>, I extends ApiIncludes> {
 
 	/**
 	 * Loop will pull data from the specified api. Alternatively if you need something other than an 
@@ -107,7 +255,7 @@ export interface LoopProps<T extends Content, I extends ApiIncludes> {
 /**
  * This component repeatedly renders its child using either an explicit array of data or an endpoint.
  */
-const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) => {
+const Loop = <T extends Content<uint>, I extends ApiIncludes>(props: LoopProps<T, I>) => {
 
 	const [pageIndex, setPageIndex] = useState(props.defaultPage || 1);
 	const [totalResults, setTotalResults] = useState(0);
@@ -199,9 +347,9 @@ const Loop = <T extends Content, I extends ApiIncludes>(props: LoopProps<T, I>) 
 		var source : Promise<ApiList<T>> | null = null;
 
 		if (props.over) {
-			source = props.over.list(filter, props.includes);
+			source = props.over.list(mapWhereToQuery(filter), props.includes);
 		} else if (props.source) {
-			source = props.source(filter, props.includes);
+			source = props.source(mapWhereToQuery(filter), props.includes);
 		}
 
 		if (!source) {

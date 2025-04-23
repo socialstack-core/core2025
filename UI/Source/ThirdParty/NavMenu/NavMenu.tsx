@@ -41,7 +41,7 @@ const NavMenu: React.FC<NavMenuProps> = (props) => {
         filter.menuKey = props.id;
     }
 
-    return <Loop over={navMenuItemApi} {...props} filter={filter}>
+    return <Loop over={navMenuItemApi} {...props} filter={{where: filter}}>
         {props.children || (item =>
             <a href={item.target}>
                 <Canvas>{item.bodyJson}</Canvas>

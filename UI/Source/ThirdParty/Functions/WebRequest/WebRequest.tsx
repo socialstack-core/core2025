@@ -141,102 +141,6 @@ export function expandIncludes<T>(response : any){
 	return (response.result ? response.result : response) as T;
 }
 
-function mapWhere(where : any, args : any[]){
-
-	// small fix.
-	if (where.where) {
-		where = where.where;
-	}
-
-	var str = '';
-	if(Array.isArray(where)){
-		for(var i=0;i<where.length;i++){
-			if(str){
-				str += where[i].and ? ' and ' : ' or ';
-			}
-			str+='(' + mapWhere(where[i], args) + ')';
-		}
-	}else{
-		for(var k in where){
-			if(k == 'and' || k == 'op'){
-				continue;
-			}
-			var v = where[k];
-			if(v === undefined){
-				continue;
-			}
-			
-			if(str != ''){str += ' and ';}
-			
-			if(Array.isArray(v)){
-				str += k +' contains [?]'; // contains on an array is the same as containsAll. Different from containsAny and containsNone.
-				args.push(v);
-			}else if(v!==null && typeof v === 'object'){
-				for(var f in v){
-					
-					switch (f)
-					{
-						case "startsWith":
-							str += k + " sw ?";
-							args.push(v[f]);
-						break;
-						case "contains":
-							str += k + " contains " + (Array.isArray(v[f]) ? '[?]' : '?');
-							args.push(v[f]);
-						break;
-						case "containsNone":
-						case "containsAny":
-						case "containsAll":
-							str += k + " " + f + " [?]";
-							args.push(v[f]);
-						break;
-						case "endsWith":
-							str += k + " endsWith ?";
-							args.push(v[f]);
-						break;
-						case "geq":
-						case "greaterThanOrEqual":
-							str += k + ">=?";
-							args.push(v[f]);
-						break;
-						case "greaterThan":
-							str += k + ">?";
-							args.push(v[f]);
-						break;
-						case "lessThan":
-							str += k + "<?";
-							args.push(v[f]);
-						break;
-						case "leq":
-						case "lessThanOrEqual":
-							str += k + "<=?";
-							args.push(v[f]);
-						break;
-						case "not":
-							str += k + "!=" + (Array.isArray(v[f]) ? '[?]' : '?');
-							args.push(v[f]);
-							break;
-
-						case "name":
-						case "equals":
-							str += k + "=" + (Array.isArray(v[f]) ? '[?]' : '?');
-							args.push(v[f]);
-                            break;
-						default:
-                            break;
-                    }
-					
-				}
-			}else{
-				str += k +'=?';
-				args.push(v);
-			}
-		}
-	}
-	
-	return str;
-}
-
 /**
  * A fetch response with the loading .text() result from it.
  */
@@ -339,7 +243,7 @@ export function getJson<T>(origUrl: string, data?: any, opts?: WebRequestOptions
 /**
  * Gets a potentially paginated list fragment. Expands any present includes for you.
  */
-export function getList<T extends Content>(origUrl: string, data?: any, opts?: WebRequestOptions) {
+export function getList<T extends Content<uint>>(origUrl: string, data?: any, opts?: WebRequestOptions) {
 	return getJson<ApiList<T>>(origUrl, data, opts)
 		.then(apiList => {
 			var result = expandIncludes<ApiList<T>>(apiList);
@@ -361,7 +265,7 @@ export function getList<T extends Content>(origUrl: string, data?: any, opts?: W
  * Handles API endpoints (load, delete, update) which return {"result": T, "includes": ...}.
  * Expands includes in to the object for you, and then returns it.
  */
-export function getOne<T extends Content>(origUrl: string, data?: any, opts?: WebRequestOptions) {
+export function getOne<T extends Content<uint>>(origUrl: string, data?: any, opts?: WebRequestOptions) {
 	return getJson<ApiContent<T>>(origUrl, data, opts)
 		.then(apiContent => {
 			var result = expandIncludes<T>(apiContent);
@@ -384,7 +288,7 @@ export function getOne<T extends Content>(origUrl: string, data?: any, opts?: We
 				method = 'post';
 			}
 				
-			var cont = result as Content;
+			var cont = result as Content<uint>;
 
 			if (cont.id && cont.type && method != 'get') {
 
@@ -395,64 +299,6 @@ export function getOne<T extends Content>(origUrl: string, data?: any, opts?: We
 
 			return result;
 		});
-}
-
-/**
- * Converts where and on into a query formatted filter.
- * */
-export function remapData(data: any, origUrl: string){
-	
-	// Data exists - does it have an old format filter?
-	if(data.where){
-		var where = data.where;
-		var d2 = {...data};
-		delete d2.where;
-		var args = [];
-		var str = '';
-		
-		if(where.from && where.from.type && where.from.id){
-			str = 'From(' + where.from.type + ',?,' + where.from.map + ')';
-			args.push(where.from.id);
-			delete where.from;
-		}else{
-			str = '';
-		}
-		
-		var q = mapWhere(where, args);
-		
-		if(q){
-			if(str){
-				// "From()" can only be combined with an and:
-				str += ' and ' + q;
-			}else{
-				str = q;
-			}
-		}
-		
-		d2.query = str;
-		d2.args = args;
-		data = d2;
-	}
-	
-	// this is done on list calls.
-	if(data.on && data.on.type && data.on.id && origUrl.endsWith("/list")){
-		var on = data.on;
-		var d2 = {...data};
-		delete d2.on;
-		var onStatement = 'On(' + data.on.type + ',?' + (data.on.map ? ',"' + data.on.map + '"' : '') + ')';
-		if(d2.query){
-			d2.query = '(' + d2.query + ') and ' + onStatement;
-		}else{
-			d2.query = onStatement;
-		}
-		if(!d2.args){
-			d2.args = [];
-		}
-		d2.args.push(data.on.id);
-		data = d2;
-	}
-	
-	return data;
 }
 
 /**
@@ -529,7 +375,6 @@ function _fetch(origUrl: string, data? : any, opts? : WebRequestOptions) {
 			headers
 		});
 	} else {
-		data = remapData(data, origUrl);
 		req = fetch(url, {
 			method: opts && opts.method ? opts.method : 'post',
 			headers: {
