@@ -11,12 +11,12 @@ namespace Api.Automations
     /// <summary>
     /// Indicates the set of available automations.
     /// </summary>
-    public partial class AutomationService : AutoService<AutomationStructure, uint>
+    public partial class AutomationService : AutoService
 	{
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public AutomationService(PageService pages, AdminNavMenuItemService adminNav) : base(Events.AvailableAutomations)
+		public AutomationService(PageService pages, AdminNavMenuItemService adminNav)
 		{
 
 			// Install custom admin page which lists automations. This install mechanism allows it to be modified if needed.

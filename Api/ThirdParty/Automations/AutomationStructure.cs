@@ -8,8 +8,7 @@ namespace Api.Automations
 	/// <summary>
 	/// Defines what automations are available from this API
 	/// </summary>
-	[CacheOnly]
-	public class AutomationStructure : Content<uint>
+	public class AutomationStructure
 	{
 		/// <summary>
 		/// The automations in this API.
