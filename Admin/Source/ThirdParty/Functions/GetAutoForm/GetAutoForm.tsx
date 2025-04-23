@@ -1,7 +1,8 @@
 import autoFormApi, { AutoFormInfo } from 'Api/AutoForm';
 
 interface CachedForm {
-	form: AutoFormInfo
+	form: AutoFormInfo,
+	name: string
 }
 
 /* Autoform cache */
@@ -17,24 +18,24 @@ export default (type: string, name : string) => {
 		cache[type] = {} as Record<string, CachedForm>;
 	}
 	
-	name = name.toLowerCase();
+	const lcName = name.toLowerCase();
 	
-	if(cache[type][name]){
-		return Promise.resolve(cache[type][name]);
+	if (cache[type][lcName]){
+		return Promise.resolve(cache[type][lcName]);
 	}
 
-	return autoFormApi.get(type, name).then(form => {
+	return autoFormApi.get(type, lcName).then(form => {
 		var cacheInfo: CachedForm = {
+			name,
 			form
 		};
-		cache[type][name] = cacheInfo;
+		cache[type][lcName] = cacheInfo;
 		return cacheInfo;
 	});
 }
 
 var gotAll = false;
 
-/*
 export function getAllContentTypes() {
 	
 	if(gotAll){
@@ -45,28 +46,33 @@ export function getAllContentTypes() {
 		gotAll = true;
 		
 		cache.content = {};
-		var byEndpoint = {};
-		var forms = response.forms;
+		var byEndpoint : Record<string, AutoFormInfo> = {};
+		var forms = response.forms || [];
 		
 		forms.forEach(form => {
-			byEndpoint[form.endpoint] = form;
+			var ep = form.endpoint;
+			if (ep) {
+				byEndpoint[ep] = form;
+			}
 		});
 		
 		var types = response.contentTypes;
 		
-		types.forEach(type => {
-			var lcName = type.name.toLowerCase();
+		types?.forEach(type => {
+			var lcName = type.name?.toLowerCase();
 			var form = byEndpoint['v1/' + lcName];
 			
-			if(!form){
+			if (!form || !lcName){
 				return;
 			}
 			
-			cache.content[lcName] = {form, name: type.name, canvas: JSON.stringify({content: form.fields})};
+			cache.content[lcName] = {
+				form,
+				name: type.name || ''
+			};
 		});
 		
 		return cache.content;
 	});
 	
 }
-*/

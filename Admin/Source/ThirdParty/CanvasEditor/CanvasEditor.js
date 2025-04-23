@@ -837,7 +837,7 @@ class CanvasEditorCore extends React.Component {
 			// Graph node.
 			return <div key={node.key} ref={node.dom} data-component-type={componentType} className={rteClasses} {...node.props} onClick={(e) => this.props.onSelectNode(e, node)}>
 				<ErrorCatcher node={node}>
-					{node.graph.render()}
+					{`Can't display graph nodes at the moment`}
 				</ErrorCatcher>
 			</div>;
 		

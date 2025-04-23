@@ -118,8 +118,16 @@ function expandVariable(type: CodeModuleType) {
  * @param type
  */
 export function isJsx(prop: PropTypeMeta) {
-    var propType = prop.type;
-    return containsIdentifier(propType, 'React.reactNode') || containsIdentifier(propType, 'reactNode');
+    return isJsxType(prop.type);
+}
+
+/**
+ * True if the given type represents a suitable JSX node. Primarily that is React.reactNode and any unions of it.
+ * @param prop
+ * @param type
+ */
+export function isJsxType(type: CodeModuleType) {
+    return containsIdentifier(type, 'React.reactNode') || containsIdentifier(type, 'reactNode');
 }
 
 export function containsIdentifier(type: CodeModuleType, identifier: string) : boolean {
@@ -135,6 +143,23 @@ export function containsIdentifier(type: CodeModuleType, identifier: string) : b
 }
 
 /**
+ * If the given proptype is an array, this returns the array element type.
+ * @param prop
+ * @param module
+ */
+export function getArrayElementPropType(prop: PropTypeMeta) {
+	var propType = prop.type;
+	return getArrayElementType(propType);
+}
+
+export function getArrayElementType(type: CodeModuleType) {
+	if(type.name == 'array'){
+		return type.elementType;
+	}
+	return null;
+}
+
+/**
  * If the given proptype is a (or refers to) a union of constants, returns an array of those constants. 
  * Null or undefined are ignored if they are present.
  * Returns null if it contains any non-constant entry.
@@ -143,23 +168,26 @@ export function containsIdentifier(type: CodeModuleType, identifier: string) : b
  */
 export function getConstantUnion(prop: PropTypeMeta, module: CodeModuleMeta) {
     var propType = prop.type;
+	return getConstantUnionType(propType, module);
+}
 
-    if (propType.name == 'identifier' && propType.instanceName) {
+export function getConstantUnionType(type: CodeModuleType, module: CodeModuleMeta){
+    if (type.name == 'identifier' && type.instanceName) {
         // Lookup the identifier in the module, and pretend we received that type.
-        var localType = getLocalType(propType.instanceName, module);
+        var localType = getLocalType(type.instanceName, module);
 
         if (!localType) {
             return null;
         }
 
-        propType = localType;
+        type = localType;
     }
 
-    if (propType.name == 'union' && propType.types) {
+    if (type.name == 'union' && type.types) {
         var result : string[] = [];
 
-        for (var i = 0; i < propType.types.length; i++) {
-            var childType = propType.types[i];
+        for (var i = 0; i < type.types.length; i++) {
+            var childType = type.types[i];
 
             if (isNullOrUndefined(childType)) {
                 continue;
@@ -177,7 +205,7 @@ export function getConstantUnion(prop: PropTypeMeta, module: CodeModuleMeta) {
         return result;
     }
 
-    var constant = getConstantValueString(propType);
+    var constant = getConstantValueString(type);
 
     if (constant) {
         return [constant];
