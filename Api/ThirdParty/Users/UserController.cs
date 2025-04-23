@@ -112,7 +112,7 @@ namespace Api.Users
 		/// Attempts to login. Returns either a Context or a LoginResult.
 		/// </summary>
 		[HttpPost("login")]
-		[Returns(typeof(Context))]
+		[Returns(typeof(object))]
 		public async ValueTask Login(HttpContext httpContext, Context context, [FromBody] UserLogin body)
 		{
 			var result = await (_service as UserService).Authenticate(context, body);

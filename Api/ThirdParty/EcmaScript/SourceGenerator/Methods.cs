@@ -153,11 +153,11 @@ namespace Api.EcmaScript
                         Name = LcFirst(method.Name),
                         ReturnType = resolvedReturnType == typeof(Context)
                             ? "Promise<SessionResponse>"
-                            : collectionOfType != null ? (
+                            : resolvedReturnType == typeof(object) ? "Promise<any>": (collectionOfType != null ? (
 								isContentList
 								? $"Promise<ApiList<{collectionOfType.Name}>>"
                                 : $"Promise<{collectionOfType.Name}[]>"
-                            ) : $"Promise<{resolvedReturnType.Name}>"
+                            ) : $"Promise<{resolvedReturnType.Name}>")
 					};
                 }
 
