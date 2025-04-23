@@ -92,10 +92,10 @@ namespace Api.EcmaScript
                 return type.Name;
             }
 
-            if (IsList(type))
-            {
-                var elementType = type.GetGenericArguments()[0];
+            var elementType = GetListOfType(type);
 
+			if (elementType != null)
+            {
                 if (ecmaService.TypeConversions.ContainsKey(elementType))
                 {
                     return $"{elementType.Name}[]";
