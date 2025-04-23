@@ -10,13 +10,6 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
-        // Types that cannot be handled
-        private static readonly Type[] unhandleableTypes = {
-            typeof(void),
-            typeof(ValueTask),
-            typeof(Task)
-        };
-
         public static void AddControllerMethods(Type controller, ClassDefinition target, string baseUrl, Script script)
         {
             var ecmaService = Services.Get<EcmaService>();
@@ -29,18 +22,18 @@ namespace Api.EcmaScript
                     continue;
                 }
 
-				Type resolvedReturnType = null;
+                Type resolvedReturnType = null;
 
-				// Handle the custom Returns attribute for return type
-				var returnsAttr = method.GetCustomAttribute<ReturnsAttribute>();
-				if (returnsAttr != null)
-				{
-					resolvedReturnType = GetResolvedType(returnsAttr.ReturnType);
-				}
+                // Handle the custom Returns attribute for return type
+                var returnsAttr = method.GetCustomAttribute<ReturnsAttribute>();
+                if (returnsAttr != null)
+                {
+                    resolvedReturnType = GetResolvedType(returnsAttr.ReturnType);
+                }
 
-				resolvedReturnType ??= GetResolvedType(method.ReturnType);
+                resolvedReturnType ??= GetResolvedType(method.ReturnType);
 
-				var recieves = method.GetCustomAttribute<ReceivesAttribute>();
+                var recieves = method.GetCustomAttribute<ReceivesAttribute>();
 
                 if (recieves is not null)
                 {
@@ -73,7 +66,7 @@ namespace Api.EcmaScript
                     {
                         isContentList = true;
 
-						script.AddImport(new Import
+                        script.AddImport(new Import
                         {
                             Symbols = ["ApiList"],
                             From = "UI/Functions/WebRequest"
@@ -83,14 +76,12 @@ namespace Api.EcmaScript
                     resolvedReturnType = collectionOfType; // Get the type inside the collection
                 }
 
-                // Skip unhandleable types (like void, ValueTask, etc.)
-                if (unhandleableTypes.Contains(resolvedReturnType))
-                {
-                    continue;
-                }
-
                 // Ensure the return type is defined or generate it if necessary
-                if (!TypeDefinitionExists(resolvedReturnType.Name))
+                if (resolvedReturnType == typeof(void))
+                {
+                    // Do nothing in this situation.
+                }
+                else if (!TypeDefinitionExists(resolvedReturnType.Name))
                 {
                     if (resolvedReturnType.Name != "Context" && !ecmaService.TypeConversions.ContainsKey(resolvedReturnType))
                     {
@@ -150,16 +141,33 @@ namespace Api.EcmaScript
                     // Handle other return types, including collections and Context
                     apiMethod = new ClassMethod
                     {
-                        Name = LcFirst(method.Name),
-                        ReturnType = resolvedReturnType == typeof(Context)
-                            ? "Promise<SessionResponse>"
-                            : resolvedReturnType == typeof(object) ? "Promise<any>": (collectionOfType != null ? (
-								isContentList
-								? $"Promise<ApiList<{collectionOfType.Name}>>"
-                                : $"Promise<{collectionOfType.Name}[]>"
-                            ) : $"Promise<{resolvedReturnType.Name}>")
+                        Name = LcFirst(method.Name)
 					};
-                }
+
+                    if (resolvedReturnType == typeof(void))
+                    {
+                        // uses getText
+						apiMethod.ReturnType = "Promise<string>";
+					}
+                    else if (resolvedReturnType == typeof(Context))
+                    {
+                        apiMethod.ReturnType = "Promise<SessionResponse>";
+                    }
+                    else if (resolvedReturnType == typeof(object))
+                    {
+                        apiMethod.ReturnType = "Promise<any>";
+                    }
+                    else if (collectionOfType != null)
+                    {
+                        apiMethod.ReturnType = isContentList
+                            ? $"Promise<ApiList<{collectionOfType.Name}>>"
+                            : $"Promise<{collectionOfType.Name}[]>";
+                    }
+                    else
+                    {
+                        apiMethod.ReturnType = $"Promise<{resolvedReturnType.Name}>";
+                    }
+				}
 
                 // Add the method parameters
                 AddMethodParams(method, apiMethod, script);

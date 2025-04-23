@@ -101,6 +101,11 @@ namespace Api.EcmaScript
                 }
             }
 
+            if (t == typeof(Task) || t == typeof(ValueTask))
+            {
+                return typeof(void);
+            }
+
             return t;
         }
 

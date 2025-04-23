@@ -101,6 +101,10 @@ namespace Api.EcmaScript
             {
                 return "getOne";
             }
+            else if (resolvedReturnType == typeof(void))
+            {
+                return "getText";
+            }
 
             return "getJson";
         }
