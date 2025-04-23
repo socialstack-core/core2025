@@ -1,6 +1,6 @@
 import getConfig from 'UI/Config';
 
-const uploaderConfig = useConfig('uploader') || {};
+const uploaderConfig = getConfig('uploader') || {};
 let UPLOADER_SIZES = uploaderConfig[0].imageSizes || [32, 64, 100, 128, 200, 256, 512, 768, 1024, 1920, 2048];
 UPLOADER_SIZES.unshift('original');
 
