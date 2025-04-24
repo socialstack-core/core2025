@@ -81,7 +81,7 @@ export default class CustomFieldSelectForm extends React.Component {
 							modalCancelCallback={() => {
 								this.setState({ showCreateOrEditModal: false, entityToEditId: null });
 							}}
-							endpoint={"customContentTypeSelectOption".toLowerCase()}
+							endpoint={"customContentTypeSelectOption"}
 							singular="Options" 
 							plural={"Options"}
 							id={this.state.entityToEditId ? this.state.entityToEditId : null}

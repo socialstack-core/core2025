@@ -270,17 +270,22 @@ export default class MultiSelect extends React.Component {
 					</div>
 				</footer>
 				{this.state.showCreateOrEditModal &&
-					<Modal title={`Edit ${this.props.label}`} visible isExtraLarge onClose={() => {
+					<Modal
+						title={this.state.entityToEditId ? `Edit ${this.props.contentType}` : `Create New ${this.props.contentType}`}
+						visible
+						isExtraLarge
+						onClose={() => {
 						this.setState({ showCreateOrEditModal: false, entityToEditId: null })
-					}}>
+						}}
+					>
 						<AutoForm
 							canvasContext={this.props.canvasContext ? this.props.canvasContext : this.props.currentContent}
 							modalCancelCallback={() => {
 								this.setState({ showCreateOrEditModal: false, entityToEditId: null });
 							}}
-								endpoint={this.props.contentType.toLowerCase()}
-								singular={this.props.label}
-								plural={this.props.label}
+								endpoint={this.props.contentType}
+								singular={this.props.contentType}
+								plural={this.props.contentType + "s"}
 								id={this.state.entityToEditId ? this.state.entityToEditId : null}
 								onActionComplete={entity => {
 									var value = this.state.value;

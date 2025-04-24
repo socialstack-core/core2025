@@ -248,9 +248,9 @@ export default class ContentSelect extends React.Component {
 					modalCancelCallback={() => {
 						this.setState({ showCreateOrEditModal: false, entityToEditId: null });
 					}}
-						endpoint={contentType.toLowerCase()}
-						singular={this.props.label} 
-						plural={this.props.label + "s"}
+						endpoint={contentType}
+						singular={this.props.contentType}
+						plural={this.props.contentType + "s"}						
 						id={this.state.entityToEditId ? this.state.entityToEditId : null}
 						onActionComplete={entity => {
 							this.setState({ showCreateOrEditModal: false, entityToEditId: null, selected: entity.id });

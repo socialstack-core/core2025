@@ -28,10 +28,10 @@ var formId = 1;
 export default function AutoForm(props) {
 	var { session, setSession } = useSession();
 	var { setPage, pageState } = useRouter();
-	var endpoint = props.contentType.toLowerCase();
+	var endpoint = props.endpoint ? props.endpoint : props.contentType;
 
 	// Get the API handler for this content type:
-	var api = require('Api/' + props.contentType).default;
+	var api = require('Api/' + (props.endpoint ? props.endpoint : props.contentType)).default;
 
 	return <AutoFormInternal {...props} endpoint={endpoint} api={api} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
 }
