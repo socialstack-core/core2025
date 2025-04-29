@@ -178,7 +178,7 @@ namespace Api.EcmaScript
                     apiMethod.Arguments.Add(new() {
                         Name = "includes?", 
                         DefaultValue = "",
-                        Type = "string"
+                        Type = "ApiIncludes"
                     });
                 }
                 else if (IsEntity(resolvedReturnType))
@@ -186,7 +186,7 @@ namespace Api.EcmaScript
                     apiMethod.Arguments.Add(new() {
                         Name = "includes?", 
                         DefaultValue = "",
-                        Type = "string"
+                        Type = "ApiIncludes"
                     });
                 }
 
