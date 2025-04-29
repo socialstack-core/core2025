@@ -50,9 +50,6 @@ namespace Api.EcmaScript.Markdown
                 document.AddParagraph(summary);
                 document.AddCodeBlock(example, "ts");
 
-                // Add a link to view the method in markdown format
-                string markdownFile = Path.GetFileNameWithoutExtension(document.FileName) + ".md"; // Replace .tsx with .md
-                document.AddParagraph($"[View method]({markdownFile})");
             }
         }
 
@@ -93,9 +90,6 @@ namespace Api.EcmaScript.Markdown
                 document.AddParagraph(summary);
                 document.AddCodeBlock(example, "ts");
 
-                // Add a link to view the method in markdown format
-                string markdownFile = Path.GetFileNameWithoutExtension(document.FileName) + ".md"; // Replace .tsx with .md
-                document.AddParagraph($"[View method]({markdownFile})");
             }
         }
 
