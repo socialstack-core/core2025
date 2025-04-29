@@ -9,23 +9,10 @@ export default (url: string, setSession: (s: SessionResponse) => Session, setPag
 		throw new Error('Logout requires ctx');
 	}
 	
-	return userApi.logout()
-		.then(response => clearAndNav(url || '/', setSession, setPage, response))
-		.catch(e => clearAndNav(url || '/', setSession, setPage));
+	return userApi.logout(setSession)
+		.then(response => setPage(url || '/'))
+		.catch(e => {
+			setSession({});
+			setPage(url || '/');
+		});
 };
-
-/**
- * Clears the local session and navigates to the stated page.
- * @param url
- * @param setSession
- * @param setPage
- * @param ctx
- */
-function clearAndNav(url: string, setSession: (s: SessionResponse) => Session, setPage: (url: string) => void, ctx?: SessionResponse) {
-	if (ctx) {
-		setSession(ctx);
-	} else {
-		setSession({});
-	}
-	setPage(url);
-}

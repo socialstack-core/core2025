@@ -1,7 +1,7 @@
 import Form from 'UI/Form';
 import Input from 'UI/Input';
 import Modal from 'UI/Modal';
-import webRequest from 'UI/Functions/WebRequest';
+import customContentTypeSelectOptionApi from 'Api/CustomContentTypeSelectOption';
 import Loop from 'UI/Loop';
 import AutoForm from 'Admin/AutoForm';
 import Alert from 'UI/Alert';
@@ -14,7 +14,7 @@ export default class CustomFieldSelectForm extends React.Component {
 	}
 
 	deleteOption(id) {
-		webRequest("customContentTypeSelectOption/" + id, undefined, { method: "delete" }).then(() => {
+		customContentTypeSelectOptionApi.delete(id).then(() => {
 			this.setState({showConfirmDeleteModal: false});
 		}).catch(e => {
 			console.error(e);
@@ -81,7 +81,7 @@ export default class CustomFieldSelectForm extends React.Component {
 							modalCancelCallback={() => {
 								this.setState({ showCreateOrEditModal: false, entityToEditId: null });
 							}}
-							endpoint={"customContentTypeSelectOption".toLowerCase()}
+							endpoint={"customContentTypeSelectOption"}
 							singular="Options" 
 							plural={"Options"}
 							id={this.state.entityToEditId ? this.state.entityToEditId : null}

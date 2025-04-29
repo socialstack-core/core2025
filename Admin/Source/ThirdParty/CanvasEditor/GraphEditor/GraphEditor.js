@@ -6,6 +6,7 @@ import TypeIcon from './TypeIcon';
 import SelectNodeType from './SelectNodeType';
 import {niceName} from './Utils';
 import {getAllContentTypes} from 'Admin/Functions/GetAutoForm';
+import {getAll as getAllPropTypes} from 'Admin/Functions/GetPropTypes';
 import Modal from 'UI/Modal';
 
 var defaultNamespace = 'Admin/CanvasEditor/GraphEditor/NodeSet/';
@@ -16,11 +17,13 @@ var dragging;
 var inputTypes = global.inputTypes = global.inputTypes || {};
 
 // type="graph"
-inputTypes.ontypegraph = function(props, _this){
+inputTypes.graph = function(props){
+	const { field, onInputRef } = props;
+	
 	return <>
-		<GraphEditor context={props.context} inputRef={props.inputRef} name={props.name} value={props.value} 
-		objectOutput={props.objectOutput} namespace={props.namespace || props.ns}
-		onChange={props.onChange}
+		<GraphEditor 
+		inputRef={onInputRef}
+		{...field}
 		/>
 	</>;
 };
@@ -97,10 +100,21 @@ export default function GraphEditor(props){
 		if(val){
 			// todo: indicate loading state.
 			
-			// Ensure all autoforms are loaded or loading:
-			getAllContentTypes().then(() => {
+			// Ensure all autoforms and component prop types are loaded or loading:
+			Promise.all([
+				getAllContentTypes(),
+				getAllPropTypes()
+			])
+			.then(ctAndPt => {
 				
-				var g = {};
+				const [contentTypes, propTypes ] = ctAndPt;
+				
+				const metadata = {
+					contentTypes,
+					propTypes
+				};
+				
+				var g = {metadata};
 				
 				// Load the nodes:
 				loadNodes(val, g).then(newNodes => {

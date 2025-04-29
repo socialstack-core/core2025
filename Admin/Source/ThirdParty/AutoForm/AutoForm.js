@@ -28,10 +28,10 @@ var formId = 1;
 export default function AutoForm(props) {
 	var { session, setSession } = useSession();
 	var { setPage, pageState } = useRouter();
-	var endpoint = props.contentType.toLowerCase();
+	var endpoint = props.endpoint ? props.endpoint : props.contentType;
 
 	// Get the API handler for this content type:
-	var api = require('Api/' + props.contentType).default;
+	var api = require('Api/' + (props.endpoint ? props.endpoint : props.contentType)).default;
 
 	return <AutoFormInternal {...props} endpoint={endpoint} api={api} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
 }
@@ -402,17 +402,12 @@ class AutoFormInternal extends React.Component {
 		var prom; // :Promise<WhateverTheContentTypeIs>
 
 		if (this.state.revisionId) {
-			// prom = api.deleteRevision() <-- but needs to only be present if revisions module is 
-			// installed, meaning we need to be able to extend AutoForm.
+			prom = api.deleteRevision();
 		} else {
-			// prom = api.delete()
+			prom = api.delete(this.props.id);
 		}
-
-		webRequest(
-			this.state.revisionId ? (this.props.endpoint + '/revision/' + this.state.revisionId) : (this.props.endpoint + '/' + this.props.id),
-			null,
-			{ method: 'delete' }
-		).then(response => {
+		
+		prom.then(response => {
 			if (this.props.onActionComplete) {
 				this.props.onActionComplete(null);
 				return;

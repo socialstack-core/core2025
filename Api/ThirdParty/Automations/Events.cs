@@ -23,11 +23,6 @@ namespace Api.Eventing
 			return _cronScheduler;
 		}
 
-		/// <summary>
-		/// All available automation events.
-		/// </summary>
-		public static EventGroup<AutomationStructure> AvailableAutomations;
-
         /// <summary>
         /// Takes a cron string and returns an event handler which you can add a listener to. Generally used during startup.
         /// The event will trigger at the rate specified by your cron expression.

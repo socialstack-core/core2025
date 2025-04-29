@@ -47,7 +47,7 @@ namespace Api.EcmaScript
             });
 
             apiScript.AddImport(new() {
-                Symbols = ["getOne", "getList"],
+                Symbols = ["getOne", "getList", "getJson", "getText"],
                 From = "UI/Functions/WebRequest"
             });
 

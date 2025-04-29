@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Api.Contexts;
 using Api.EcmaScript.TypeScript;
 using Api.Startup;
 
@@ -9,13 +10,6 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
-        // Types that cannot be handled
-        private static readonly Type[] unhandleableTypes = {
-            typeof(void),
-            typeof(ValueTask),
-            typeof(Task)
-        };
-
         public static void AddControllerMethods(Type controller, ClassDefinition target, string baseUrl, Script script)
         {
             var ecmaService = Services.Get<EcmaService>();
@@ -27,6 +21,17 @@ namespace Api.EcmaScript
                 {
                     continue;
                 }
+
+                Type resolvedReturnType = null;
+
+                // Handle the custom Returns attribute for return type
+                var returnsAttr = method.GetCustomAttribute<ReturnsAttribute>();
+                if (returnsAttr != null)
+                {
+                    resolvedReturnType = GetResolvedType(returnsAttr.ReturnType);
+                }
+
+                resolvedReturnType ??= GetResolvedType(method.ReturnType);
 
                 var recieves = method.GetCustomAttribute<ReceivesAttribute>();
 
@@ -43,56 +48,49 @@ namespace Api.EcmaScript
                     AddMethodParams(method, classMethod, script, true);
 
                     // Add the method body
-                    AddMethodBody(method, classMethod, script, baseUrl);
+                    AddMethodBody(method, classMethod, script, baseUrl, resolvedReturnType);
 
                     // Add the method to the class
                     target.AddMethod(classMethod);
                     continue;
                 }
 
-                Type returnType = null;
-
-                // Handle the custom Returns attribute for return type
-                var returnsAttr = method.GetCustomAttribute<ReturnsAttribute>();
-                if (returnsAttr != null)
-                {
-                    returnType = GetResolvedType(returnsAttr.ReturnType);
-                }
-
-                returnType ??= GetResolvedType(method.ReturnType);
-
                 // Check if the return type is a collection (List or similar)
-                var isCollection = IsList(returnType);
+                var collectionOfType = GetListOfType(resolvedReturnType);
+                var isContentList = false;
 
-                if (isCollection)
+                if (collectionOfType != null)
                 {
-                    // Import ApiList when handling collections
-                    script.AddImport(new Import
+                    // Import ApiList if it's a content type.
+                    if (IsContentType(collectionOfType))
                     {
-                        Symbols = [ "ApiList" ],
-                        From = "UI/Functions/WebRequest"
-                    });
+                        isContentList = true;
 
-                    returnType = returnType.GetGenericArguments()[0]; // Get the type inside the collection
-                }
+                        script.AddImport(new Import
+                        {
+                            Symbols = ["ApiList"],
+                            From = "UI/Functions/WebRequest"
+                        });
+                    }
 
-                // Skip unhandleable types (like void, ValueTask, etc.)
-                if (unhandleableTypes.Contains(returnType))
-                {
-                    continue;
+                    resolvedReturnType = collectionOfType; // Get the type inside the collection
                 }
 
                 // Ensure the return type is defined or generate it if necessary
-                if (!TypeDefinitionExists(returnType.Name))
+                if (resolvedReturnType == typeof(void))
                 {
-                    if (returnType.Name != "Context" && !ecmaService.TypeConversions.ContainsKey(returnType))
+                    // Do nothing in this situation.
+                }
+                else if (!TypeDefinitionExists(resolvedReturnType.Name))
+                {
+                    if (resolvedReturnType.Name != "Context" && !ecmaService.TypeConversions.ContainsKey(resolvedReturnType))
                     {
-                        if (!IsEntity(returnType))
+                        if (!IsEntity(resolvedReturnType))
                         {
                             // It's an undiscovered type, we generate it
-                            if (!ignoreParamTypes.Contains(returnType))
+                            if (!ignoreParamTypes.Contains(resolvedReturnType))
                             {
-                                var newType = OnNonEntity(returnType, script);
+                                var newType = OnNonEntity(resolvedReturnType, script);
                                 script.AddTypeDefinition(newType);
                             }
                         }
@@ -100,14 +98,14 @@ namespace Api.EcmaScript
                         {
                             // It's an entity, so it will be handled automatically
                             var existing = script.Children.OfType<TypeDefinition>()
-                                .FirstOrDefault(child => child.Name == returnType.Name);
+                                .FirstOrDefault(child => child.Name == resolvedReturnType.Name);
 
                             if (existing == null)
                             {
                                 script.AddImport(new Import
                                 {
-                                    Symbols = [ returnType.Name ],
-                                    From = $"./{returnType.Name}"
+                                    Symbols = [ resolvedReturnType.Name ],
+                                    From = $"./{resolvedReturnType.Name}"
                                 });
                             }
                         }
@@ -118,8 +116,8 @@ namespace Api.EcmaScript
                     // Type already exists, just import it
                     script.AddImport(new Import
                     {
-                        Symbols = [ returnType.Name ],
-                        From = $"./{returnType.Name}"
+                        Symbols = [ resolvedReturnType.Name ],
+                        From = $"./{resolvedReturnType.Name}"
                     });
                 }
 
@@ -127,49 +125,55 @@ namespace Api.EcmaScript
                 ClassMethod apiMethod = null;
 
                 // Special case for handling ContentStream<,> return type
-                if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                if (resolvedReturnType.IsGenericType && resolvedReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                 {
-                    var generics = returnType.GetGenericArguments();
-
-                    if (generics.Length == 0)
-                    {
-                        apiMethod = new ClassMethod
-                        {
-                            Name = LcFirst(method.Name),
-                            ReturnType = $"Promise<Record<string, string | number | boolean>>"
-                        };    
-                    }
-                    else
-                    {
-                        var actualType = generics[0];
+                    var generics = resolvedReturnType.GetGenericArguments();
+                    var actualType = generics[0];
                         
-                        apiMethod = new ClassMethod
-                        {
-                            Name = LcFirst(method.Name),
-                            ReturnType = $"Promise<{actualType.Name}>"
-                        };
-                    }
-                    
+                    apiMethod = new ClassMethod
+                    {
+                        Name = LcFirst(method.Name),
+                        ReturnType = $"Promise<{actualType.Name}>"
+                    };
                 }
                 else
                 {
                     // Handle other return types, including collections and Context
                     apiMethod = new ClassMethod
                     {
-                        Name = LcFirst(method.Name),
-                        ReturnType = returnType.Name == "Context"
-                            ? "Promise<SessionResponse>"
-                            : isCollection
-                                ? $"Promise<ApiList<{returnType.Name}>>"
-                                : $"Promise<{returnType.Name}>"
-                    };
-                }
+                        Name = LcFirst(method.Name)
+					};
+
+                    if (resolvedReturnType == typeof(void))
+                    {
+                        // uses getText
+						apiMethod.ReturnType = "Promise<string>";
+					}
+                    else if (resolvedReturnType == typeof(Context))
+                    {
+                        apiMethod.ReturnType = "Promise<SessionResponse>";
+                    }
+                    else if (resolvedReturnType == typeof(object))
+                    {
+                        apiMethod.ReturnType = "Promise<any>";
+                    }
+                    else if (collectionOfType != null)
+                    {
+                        apiMethod.ReturnType = isContentList
+                            ? $"Promise<ApiList<{collectionOfType.Name}>>"
+                            : $"Promise<{collectionOfType.Name}[]>";
+                    }
+                    else
+                    {
+                        apiMethod.ReturnType = $"Promise<{resolvedReturnType.Name}>";
+                    }
+				}
 
                 // Add the method parameters
                 AddMethodParams(method, apiMethod, script);
 
                 // Add the method body
-                AddMethodBody(method, apiMethod, script, baseUrl);
+                AddMethodBody(method, apiMethod, script, baseUrl, resolvedReturnType);
 
                 // Add the method to the class
                 target.AddMethod(apiMethod);

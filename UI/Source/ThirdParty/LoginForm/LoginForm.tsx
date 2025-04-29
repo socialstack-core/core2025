@@ -61,7 +61,7 @@ export default (props : LoginFormProps) => {
 	}
 
 	var onClickResendVerificationEmail = () => {
-		userApi.resendVerificationEmail({
+		userApi.resendVerificationEmail(setSession, {
 			email: user?.email
 		}).then(() => {
 			setEmailVerificationSent(true);

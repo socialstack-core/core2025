@@ -10,7 +10,7 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
-        public static void AddMethodBody(MethodInfo method, ClassMethod classMethod, Script script, string baseUrl)
+        public static void AddMethodBody(MethodInfo method, ClassMethod classMethod, Script script, string baseUrl, Type resolvedReturnType)
         {
             var ecmaService = Services.Get<EcmaService>();
             var endpointUrl = GetEndpointUrl(method) ?? "";
@@ -23,7 +23,7 @@ namespace Api.EcmaScript
 
             endpointUrl = ReplaceRouteAndQueryParams(endpointUrl, parameters);
 
-            var caller = ResolveCaller(method);
+            var caller = ResolveCaller(resolvedReturnType);
 
             classMethod.Injected = GenerateCall(caller, endpointUrl, bodyParam, parameters, GetHttpMethodFromAttribute(method), classMethod);
 
@@ -86,12 +86,27 @@ namespace Api.EcmaScript
             return endpointUrl.Replace("?&", "?");
         }
 
-        private static string ResolveCaller(MethodInfo method)
+        private static string ResolveCaller(Type resolvedReturnType)
         {
-            var returnType = method.ReturnType;
-            var genericArgs = returnType.IsGenericType ? returnType.GetGenericArguments() : Type.EmptyTypes;
+            var listOfType = GetListOfType(resolvedReturnType);
 
-            return (genericArgs.Length > 0 && IsList(genericArgs[0])) ? "getList" : "getOne";
+            if (listOfType != null)
+            {
+                if (IsContentType(listOfType))
+                {
+                    return "getList";
+                }
+            }
+            else if (IsContentType(resolvedReturnType))
+            {
+                return "getOne";
+            }
+            else if (resolvedReturnType == typeof(void))
+            {
+                return "getText";
+            }
+
+            return "getJson";
         }
 
         private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod, ClassMethod classMethod)
@@ -121,26 +136,14 @@ namespace Api.EcmaScript
 
             if (multipleParams.Count > 1)
             {
-                
-                inject.Add($"return getOne({urlPart}, {{"); 
-                
-                inject.AddRange(multipleParams.Select(p => $"{p.Name},"));
-                inject.Add("})");
-
-                if (classMethod.ReturnType == "Promise<SessionResponse>")
-                {
-                    inject.Add(".then((s: SessionResponse) => {");
-                    inject.Add("\tsetSession(s);");
-                    inject.Add("\treturn s;");
-                    inject.Add("})");
-                }
-
-                return inject;
-            } else if (multipleParams.Count == 1)
+                throw new Exception("Multiple [FromBody] attributes in a method is not permitted. The method was: " + classMethod.Name);
+            }
+            
+            if (multipleParams.Count == 1)
             {
-                inject.Add($"return {caller}({urlPart}, {{");
+                inject.Add($"return {caller}({urlPart}, ");
                 inject.Add(multipleParams[0].Name);
-                inject.Add("}, { method: '" + requestMethod + "' })");
+                inject.Add(", { method: '" + requestMethod + "' })");
 
                 if (classMethod.ReturnType == "Promise<SessionResponse>")
                 {

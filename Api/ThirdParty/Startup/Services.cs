@@ -443,19 +443,15 @@ namespace Api.Startup
 
             // The 
             var autoServiceType = GetAutoServiceType(service.GetType());
-            
+
+            var svcName = autoService.ServicedType == null ?
+                serviceType.Name.ToLower() :
+                (autoService.EntityName + "service").ToLower();
+
             if (startup)
             {
-                // If it's an AutoService, add it to the lookups:
-                var svcName = autoService.ServicedType == null ?
-                    serviceType.Name.ToLower() :
-                    (autoService.EntityName + "service");
-
-				All[serviceType] = autoService;
-
-                AllByName[
-                    svcName
-                ] = autoService;
+                All[serviceType] = autoService;
+                AllByName[svcName] = autoService;
 
                 var ctx = new Contexts.Context()
                 {
@@ -487,11 +483,7 @@ namespace Api.Startup
                 // Shutdown - deregister this service.
                 All.Remove(serviceType, out _);
 
-				var svcName = autoService.ServicedType == null ?
-					serviceType.Name.ToLower() :
-					(autoService.EntityName + "service");
-
-				AllByName.Remove(svcName, out _);
+    			AllByName.Remove(svcName, out _);
 
                 var ctx = new Contexts.Context()
                 {

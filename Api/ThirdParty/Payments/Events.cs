@@ -21,6 +21,11 @@ namespace Api.Eventing
 		public static EventGroup<Coupon> Coupon;
 		
 		/// <summary>
+		/// Set of events for a product attribute.
+		/// </summary>
+		public static EventGroup<ProductAttribute> ProductAttribute;
+		
+		/// <summary>
 		/// Set of events for a purchase.
 		/// </summary>
 		public static PurchaseEventGroup Purchase;

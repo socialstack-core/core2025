@@ -36,11 +36,6 @@ namespace Api.ContentSync
 		}
 
 		/// <summary>
-		/// Handshake opcode
-		/// </summary>
-		public OpCode<SyncServerHandshake> HandshakeOpCode { get; set; }
-
-		/// <summary>
 		/// True if sync should be in verbose mode.
 		/// </summary>
 		public bool Verbose = true;
@@ -48,15 +43,6 @@ namespace Api.ContentSync
 		static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
 		private ContentSyncServiceConfig _configuration;
 		private ClusteredServerService _clusteredServerService;
-
-		/// <summary>
-		/// The port number for contentSync to use.
-		/// </summary>
-		public int Port {
-			get {
-				return _configuration.Port;
-			}
-		}
 
 		/// <summary>
 		/// Network room type service.
@@ -80,11 +66,6 @@ namespace Api.ContentSync
 
 			// Load config:
 			_configuration = GetConfig<ContentSyncServiceConfig>();
-
-			if (_configuration.SyncFileMode.HasValue)
-			{
-				SyncFileMode = _configuration.SyncFileMode.Value;
-			}
 
 			Verbose = _configuration.Verbose;
 
@@ -117,7 +98,7 @@ namespace Api.ContentSync
 		public string HostName;
 
 		/// <summary>
-		/// Sets up the config required to connect to other servers.
+		/// Sets up the config required to communicate with other servers.
 		/// </summary>
 		/// <returns></returns>
 		public async Task Startup()
@@ -134,7 +115,6 @@ namespace Api.ContentSync
 				// Dev environment always uses the same data:
 				Self = new ClusteredServer()
 				{
-					Port = Port,
 					HostName = HostName,
 					Environment = env,
 					Id = 1
@@ -208,7 +188,6 @@ namespace Api.ContentSync
 			{
 				self = new ClusteredServer()
 				{
-					Port = Port,
 					HostName = HostName,
 					Environment = env,
 					RegionId = regionId,

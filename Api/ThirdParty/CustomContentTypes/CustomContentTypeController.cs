@@ -12,11 +12,11 @@ namespace Api.CustomContentTypes
 	public partial class CustomContentTypeController : AutoController<CustomContentType>
     {
         /// <summary>
-        /// All custom types which will include deleted ones and forms.
+        /// All custom types which will include deleted ones.
         /// </summary>
         /// <returns></returns>
         [HttpGet("alltypes")]
-        public async ValueTask<List<string>> GetAllTypes()
+        public List<string> GetAllTypes()
         {
             var types = Services
                 .AllByName
@@ -28,7 +28,7 @@ namespace Api.CustomContentTypes
         }
 
         /// <summary>
-        /// Gets all custom types excluding deleted or form ones.
+        /// Gets all custom types excluding deleted ones.
         /// </summary>
         /// <returns></returns>
         [HttpGet("allcustomtypesplus")]
@@ -36,7 +36,7 @@ namespace Api.CustomContentTypes
         {
             var results = new List<TypeInfo>();
             
-            var customTypes = await (_service as CustomContentTypeService).Where("Deleted=? AND IsForm=?", DataOptions.IgnorePermissions).Bind(false).Bind(false).ListAll(context);
+            var customTypes = await (_service as CustomContentTypeService).Where("Deleted=?", DataOptions.IgnorePermissions).Bind(false).ListAll(context);
 
             if (customTypes != null)
             {
