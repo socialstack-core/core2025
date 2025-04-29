@@ -92,13 +92,9 @@ namespace Api.ESLint
 
                 PrintFormattedOutput(stdout);
 
-                if (process.ExitCode != 0)
+                if (process.ExitCode == 0)
                 {
-                    Console.Error.WriteLine($"[ESLint] failed with exit code {process.ExitCode}. Please check the errors above.");
-                }
-                else
-                {
-                    Console.WriteLine("[ESLint] completed successfully.");
+                    Console.WriteLine("[ESLint] All checks passed");
                 }
             }
             catch (Exception ex)
