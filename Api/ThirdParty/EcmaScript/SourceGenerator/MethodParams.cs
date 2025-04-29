@@ -70,7 +70,7 @@ namespace Api.EcmaScript
                     {
                         Name = param.Name,
                         Type = mappedType,
-                        DefaultValue = param.DefaultValue?.ToString() ?? "undefined"
+                        DefaultValue = param.DefaultValue?.ToString() ?? ""
                     });
                     continue;
                 }
@@ -113,7 +113,7 @@ namespace Api.EcmaScript
                 {
                     Name = param.Name,
                     Type = type.Name,
-                    DefaultValue = param.DefaultValue?.ToString() ?? "undefined"
+                    DefaultValue = param.DefaultValue?.ToString() ?? ""
                 });
             }
         }

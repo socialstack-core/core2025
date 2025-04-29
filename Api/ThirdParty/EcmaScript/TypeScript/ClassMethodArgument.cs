@@ -38,6 +38,9 @@ namespace Api.EcmaScript.TypeScript
                 {
                     src += $" = {DefaultValue}";
                 }
+            } else if (DefaultValue is not null && DefaultValue.Length == 0)
+            {
+                src += " = ''";
             }
             return src;
         }

@@ -42,7 +42,7 @@ namespace Api.EcmaScript
             {
                 PropertyName = "includes?",
                 PropertyType = "ApiIncludes",
-                DefaultValue = "undefined"
+                DefaultValue = ""
             });
         }
 
