@@ -22,6 +22,26 @@ namespace Api.EcmaScript
             HandleParameterTypes(parameters, script);
 
             endpointUrl = ReplaceRouteAndQueryParams(endpointUrl, parameters);
+            endpointUrl += !endpointUrl.Contains('?') ? '?' : "";
+
+            if (classMethod.Arguments.Any(arg => arg.Name == "includes?"))
+            {
+                if (IsContentType(resolvedReturnType))
+                {
+                    endpointUrl += "&includes=' + includes + '";
+                }
+                else if (IsEntity(resolvedReturnType))
+                {
+                    endpointUrl += "&includes=' + includes + '";
+                }
+            }
+
+            endpointUrl = endpointUrl.Replace("?&", "?");
+
+            if (endpointUrl.EndsWith('?'))
+            {
+                endpointUrl = endpointUrl[0..^1];
+            }
 
             var caller = ResolveCaller(resolvedReturnType);
 

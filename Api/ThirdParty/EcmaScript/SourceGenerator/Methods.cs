@@ -71,6 +71,7 @@ namespace Api.EcmaScript
                             Symbols = ["ApiList"],
                             From = "UI/Functions/WebRequest"
                         });
+                        
                     }
 
                     resolvedReturnType = collectionOfType; // Get the type inside the collection
@@ -171,6 +172,23 @@ namespace Api.EcmaScript
 
                 // Add the method parameters
                 AddMethodParams(method, apiMethod, script);
+
+                if (IsContentType(resolvedReturnType))
+                {
+                    apiMethod.Arguments.Add(new() {
+                        Name = "includes?", 
+                        DefaultValue = "",
+                        Type = "string"
+                    });
+                }
+                else if (IsEntity(resolvedReturnType))
+                {
+                    apiMethod.Arguments.Add(new() {
+                        Name = "includes?", 
+                        DefaultValue = "",
+                        Type = "string"
+                    });
+                }
 
                 // Add the method body
                 AddMethodBody(method, apiMethod, script, baseUrl, resolvedReturnType);
