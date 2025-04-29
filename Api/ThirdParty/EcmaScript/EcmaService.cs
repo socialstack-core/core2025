@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
 using Api.Contexts;
+using Api.EcmaScript.Markdown;
 using Api.EcmaScript.TypeScript;
 using Api.Eventing;
 using Microsoft.AspNetCore.Http;
@@ -134,13 +135,17 @@ namespace Api.EcmaScript
 
                     try
                     {
+                        
+                        MarkdownGeneration.AddUsage(entityType);
 
                         script.AddTypeDefinition(
                             SourceGenerator.OnEntity(entityType, script, module)
                         );
+                        MarkdownGeneration.OnEntity(entityType, module);
                         script.AddChild(
                             SourceGenerator.OnEntityController(entityType, controller, script)
                         );
+                        MarkdownGeneration.OnController(controllerType, entityType, module);
                     
                         SourceGenerator.CreateIncludeClass(entityType, IncludesScript);
 
@@ -182,6 +187,8 @@ namespace Api.EcmaScript
                             SourceGenerator.OnNonEntityController(controller, script)
                         );
 
+                        MarkdownGeneration.OnController(controller, module);
+
                         
                         script.AddImport(new() {
                             Symbols = ["getOne", "getList", "getJson", "getText"],
@@ -207,6 +214,8 @@ namespace Api.EcmaScript
                 sourceContainer.Add(script.FileName, source);
                 File.WriteAllText(script.FileName, source);
             });
+
+            MarkdownGeneration.GenerateMarkdown();
             
         }
 
