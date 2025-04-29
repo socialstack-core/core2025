@@ -2043,11 +2043,15 @@ namespace Api.CanvasRenderer
                     await ConstructCss();
                 }
 
+                var context = new Context();
+
+                await Events.ESLint.Change.Dispatch(context, change);
+
                 // Now (local time, because this is for developers).
                 Log.Ok("frontendcodeservice", "Done handling UI changes.");
 
                 // Trigger event:
-                await Events.FrontendAfterUpdate.Dispatch(new Context(), BuildTimestampMs);
+                await Events.FrontendAfterUpdate.Dispatch(context, BuildTimestampMs);
             };
             _fileSystemTimer.Start();
         }
