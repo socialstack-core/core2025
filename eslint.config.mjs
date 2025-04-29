@@ -1,6 +1,8 @@
 // eslint.config.mjs
 import { Linter } from 'eslint';
 import tsParser from '@typescript-eslint/parser';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
 
 /** @type {Linter.FlatConfig[]} */
 export default [
@@ -17,6 +19,10 @@ export default [
         },
       },
     },
+    plugins: {
+      react: reactPlugin, // React plugin object
+      'react-hooks': reactHooksPlugin, // React Hooks plugin object
+    },
     rules: {
       'no-restricted-imports': [
         'error',
@@ -39,6 +45,13 @@ export default [
           ],
         },
       ],
+      // React specific rules
+      'react/jsx-uses-react': 'off', // React 17 JSX Transform no longer requires React import
+      'react/react-in-jsx-scope': 'off', // React 17 JSX Transform no longer requires React in scope
+
+      // React Hooks rules
+      'react-hooks/rules-of-hooks': 'error', // Enforce rules of hooks
+      'react-hooks/exhaustive-deps': 'warn', // Ensure all dependencies are in useEffect's dependency array
     },
   },
   {
@@ -52,6 +65,10 @@ export default [
         project: './tsconfig.json', // Specify tsconfig.json for type checking
       },
     },
+    plugins: {
+      react: reactPlugin, // React plugin object
+      'react-hooks': reactHooksPlugin, // React Hooks plugin object
+    },
     rules: {
       'no-restricted-imports': [
         'error',
@@ -74,6 +91,13 @@ export default [
           ],
         },
       ],
+      // React specific rules
+      'react/jsx-uses-react': 'off', // React 17 JSX Transform no longer requires React import
+      'react/react-in-jsx-scope': 'off', // React 17 JSX Transform no longer requires React in scope
+
+      // React Hooks rules
+      'react-hooks/rules-of-hooks': 'error', // Enforce rules of hooks
+      'react-hooks/exhaustive-deps': 'warn', // Ensure all dependencies are in useEffect's dependency array
     },
   },
 ];

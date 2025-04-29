@@ -1,7 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Api.Eventing;
 
@@ -42,12 +43,12 @@ namespace Api.ESLint
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 fileName = "cmd.exe";
-                arguments = "/c npx eslint --ext .ts,.tsx UI Email Admin";
+                arguments = "/c npx eslint --ext .ts,.tsx UI Email Admin -f json";
             }
             else
             {
                 fileName = "/bin/bash";
-                arguments = "-c \"npx eslint --ext .ts,.tsx UI Email Admin\"";
+                arguments = "-c \"npx eslint --ext .ts,.tsx UI Email Admin -f json\"";
             }
 
             var process = new Process
@@ -90,66 +91,84 @@ namespace Api.ESLint
 
                 await process.WaitForExitAsync();
 
-                PrintFormattedOutput(stdout);
-
+                // If the process is successful, parse and log the output
                 if (process.ExitCode == 0)
                 {
-                    Console.WriteLine("[ESLint] All checks passed");
+                    Log.Info("ESLINT", "[ESLint] All checks passed");
                 }
+                else if (process.ExitCode == 2)
+                {
+                    Log.Error("ESLINT", stderr);
+                }
+
+                // Parse and log the formatted output
+                PrintFormattedOutput(stdout);
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"[ESLint] failed to run: {ex.Message}");
+                Log.Error("ESLINT", $"[ESLint] failed to run: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Parses and prints ESLint output, associating errors with the correct file.
+        /// Parses and prints ESLint JSON output, associating errors with the correct file.
         /// </summary>
         private static void PrintFormattedOutput(string rawOutput)
         {
-            var lines = rawOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            string currentFile = null;
-
-            foreach (var line in lines)
+            try
             {
-                var trimmed = line.Trim();
+                // Deserialize the ESLint JSON output
+                var eslintResults = JsonSerializer.Deserialize<JsonArray>(rawOutput);
 
-                // If it's a full path (file), set it as current
-                if (trimmed.EndsWith(".ts") || trimmed.EndsWith(".tsx") || trimmed.EndsWith(".js") || trimmed.EndsWith(".jsx"))
+                if (eslintResults == null || eslintResults.Count == 0)
                 {
-                    currentFile = trimmed;
-                    continue;
+                    Log.Info("ESLINT", "No issues found.");
+                    return;
                 }
 
-                // Match ESLint error format: line:col  severity  message  rule
-                var match = Regex.Match(trimmed, @"^(?<line>\d+):(?<column>\d+)\s+(?<severity>error|warning)\s+(?<message>.+?)\s+(?<ruleId>[a-zA-Z\-]+)$");
-
-                if (match.Success && currentFile != null)
+                // Process each file's linting results
+                foreach (var fileResult in eslintResults)
                 {
-                    var lineNumber = match.Groups["line"].Value;
-                    var column = match.Groups["column"].Value;
-                    var severity = match.Groups["severity"].Value.ToUpper();
-                    var message = match.Groups["message"].Value;
-                    var ruleId = match.Groups["ruleId"].Value;
+                    var fileObject = fileResult.AsObject();
 
-                    currentFile = currentFile.Replace(Environment.CurrentDirectory + '\\', "");
- 
-                    var formatted = $"{currentFile}:{lineNumber}:{column} ({ruleId}) - {message} ";
+                    var filePath = fileObject["filePath"]?.GetValue<string>();
+                    var messages = fileObject["messages"]?.AsArray();
 
-                    if (severity == "ERROR")
+                    if (string.IsNullOrEmpty(filePath) || messages == null || messages.Count == 0)
                     {
-                        Log.Error("ESLINT", formatted);
+                        continue;
                     }
-                    else
+
+                    filePath = filePath.Replace(Environment.CurrentDirectory + '\\', "");
+
+                    // Log the issues for this file
+                    foreach (var message in messages)
                     {
-                        Log.Warn("ESLINT", formatted);
+                        var severity = message["severity"]?.GetValue<int>() == 2 ? "ERROR" : "WARNING";
+                        var lineNumber = message["line"]?.GetValue<int>();
+                        var column = message["column"]?.GetValue<int>();
+                        var messageText = message["message"]?.GetValue<string>();
+                        var ruleId = message["ruleId"]?.GetValue<string>();
+
+                        if (lineNumber.HasValue && column.HasValue && !string.IsNullOrEmpty(messageText))
+                        {
+                            var formatted = $"{filePath}:{lineNumber}:{column} ({ruleId}) - {messageText}";
+
+                            if (severity == "ERROR")
+                            {
+                                Log.Error("ESLINT", formatted);
+                            }
+                            else
+                            {
+                                Log.Warn("ESLINT", formatted);
+                            }
+                        }
                     }
                 }
-                else
-                {
-                    Log.Info("ESLINT", line);
-                }
+            }
+            catch (JsonException ex)
+            {
+                Log.Error("ESLINT", $"Error parsing ESLint output: {ex.Message}");
             }
         }
     }
