@@ -17,6 +17,7 @@ namespace Api.ESLint
         /// </summary>
         public ESLintService()
         {
+#if DEBUG
             Events.Compiler.BeforeCompile.AddEventListener((context, container) =>
             {
                 _ = RunESLint();
@@ -28,6 +29,7 @@ namespace Api.ESLint
                 _ = RunESLint();
                 return ValueTask.FromResult(container);
             });
+#endif
         }
 
         private static async Task RunESLint()
@@ -135,6 +137,8 @@ namespace Api.ESLint
                     var message = match.Groups["message"].Value;
                     var ruleId = match.Groups["ruleId"].Value;
 
+                    currentFile = currentFile.Replace(Environment.CurrentDirectory + '\\', "");
+ 
                     var formatted = $"{currentFile}:{lineNumber}:{column} ({ruleId}) - {message} ";
 
                     if (severity == "ERROR")
