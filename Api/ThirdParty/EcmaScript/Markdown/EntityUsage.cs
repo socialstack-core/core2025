@@ -25,7 +25,7 @@ namespace Api.EcmaScript.Markdown
             document.AddHeading("Update", 5);
             document.AddCodeBlock(@$"
 <Form action={{(values) => {{ 
-    {entityType.Name}Api.update(values.id, values); 
+    return {entityType.Name}Api.update(values.id, values); 
 }}}}>
     {{/* Add children here */}}
 </Form>", "tsx");
