@@ -20,7 +20,6 @@ namespace Api.Components
 		public ComponentGroupService() : base(Events.ComponentGroup)
         {
 			// Example admin page install:
-			Console.WriteLine("Installing admin page");
 			InstallAdminPages("ComponentGroups", "fa:fa-rocket", new string[] { "id", "name" });
 		}
 	}

@@ -188,6 +188,17 @@ namespace Api.Pages
 				return new ValueTask<Page>(page);
 			});
 
+			Events.Page.BeforeAdminPageInstall.AddEventListener((context, page, canvasNode, contentType, pageType) => {
+
+					if (pageType == AdminPageType.Single && contentType == typeof(Page))
+					{
+						canvasNode.Module = "Admin/Page/Single";
+						canvasNode.Data.Clear();
+					}
+
+				return ValueTask.FromResult(page);
+			});
+
 			Events.Page.BeforeCreate.AddEventListener((Context context, Page page) =>
 			{
 				if (string.IsNullOrEmpty(page.Url))

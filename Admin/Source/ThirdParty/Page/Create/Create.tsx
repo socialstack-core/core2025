@@ -3,6 +3,7 @@ import Default from "Admin/Layouts/Default"
 import PageApi, { Page } from "Api/Page";
 import TemplateApi, { Template } from "Api/Template";
 import { useEffect, useState } from "react";
+import Alert from "UI/Alert";
 import Button from "UI/Button";
 import Column from "UI/Column";
 import Container from "UI/Container";
@@ -25,6 +26,8 @@ const CreatePage: React.FC = (): React.ReactElement => {
     // holds the selected template from the array above
     const [chosenTemplate, setChosenTemplate] = useState<Template>();
 
+    const [error, setError] = useState<string>()
+
     // fetch all templates that can be used.
     useEffect(() => {
         if (!layouts) {
@@ -39,7 +42,8 @@ const CreatePage: React.FC = (): React.ReactElement => {
     useEffect(() => {
         if (chosenLayout) {
             TemplateApi.list({
-                baseTemplate: chosenLayout?.name,
+                query: "baseTemplate = ?",
+                args: [chosenLayout?.name]
             })
             .then((templates) => {
                 setTemplates(templates.results)
@@ -65,11 +69,22 @@ const CreatePage: React.FC = (): React.ReactElement => {
                             onValues={(values: Page): Page => {
 
                                 // set the layout and template to the values.
-                                values.bodyJson = chosenTemplate?.bodyJson;
+
+                                const rootElement = {
+                                    c: JSON.parse(chosenTemplate?.bodyJson ?? "{}") ?? {},
+                                    i: 1
+                                }
+                                
+
+                                values.bodyJson = JSON.stringify(rootElement);
 
                                 return values;
                             }}
+                            onFailed={(error) => {
+                                setError(error.message)
+                            }}
                         >
+                            {error && <Alert variant="danger">{error}</Alert>}
                             <Input
                                 type={'text'}
                                 name={'title'}
@@ -94,7 +109,7 @@ const CreatePage: React.FC = (): React.ReactElement => {
                                     setChosenLayout(layout)
                                 }}
                             >
-                                <option value={""}>Select Layout</option>
+                                <option value={""}>None</option>
                                 {layouts?.map((layout) => {
                                     return (
                                         <option key={layout.name} value={layout.name}>{layout.name.includes('/') ? layout.name.split('/').pop() : layout.name}</option>
@@ -112,19 +127,15 @@ const CreatePage: React.FC = (): React.ReactElement => {
                                         setChosenTemplate(template);
                                     }}
                                 >
-                                    <option value={"0"}>Select Template</option>
+                                    <option value={"0"}>None</option>
                                     {templates?.map((template) => {
                                         return (
                                             <option key={template.id} value={template.id}>{template.title}</option>
                                         )
                                     })}
                                 </Input>
-                            )}
-                            {
-                                chosenLayout && chosenTemplate && (
-                                    <Button buttonType='submit'>{`Create page`}</Button>
-                                )
-                            }
+                            )}    
+                            <Button buttonType='submit'>{`Create page`}</Button>
                         </Form>
                     </Column>
                 </Row>
