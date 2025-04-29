@@ -51,7 +51,7 @@ namespace Api.EcmaScript.Markdown
                 document.AddCodeBlock(example, "ts");
 
                 // Add a link to view the method in markdown format
-                string markdownFile = Path.GetFileNameWithoutExtension(document.FileName) + ".tsx"; // Replace .md with .tsx
+                string markdownFile = Path.GetFileNameWithoutExtension(document.FileName) + ".md"; // Replace .tsx with .md
                 document.AddParagraph($"[View method]({markdownFile})");
             }
         }
@@ -94,7 +94,7 @@ namespace Api.EcmaScript.Markdown
                 document.AddCodeBlock(example, "ts");
 
                 // Add a link to view the method in markdown format
-                string markdownFile = Path.GetFileNameWithoutExtension(document.FileName) + ".tsx"; // Replace .md with .tsx
+                string markdownFile = Path.GetFileNameWithoutExtension(document.FileName) + ".md"; // Replace .tsx with .md
                 document.AddParagraph($"[View method]({markdownFile})");
             }
         }
@@ -112,6 +112,19 @@ namespace Api.EcmaScript.Markdown
             var entityName = method.DeclaringType?.Name?.Replace("Api", "") ?? "Entity"; // API class name, e.g., FrontendCodeApi => FrontendCode
             var apiInstance = entityType.Name + "Api"; // Create dynamic apiInstance name
 
+            // Get the parameters for the method
+            var parameters = method.GetParameters()
+                .Where(p => !SourceGenerator.ignoreParamTypes.Contains(p.ParameterType))
+                .ToList();
+
+            // Build parameter string
+            string args = parameters.Count > 0
+                ? "{ " + string.Join(", ", parameters.Select(p => $"{p.Name}: {InferTypeScriptType(p.ParameterType)}")) + " }"
+                : "";
+
+            // Handle special case for localeId with default value
+            string idArg = parameters.FirstOrDefault(p => p.Name?.ToLower() == "localeid")?.Name ?? "localeId";
+            string defaultLocaleId = idArg == "localeId" ? "= 1" : "";
 
             // Convert method name to lowercase-first (lcfirst) style
             string lcMethodName = methodName.Substring(0, 1).ToLower() + methodName.Substring(1);
@@ -119,12 +132,23 @@ namespace Api.EcmaScript.Markdown
             // Generate the TypeScript example based on HTTP method
             return httpMethod.ToUpper() switch
             {
-                "GET" => $"await {apiInstance}.{lcMethodName}()",  // For methods like reload(), getStaticFileList()
-                "POST" => $"await {apiInstance}.{lcMethodName}",  // For POST with parameters
-                "PUT" => $"await {apiInstance}.{lcMethodName}",  // For PUT with parameters
-                "DELETE" => $"await {apiInstance}.{lcMethodName}()",  // For DELETE with no params
-                _ => "// unknown handle type."
+                "GET" => $"await {apiInstance}.{lcMethodName}();",  // For methods like reload(), getStaticFileList()
+                "POST" => $"await {apiInstance}.{lcMethodName}({args});",  // For POST with parameters
+                "PUT" => $"await {apiInstance}.{lcMethodName}({args});",  // For PUT with parameters
+                "DELETE" => $"await {apiInstance}.{lcMethodName}();",  // For DELETE with no params
+                _ => $"await {apiInstance}.request('{httpMethod.ToLower()}', '{url}', {args});"  // For other HTTP methods
             };
+        }
+
+        private static string InferTypeScriptType(Type type)
+        {
+            if (type == typeof(string)) return "string";
+            if (type == typeof(int) || type == typeof(long) || type == typeof(uint)) return "number";
+            if (type == typeof(bool)) return "boolean";
+            if (type == typeof(JObject)) return "Partial<T>";
+            if (type == typeof(object)) return "any";
+
+            return type.Name;
         }
     }
 }

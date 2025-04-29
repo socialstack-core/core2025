@@ -135,7 +135,7 @@ namespace Api.EcmaScript
 
                     try
                     {
-                        
+                        MarkdownGeneration.OnImport(entityType);
                         MarkdownGeneration.AddUsage(entityType);
 
                         script.AddTypeDefinition(
@@ -183,6 +183,9 @@ namespace Api.EcmaScript
                     SourceGenerator.EnsureScript(script);
 
                     try{
+                        
+                        MarkdownGeneration.OnImport(controller);
+                        
                         script.AddChild(
                             SourceGenerator.OnNonEntityController(controller, script)
                         );
