@@ -69,7 +69,7 @@ export default [
                 'getList',
                 'getOne',
               ],
-              message: "Do not import from 'UI/Functions/WebRequest' directly. Use the generated API in the 'typescript' directory instead.",
+              message: "Do not import from 'UI/Functions/WebRequest' directly. Use the generated API in the 'TypeScript' directory instead.",
             },
           ],
         },

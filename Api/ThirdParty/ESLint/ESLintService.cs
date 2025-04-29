@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Api.Eventing;
 
@@ -18,15 +19,12 @@ namespace Api.ESLint
         {
             Events.Compiler.BeforeCompile.AddEventListener((context, container) =>
             {
-                // we don't want to await this, the only thing we want to do is get the messages to show in
-                // the log, ESLint can be a little slow due to the amount of files it has to traverse.
                 _ = RunESLint();
                 return ValueTask.FromResult(container);
             });
+
             Events.ESLint.Change.AddEventListener((context, container) =>
             {
-                // we don't want to await this, the only thing we want to do is get the messages to show in
-                // the log, ESLint can be a little slow due to the amount of files it has to traverse.
                 _ = RunESLint();
                 return ValueTask.FromResult(container);
             });
@@ -34,11 +32,11 @@ namespace Api.ESLint
 
         private static async Task RunESLint()
         {
-            Log.Info("ESLINT", "[ESLINT] Checking JS/TS for validity, please wait...");
+            Log.Info("ESLINT", "Checking JS/TS for validity, please wait...");
             string fileName;
             string arguments;
 
-            // Adjust the command based on OS
+            // Choose correct shell command based on OS
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 fileName = "cmd.exe";
@@ -63,23 +61,14 @@ namespace Api.ESLint
                 }
             };
 
+            string stdout = "";
+            string stderr = "";
+
             process.OutputDataReceived += (sender, args) =>
             {
                 if (!string.IsNullOrWhiteSpace(args.Data))
                 {
-                    // Process each output line and format it
-                    var formattedOutput = FormatESLintOutput(args.Data);
-                    if (formattedOutput != null)
-                    {
-                        if (args.Data.Contains("error"))
-                        {
-                            Log.Error("ESLINT", formattedOutput);
-                        }
-                        else
-                        {
-                            Log.Info("ESLINT", formattedOutput);
-                        }
-                    }
+                    stdout += args.Data + "\n";
                 }
             };
 
@@ -87,12 +76,7 @@ namespace Api.ESLint
             {
                 if (!string.IsNullOrWhiteSpace(args.Data))
                 {
-                    // Process error output separately with a different prefix
-                    var formattedError = FormatESLintOutput(args.Data, true);
-                    if (formattedError != null)
-                    {
-                        Log.Error("ESLINT", formattedError);
-                    }
+                    stderr += args.Data + "\n";
                 }
             };
 
@@ -103,6 +87,8 @@ namespace Api.ESLint
                 process.BeginErrorReadLine();
 
                 await process.WaitForExitAsync();
+
+                PrintFormattedOutput(stdout);
 
                 if (process.ExitCode != 0)
                 {
@@ -120,37 +106,51 @@ namespace Api.ESLint
         }
 
         /// <summary>
-        /// Formats the ESLint output to make it cleaner and more readable.
+        /// Parses and prints ESLint output, associating errors with the correct file.
         /// </summary>
-        /// <param name="data">The raw output from ESLint.</param>
-        /// <param name="isError">If true, this is error output; otherwise, it's standard output.</param>
-        /// <returns>A formatted string, or null if the data isn't relevant.</returns>
-        private static string FormatESLintOutput(string data, bool isError = false)
+        private static void PrintFormattedOutput(string rawOutput)
         {
-            // If it's an ESLint error message, we want to capture the file and the error description.
-            if (data.Contains("error"))
+            var lines = rawOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            string currentFile = null;
+
+            foreach (var line in lines)
             {
-                // Try to extract file, line number, and the error message
-                var pattern = @"(?<file>.*?)(?::(?<line>\d+))?[\s]+(?<message>.+)";
-                var match = System.Text.RegularExpressions.Regex.Match(data, pattern);
+                var trimmed = line.Trim();
 
-                if (match.Success)
+                // If it's a full path (file), set it as current
+                if (trimmed.EndsWith(".ts") || trimmed.EndsWith(".tsx") || trimmed.EndsWith(".js") || trimmed.EndsWith(".jsx"))
                 {
-                    var file = match.Groups["file"].Value;
-                    var line = match.Groups["line"].Value;
-                    var message = match.Groups["message"].Value;
+                    currentFile = trimmed;
+                    continue;
+                }
 
-                    // Format the output as: [File Path] [Line Number] - Error: [Error Message]
-                    return isError
-                        ? $"{file}{(string.IsNullOrEmpty(line) ? "" : $":{line}")} - {message}"
-                        : $"{file}{(string.IsNullOrEmpty(line) ? "" : $":{line}")} - {message}";
+                // Match ESLint error format: line:col  severity  message  rule
+                var match = Regex.Match(trimmed, @"^(?<line>\d+):(?<column>\d+)\s+(?<severity>error|warning)\s+(?<message>.+?)\s+(?<ruleId>[a-zA-Z\-]+)$");
+
+                if (match.Success && currentFile != null)
+                {
+                    var lineNumber = match.Groups["line"].Value;
+                    var column = match.Groups["column"].Value;
+                    var severity = match.Groups["severity"].Value.ToUpper();
+                    var message = match.Groups["message"].Value;
+                    var ruleId = match.Groups["ruleId"].Value;
+
+                    var formatted = $"{currentFile}:{lineNumber}:{column} ({ruleId}) - {message} ";
+
+                    if (severity == "ERROR")
+                    {
+                        Log.Error("ESLINT", formatted);
+                    }
+                    else
+                    {
+                        Log.Warn("ESLINT", formatted);
+                    }
+                }
+                else
+                {
+                    Log.Info("ESLINT", line);
                 }
             }
-
-            // Return null if the line does not match expected ESLint format
-            return null;
         }
-
-
     }
 }
