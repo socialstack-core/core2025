@@ -2,10 +2,12 @@ import Tile from "Admin/Tile";
 import { useState } from "react"
 import Alert from "UI/Alert";
 import Form from "UI/Form";
-import Input from "UI/Input"
+import Input from "UI/Input";
+import stdOutApi from "Api/StdOut";
 
-export type ModWindowScope = typeof window & {
-    recordSets: RecordSet[]
+
+declare global {
+    var recordSets: RecordSet[];
 }
 
 export type RecordSet = {
@@ -52,8 +54,8 @@ const renderRuns = (runs: any) => {
 
 const Database: React.FC<{}> = (): React.ReactNode => {
     
-    const [runs, setRuns] = useState([]);
-
+    const [runs, setRuns] = useState<any[]>([]);
+    
     return (
         <div className="dashboards-database">
             <Tile>
@@ -61,29 +63,27 @@ const Database: React.FC<{}> = (): React.ReactNode => {
                     Tip: Use your browsers JS console to perform analysis. Within a session, every result set will be available via <b>window.recordSets</b>
                 </Alert>
                 <Form 
-                    action={() => Promise.resolve()} 
+                    action={(values : any) => stdOutApi.runQuery({query: values.query})} 
                     loadingMessage={`Running query..`}
                     submitLabel={`Execute Query`}
                     onSuccess={response => {
+                        var run = JSON.parse(response) as any;
 
-                        var modWin: ModWindowScope = window as ModWindowScope;
-                        
-                        if(!modWin.recordSets){
-                            modWin.recordSets = [];
+                        if(!window.recordSets){
+                            window.recordSets = [];
                         }
                         
-                        // if(response.sets){
-                        //     modWin.recordSets = modWin.recordSets.concat(response.sets);
-                        // }
+                        if (run.sets){
+                            window.recordSets = window.recordSets.concat(run.sets);
+                        }
                         
                         var newRuns = runs.slice();
-                        newRuns.unshift(response as never);
+                        newRuns.unshift(run);
                         setRuns(newRuns);
                     }}
                 >
                     <Input 
-                        type='textarea' 
-                        contentType='application/sql' 
+                        type='sql' 
                         name='query' 
                     />
                 </Form>
