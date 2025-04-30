@@ -12,18 +12,10 @@ const EditTemplate: React.FC = (props: any): React.ReactNode => {
     const pathItems = location.pathname.replaceAll("//", "/").split('/')
     const targetIdx = pathItems.indexOf('template');
 
-    if (targetIdx < 0 || !pathItems[targetIdx + 1]) {
-        return showError();
-    }
-
+    const [template, setTemplate] = useState<Template | undefined>();
+    
     // grab the ID from the URL
     const id: number = parseInt(pathItems[targetIdx + 1]);
-
-    if (Number.isNaN(id)) {
-        return showError();
-    }
-
-    const [template, setTemplate] = useState<Template | undefined>();
 
     useEffect(() => {
         if (!template) {
@@ -31,7 +23,17 @@ const EditTemplate: React.FC = (props: any): React.ReactNode => {
                        .then((tpl: Template) => setTemplate(tpl))
                        .catch(() => console.error('Failed to load template'))
         }
-    }, [template])
+    }, [template, id])
+
+    if (targetIdx < 0 || !pathItems[targetIdx + 1]) {
+        return showError();
+    }
+
+    if (Number.isNaN(id)) {
+        return showError();
+    }
+
+    
 
     if (!template) {
         return <p>Loading</p>

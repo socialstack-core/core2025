@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Alert from "UI/Alert";
-import { ApiContent, getJson } from "UI/Functions/WebRequest";
+import { ApiContent } from "UI/Functions/WebRequest";
+import PasswordResetRequestApi from "Api/PasswordResetRequest";
 import Loading from "UI/Loading";
 import { useTokens } from "UI/Token";
 
@@ -13,10 +14,10 @@ const PasswordResetButton: React.FC<{}> = (): React.ReactNode => {
     const [url, setUrl] = useState<string|null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const userId = useTokens('$url.user.id', undefined);
+    const userId: uint = parseInt(useTokens('$url.user.id', undefined)) as uint;
 
     const generate = () => {
-        getJson('passwordresetrequest/' + userId + '/generate')
+        PasswordResetRequestApi.generate(userId)
             .then((response) => {
                 const result: ApiContent<PasswordResetResponse> = response as ApiContent<PasswordResetResponse>;
 

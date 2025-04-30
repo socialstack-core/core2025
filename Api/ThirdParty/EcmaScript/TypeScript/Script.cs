@@ -132,6 +132,10 @@ namespace Api.EcmaScript.TypeScript
             source += "// Imports" + Environment.NewLine;
             foreach(var import in Imports)
             {
+                if (import.From == "UI/Functions/WebRequest")
+                {
+                    source += "// eslint-disable-next-line no-restricted-imports" + Environment.NewLine;
+                }
                 source += import.CreateSource();
             }
             source += Environment.NewLine;

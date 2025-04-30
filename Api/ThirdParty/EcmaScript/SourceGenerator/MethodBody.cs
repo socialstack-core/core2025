@@ -116,25 +116,27 @@ namespace Api.EcmaScript
 
         private static string ResolveCaller(Type resolvedReturnType)
         {
+            var ecmaService = Services.Get<EcmaService>();
             var listOfType = GetListOfType(resolvedReturnType);
 
             if (listOfType != null)
             {
                 if (IsContentType(listOfType))
                 {
-                    return "getList";
+                    return "getList<ApiList<" + ecmaService.GetTypeConversion(resolvedReturnType) + ">>";
                 }
+                return "getJson<" + ecmaService.GetTypeConversion(resolvedReturnType) + "[]>";
             }
             else if (IsContentType(resolvedReturnType))
             {
-                return "getOne";
+                return "getOne<" + resolvedReturnType + ">";
             }
             else if (resolvedReturnType == typeof(void))
             {
                 return "getText";
             }
 
-            return "getJson";
+            return "getJson<" + ecmaService.GetTypeConversion(resolvedReturnType) + ">";
         }
 
         private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod, ClassMethod classMethod)
