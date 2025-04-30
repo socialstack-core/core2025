@@ -72,43 +72,9 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
     const [templateConfig, setTemplateConfig] = useState<Record<string, Scalar>>({});
     const [error, setError] = useState<string | undefined>();
 
-    if (!layoutProps) {
-        return (
-            <Alert type='error'>{`Invalid template: Cannot find a props type in this template, please ensure the template's props use`}</Alert>
-        )
-    }
-
-
-    // get the fields, from here we iterate over them
-    // and then these directly reflect on the template
-    const { fields } = layoutProps;
-
     // this holds the config for all fields, when this is updated
     // the full template is updated.
     const [fullConfig, setFullConfig] = useState<Record<string, CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>>>({});
-
-    const onChange = (update: CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>) => {
-        
-        setError(undefined);
-        fullConfig[update.propName] = {...update};
-
-        setFullConfig({...fullConfig});
-
-        // now to valid any rules 
-        try
-        {
-            const convertedJson = templateConfigToCanvasJson(fullConfig, currentLayout)
-            Object.assign(convertedJson.d, templateConfig);
-
-            props.onChange && props.onChange(convertedJson)
-        }
-        catch(e)
-        {
-            setError((e as Error).message);
-        }
-
-        console.log(fullConfig)
-    }
 
     // this only fires when the "inherits" field is changed. 
     useEffect(() => {
@@ -144,7 +110,43 @@ const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): Re
             assignParentLock(child);
         })
 
-    }, [currentTemplate])
+    }, [currentTemplate, fullConfig, props?.existing])
+
+    if (!layoutProps) {
+        return (
+            <Alert type='error'>{`Invalid template: Cannot find a props type in this template, please ensure the template's props use`}</Alert>
+        )
+    }
+
+
+    // get the fields, from here we iterate over them
+    // and then these directly reflect on the template
+    const { fields } = layoutProps;
+
+    const onChange = (update: CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>) => {
+        
+        setError(undefined);
+        fullConfig[update.propName] = {...update};
+
+        setFullConfig({...fullConfig});
+
+        // now to valid any rules 
+        try
+        {
+            const convertedJson = templateConfigToCanvasJson(fullConfig, currentLayout)
+            Object.assign(convertedJson.d, templateConfig);
+
+            props.onChange && props.onChange(convertedJson)
+        }
+        catch(e)
+        {
+            setError((e as Error).message);
+        }
+
+        console.log(fullConfig)
+    }
+
+    
 
     const configFields = (currentLayout as any).types.types[0].fields?.filter((field:CodeModuleTypeField) => !['React.ReactNode', 'React.ReactElement'].includes(field?.fieldType?.instanceName!))
 
@@ -471,7 +473,7 @@ const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEd
             .catch((err) => {
                 console.error(err);
             })
-    }, [canHaveChildren])
+    }, [canHaveChildren, item])
 
     return (
         <div className='child-section'>
