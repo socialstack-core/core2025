@@ -16,11 +16,14 @@ if [ -d "$HOOK_DIR" ]; then
 
   # Loop over all .js files and run them
   for file in *.js; do
-    echo "Running Node script: $file"
-    node "$file" || {
-      echo "Script $file failed. Aborting commit."
-      exit 1
-    }
+    # Ensure that the file exists and is a regular file
+    if [ -f "$file" ]; then
+      echo "Running Node script: $file"
+      node "$file" || {
+        echo "Script $file failed. Aborting commit."
+        exit 1
+      }
+    fi
   done
 else
   echo "No pre-commit scripts found in $HOOK_DIR."

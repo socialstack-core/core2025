@@ -13,17 +13,20 @@ cd "$(dirname "$0")/../.."
 # Path to the commit-msg hook scripts
 HOOK_DIR="scripts/commit-msg"
 
-# Check if directory exists
+# Check if the directory exists
 if [ -d "$HOOK_DIR" ]; then
   cd "$HOOK_DIR"
 
   # Loop over .js files and run them with the commit message file as argument
   for file in *.js; do
-    echo "Running Node script: $file with commit message file: $COMMIT_MSG_FILE"
-    node "$file" "$COMMIT_MSG_FILE" || {
-      echo "Script $file failed. Aborting commit."
-      exit 1
-    }
+    # Ensure file exists before running
+    if [ -f "$file" ]; then
+      echo "Running Node script: $file with commit message file: $COMMIT_MSG_FILE"
+      node "$file" "$COMMIT_MSG_FILE" || {
+        echo "Script $file failed. Aborting commit."
+        exit 1
+      }
+    fi
   done
 else
   echo "No commit-msg scripts found in $HOOK_DIR."

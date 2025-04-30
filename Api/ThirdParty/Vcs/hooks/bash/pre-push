@@ -14,17 +14,20 @@ cd "$(dirname "$0")/../.."
 # Path to the pre-push hook scripts
 HOOK_DIR="scripts/pre-push"
 
-# Check if directory exists
+# Check if the directory exists
 if [ -d "$HOOK_DIR" ]; then
   cd "$HOOK_DIR"
 
-  # Loop over all .js scripts and run them with remote info
+  # Loop over all .js files and run them with remote info
   for file in *.js; do
-    echo "Running Node script: $file with remote: $REMOTE_NAME, URL: $REMOTE_URL"
-    node "$file" "$REMOTE_NAME" "$REMOTE_URL" || {
-      echo "Script $file failed. Aborting push."
-      exit 1
-    }
+    # Ensure the file exists and is a regular file
+    if [ -f "$file" ]; then
+      echo "Running Node script: $file with remote: $REMOTE_NAME, URL: $REMOTE_URL"
+      node "$file" "$REMOTE_NAME" "$REMOTE_URL" || {
+        echo "Script $file failed. Aborting push."
+        exit 1
+      }
+    fi
   done
 else
   echo "No pre-push scripts found in $HOOK_DIR."
