@@ -1,9 +1,9 @@
-import { ApiContent, ApiList, getJson } from 'UI/Functions/WebRequest';
+import { ApiList } from 'UI/Functions/WebRequest';
 import Tile from 'Admin/Tile';
 import Alert from 'UI/Alert';
-import Html from 'UI/Html';
 import {isoConvert} from 'UI/Functions/DateTools';
 import { useEffect, useState } from 'react';
+import StdOutApi from 'Api/StdOut';
 
 export type ModWindowScope = typeof window & {
     scrollMaxY: number
@@ -30,9 +30,9 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
     
     useEffect(() => {
         var update = () => {
-            getJson('monitoring/log', {}).then(res => {
+            StdOutApi.getLog({}).then(res => {
 
-                var response = res as ApiList<StdEntry>
+                var response = JSON.parse(res) as ApiList<StdEntry>
 
                 var results = response.results.reverse();
                 
