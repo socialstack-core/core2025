@@ -58,4 +58,4 @@ export default [
 ];
 
 // At the root level of your config, add ignorePatterns
-export const ignorePatterns = ['node_modules/**'];
+export const ignorePatterns = ['node_modules/**', 'TypeScript/**'];
