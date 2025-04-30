@@ -20,7 +20,7 @@ const Developer: React.FC<{}> = () => {
 	
 	/* Default developer role dashboard. */
 	
-	var whoAmI = () => {
+	var WhoAmI = () => {
 		
 		var [who, setWho] = useState<int>();
 		
@@ -65,7 +65,7 @@ const Developer: React.FC<{}> = () => {
 				Metrics and realtime health monitoring coming soon
 			</Tile>
 			<Tile title={`Maintenance links`}>
-				{whoAmI()}
+				<WhoAmI />
 				<ul>
 					<li>
 						<a href='/en-admin/stdout'>
@@ -80,7 +80,9 @@ const Developer: React.FC<{}> = () => {
 					<li>
 						<a href='#' onClick={() => confirmAction(
 							`Force the C# garbage collector to run inside the API`,
-							() => monitoringApi.gC()
+							async () => {
+								await monitoringApi.gC()
+							}
 						)}>
 							Run the garbage collector (will prompt first)
 						</a>
@@ -88,7 +90,9 @@ const Developer: React.FC<{}> = () => {
 					<li>
 						<a href='#' onClick={() => confirmAction(
 							`This will tell the application to halt. On a deployed server, the service runner will then automatically start again. Note that the restart won't happen in a debug environment.`,
-							() => monitoringApi.halt()
+							async () => {
+								await monitoringApi.halt()
+							}
 						)}>
 							Restart the API (will prompt first)
 						</a>
