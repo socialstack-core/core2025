@@ -14,16 +14,14 @@ const PasswordResetButton: React.FC<{}> = (): React.ReactNode => {
     const [url, setUrl] = useState<string|null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const userId: uint = parseInt(useTokens('$url.user.id', undefined)) as uint;
+    const userId: uint = parseInt(useTokens('${url.user.id}', undefined)) as uint;
 
     const generate = () => {
         PasswordResetRequestApi.generate(userId)
-            .then((response) => {
-                const result: ApiContent<PasswordResetResponse> = response as ApiContent<PasswordResetResponse>;
-
+            .then((result) => {
                 setUrl(
                     location.origin + 
-                    result.result?.url
+                    result.url
                 )
             })
     }
