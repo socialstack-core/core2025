@@ -24,7 +24,7 @@ namespace Api.Users
 		/// The user's main role.
 		/// </summary>
 		[Module("Admin/ContentSelect")]
-		[Data("contentType", "role")]
+		[Data("contentType", "Role")]
 		[Permissions(HideFieldByDefault = false)]
 		public uint Role;
 		
