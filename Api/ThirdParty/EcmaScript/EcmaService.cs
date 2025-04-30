@@ -9,6 +9,7 @@ using Api.Contexts;
 using Api.EcmaScript.Markdown;
 using Api.EcmaScript.TypeScript;
 using Api.Eventing;
+using Api.Startup;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 
@@ -88,31 +89,67 @@ namespace Api.EcmaScript
         private void InitTsScripts(SourceFileContainer sourceContainer)
         {
             var allEndpointsByModule = endpointService.ListByModule();
+            var def = new ClassDefinition() {
+                Name = "ApiIncludes",
+                Children = [
+                    new ClassProperty() {
+                        PropertyName = "text",
+                        PropertyType = "string",
+                        DefaultValue = ""
+                    },
+                    new ClassMethod() {
+                        Name = "constructor",
+                        Arguments = [
+                            new ClassMethodArgument() {
+                                Name = "chain",
+                                Type = "string",
+                                DefaultValue = ""
+                            },
+                            new ClassMethodArgument() {
+                                Name = "includeName", 
+                                Type = "string",
+                                DefaultValue = ""
+                            }
+                        ],
+                        Injected = [
+                            "if(chain && includeName){",
+                            "this.text = chain + '.' + includeName;",
+                            "}else{",
+                            "this.text = chain || includeName;",
+                            "}"
+                        ]
+                    },
+                    new ClassMethod() {
+                        Name = "toString", 
+                        Injected = [
+                            "return this.text"
+                        ]
+                    }
+                ]
+            };
+
+            // now for all global virtual fields.
+
+            foreach(var entry in ContentFields.GlobalVirtualFields)
+            {
+                var field = entry.Key;
+                var contentFieldInfo = entry.Value;
+
+
+                if (contentFieldInfo.IsVirtual)
+                {
+                    def.Children.Add(new ClassGetter() {
+                        Name = LcFirst(field),
+                        ReturnType = "ApiIncludes",
+                        Source = [
+                            "return new ApiIncludes(this.text, '" + LcFirst(field) + "');"
+                        ]
+                    });
+                }
+            }
 
             IncludesScript.AddChild(
-                new ClassDefinition() {
-                    Name = "ApiIncludes",
-                    Children = [
-                        new ClassProperty() {
-                            PropertyName = "text",
-                            PropertyType = "string",
-                            DefaultValue = ""
-                        },
-                        new ClassMethod() {
-                            Name = "constructor",
-                            Arguments = [
-                                new ClassMethodArgument() {
-                                    Name = "text",
-                                    Type = "string",
-                                    DefaultValue = ""
-                                }
-                            ],
-                            Injected = [
-                                "this.text = text"
-                            ]
-                        }
-                    ]
-                }
+                def
             );
 
             SourceGenerator.EnsureScript(IncludesScript);
