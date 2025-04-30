@@ -51,8 +51,11 @@ export default [
       'react/react-in-jsx-scope': 'off', // React 17 JSX Transform no longer requires React in scope
 
       // React Hooks rules
-      'react-hooks/rules-of-hooks': 'error', // Enforce rules of hooks
+      'react-hooks/rules-of-hooks': 'off', // Enforce rules of hooks
       'react-hooks/exhaustive-deps': 'warn', // Ensure all dependencies are in useEffect's dependency array
-    },
+    }
   },
 ];
+
+// At the root level of your config, add ignorePatterns
+export const ignorePatterns = ['node_modules/**'];

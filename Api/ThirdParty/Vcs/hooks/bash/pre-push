@@ -1,0 +1,33 @@
+#!/bin/bash
+# === pre-push hook (Bash version) ===
+
+# Exit on any error
+set -e
+
+# First two arguments are: remote name and remote URL
+REMOTE_NAME="$1"
+REMOTE_URL="$2"
+
+# Navigate to the project root from .git/hooks
+cd "$(dirname "$0")/../.."
+
+# Path to the pre-push hook scripts
+HOOK_DIR="scripts/pre-push"
+
+# Check if directory exists
+if [ -d "$HOOK_DIR" ]; then
+  cd "$HOOK_DIR"
+
+  # Loop over all .js scripts and run them with remote info
+  for file in *.js; do
+    echo "Running Node script: $file with remote: $REMOTE_NAME, URL: $REMOTE_URL"
+    node "$file" "$REMOTE_NAME" "$REMOTE_URL" || {
+      echo "Script $file failed. Aborting push."
+      exit 1
+    }
+  done
+else
+  echo "No pre-push scripts found in $HOOK_DIR."
+fi
+
+exit 0
