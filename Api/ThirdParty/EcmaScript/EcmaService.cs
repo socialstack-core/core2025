@@ -306,6 +306,10 @@ namespace Api.EcmaScript
             AddTypeConversion(typeof(Context), "SessionResponse");
             AddTypeConversion(typeof(JObject), "Record<string, string | number | boolean>");
             AddTypeConversion(typeof(byte[]), "int[]");
+
+            SourceGenerator.FieldOverwrites.Add(typeof(ListFilter), new Dictionary<string, string>(){
+                ["Args"] = "any[]"
+            });
         }
 
        

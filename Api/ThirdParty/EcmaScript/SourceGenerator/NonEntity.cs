@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Api.EcmaScript.TypeScript;
+using Api.Startup;
 
 namespace Api.EcmaScript
 {
@@ -11,6 +13,9 @@ namespace Api.EcmaScript
     /// </summary>
     public static partial class SourceGenerator
     {
+
+        public static readonly Dictionary<Type, Dictionary<string, string>> FieldOverwrites = [];
+
         /// <summary>
         /// 
         /// </summary>
@@ -55,7 +60,19 @@ namespace Api.EcmaScript
                 }
                 else
                 {
-                    var isNullable = IsTypeNullable(field.FieldType);
+                    var isNullable = IsTypeNullable(field.FieldType) || field.FieldType.IsPrimitive;
+
+                    if (FieldOverwrites.TryGetValue(nonEntityType, out Dictionary<string, string> fieldOverwrite))
+                    {
+                        // this class has associated field overwrites
+
+                        if (fieldOverwrite.TryGetValue(field.Name, out string overridingType))
+                        {
+                            nonEntity.AddProperty(LcFirst(field.Name) + (isNullable ? "?" : ""), overridingType);
+                            continue;
+                        }
+                    }
+                    
                     var fieldType = OnField(field.FieldType, containingScript, currentDepth + 1);
                     nonEntity.AddProperty(LcFirst(field.Name) + (isNullable ? "?" : ""), fieldType);
                 }
@@ -81,6 +98,17 @@ namespace Api.EcmaScript
                 else
                 {
                     var isNullable = IsTypeNullable(property.PropertyType);
+
+                    if (FieldOverwrites.TryGetValue(nonEntityType, out Dictionary<string, string> fieldOverwrite))
+                    {
+                        // this class has associated field overwrites
+
+                        if (fieldOverwrite.TryGetValue(property.Name, out string overridingType))
+                        {
+                            nonEntity.AddProperty(LcFirst(property.Name) + (isNullable ? "?" : ""), overridingType);
+                            continue;
+                        }
+                    }
                     var propertyType = OnField(property.PropertyType, containingScript, currentDepth + 1);
                     nonEntity.AddProperty(LcFirst(property.Name) + (isNullable ? "?" : ""), propertyType);
                 }

@@ -29,7 +29,7 @@ namespace Api.EcmaScript
             var classDef = new ClassDefinition
             {
                 Name = apiName,
-                Extends = $"AutoController<{entityName}, uint, {includesName}>"
+                Extends = $"AutoController<{entityName}, uint>"
             };
 
             AddApiImports(script, entityName, includesName);
@@ -82,7 +82,7 @@ namespace Api.EcmaScript
                 Injected =
                 [
                     $"super('{baseUrl}')",
-                    $"this.includes = new {includesName}('');"
+                    $"this.includes = new {includesName}('', '');"
                 ]
             };
 
