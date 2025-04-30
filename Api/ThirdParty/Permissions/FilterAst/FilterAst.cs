@@ -398,6 +398,10 @@ namespace Api.Permissions{
 		/// </summary>
 		public FieldBuilder Builder;
 		/// <summary>
+		/// If this is an array type, the element type inside it.
+		/// </summary>
+		public Type ArrayOf;
+		/// <summary>
 		/// Constructed field on target type
 		/// </summary>
 		public FieldInfo ConstructedField;

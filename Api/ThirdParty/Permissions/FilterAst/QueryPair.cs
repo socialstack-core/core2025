@@ -3,6 +3,7 @@ using Api.Database;
 using Api.SocketServerLibrary;
 using Api.Startup;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -215,7 +216,14 @@ namespace Api.Permissions
 
 			for (var i = 0; i < ArgTypes.Count; i++)
 			{
-				ArgTypes[i].ConstructedField = _constructedType.GetField("Arg_" + i);
+				var argType = ArgTypes[i];
+				var field = _constructedType.GetField("Arg_" + i);
+				argType.ConstructedField = field;
+
+				if (field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+				{
+					argType.ArrayOf = field.FieldType.GetGenericArguments()[0];
+				}
 			}
 		}
 
@@ -834,6 +842,87 @@ namespace Api.Permissions
 
 					_arg++;
 					return this;
+				}
+				else if (t == typeof(JArray))
+				{
+					if (argInfo.ArrayOf == null)
+					{
+						Fail(t);
+					}
+
+					var jArray = (JArray)v;
+
+					if (argType == typeof(IEnumerable<string>))
+					{
+						var nl = new List<string>();
+
+						foreach (var item in jArray)
+						{
+							var token = item as JValue;
+
+							if (token == null || token.Type == JTokenType.Null)
+							{
+								nl.Add(null);
+							}
+							else if (token.Type == JTokenType.String)
+							{
+								nl.Add(token.Value<string>());
+							}
+							else if (token.Type == JTokenType.Boolean)
+							{
+								nl.Add(token.Value<bool>() ? "true" : "false");
+							}
+							else if (token.Type == JTokenType.Float)
+							{
+								nl.Add(token.Value<float>().ToString());
+							}
+							else if (token.Type == JTokenType.Integer)
+							{
+								nl.Add(token.Value<long>().ToString());
+							}
+						}
+
+						v = nl;
+					}
+					else if (argType == typeof(IEnumerable<uint>))
+					{
+						var nl = new List<uint>();
+
+						foreach (var item in jArray)
+						{
+							var token = item as JValue;
+
+							if (token == null || token.Type == JTokenType.Null)
+							{
+								nl.Add(0);
+							}
+							else if (token.Type == JTokenType.String)
+							{
+								if (uint.TryParse(token.Value<string>(), out uint ui))
+								{
+									nl.Add(ui);
+								}
+								else
+								{
+									nl.Add(0);
+								}
+							}
+							else if (token.Type == JTokenType.Boolean)
+							{
+								nl.Add(token.Value<bool>() ? (uint)1 : 0);
+							}
+							else if (token.Type == JTokenType.Float)
+							{
+								nl.Add((uint)token.Value<float>());
+							}
+							else if (token.Type == JTokenType.Integer)
+							{
+								nl.Add((uint)token.Value<long>());
+							}
+						}
+
+						v = nl;
+					}
 				}
 				else if (!argType.IsAssignableFrom(t))
 				{
