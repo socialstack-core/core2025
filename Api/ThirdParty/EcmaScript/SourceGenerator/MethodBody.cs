@@ -140,6 +140,11 @@ namespace Api.EcmaScript
         private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod, ClassMethod classMethod)
         {
             var urlPart = string.IsNullOrEmpty(endpointUrl) ? "this.apiUrl" : $"this.apiUrl + '/{endpointUrl}'";
+
+            if (classMethod.Arguments.Any(arg => arg.Type == "ApiIncludes[]"))
+            {
+                urlPart += "+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : '')";
+            }
             List<string> inject = [];
 
             if (bodyParam != null)

@@ -35,17 +35,7 @@ namespace Api.Vcs
 
                 Log.Info("GIT", "Installing git hooks");
 
-                string dir;
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    dir = "Api/ThirdParty/Vcs/hooks/cmd";
-                }
-                else
-                {
-                    dir = "Api/ThirdParty/Vcs/hooks/bash";
-                }
-
-                dir += "/";
+                string dir ="Api/ThirdParty/Vcs/hooks/bash/";
 
                 File.Copy(dir + "/commit-msg", ".git/hooks/commit-msg");
                 File.Copy(dir + "/pre-commit", ".git/hooks/pre-commit");

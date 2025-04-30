@@ -24,7 +24,7 @@ namespace Api.EcmaScript
             var classDef = new ClassDefinition
             {
                 Name = typeName,
-                GenericTemplate = $"{genericArgs}, ApiIncludes"
+                GenericTemplate = $"{genericArgs}"
             };
 
             AddImportsForGenericController(script);
@@ -51,7 +51,7 @@ namespace Api.EcmaScript
             {
                 PropertyName = "includes?",
                 PropertyType = "ApiIncludes",
-                DefaultValue = ""
+                DefaultValue = null
             });
         }
 

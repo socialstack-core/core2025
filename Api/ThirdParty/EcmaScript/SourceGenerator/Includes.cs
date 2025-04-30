@@ -40,13 +40,41 @@ namespace Api.EcmaScript
             foreach(var virtualField in virtuals)
             {
                 def.Children.Add(new ClassGetter() {
-                    Name = virtualField.FieldName,
+                    Name = LcFirst(virtualField.FieldName),
                     ReturnType = virtualField.Type.Name + "Includes",
                     Source = [
-                        "return new " + virtualField.Type.Name + "Includes(this.text);"
+                        "return new " + virtualField.Type.Name + "Includes(this.text + '." + LcFirst(virtualField.FieldName) + "');"
                     ]
                 });
             }
+
+            // now for all global virtual fields.
+
+            foreach(var entry in ContentFields.GlobalVirtualFields)
+            {
+                var field = entry.Key;
+                var contentFieldInfo = entry.Value;
+
+
+                if (contentFieldInfo.IsVirtual)
+                {
+                    def.Children.Add(new ClassGetter() {
+                        Name = LcFirst(field),
+                        ReturnType = entityType.Name + "Includes",
+                        Source = [
+                            "return new " + entityType.Name + "Includes(this.text + '." + LcFirst(field) + "');"
+                        ]
+                    });
+                }
+            }
+
+            def.Children.Add(new ClassGetter() {
+                Name = "all",
+                ReturnType = def.Name,
+                Source = [
+                    "return new " + def.Name + "(this.text + '.*')"
+                ]
+            });
 
             script.AddChild(def);
         }
