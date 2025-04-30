@@ -4,6 +4,23 @@ import aceJs from './static/ace.js';
 inputTypes.json = function (props) {
 	const { field } = props;
 	return <AceEditor 
+		type="json"
+		{...field}
+	/>;
+};
+
+inputTypes.sql = function (props) {
+	const { field } = props;
+	return <AceEditor 
+		type="sql"
+		{...field}
+	/>;
+};
+
+inputTypes.html = function (props) {
+	const { field } = props;
+	return <AceEditor 
+		type="html"
 		{...field}
 	/>;
 };
@@ -66,16 +83,7 @@ export default class AceEditor extends React.Component{
 	}
 	
 	goToType(p, editor){
-		var type = 'json';
-		
-		if(p.contentType){
-			var cType = p.contentType.split('/');
-			type = cType[cType.length - 1];
-			if(type == 'canvas'){
-				type = 'json';
-			}
-		}
-		
+		var type = p.type || 'json';
 		editor.session.setMode("ace/mode/" + type);
 	}
 	
