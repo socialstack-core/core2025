@@ -1575,6 +1575,22 @@ namespace Api.Uploader
 			return result;
 		}
 
+        private async ValueTask ReadExact(Stream stream, byte[] buffer, int count)
+        {
+            var read = 0;
+            while (read < count)
+            {
+                var bytesRead = await stream.ReadAsync(buffer, read, count - read);
+
+                if (bytesRead == 0)
+                {
+                    throw new EndOfStreamException("End of tar stream encountered unexpectedly");
+                }
+
+                read += bytesRead;
+            }
+        }
+
 		private async ValueTask ExtractTar(Stream stream, Action<string, string> onFile)
         {
             var buffer = new byte[512];
@@ -1601,16 +1617,16 @@ namespace Api.Uploader
                 if (String.IsNullOrWhiteSpace(name))
                     break;
 
-                // Skip 24 bytes
-                await stream.ReadAsync(buffer, 0, 24);
+				// Skip 24 bytes
+				await ReadExact(stream, buffer, 24);
 
-                // read the size, a 12 byte string:
-                await stream.ReadAsync(buffer, 0, 12);
+				// read the size, a 12 byte string:
+				await ReadExact(stream, buffer, 12);
                 var sizeString = Encoding.ASCII.GetString(buffer, 0, 12).Trim('\0').Trim();
                 var size = Convert.ToInt64(sizeString, 8);
 
-                // 512 byte alignment:
-                await stream.ReadAsync(buffer, 0, 376);
+				// 512 byte alignment:
+				await ReadExact(stream, buffer, 376);
                 streamBytesRead += 512;
 
                 // Directories have size=0.
@@ -1643,7 +1659,7 @@ namespace Api.Uploader
                 if (offset == 512)
                     offset = 0;
 
-                await stream.ReadAsync(buffer, 0, offset);
+				await ReadExact(stream, buffer, offset);
                 streamBytesRead += offset;
             }
         }
