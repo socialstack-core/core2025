@@ -1,24 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
 import Debounce from 'UI/Functions/Debounce';
-import { ApiIncludes } from 'Api/ApiEndpoints';
+import { ApiIncludes, ListFilter } from 'Api/ApiEndpoints';
 import { Content } from 'Api/Content';
+import { ApiList } from 'UI/Functions/WebRequest';
 
-export type SearchProps<T extends Content> = {
+export type SearchProps<T extends Content<uint>> = {
     startHidden?: boolean;
     value?: string;
     minLength?: number;
-    exclude?: string[];
+    exclude?: uint[];
     includes?: ApiIncludes;
     field?: string;
     limit?: number;
     onResults?: (results: T[]) => void;
-    onQuery?: (where: Partial<Content>, query: string) => void
+    onQuery?: (filter: ListFilter, query: string) => void;
+    onFind?: (result: T) => void;
     placeholder?: string;
     searchText?: string;
     name?: string;
     className?: string;
     'data-theme'?: string;
-    endpoint?: (where?: Partial<Content>, includes?: ApiIncludes) => Promise<T[]>;
+    endpoint?: (filter?: ListFilter, includes?: ApiIncludes) => Promise<ApiList<T>>;
 };
 
 type NoFieldWhereQuery = {
@@ -28,12 +30,14 @@ type NoFieldWhereQuery = {
 /**
  * Used to search for things.
  */
-const Search = <T extends Content,>(props: SearchProps<T>) => {
+const Search = <T extends Content<uint>,>(props: SearchProps<T>) => {
+
+    const { onFind, exclude } = props;
 
     const [loading, setLoading] = useState<boolean>(false);
     const [hidden, setHidden] = useState<boolean>(Boolean(props.startHidden));
     const [results, setResults] = useState<T[] | null>(null); // Typed results as T[]
-    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [selected, setSelected] = useState<T | null>(null);
 
     const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -47,19 +51,26 @@ const Search = <T extends Content,>(props: SearchProps<T>) => {
         setLoading(true); // Set loading to true while fetching
         
         const { field } = props;
-        const where: Partial<Content> = {}; // Adjusting query filter based on provided field
 
-        if (!field) {
-            (where as NoFieldWhereQuery).name = query
-        }
+        var filter : ListFilter = {
+            query: field + " contains ?",
+            args: [query]
+        };
 
         const { includes } = props;
 
-        props.onQuery && props.onQuery(where, query)
+        props.onQuery && props.onQuery(filter, query)
 
-        props.endpoint && props.endpoint(where, includes)
+        props.endpoint && props.endpoint(filter, includes)
             .then((fetchedResults) => {
-                setResults(fetchedResults);
+
+                var res = fetchedResults.results;
+
+                if (exclude) {
+                    res = res.filter(r => !exclude.find(id => id == r.id));
+                }
+
+                setResults(res);
                 setLoading(false); // Set loading to false after fetching
             })
             .catch((error) => {
@@ -74,7 +85,10 @@ const Search = <T extends Content,>(props: SearchProps<T>) => {
         }
     }, [results])
 
-    const selectValue = (value: number) => setSelectedId(value);
+    const selectValue = (value: T) => {
+        onFind && onFind(value);
+        setSelected(value);
+    };
 
     return (
         <div className={`search ${props.className}`} data-theme={props['data-theme'] || 'search-theme'}>
@@ -97,7 +111,7 @@ const Search = <T extends Content,>(props: SearchProps<T>) => {
                 }}
                 onKeyDown={(e) => {
                     if (e.keyCode === 13 && results && results.length === 1) {
-                        selectValue((results[0] as any).id); // Select the first result if it's a match
+                        selectValue(results[0]); // Select the first result if it's a match
                         e.preventDefault();
                     }
                     if (e.keyCode === 27) {
@@ -112,7 +126,7 @@ const Search = <T extends Content,>(props: SearchProps<T>) => {
                             <button
                                 type="button"
                                 key={i}
-                                onMouseDown={() => selectValue((result as any).id)}
+                                onMouseDown={() => selectValue(result)}
                                 className="btn suggestion"
                             >
                                 {/* Customize the display of the result here */}
@@ -124,7 +138,7 @@ const Search = <T extends Content,>(props: SearchProps<T>) => {
                     )}
                 </div>
             )}
-            {props.name && <input type="hidden" value={selectedId || props.value} name={props.name} />}
+            {props.name && <input type="hidden" value={(selected ? selected.id : '') || props.value} name={props.name} />}
         </div>
     );
 };
