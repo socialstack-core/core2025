@@ -3,13 +3,8 @@ import Search from 'UI/Search';
 import Table from 'UI/Table';
 import { Content } from 'Api/Content';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
-import {useTokens} from 'UI/Token';
 import { isoConvert } from "UI/Functions/DateTools";
 import { useState, useEffect } from 'react';
-import { ApiIncludes } from 'Api/ApiEndpoints';
-import { ApiList } from 'UI/Functions/WebRequest';
-
-type ScalarValue = string | number | boolean
 
 /**
  * Props for the AutoList component.
@@ -51,7 +46,7 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 			setSort(props.fields.find(field => field == 'id') ? { field: 'id', direction: 'desc' } : null);
 		}
 
-	}, [props.fields]);
+	}, [props.fields, sort]);
 
 	if (!props.contentType) {
 		return `Old page identified: please delete your en-admin pages and restart the API to regenerate them.`;
@@ -65,8 +60,9 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 			{searchText ? `No matching records for "${searchText}"` : `No data available`}
 		</tr>;
 	}
-
-	const renderHeader = (allContent? : Content[]) => {
+	// marked as Content<never> as this is pretty much a top level
+	// element, it will be mostly instanced by the JSON tree,
+	const renderHeader = (allContent? : Content<never>[]) => {
 		// Header (Optional)
 		var fields = props.fields.map(field => {
 			
@@ -129,28 +125,31 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 			</th>
 		].concat(fields);
 	}
-	
-	const renderColgroups = (allContent? : Content[]) => {
-		var fields = props.fields.map(field => {
-			var className = '';
+	/**
+	 * This was greyed out as unused, so to reduce an extra error for generic
+	 * types, we comment this out.
+	 */
+	// const renderColgroups = (allContent? : Content[]) => {
+	// 	var fields = props.fields.map(field => {
+	// 		var className = '';
 
-			switch (field) {
-				case 'id':
-					className = 'col__id';
-					break;
-            }
+	// 		switch (field) {
+	// 			case 'id':
+	// 				className = 'col__id';
+	// 				break;
+    //         }
 
-			return (
-				<col className={className}>
-				</col>
-			);
-		});
+	// 		return (
+	// 			<col className={className}>
+	// 			</col>
+	// 		);
+	// 	});
 
-		return [
-			<col className='col__select'>
-			</col>
-		].concat(fields);
-	}
+	// 	return [
+	// 		<col className='col__select'>
+	// 		</col>
+	// 	].concat(fields);
+	// }
 
 	const getSelectedCount = () => {
 		if(!bulkSelections){
