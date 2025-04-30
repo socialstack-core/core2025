@@ -70,7 +70,17 @@ interface PaginatorProps {
 const Paginator: React.FC<PaginatorProps> = (props) => {
 	var { pageIndex, totalResults, pageSize } = props;
 
-	const [dropdownId, setDropdownId] = useState(() => props.id ?? newId());
+	const [dropdownId, setDropdownId] = useState<string>();
+
+	useEffect(() => {
+		if (!dropdownId) {
+			if (props.id) {
+				setDropdownId(props.id);
+			} else {
+				setDropdownId(newId())
+			}
+		}
+	}, [dropdownId, props?.id])
 
 	const [currentPage, setCurrentPage] = useState(pageIndex || 1);
 
