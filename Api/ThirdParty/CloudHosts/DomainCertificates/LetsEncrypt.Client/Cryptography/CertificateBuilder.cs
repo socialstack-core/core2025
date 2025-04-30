@@ -39,8 +39,8 @@ namespace LetsEncrypt.Client.Cryptography
         /// </summary>
         public static byte[] Generate(RSA rsa, CertificateChain certificateChain, string password, X509ContentType certificateType)
         {
-            var certificate = new X509Certificate2(certificateChain.CertificateBytes);
-            var issuer = new X509Certificate2(certificateChain.IssuerBytes);
+            var certificate = X509CertificateLoader.LoadCertificate(certificateChain.CertificateBytes);
+            var issuer = X509CertificateLoader.LoadCertificate(certificateChain.IssuerBytes);
 
             certificate = certificate.CopyWithPrivateKey(rsa);
 

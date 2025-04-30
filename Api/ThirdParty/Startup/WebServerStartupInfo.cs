@@ -27,11 +27,6 @@ namespace Api.Startup
 		public static event Action<IServiceCollection> OnConfigureServices;
 
 		/// <summary>
-		/// An event which fires when services are being configured.
-		/// </summary>
-		public static event Action<MvcOptions> OnConfigureMvc;
-
-		/// <summary>
 		/// An event which fires when Configure occurs.
 		/// </summary>
 		public static event Action<IApplicationBuilder, ILoggerFactory, IServiceProvider> OnConfigure;

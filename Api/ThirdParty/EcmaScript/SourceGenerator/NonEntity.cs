@@ -11,6 +11,13 @@ namespace Api.EcmaScript
     /// </summary>
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nonEntityType"></param>
+        /// <param name="containingScript"></param>
+        /// <param name="currentDepth"></param>
+        /// <returns></returns>
         public static TypeDefinition OnNonEntity(Type nonEntityType, Script containingScript, int currentDepth = 0)
         {
             // Ensure the script is registered.

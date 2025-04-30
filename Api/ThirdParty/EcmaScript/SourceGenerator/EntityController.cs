@@ -9,6 +9,13 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <param name="controller"></param>
+        /// <param name="script"></param>
+        /// <returns></returns>
         public static ClassDefinition OnEntityController(Type entityType, Type controller, Script script)
         {
             var ecmaService = Services.Get<EcmaService>();

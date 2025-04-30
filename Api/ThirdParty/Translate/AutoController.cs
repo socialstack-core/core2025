@@ -124,29 +124,33 @@ public partial class AutoController<T, ID>
         };
     }
 
-    /// <summary>
-    /// GET /v1/entityTypeName/list.pot
-    /// Lists all entities of this type available to this user, and outputs as a POT file.
-    /// </summary>
-    /// <param name="includes"></param>
-    /// <param name="ignoreFields"></param>
-    /// <returns></returns>
-    [HttpGet("list.pot")]
+	/// <summary>
+	/// GET /v1/entityTypeName/list.pot
+	/// Lists all entities of this type available to this user, and outputs as a POT file.
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <param name="context"></param>
+	/// <param name="includes"></param>
+	/// <param name="ignoreFields"></param>
+	/// <returns></returns>
+	[HttpGet("list.pot")]
     public virtual async ValueTask ListPOT(HttpContext httpContext, Context context, [FromQuery] string includes = null, [FromQuery] string ignoreFields = null)
     {
         await ListPOT(httpContext, context, null, includes, ignoreFields);
     }
 
-    /// <summary>
-    /// POST /v1/entityTypeName/list.pot
-    /// Lists filtered entities available to this user.
-    /// See the filter documentation for more details on what you can request here.
-    /// </summary>
-    /// <param name="filters"></param>
-    /// <param name="includes"></param>
-    /// <param name="ignoreFields"></param>
-    /// <returns></returns>
-    [HttpPost("list.pot")]
+	/// <summary>
+	/// POST /v1/entityTypeName/list.pot
+	/// Lists filtered entities available to this user.
+	/// See the filter documentation for more details on what you can request here.
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <param name="context"></param>
+	/// <param name="filters"></param>
+	/// <param name="includes"></param>
+	/// <param name="ignoreFields"></param>
+	/// <returns></returns>
+	[HttpPost("list.pot")]
     public virtual async ValueTask ListPOT(
         HttpContext httpContext, Context context, [FromBody] JObject filters, 
         [FromQuery] string includes = null, [FromQuery] string ignoreFields = null)
@@ -195,7 +199,7 @@ public partial class AutoController<T, ID>
         }
 
 		httpContext.Response.ContentType = "text/plain";
-		httpContext.Response.Headers.Add("Content-Disposition", "attachment; filename=\"" + typeName + ".pot\"");
+		httpContext.Response.Headers.Append("Content-Disposition", "attachment; filename=\"" + typeName + ".pot\"");
 
         var translationServiceConfig = Services.Get<TranslationService>().GetConfig<TranslationServiceConfig>();
 

@@ -44,13 +44,13 @@ namespace Api.SiteDomains
                 return siteDomain;
             });
 
-            Events.Page.BeforeParseUrl.AddEventListener(async (Context context, Pages.UrlInfo urlInfo, Microsoft.AspNetCore.Http.QueryString query) =>
+            Events.Page.BeforeParseUrl.AddEventListener((Context context, Pages.UrlInfo urlInfo, Microsoft.AspNetCore.Http.QueryString query) =>
             {
                 if (_multiDomain)
                 {
                     if (urlInfo.Url.StartsWith("/favicon") || urlInfo.Url.StartsWith("/en-admin") || string.IsNullOrWhiteSpace(urlInfo.Host))
                     {
-                        return urlInfo;
+                        return new ValueTask<Pages.UrlInfo>(urlInfo);
                     }
 
                     // Does the domain have a page prefix?
@@ -71,8 +71,8 @@ namespace Api.SiteDomains
                             // if url already prefixed with domain (maybe from admin panel)
                             if (_siteDomainPrefixMap.Any(dpm => strippedUrl.StartsWith(dpm.Key + "/", StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                return urlInfo;
-                            }
+								return new ValueTask<Pages.UrlInfo>(urlInfo);
+							}
 
                             urlInfo.Url = siteDomain.Code + "/" + strippedUrl;
                         }
@@ -82,8 +82,8 @@ namespace Api.SiteDomains
                     }
                 }
 
-                return urlInfo;
-            });
+				return new ValueTask<Pages.UrlInfo>(urlInfo);
+			});
 
             Events.Context.OnInitiate.AddEventListener((Context context, HttpRequest request) =>
             {

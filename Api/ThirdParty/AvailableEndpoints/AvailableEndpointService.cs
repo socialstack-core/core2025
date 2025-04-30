@@ -39,7 +39,7 @@ namespace Api.AvailableEndpoints
 		/// Gets the API structure, considering user permissions.
 		/// </summary>
 		/// <returns></returns>
-		public async ValueTask<ApiStructure> GetStructure(Context context)
+		public ApiStructure GetStructure(Context context)
 		{
 
 			// Get the content types and their IDs:
@@ -66,6 +66,9 @@ namespace Api.AvailableEndpoints
 
 		private XmlDoc _doc;
 
+		/// <summary>
+		/// Gets the documentation set.
+		/// </summary>
 		public XmlDoc Documentation {
 			get {
 				if (_doc == null)

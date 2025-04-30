@@ -12,23 +12,33 @@ public partial class AutoService
     /// Find unique values within content for filtering etc
     /// </summary>
     /// <returns></returns>
-
-    /// <summary>
-    /// Find unique values within content for filtering etc
-    /// </summary>
-    /// <returns></returns>
     public virtual ValueTask<List<Tag>> ExtractTaxonomy(Context context, string key)
     {
         // This service doesn't have a content type thus can just safely do nothing at all.
         return new ValueTask<List<Tag>>();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="fieldName"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public virtual ValueTask<bool> HasBooleanValue(Context context, string fieldName, object data)
     {
         // This service doesn't have a content type thus can just safely do nothing at all.
         return new ValueTask<bool>();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="fieldName"></param>
+    /// <param name="fieldValue"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public virtual ValueTask<bool> HasMatchingValue(Context context, string fieldName, string fieldValue, object data)
     {
         // This service doesn't have a content type thus can just safely do nothing at all.
@@ -102,7 +112,7 @@ public partial class AutoService<T, ID>
     /// <param name="fieldName"></param>
     /// <param name="data"></param>
     /// <returns></returns>
-    public async ValueTask<bool> HasBooleanValue(Context context, string fieldName, object data)
+    public override async ValueTask<bool> HasBooleanValue(Context context, string fieldName, object data)
     {
         JsonField booleanField = null;
 
@@ -134,7 +144,7 @@ public partial class AutoService<T, ID>
     /// <param name="fieldValue"></param>
     /// <param name="data"></param>
     /// <returns></returns>
-    public async ValueTask<bool> HasMatchingValue(Context context, string fieldName, string fieldValue, object data)
+    public override async ValueTask<bool> HasMatchingValue(Context context, string fieldName, string fieldValue, object data)
     {
         JsonField matchingField = null;
 

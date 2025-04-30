@@ -19,6 +19,9 @@ namespace Api.EcmaScript
             "React.FC"
         ];
 
+        /// <summary>
+        /// 
+        /// </summary>
         public static void Validate()
         {
             scripts.ForEach(script => {

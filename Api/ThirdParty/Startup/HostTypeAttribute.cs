@@ -13,6 +13,10 @@ namespace Api.Startup
         /// </summary>
         public string HostType;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="hostType"></param>
         public HostTypeAttribute(string hostType)
         {
             HostType = hostType;

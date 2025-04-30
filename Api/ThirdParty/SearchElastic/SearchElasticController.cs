@@ -114,14 +114,14 @@ namespace Api.SearchElastic
         /// </summary>
         /// <returns></returns>
         [HttpGet("health")]
-        public virtual async ValueTask<Nest.ClusterHealthResponse> Health(Context context)
+        public virtual Nest.ClusterHealthResponse Health(Context context)
         {
             if (context.Role == null || !context.Role.CanViewAdmin)
             {
                 throw PermissionException.Create("elastic_health", context);
             }
 
-            return await Services.Get<SearchElasticService>().Health(context);
+            return Services.Get<SearchElasticService>().Health(context);
         }
 
         /// <summary>
@@ -129,14 +129,14 @@ namespace Api.SearchElastic
         /// </summary>
         /// <returns></returns>
         [HttpGet("shards")]
-        public virtual async ValueTask<List<Nest.CatShardsRecord>> Shards(Context context)
+        public List<Nest.CatShardsRecord> Shards(Context context)
         {
             if (context.Role == null || !context.Role.CanViewAdmin)
             {
                 throw PermissionException.Create("elastic_shards", context);
             }
 
-            return await Services.Get<SearchElasticService>().Shards(context);
+            return Services.Get<SearchElasticService>().Shards(context);
         }
 
     }

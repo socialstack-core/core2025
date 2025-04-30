@@ -8,6 +8,12 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controller"></param>
+        /// <param name="script"></param>
+        /// <returns></returns>
         public static ClassDefinition OnNonEntityController(Type controller, Script script)
         {
             // Ensure the script is registered.

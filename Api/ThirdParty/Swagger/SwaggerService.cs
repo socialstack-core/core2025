@@ -38,6 +38,11 @@ namespace Api.Swagger
             };
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="swaggerDoc"></param>
+        /// <param name="context"></param>
         public void FilterDocuments(OpenApiDocument swaggerDoc, DocumentFilterContext context)
         {
             // Get all controllers flagged with the internal attribute
@@ -218,6 +223,11 @@ namespace Api.Swagger
                 || _cfg.ExcludedServices.Any();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static T GetAssemblyAttribute<T>() where T : Attribute
         {
             var thisAsm = typeof(EventListener).Assembly;

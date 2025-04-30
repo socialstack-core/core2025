@@ -16,7 +16,7 @@ public partial class StdOutController : AutoController
 	/// Attempts to purge V8 engines from the canvas renderer service.
 	/// </summary>
 	[HttpGet("v8/clear")]
-	public async ValueTask V8Clear(Context context)
+	public void V8Clear(Context context)
 	{
 		if (context.Role == null || !context.Role.CanViewAdmin || context.Role.Id != 1)
 		{

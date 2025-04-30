@@ -47,11 +47,11 @@ namespace Api.SearchIndexing
             {
                 // subscribe to event after the page html has been loaded to allow for parsing before its 
                 // added to the index (remove footers etc)
-                Events.Elastic.AfterPage.AddEventListener(async (Context ctx, HtmlDocument htmlDocument) =>
+                Events.Elastic.AfterPage.AddEventListener((Context ctx, HtmlDocument htmlDocument) =>
                 {
                     if (_cfg == null || _cfg.NodeSelectors == null)
                     {
-                        return htmlDocument;
+                        return new ValueTask<HtmlDocument>(htmlDocument);
                     }
 
                     foreach (var selector in _cfg.NodeSelectors)
@@ -70,15 +70,15 @@ namespace Api.SearchIndexing
                             }
                         }
                     }
-                    return htmlDocument;
-                });
+
+					return new ValueTask<HtmlDocument>(htmlDocument);
+				});
 
                 // subscribe to event just before elastic document is stored
                 // last chance to make any changes 
-                Events.Elastic.BeforeUpdate.AddEventListener(async (Context ctx, Api.SearchElastic.Document document) =>
+                Events.Elastic.BeforeDocumentUpdate.AddEventListener((Context ctx, Api.SearchElastic.Document document) =>
                 {
-                    var test = document;
-                    return document;
+                    return new ValueTask<Api.SearchElastic.Document>(document);
                 });
 
                 return new ValueTask<object>(sender);

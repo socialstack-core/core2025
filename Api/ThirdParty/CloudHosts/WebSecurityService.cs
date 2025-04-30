@@ -69,6 +69,10 @@ public partial class WebSecurityService : AutoService
 		await _webServer.UpdateCertificates(context, certs);
 	}
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	public WebSecurityConfig GetWebSecurityConfig() => _config;
 
 }

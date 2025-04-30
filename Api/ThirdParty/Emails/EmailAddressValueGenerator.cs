@@ -24,7 +24,7 @@ public partial class EmailAddressValueGenerator<T, ID> : VirtualFieldValueGenera
     /// <param name="forObject"></param>
     /// <param name="writer"></param>
     /// <returns></returns>
-    public override async ValueTask GetValue(Context context, T forObject, Writer writer)
+    public override ValueTask GetValue(Context context, T forObject, Writer writer)
     {
         User user = forObject as User;
 
@@ -32,7 +32,7 @@ public partial class EmailAddressValueGenerator<T, ID> : VirtualFieldValueGenera
         {
             // This include only works on user objects.
             writer.WriteASCII("null");
-            return;
+            return new ValueTask();
         }
 
         // Is it "myself"?
@@ -45,8 +45,10 @@ public partial class EmailAddressValueGenerator<T, ID> : VirtualFieldValueGenera
         {
             // Nope go away!
             writer.WriteASCII("null");
-        }
-    }
+		}
+
+		return new ValueTask();
+	}
 
     /// <summary>
     /// The type, if any, associated with the value being outputted.

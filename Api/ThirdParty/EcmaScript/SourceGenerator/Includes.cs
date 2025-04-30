@@ -11,6 +11,11 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <param name="script"></param>
         public static void CreateIncludeClass(Type entityType, Script script)
         {
 

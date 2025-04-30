@@ -63,8 +63,16 @@ namespace Api.Swagger
             };
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public class RemoveEndpointsDocumentFilter : IDocumentFilter
         {
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="swaggerDoc"></param>
+            /// <param name="context"></param>
             public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
             {
                 //call service so that we have dynamic config etc 
@@ -76,15 +84,27 @@ namespace Api.Swagger
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public class SwaggerAuthenticationMiddleware
         {
             private readonly RequestDelegate _next;
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="next"></param>
             public SwaggerAuthenticationMiddleware(RequestDelegate next)
             {
                 _next = next;
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="context"></param>
+            /// <returns></returns>
             public async Task InvokeAsync(HttpContext context)
             {
                 if (context.Request.Path.StartsWithSegments("/swagger"))

@@ -9,11 +9,18 @@ using Api.Startup;
 namespace Api.EcmaScript
 {
     /// <summary>
-    /// The new & vastly improved source generation engine.
+    /// The new and vastly improved source generation engine.
     /// Made to be a lot more maintainable and easy to identify errors.
     /// </summary>
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fieldType"></param>
+        /// <param name="script"></param>
+        /// <param name="currentDepth"></param>
+        /// <returns></returns>
         public static string OnField(Type fieldType, Script script, int currentDepth = 0)
         {
             var ecmaService = Services.Get<EcmaService>();

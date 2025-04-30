@@ -88,11 +88,6 @@ namespace Api.ContentSync
 		}
 
 		/// <summary>
-		/// True if the sync file is active.
-		/// </summary>
-		private bool SyncFileMode = false;
-
-		/// <summary>
 		/// The name of this ContentSync host
 		/// </summary>
 		public string HostName;

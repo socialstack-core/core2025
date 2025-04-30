@@ -151,6 +151,7 @@ namespace Api.Uploader
         /// Performs a file consistency check, where it will make sure each identified ref file matches the current upload policy.
         /// In the future this will also add any missing database entries.
         /// </summary>
+        /// <param name="context"></param>
         /// <param name="regenBefore">An ISO date string in UTC. Regenerate files if they are before the specified date.</param>
         /// <param name="idRange">Of the form "1-500" inclusive. Will skip any files with an upload ID out of this range if specified. Can be used for bulk task delegation amongst a group of machines. Use blank values for "anything after" ("100-") and "anything before" ("-100").</param>
         [HttpGet("file-consistency")]

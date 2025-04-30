@@ -59,14 +59,14 @@ namespace Api.AvailableEndpoints
 		/// Returns meta about what's available from this API. Includes endpoints and content types.
 		/// </summary>
 		[HttpGet]
-		public async ValueTask<ApiStructure> Get(Context context)
+		public ApiStructure Get(Context context)
         {
 			if(context.Role == null || !context.Role.CanViewAdmin)
 			{
 				throw PermissionException.Create("api_home", context);
 			}
 			
-			return await _availableEndpoints.GetStructure(context);
+			return _availableEndpoints.GetStructure(context);
         }
 		
     }

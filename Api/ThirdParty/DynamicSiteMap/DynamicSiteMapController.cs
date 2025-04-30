@@ -20,6 +20,11 @@ namespace Api.DynamicSiteMap
         private SiteDomainService _siteDomains;
         private DynamicSiteMapService _dynamicMaps;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dynamicMaps"></param>
+        /// <param name="siteDomains"></param>
 		public DomainSiteMapController(DynamicSiteMapService dynamicMaps, SiteDomainService siteDomains)
         {
             _siteDomains = siteDomains;

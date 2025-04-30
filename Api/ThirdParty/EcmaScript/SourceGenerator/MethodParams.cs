@@ -12,12 +12,21 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
-        // Types to be ignored when processing method parameters
-        public static readonly Type[] ignoreParamTypes = {
+		/// <summary>
+		/// Types to be ignored when processing method parameters
+		/// </summary>
+		public static readonly Type[] ignoreParamTypes = {
             typeof(HttpContext),
             typeof(Context)
         };
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="method"></param>
+        /// <param name="classMethod"></param>
+        /// <param name="script"></param>
+        /// <param name="acceptsPartial"></param>
         public static void AddMethodParams(MethodInfo method, ClassMethod classMethod, Script script, bool acceptsPartial = false)
         {
             var ecmaService = Services.Get<EcmaService>();

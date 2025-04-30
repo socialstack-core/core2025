@@ -5,8 +5,17 @@ using Api.EcmaScript.TypeScript;
 
 namespace Api.EcmaScript
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="script"></param>
+        /// <returns></returns>
         public static ClassDefinition OnGenericControllerClass(Type t, Script script)
         {
             var typeName = GetCleanTypeName(t);

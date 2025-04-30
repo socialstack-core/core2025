@@ -7,11 +7,18 @@ using Api.Startup;
 namespace Api.EcmaScript
 {
     /// <summary>
-    /// The new & vastly improved source generation engine.
+    /// The new and vastly improved source generation engine.
     /// Made to be a lot more maintainable and easier to identify errors.
     /// </summary>
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <param name="containingScript"></param>
+        /// <param name="module"></param>
+        /// <returns></returns>
         public static TypeDefinition OnEntity(Type entityType, Script containingScript, ModuleEndpoints module)
         {
             EnsureScript(containingScript);

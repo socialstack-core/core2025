@@ -144,16 +144,18 @@ namespace Api.SearchElastic
                 }
 
                 // subscribe to event requesting if the elastic store is connected
-                Events.Elastic.IsConnected.AddEventListener(async (Context ctx, bool connected) =>
+                Events.Elastic.IsConnected.AddEventListener((Context ctx, bool connected) =>
                 {
-                    return SetupClient(ctx);
+                    var result = SetupClient(ctx);
+                    return new ValueTask<bool>(result);
                 });
 
                 // subscribe to event requesting that a new index is created 
-                Events.Elastic.CreateIndex.AddEventListener(async (Context ctx, bool success, string indexName) =>
+                Events.Elastic.CreateIndex.AddEventListener((Context ctx, bool success, string indexName) =>
                 {
-                    return CreateIndex(indexName);
-                });
+					var result = CreateIndex(indexName);
+					return new ValueTask<bool>(result);
+				});
 
                 // subscribe to event requesting a document is deleted
                 Events.Elastic.DeleteDocument.AddEventListener(async (Context ctx, bool success, string id, List<string> indexes) =>
@@ -230,11 +232,11 @@ namespace Api.SearchElastic
                 });
 
                 // subscribe to site crawler status change event
-                Events.Crawler.CrawlerStatus.AddEventListener(async (Context ctx, SearchCrawlerStatus status, SearchCrawlerMode mode) =>
+                Events.Crawler.CrawlerStatus.AddEventListener((Context ctx, SearchCrawlerStatus status, SearchCrawlerMode mode) =>
                 {
                     if ((mode & SearchCrawlerMode.Indexing) != SearchCrawlerMode.Indexing)
                     {
-                        return status;
+                        return new ValueTask<SearchCrawlerStatus>(status);
                     }
 
                     if (status == SearchCrawlerStatus.Started)
@@ -295,8 +297,8 @@ namespace Api.SearchElastic
                         }
                     }
 
-                    return status;
-                });
+					return new ValueTask<SearchCrawlerStatus>(status);
+				});
 
                 return new ValueTask<object>(sender);
             });
@@ -689,7 +691,7 @@ namespace Api.SearchElastic
             for (int i = 0; i < documents.Count; i++)
             {
                 // allow other services to update the document before its saved
-                documents[i] = await Events.Elastic.BeforeUpdate.Dispatch(ctx, documents[i]);
+                documents[i] = await Events.Elastic.BeforeDocumentUpdate.Dispatch(ctx, documents[i]);
 
                 // only needed if we are comparing for changes against indexed doc
                 if (!_cfg.AlwaysUpdateIndex)
@@ -767,7 +769,7 @@ namespace Api.SearchElastic
         private async Task<bool> IndexDocument(Context ctx, Document document, List<string> indexKeys = null)
         {
             // allow other services to update the document before its saved
-            document = await Events.Elastic.BeforeUpdate.Dispatch(ctx, document);
+            document = await Events.Elastic.BeforeDocumentUpdate.Dispatch(ctx, document);
 
             // only needed if we are comparing for changes against indexed doc
             if (!_cfg.AlwaysUpdateIndex)
@@ -920,15 +922,13 @@ namespace Api.SearchElastic
             return success;
         }
 
-
-
         /// <summary>
-        /// Get all the possible taxonomy values forom categories/tags
+        /// Get all the possible taxonomy values from categories/tags
         /// </summary>
         /// <param name="ctx"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        private async Task<AggregationOverride> ExtractTaxonomy(Context ctx, string name)
+        private async Task<AggregationOverride> ExtractAggregationTaxonomy(Context ctx, string name)
         {
             // see if we have a category to extract the tags from 
             var category = await _categoryService.Where("Name=?").Bind(name).First(ctx);
@@ -1540,7 +1540,7 @@ namespace Api.SearchElastic
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        public async Task<ClusterHealthResponse> Health(Context ctx)
+        public ClusterHealthResponse Health(Context ctx)
         {
             SetupClient(ctx);
             if (_client == null)
@@ -1551,7 +1551,12 @@ namespace Api.SearchElastic
             return _client.Cluster.Health();
         }
 
-        public async Task<List<CatShardsRecord>> Shards(Context ctx)
+        /// <summary>
+        /// Gets the set of category shards
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        public List<CatShardsRecord> Shards(Context ctx)
         {
             SetupClient(ctx);
             if (_client == null)
@@ -1823,7 +1828,7 @@ namespace Api.SearchElastic
                 {
                     var aggregationName = CapitalizeFirstLetterInEachWord(field.Replace("taxonomy.", string.Empty));
 
-                    var aggregationOverride = await ExtractTaxonomy(ctx, aggregationName);
+                    var aggregationOverride = await ExtractAggregationTaxonomy(ctx, aggregationName);
 
                     if (aggregationOverride != null)
                     {

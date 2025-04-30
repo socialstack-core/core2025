@@ -12,6 +12,7 @@ namespace Api.Payments
 		/// <summary>
 		/// Checks a coupon code and if it's not disabled, returns its info.
 		/// </summary>
+		/// <param name="context"></param>
 		/// <param name="couponCode"></param>
 		/// <exception cref="PublicException"></exception>
 		[HttpGet("check/{couponCode}")]

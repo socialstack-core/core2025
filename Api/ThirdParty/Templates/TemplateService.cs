@@ -99,7 +99,7 @@ namespace Api.Templates
 
         private void InitEvents()
         {
-            Events.Page.BeforeAdminPageInstall.AddEventListener(async (Context context, Page page, CanvasNode canvasNode, Type type, AdminPageType pageType) => {
+            Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode canvasNode, Type type, AdminPageType pageType) => {
 				
 				if (type == typeof(Template) && pageType == AdminPageType.Single)
 				{
@@ -108,7 +108,7 @@ namespace Api.Templates
 					canvasNode.Module = "Admin/Template/SinglePage";
 				}
 
-				return page;
+				return new ValueTask<Page>(page);
 			}, 2);
         }
 

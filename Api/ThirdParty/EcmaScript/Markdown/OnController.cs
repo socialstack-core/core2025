@@ -13,6 +13,12 @@ namespace Api.EcmaScript.Markdown
 {
     public static partial class MarkdownGeneration
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controllerType"></param>
+        /// <param name="entityType"></param>
+        /// <param name="module"></param>
         public static void OnController(Type controllerType, Type entityType, ModuleEndpoints module)
         {
             var ecmaService = Services.Get<EcmaService>();
@@ -53,6 +59,11 @@ namespace Api.EcmaScript.Markdown
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controllerType"></param>
+        /// <param name="module"></param>
         public static void OnController(Type controllerType, ModuleEndpoints module)
         {
             var ecmaService = Services.Get<EcmaService>();

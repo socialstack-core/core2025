@@ -75,7 +75,7 @@ namespace Api.Startup
 		/// Forces an application halt.
 		/// </summary>
 		[HttpGet("halt")]
-		public async ValueTask Halt(Context context)
+		public void Halt(Context context)
 		{
 			if (context.Role == null || !context.Role.CanViewAdmin || context.Role.Id != 1)
 			{

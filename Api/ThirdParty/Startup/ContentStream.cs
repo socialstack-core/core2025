@@ -84,6 +84,8 @@ public struct ContentStream<T, ID>
 	/// </summary>
 	/// <param name="context"></param>
 	/// <param name="onResult"></param>
+	/// <param name="srcA">An object that you can pass through to the callback without needing to heap allocate a delegate state.</param>
+	/// <param name="srcB">A second object that you can pass through to the callback without needing to heap allocate a delegate state.</param>
 	/// <returns></returns>
 	public async ValueTask Stream(Context context, Func<Context, T, int, object, object, ValueTask> onResult, object srcA, object srcB)
 	{
@@ -136,8 +138,15 @@ public class ListStreamSource<T, ID> : ContentStreamSource<T, ID>
 	where T: Content<ID>, new()
 	where ID : struct, IEquatable<ID>, IComparable<ID>, IConvertible
 {
+	/// <summary>
+	/// The list in this source.
+	/// </summary>
 	public List<T> Content;
 	
+	/// <summary>
+	/// Creates a new list source.
+	/// </summary>
+	/// <param name="content"></param>
 	public ListStreamSource(List<T> content)
 	{
 		Content = content;

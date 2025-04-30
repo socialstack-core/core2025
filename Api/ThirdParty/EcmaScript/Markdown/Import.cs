@@ -6,6 +6,10 @@ namespace Api.EcmaScript.Markdown
 {
     public static partial class MarkdownGeneration
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="t"></param>
         public static void OnImport(Type t)
         {
             var document = GetDocument(t);

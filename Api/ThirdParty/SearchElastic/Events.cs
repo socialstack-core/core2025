@@ -49,7 +49,7 @@ namespace Api.SearchElastic
 		/// <summary>
 		/// Called after the core index document is created just prior to saving
 		/// </summary>
-		public Api.Eventing.EventHandler<Api.SearchElastic.Document> BeforeUpdate;
+		public Api.Eventing.EventHandler<Api.SearchElastic.Document> BeforeDocumentUpdate;
 
         /// <summary>
         /// Called to request a new document is indexed

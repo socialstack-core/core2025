@@ -103,7 +103,6 @@ namespace Api.ContentSync
 		}
 
 		private ContentSyncService contentSyncService;
-		private ClusteredServerService clusteredServerService;
 
 	}
 

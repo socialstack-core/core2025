@@ -596,14 +596,14 @@ namespace Api.Startup
             All.TryGetValue(typeof(T), out AutoService result);
             return (T)result;
         }
-        
-        /// <summary>
-        /// Gets a service without using injection. 
-        /// Useful for when in entity classes etc.
-        /// </summary>
-        /// <typeparam name="T">The services interface.</typeparam>
-        /// <returns></returns>
-        public static object GetByServiceType(Type t)
+
+		/// <summary>
+		/// Gets a service without using injection. 
+		/// Useful for when in entity classes etc.
+		/// </summary>
+		/// <param name="t">The services interface.</param>
+		/// <returns></returns>
+		public static object GetByServiceType(Type t)
         {
             All.TryGetValue(t, out AutoService result);
             return result;

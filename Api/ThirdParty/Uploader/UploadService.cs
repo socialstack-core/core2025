@@ -322,8 +322,8 @@ namespace Api.Uploader
                             while (bytesToRead > 0)
                             {
                                 var readSize = bytesToRead > chunkSize ? chunkSize : bytesToRead;
-                                await fs.ReadAsync(result, size - bytesToRead, readSize);
-                                bytesToRead -= readSize;
+                                var readCount = await fs.ReadAsync(result, size - bytesToRead, readSize);
+                                bytesToRead -= readCount;
                             }
                         }
                     }
@@ -1583,10 +1583,10 @@ namespace Api.Uploader
 
             while (true)
             {
-                await stream.ReadAsync(buffer, 0, 100);
+                var readBytes = await stream.ReadAsync(buffer, 0, 100);
 
                 var stringEnd = 0;
-                for (var i = 0; i < 100; i++)
+                for (var i = 0; i < readBytes; i++)
                 {
                     if (buffer[i] < 10)
                     {

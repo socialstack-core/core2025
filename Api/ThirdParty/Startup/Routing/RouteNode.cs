@@ -351,18 +351,6 @@ public class TerminalVoidNode<State, BodyType> : TerminalNode
 	where State : struct
 {
 	/// <summary>
-	/// Common JSON serialiser config.
-	/// </summary>
-	public static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
-	{
-		ContractResolver = new DefaultContractResolver
-		{
-			NamingStrategy = new CamelCaseNamingStrategy()
-		},
-		Formatting = Formatting.None
-	};
-
-	/// <summary>
 	/// The binder method, which binds URL args.
 	/// </summary>
 	public readonly TerminalBinderMethod<State> Binder;

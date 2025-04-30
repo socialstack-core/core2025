@@ -28,12 +28,19 @@ namespace Api.SearchEntities
         private SearchEntityConfig _cfg;
         private readonly FrontendCodeService _frontendService;
 
-        private Random random;
+        // private Random random;
 
         // removed any similar chars like 1/ I 5/S 0/O etc 
         private const string refPattern = "ACEFHJKMNPRTUVWXY23456789";
 
+        /// <summary>
+        /// The index task key.
+        /// </summary>
         public const string fullIndexTaskKey = "entity_index";
+
+        /// <summary>
+        /// The index updater task key.
+        /// </summary>
         public const string incrementalIndexTaskKey = "entity_index_update";
 
         /// <summary>

@@ -11,6 +11,12 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="script"></param>
+        /// <returns></returns>
         public static TypeDefinition OnGenericTypeDefinition(Type t, Script script)
         {
             var ecmaService = Services.Get<EcmaService>();

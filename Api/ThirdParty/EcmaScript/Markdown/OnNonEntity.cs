@@ -12,6 +12,11 @@ namespace Api.EcmaScript.Markdown
     /// </summary>
     public static partial class MarkdownGeneration
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nonEntityType"></param>
+        /// <param name="module"></param>
         public static void OnNonEntity(Type nonEntityType, ModuleEndpoints module)
         {
             var ecmaService = Services.Get<EcmaService>();

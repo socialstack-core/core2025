@@ -10,6 +10,13 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controller"></param>
+        /// <param name="target"></param>
+        /// <param name="baseUrl"></param>
+        /// <param name="script"></param>
         public static void AddControllerMethods(Type controller, ClassDefinition target, string baseUrl, Script script)
         {
             var ecmaService = Services.Get<EcmaService>();

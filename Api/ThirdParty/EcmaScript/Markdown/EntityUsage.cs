@@ -4,6 +4,10 @@ namespace Api.EcmaScript.Markdown
 {
     public static partial class MarkdownGeneration
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entityType"></param>
         public static void AddUsage(Type entityType)
         {
             var document = GetDocument(entityType);

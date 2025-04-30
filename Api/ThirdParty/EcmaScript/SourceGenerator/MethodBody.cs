@@ -10,6 +10,14 @@ namespace Api.EcmaScript
 {
     public static partial class SourceGenerator
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="method"></param>
+        /// <param name="classMethod"></param>
+        /// <param name="script"></param>
+        /// <param name="baseUrl"></param>
+        /// <param name="resolvedReturnType"></param>
         public static void AddMethodBody(MethodInfo method, ClassMethod classMethod, Script script, string baseUrl, Type resolvedReturnType)
         {
             var ecmaService = Services.Get<EcmaService>();
