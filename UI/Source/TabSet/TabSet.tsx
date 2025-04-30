@@ -1,69 +1,68 @@
-import { useEffect, useId } from 'react';
+import { cloneElement, useEffect, useId, ReactElement, isValidElement, ReactNode, Children } from 'react';
 
 const COMPONENT_PREFIX = 'ui-tabset';
-//const DEFAULT_VARIANT = 'info';
-
-//export type AlertType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';
 
 interface TabSetProps {
-	/**
-	 * unique name for tab collection (NB: will be used to group underlying radio button controls)
-	 */
-	name: string,
-	/**
-	 * unique ID
-	 */
-	id?: string,
-	/**
-	 * true if tab links should have no background
-	 */
-	links?: boolean,
-	/**
-	 * optional additional classes
-	 */
-	className?: string,
-	/**
-	 * current selected tab
-	 */
-	selectedIndex?: number,
-	/**
-	 * callback function triggered on selection change
-	 */
-	onChange?: Function
+	name: string;
+	id?: string;
+	links?: boolean;
+	className?: string;
+	selectedIndex?: number;
+	onChange?: (index: number) => void;
+	children?: ReactNode;
 }
 
-/**
- * TabSet component
- */
-const TabSet: React.FC<React.PropsWithChildren<TabSetProps>> = ({ name, id, links, className, selectedIndex, onChange, children }) => {
-	let _id = id || useId();
-	let componentClasses = [COMPONENT_PREFIX];
+type MixedElement = HTMLElement & {
+	index?: number,
+	panel?: boolean,
+	name?: string,
+	selectedIndex?: number,
+	onChange?: (index: number) => void;
+}
 
-	useEffect(() => {
-		// javascript available - rework component to use links
+const TabSet: React.FC<React.PropsWithChildren<TabSetProps>> = (props: TabSetProps) => {
+	
+	const { name, id, links, className, selectedIndex, onChange, children } = props;
+	
+	const generatedId = useId();
+	const _id = id || generatedId;
 
-	}, []);
-
-	if (links) {
-		componentClasses.push(`${COMPONENT_PREFIX}--links`);
-	}
-
-	if (className) {
-		componentClasses.push(className);
-	}
+	const componentClasses = [COMPONENT_PREFIX];
+	
+	if (links) componentClasses.push(`${COMPONENT_PREFIX}--links`);
+	if (className) componentClasses.push(className);
 
 	return (
 		<section id={_id} className={componentClasses.join(' ')}>
-			{children.map((child, index) =>
-				React.cloneElement(child, { name, id: _id, index, selectedIndex: selectedIndex || 0, onChange })
-			)}
+			{/* Render tab headers */}
+			{Children.map(children, (child, index) => {
+				if (isValidElement(child)) {
+					return cloneElement(child as ReactElement<MixedElement>, {
+						name,
+						id: _id,
+						index,
+						selectedIndex,
+						onChange
+					});
+				}
+				return null;
+			})}
+
+			{/* Render tab panels */}
 			<div className={`${COMPONENT_PREFIX}__panels`}>
-				{children.map((child, index) =>
-					React.cloneElement(child, { id: _id, panel: true, index })
-				)}
+				{Children.map(children, (child, index) => {
+					if (isValidElement(child)) {
+						return cloneElement(child as ReactElement<MixedElement>, {
+							id: _id as string,
+							index,
+							panel: true
+						});
+					}
+					return null;
+				})}
 			</div>
 		</section>
 	);
-}
+};
 
 export default TabSet;
