@@ -69,11 +69,39 @@ interface PaginatorProps {
 */
 const Paginator: React.FC<PaginatorProps> = (props) => {
 	var { pageIndex, totalResults, pageSize } = props;
-	const dropdownId = props.id ? props.id : useState(() => newId())[0];
+
+	const [dropdownId, setDropdownId] = useState(() => props.id ?? newId());
 
 	const [currentPage, setCurrentPage] = useState(pageIndex || 1);
 
 	let totalPages = getTotalPages();
+
+	function changePage(nextPage: number) {
+		if (!nextPage || nextPage <= 0) {
+			nextPage = 1;
+		}
+
+		//var totalPages = getTotalPages();
+
+		if (totalPages && nextPage > totalPages) {
+			nextPage = totalPages;
+		}
+
+		if (props.onChange) {
+			props.onChange(nextPage, currentPage);
+		}
+
+		setCurrentPage(nextPage);
+	}
+
+	useEffect(() => {
+		// something external has changed the results 
+		if (currentPage && pageIndex && currentPage != pageIndex) {
+			changePage(pageIndex);
+		}
+
+    }, [pageIndex, totalResults, currentPage]);
+
 
 	// if we only have a single page then optionally hide
 	if (!props.always && totalPages && totalPages < 2) {
@@ -120,24 +148,6 @@ const Paginator: React.FC<PaginatorProps> = (props) => {
 			// E.g. user typed in something that isn't a number
 			return;
 		}
-	}
-
-	function changePage(nextPage: number) {
-		if (!nextPage || nextPage <= 0) {
-			nextPage = 1;
-		}
-
-		//var totalPages = getTotalPages();
-
-		if (totalPages && nextPage > totalPages) {
-			nextPage = totalPages;
-		}
-
-		if (props.onChange) {
-			props.onChange(nextPage, currentPage);
-		}
-
-		setCurrentPage(nextPage);
 	}
 
 	function renderPaginator(description : string, maxLinks : number, mobile : boolean) {
@@ -288,14 +298,6 @@ const Paginator: React.FC<PaginatorProps> = (props) => {
 			}
 		</li>;
 	}
-
-    useEffect(() => {
-		// something external has changed the results 
-		if (currentPage && pageIndex && currentPage != pageIndex) {
-			changePage(pageIndex);
-		}
-
-    }, [pageIndex, totalResults]);
 
 	return <>
 		{renderPaginator(description, maxLinksMobile, true)}

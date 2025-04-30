@@ -41,7 +41,7 @@ export default [
                 'getList',
                 'getOne',
               ],
-              message: "Do not import from 'UI/Functions/WebRequest' directly. Use the generated API in the 'TypeScript' directory instead.",
+              message: "Do not import from 'UI/Functions/WebRequest' directly. Use the generated API in an 'Api/' module instead.",
             },
           ],
         },
@@ -51,7 +51,7 @@ export default [
       'react/react-in-jsx-scope': 'off', // React 17 JSX Transform no longer requires React in scope
 
       // React Hooks rules
-      'react-hooks/rules-of-hooks': 'off', // Enforce rules of hooks
+      'react-hooks/rules-of-hooks': 'error', // Enforce rules of hooks
       'react-hooks/exhaustive-deps': 'warn', // Ensure all dependencies are in useEffect's dependency array
     }
   },
