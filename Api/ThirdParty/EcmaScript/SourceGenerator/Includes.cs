@@ -48,14 +48,6 @@ namespace Api.EcmaScript
                 });
             }
 
-            def.Children.Add(new ClassGetter() {
-                Name = "all",
-                ReturnType = def.Name,
-                Source = [
-                    "return new " + def.Name + "(this.text, '.*')"
-                ]
-            });
-
             script.AddChild(def);
         }
     }
