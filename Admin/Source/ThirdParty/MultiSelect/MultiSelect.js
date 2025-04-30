@@ -103,7 +103,9 @@ export default class MultiSelect extends React.Component {
 			}
 
 		}
-
+		
+		var api = require('Api/' + this.props.contentType).default;
+		
 		if (!fieldName) {
 			fieldName = 'name';
 		}
@@ -251,7 +253,7 @@ export default class MultiSelect extends React.Component {
 							<span className="admin-multiselect__search-max">
 								<i>{`Max of ${this.props.max} added`}</i>
 							</span> :
-							<Search host={this.props.host} exclude={excludeIds} requestOpts={this.props.requestOpts} for={contentTypeLower} field={fieldName} limit={5}
+							<Search endpoint={api.list} exclude={excludeIds} field={fieldName} limit={5}
 								placeholder={`Find ${this.props.label} to add..`} onFind={entry => {
 									if (!entry || this.state.value.some(entity => entity.id === entry.id)) {
 										return;
