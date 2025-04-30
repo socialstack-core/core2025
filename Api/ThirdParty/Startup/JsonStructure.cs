@@ -859,6 +859,13 @@ namespace Api.Startup
 							}
 							targetValue = null;
 						}
+						else if(ulong.TryParse(str, out ulong timestamp))
+						{
+							// it's a timestamp, in milliseconds from year 0.
+							// It was parsed as a ulong because negative numbers are not permitted here (BC years).
+							// Milliseconds from 0 to ticks is simply a multiply:
+							targetValue = new DateTime((long)(timestamp * 10000));
+						}
 						else if (DateTime.TryParse(
 							str,
 							CultureInfo.InvariantCulture,
@@ -911,7 +918,7 @@ namespace Api.Startup
 
 			return targetValue;
 		}
-
+		
 		/// <summary>
 		/// Allocating number parse to the target value.
 		/// </summary>
