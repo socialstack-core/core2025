@@ -802,6 +802,7 @@ class AutoFormInternal extends React.Component {
 		}
 
 		const api = this.props.api;
+		const includes = [api.includes.all, api.includes.primaryurl];
 		
 		var onValues = values => {
 			if (this.props.values && typeof this.props.values === 'object' && !Array.isArray(this.props.values) && this.props.values !== null) {
@@ -1186,7 +1187,9 @@ class AutoFormInternal extends React.Component {
 								</Input>
 							</div>
 						}
-						<Form id={this.formId} autoComplete="off" locale={locale} action={isEdit ? values => api.update(parsedId, values) : api.create}
+						<Form id={this.formId} autoComplete="off" locale={locale} action={
+							isEdit ? values => api.update(parsedId, values, includes) :
+								values => api.create(values, includes)}
 							onValues={onValues} onFailed={onFailed} onSuccess={onSuccess}>
 							{this.props.renderFormFields ? this.props.renderFormFields(this.state) : this.renderFormFields()}
 							{isEdit && <input type="hidden" name="id" value={parsedId} />}

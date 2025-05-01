@@ -36,7 +36,7 @@ const PasswordResetButton: React.FC<{}> = (): React.ReactNode => {
                     onClick={() => generate()}
                     disabled={loading}
                 >
-                        {`Generate password reset link`}`
+                        {`Generate password reset link`}
                 </button>
                 {url && (
                     <div>
