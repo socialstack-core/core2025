@@ -55,7 +55,7 @@ const PasswordReset: React.FC<PasswordResetProps> = (props) => {
 				setFailed(e as PublicError);
 			});
 		
-    }, [token]);
+    }, []);
     
 	return <div className="password-reset">
 		{

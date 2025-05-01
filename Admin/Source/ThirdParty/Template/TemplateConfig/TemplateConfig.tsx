@@ -96,7 +96,7 @@ const TemplateConfig: React.FC<TemplateConfigProps> = (props: TemplateConfigProp
             setChosenTemplate(possibleTemplates?.find(tpl => tpl.id === props.existing?.id))
         }
             
-    }, [possibleTemplates, props.existing])
+    }, [possibleTemplates])
 
     useEffect(() => {
         // when the update occurs, set the template JSON

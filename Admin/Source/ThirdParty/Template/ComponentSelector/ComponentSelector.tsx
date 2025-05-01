@@ -70,7 +70,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                 setAllowedComponents([]);
             })
         }
-    }, [allowedComponents, session])
+    }, [allowedComponents])
 
     useEffect(() => {
         // we need the components available to actually choose one. 
@@ -124,7 +124,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
             });
         }
 
-    }, [components, props.permitted])
+    }, [components])
 
     const { extra } = props;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactElement, useCallback } from 'react';
+import { useState, useEffect, ReactElement } from 'react';
 
 const COMPONENT_PREFIX = 'ui-tabset';
 
@@ -69,7 +69,7 @@ const Tab: React.FC<React.PropsWithChildren<TabProps>> = ({ label, hash, id, nam
 		setTabLink(<>
 			<a href={`#${tabHash}`} onClick={(e) => handleClick(e, index)}>{label}</a>
 		</>)
-	}, [index, label, tabHash]);
+	}, []);
 
 	
 

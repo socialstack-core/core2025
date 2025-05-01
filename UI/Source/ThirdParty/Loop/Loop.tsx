@@ -1,11 +1,12 @@
 import { ApiList } from 'UI/Functions/WebRequest';
 import Failure from 'UI/Failed';
 import Paginator from 'UI/Paginator';
-import { AutoApi, ApiIncludes, ListFilter } from 'Api/ApiEndpoints';
+import { AutoController, ListFilter } from 'Api/ApiEndpoints';
+import { ApiIncludes } from 'Api/Includes'
 import { Content } from 'Api/Content';
 import { ContentChangeDetail } from 'UI/Functions/ContentChange';
 import useApi from 'UI/Functions/UseApi';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 const DEFAULT_PAGE_SIZE = 50;
 
 export interface LoopPageConfig {
@@ -186,7 +187,7 @@ export interface LoopProps<T extends Content<uint>, I extends ApiIncludes> {
 	 * Loop will pull data from the specified api. Alternatively if you need something other than an 
 	 * api source, use source instead.
 	 */
-	over?: AutoApi<T, I>;
+	over?: AutoController<T, I>;
 
 	/**
 	 * An alternative to 'over', where you can specify a custom data source function.

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Icon from 'UI/Icon';
 
 const MAX_PAGES = 5;
@@ -110,7 +110,7 @@ const Paginator: React.FC<PaginatorProps> = (props) => {
 			changePage(pageIndex);
 		}
 
-    }, [pageIndex, totalResults, currentPage, changePage]);
+    }, [pageIndex, totalResults, currentPage]);
 
 
 	// if we only have a single page then optionally hide

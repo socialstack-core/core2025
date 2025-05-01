@@ -9,8 +9,6 @@ const useApi = <T,>(loader: () => Promise<T>, deps?: React.DependencyList) => {
 
     const [current, setCurrent] = state;
 
-    const dependencies:React.DependencyList = deps ?? [];
-
     useEffect(() => {
         loader()
             .then(val => {
@@ -25,7 +23,7 @@ const useApi = <T,>(loader: () => Promise<T>, deps?: React.DependencyList) => {
     // passing dependencies here from the method which
     // renders this impossible.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [loader, setCurrent, ...dependencies]);
+    }, deps);
 
     return state;
 };
