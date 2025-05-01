@@ -268,15 +268,13 @@ class AutoFormInternal extends React.Component {
 		var fieldData = undefined;
 
 		if (isEdit) {
-			// We always force locale:
-			var opts = { locale, includes: '*,primaryUrl' };
-
 			var pending; // Promise<Content>
+			var api = this.props.api;
 
 			if (revisionId) {
 				throw new Error('Revisions not supported here yet.');
 			} else {
-				pending = this.props.api.load(props.id); // , opts);
+				pending = api.load(props.id, [api.includes.all, api.includes.primaryurl]);
 			}
 
 			pending.then(content => {

@@ -36,12 +36,12 @@ const PasswordResetButton: React.FC<{}> = (): React.ReactNode => {
                     onClick={() => generate()}
                     disabled={loading}
                 >
-                    Generate password reset link
+                        {`Generate password reset link`}`
                 </button>
                 {url && (
                     <div>
                         <Alert type="info">
-                            Send this to the user - when they open it in a browser, they'll be able to set a password and login. 
+                            {`Send this to the user - when they open it in a browser, they'll be able to set a password and login.`}
                         </Alert>
                         <p>
                             {url}
