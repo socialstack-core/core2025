@@ -164,7 +164,7 @@ namespace Api.PasswordResetRequests
 		/// Admin link generation.
 		/// </summary>
 		[HttpGet("{id}/generate")]
-		public async ValueTask<object> Generate(Context context, [FromRoute] uint id)
+		public async ValueTask<ResetToken?> Generate(Context context, [FromRoute] uint id)
 		{
 			// must be admin/ super admin. Nobody else can do this for very clear security reasons.
 			if (context.Role != Roles.Developer && context.Role != Roles.Admin)
@@ -183,10 +183,10 @@ namespace Api.PasswordResetRequests
 				return null;
 			}
 
-			return new
+			return new ResetToken()
 			{
-				token = prr.Token,
-				url = "/password/reset/" + prr.Token
+				Token = prr.Token,
+				Url = "/password/reset/" + prr.Token
 			};
 		}
 
@@ -201,5 +201,11 @@ namespace Api.PasswordResetRequests
 		/// The new password.
 		/// </summary>
 		public string Password;
+	}
+
+	public struct ResetToken
+	{
+		public string Token;
+		public string Url;
 	}
 }

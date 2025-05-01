@@ -9,6 +9,7 @@ using Api.Emails;
 using Api.Users;
 using Api.Pages;
 using Api.CanvasRenderer;
+using Api.Startup;
 
 namespace Api.PasswordResetRequests
 {
@@ -66,8 +67,9 @@ namespace Api.PasswordResetRequests
 				
 				if(string.IsNullOrWhiteSpace(reset.Email))
 				{
-					if(reset.UserId == 0){
-						return null;
+					if(reset.UserId == 0)
+					{
+						throw new PublicException("No user ID or email was provided - unable to generate a reset request.", "reset/unknown");
 					}
 					
 					// Admins can provide a user ID.

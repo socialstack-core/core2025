@@ -14,16 +14,14 @@ const PasswordResetButton: React.FC<{}> = (): React.ReactNode => {
     const [url, setUrl] = useState<string|null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const userId: uint = parseInt(useTokens('$url.user.id', undefined)) as uint;
+    const userId: uint = parseInt(useTokens('${url.user.id}', undefined)) as uint;
 
     const generate = () => {
         PasswordResetRequestApi.generate(userId)
-            .then((response) => {
-                const result: ApiContent<PasswordResetResponse> = response as ApiContent<PasswordResetResponse>;
-
+            .then((result) => {
                 setUrl(
                     location.origin + 
-                    result.result?.url
+                    result.url
                 )
             })
     }
@@ -38,12 +36,12 @@ const PasswordResetButton: React.FC<{}> = (): React.ReactNode => {
                     onClick={() => generate()}
                     disabled={loading}
                 >
-                    Generate password reset link
+                        {`Generate password reset link`}
                 </button>
                 {url && (
                     <div>
                         <Alert type="info">
-                            Send this to the user - when they open it in a browser, they'll be able to set a password and login. 
+                            {`Send this to the user - when they open it in a browser, they'll be able to set a password and login.`}
                         </Alert>
                         <p>
                             {url}

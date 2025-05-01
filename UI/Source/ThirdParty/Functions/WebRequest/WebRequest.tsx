@@ -230,9 +230,10 @@ export function getJson<T>(origUrl: string, data?: any, opts?: WebRequestOptions
 			}
 
 			if (!rwt.response.ok) {
+				// json is null if it was a 404 typically
 				var fail = json as PublicException;
-				var type = fail.type || `response/failed`;
-				var message = fail.message || `Invalid response from the server`;
+				var type = fail?.type || `response/failed`;
+				var message = fail?.message || `Invalid response from the server`;
 				throw new PublicError(type, message);
 			}
 

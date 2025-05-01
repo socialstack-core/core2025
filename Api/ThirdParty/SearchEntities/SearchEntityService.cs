@@ -367,6 +367,11 @@ namespace Api.SearchEntities
             // wire up the after create event for this entity
             service.EventGroup.AfterCreate.AddEventListener(async (Context context, T entity) =>
             {
+                if(entity == null)
+                {
+                    return entity;
+                }
+
                 if (!_cfg.UseDynamicIndexing)
                 {
                     var exists = await Where("ContentType=? AND ContentId=? AND Action=?", DataOptions.IgnorePermissions)
