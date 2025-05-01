@@ -1,5 +1,5 @@
 import * as dateTools from 'UI/Functions/DateTools';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 /**
  * Props for the Html component.
@@ -179,12 +179,12 @@ function timeAgoString(date : Date, absolute?: boolean, withDate?: boolean, date
 * Displays "x ago" phrase, or just an absolute date/time. 'ago' is the default unless absolute is specified.
 */
 const Time: React.FC<TimeProps> = ({ date, updateRate, absolute, withDate, dateDisplay, ...props }) => {
-	const jsDate = date ? dateTools.isoConvert(date) : new Date();
+	const jsDate = useMemo(() => date ? dateTools.isoConvert(date) : new Date(), [date]);
 	const [agoTime, setAgoTime] = useState('');
 
 	useEffect(() => {
 		setAgoTime(timeAgoString(jsDate, absolute, withDate, dateDisplay));
-	}, [date]);
+	}, [date, absolute, dateDisplay, jsDate, withDate]);
 
 	useEffect(() => {
 		if (updateRate && updateRate <= 0) {
@@ -196,7 +196,7 @@ const Time: React.FC<TimeProps> = ({ date, updateRate, absolute, withDate, dateD
 		return () => {
 			clearInterval(x);
 		};
-	}, []);
+	}, [absolute, dateDisplay, jsDate, updateRate, withDate]);
 
 	var isoString = '';
 	var title = '';

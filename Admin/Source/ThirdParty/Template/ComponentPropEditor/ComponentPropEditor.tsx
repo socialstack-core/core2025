@@ -39,7 +39,7 @@ const ComponentPropEditor: React.FC<ComponentPropEditorProps> = (props:Component
 
         setCodeModule(allModules[item.t])
 
-    }, [allModules])
+    }, [item, allModules])
 
     if (item.d.$isMeta && allModules) {
         // if allModules is null, it will flow down to !codeModule if statement and return loading.

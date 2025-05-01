@@ -1,4 +1,4 @@
-import { getJson } from 'UI/Functions/WebRequest';
+import FrontendCodeApi from 'Api/FrontendCode';
 
 export interface TypeMeta {
     /**
@@ -53,6 +53,8 @@ export interface CodeModuleType {
      * Literal value if it is a literal.
      */
     value?: string;
+
+    elementType?: string
 }
 
 export type UnionType = {
@@ -469,7 +471,7 @@ function loadCache() {
     }
 
     if (!_cacheLoader) {
-        _cacheLoader = getJson<TypeMeta>("/pack/type-meta.json")
+        _cacheLoader = FrontendCodeApi.getTypeMeta()
         .then(json => {
             for (var k in json.codeModules) {
                 var module = json.codeModules[k];

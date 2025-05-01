@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Icon from 'UI/Icon';
 
 const MAX_PAGES = 5;
@@ -86,7 +86,7 @@ const Paginator: React.FC<PaginatorProps> = (props) => {
 
 	let totalPages = getTotalPages();
 
-	function changePage(nextPage: number) {
+	const changePage = useCallback(function(nextPage: number) {
 		if (!nextPage || nextPage <= 0) {
 			nextPage = 1;
 		}
@@ -102,7 +102,7 @@ const Paginator: React.FC<PaginatorProps> = (props) => {
 		}
 
 		setCurrentPage(nextPage);
-	}
+	}, [currentPage, totalPages, props])
 
 	useEffect(() => {
 		// something external has changed the results 
@@ -110,7 +110,7 @@ const Paginator: React.FC<PaginatorProps> = (props) => {
 			changePage(pageIndex);
 		}
 
-    }, [pageIndex, totalResults, currentPage]);
+    }, [pageIndex, totalResults, currentPage, changePage]);
 
 
 	// if we only have a single page then optionally hide

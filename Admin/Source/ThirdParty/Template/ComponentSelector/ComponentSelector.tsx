@@ -38,7 +38,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
         {
             ComponentGroupApi.list({
                 query: "Role = ?",
-                args: [session.role.id]
+                args: [session?.role?.id ?? 0]
             })
             .then((result: ApiList<ComponentGroup>) => {
                 if (result.totalResults == 0)
@@ -70,7 +70,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                 setAllowedComponents([]);
             })
         }
-    }, [allowedComponents])
+    }, [allowedComponents, session])
 
     useEffect(() => {
         // we need the components available to actually choose one. 
@@ -124,7 +124,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
             });
         }
 
-    }, [components])
+    }, [components, props.permitted])
 
     const { extra } = props;
 

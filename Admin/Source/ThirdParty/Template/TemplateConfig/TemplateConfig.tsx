@@ -45,7 +45,7 @@ const TemplateConfig: React.FC<TemplateConfigProps> = (props: TemplateConfigProp
             setChosenLayout(layoutTemplates?.find(tpl => tpl.name === props.existing?.baseTemplate))
         }
 
-    }, [layoutTemplates])
+    }, [layoutTemplates, props.existing])
 
     // when a chosen layout is selected, we need to pull any templates that share
     // the same base template, this removes any ambiguity.
@@ -96,7 +96,7 @@ const TemplateConfig: React.FC<TemplateConfigProps> = (props: TemplateConfigProp
             setChosenTemplate(possibleTemplates?.find(tpl => tpl.id === props.existing?.id))
         }
             
-    }, [possibleTemplates])
+    }, [possibleTemplates, props.existing])
 
     useEffect(() => {
         // when the update occurs, set the template JSON

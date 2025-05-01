@@ -5,7 +5,7 @@ import { AutoApi, ApiIncludes, ListFilter } from 'Api/ApiEndpoints';
 import { Content } from 'Api/Content';
 import { ContentChangeDetail } from 'UI/Functions/ContentChange';
 import useApi from 'UI/Functions/UseApi';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 const DEFAULT_PAGE_SIZE = 50;
 
 export interface LoopPageConfig {
@@ -267,78 +267,7 @@ const Loop = <T extends Content<uint>, I extends ApiIncludes>(props: LoopProps<T
 
 	const filterStr = props.filter ? JSON.stringify(props.filter) : '';
 
-	const [results, setResults] = useApi<T[] | null>(() => {
-		return load();
-	}, [filterStr, props.paged, props.over, props.source, props.includes]);
-
-	useEffect(() => {
-		var onContentUpdate = (e: CustomEvent<ContentChangeDetail>) => {
-			const changeInfo = e.detail;
-			const entity = changeInfo.entity as T;
-
-			if (!results || !entity) {
-				return;
-			}
-
-			if (changeInfo.deleted) {
-				var postDeleteResults = results
-					.filter(content => !(content.type == entity.type && content.id == entity.id));
-
-				if (postDeleteResults.length != results.length) {
-					setResults(postDeleteResults);
-				}
-
-			} else if (changeInfo.updated) {
-				var changed = false;
-				var updatedResults = results
-					.map(content => {
-						if (content.type == entity.type && content.id == entity.id) {
-							changed = true;
-							return changeInfo.entity as T;
-						} else {
-							return content;
-						}
-					});
-
-				if (changed) {
-					setResults(updatedResults);
-				}
-			} else if (changeInfo.added) {
-				load().then(res => setResults(res));
-			}
-		};
-
-		document.addEventListener("contentchange", onContentUpdate as EventListener);
-
-		return () => {
-			document.removeEventListener("contentchange", onContentUpdate as EventListener);
-		};
-	}, [results]);
-
-	const getPagedFilter = (filter: any, pageIndex: number, paged?: LoopPageConfig | boolean) => {
-		if (!paged) {
-			return filter;
-		}
-
-		var pgCfg = getPageConfig(paged);
-
-		if (!filter) {
-			filter = {};
-		}
-
-		filter = { ...filter };
-		filter.pageIndex = pageIndex - 1;
-		filter.includeTotal = true;
-		var pageSize = pgCfg.pageSize || DEFAULT_PAGE_SIZE;
-
-		if (!filter.pageSize) {
-			filter.pageSize = pageSize;
-		}
-
-		return filter;
-	};
-	
-	const load = (newPageIndex? : number) => {
+	const load = useCallback((newPageIndex? : number) => {
 		setErrored(null);
 
 		if(newPageIndex){
@@ -394,7 +323,80 @@ const Loop = <T extends Content<uint>, I extends ApiIncludes>(props: LoopProps<T
 
 			return null;
 		});
-	}
+	}, [pageIndex, props])
+
+	const [results, setResults] = useApi<T[] | null>(() => {
+		return load();
+	}, [filterStr, props.paged, props.over, props.source, props.includes]);
+
+	useEffect(() => {
+		var onContentUpdate = (e: CustomEvent<ContentChangeDetail>) => {
+			const changeInfo = e.detail;
+			const entity = changeInfo.entity as T;
+
+			if (!results || !entity) {
+				return;
+			}
+
+			if (changeInfo.deleted) {
+				var postDeleteResults = results
+					.filter(content => !(content.type == entity.type && content.id == entity.id));
+
+				if (postDeleteResults.length != results.length) {
+					setResults(postDeleteResults);
+				}
+
+			} else if (changeInfo.updated) {
+				var changed = false;
+				var updatedResults = results
+					.map(content => {
+						if (content.type == entity.type && content.id == entity.id) {
+							changed = true;
+							return changeInfo.entity as T;
+						} else {
+							return content;
+						}
+					});
+
+				if (changed) {
+					setResults(updatedResults);
+				}
+			} else if (changeInfo.added) {
+				load().then(res => setResults(res));
+			}
+		};
+
+		document.addEventListener("contentchange", onContentUpdate as EventListener);
+
+		return () => {
+			document.removeEventListener("contentchange", onContentUpdate as EventListener);
+		};
+	}, [results, load, setResults]);
+
+	const getPagedFilter = (filter: any, pageIndex: number, paged?: LoopPageConfig | boolean) => {
+		if (!paged) {
+			return filter;
+		}
+
+		var pgCfg = getPageConfig(paged);
+
+		if (!filter) {
+			filter = {};
+		}
+
+		filter = { ...filter };
+		filter.pageIndex = pageIndex - 1;
+		filter.includeTotal = true;
+		var pageSize = pgCfg.pageSize || DEFAULT_PAGE_SIZE;
+
+		if (!filter.pageSize) {
+			filter.pageSize = pageSize;
+		}
+
+		return filter;
+	};
+	
+	
 	
 	if (errored) {
 		// is a specific failure set?

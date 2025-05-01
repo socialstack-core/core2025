@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Debounce from 'UI/Functions/Debounce';
-import { ApiIncludes, ListFilter } from 'Api/ApiEndpoints';
+import { ApiIncludes } from 'Api/Includes';
+import { ListFilter } from 'Api/ApiEndpoints'
 import { Content } from 'Api/Content';
 import { ApiList } from 'UI/Functions/WebRequest';
 
@@ -83,7 +84,7 @@ const Search = <T extends Content<uint>,>(props: SearchProps<T>) => {
         if (results) {
             props.onResults && props.onResults(results);
         }
-    }, [results])
+    }, [results, props])
 
     const selectValue = (value: T) => {
         onFind && onFind(value);

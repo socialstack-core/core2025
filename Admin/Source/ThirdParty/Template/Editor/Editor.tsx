@@ -4,7 +4,7 @@ import Input from "UI/Input";
 import TemplateTypeSelector from "../TemplateTypeSelector";
 import { Scalar } from "Admin/Template/RegionEditor";
 import Default from "Admin/Layouts/Default";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Form from "UI/Form";
 import { validateTemplate } from "../Functions";
 import Alert from "UI/Alert";
@@ -18,7 +18,7 @@ export type TemplateEditorProps = {
 
 const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProps): React.ReactElement => {
 
-    const formSections: React.ReactElement[] = [
+    const formSections: React.ReactElement[] = useMemo(() => [
         // first panel
         <div className='main-information'>
     
@@ -42,11 +42,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProp
             />
             <TemplateTypeSelector selected={props.existing?.templateType} name='templateType' label={`Template type`}/>
             {props.existing && <input type='hidden' name='baseTemplate' value={props.existing.baseTemplate}/>}
-    
+
         </div> , 
         // template config
         <TemplateConfig existing={props.existing}/>
-    ];
+    ], [props.existing]);
 
 
     const [currentSection, setSection] = useState(0)
@@ -61,7 +61,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProp
             setSection(formSections.length - 1);
             return;
         }
-    }, [currentSection])
+    }, [currentSection, formSections])
 
     return (
         <Default>

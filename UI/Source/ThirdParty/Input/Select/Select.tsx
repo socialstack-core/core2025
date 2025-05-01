@@ -50,7 +50,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 		var api = module.default as AutoApi<Content, ApiIncludes>;
 		api.list(filter).then(setOptions);
 
-	}, [contentType]);
+	}, [contentType, filter]);
 
 	var selectDefaultValue = typeof selectValue === 'undefined' ? defaultValue : selectValue;
 

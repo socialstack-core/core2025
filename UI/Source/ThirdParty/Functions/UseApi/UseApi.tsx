@@ -9,6 +9,8 @@ const useApi = <T,>(loader: () => Promise<T>, deps?: React.DependencyList) => {
 
     const [current, setCurrent] = state;
 
+    const dependencies:React.DependencyList = deps ?? [];
+
     useEffect(() => {
         loader()
             .then(val => {
@@ -17,7 +19,13 @@ const useApi = <T,>(loader: () => Promise<T>, deps?: React.DependencyList) => {
                 }
                 setCurrent(val)
             });
-    }, deps);
+
+    // [Lint disabled here] 
+    // Reason: the dependency array expects an array literal, we're
+    // passing dependencies here from the method which
+    // renders this impossible.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loader, setCurrent, ...dependencies]);
 
     return state;
 };

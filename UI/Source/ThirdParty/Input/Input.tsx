@@ -77,7 +77,7 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 		if (autoFocus && inputRef) {
 			inputRef.focus();
 		}
-	}, []);
+	}, [autoFocus, inputRef]);
 
 	if (!labelPosition) {
 		labelPosition = 'above';

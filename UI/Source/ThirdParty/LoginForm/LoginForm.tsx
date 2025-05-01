@@ -116,7 +116,7 @@ export default (props : LoginFormProps) => {
 		if (user && user.role == 3) {
 			setEmailVerificationRequired(true);
 		}
-	});
+	}, [user]);
 
 	if (emailVerificationRequired) {
 		return <div className="login-form">

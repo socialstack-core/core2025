@@ -44,7 +44,7 @@ const Modal: React.FC<ModalProps> = (props) => {
     if (props.onOpen) {
       props.onOpen();
     }
-  }, [props.onOpen]);
+  }, [props, props.onOpen]);
 
   const newTitleId = () => {
     setModalTitleId(`modal_title_${titleId++}`);
