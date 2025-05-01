@@ -2,7 +2,7 @@
  * ref: https://getbootstrap.com/docs/5.0/components/dropdowns/
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 let lastId = 0;
 
@@ -260,7 +260,7 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
 		</svg>;
 	}
 
-	const handleClick = useCallback((event: MouseEvent) => {
+	function handleClick(event: MouseEvent) {
 		// toggle dropdown
 		if (toggleRef && toggleRef.current == event.target) {
 
@@ -298,7 +298,7 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
 				closeDropdown();
 			}
 		}
-	}, [stayOpenOnSelection, dropdownWrapperRef, toggleRef, dropdownRef]);
+	}
 
 	function closeDropdown() {
 		setOpen(false);
@@ -311,7 +311,7 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
 			window.document.removeEventListener("click", handleClick);
 		};
 
-	}, [handleClick]);
+	}, []);
 
 	let dropdownMenuClass = ['dropdown-menu'];
 

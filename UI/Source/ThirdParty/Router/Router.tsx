@@ -4,7 +4,7 @@ import { ContentChangeDetail } from 'UI/Functions/ContentChange';
 import { WebSocketMessageDetail } from 'UI/Functions/WebSocket';
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import AdminTrigger from 'UI/AdminTrigger';
-import { createContext, useContext, useRef, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useRef, useState, useEffect } from 'react';
 
 
 export interface RouterContext {
@@ -77,8 +77,19 @@ const Router: React.FC<{}> = () => {
 
 	var [scrollTarget, setScrollTarget] = useState<ScrollTarget | null>(null);
 	const scrollTimer = useRef<number | null>(null);
-
-	const goNow = useCallback(function(url : string) {
+	
+	function go(url : string) {
+		if(window.beforePageLoad){
+			window.beforePageLoad(url).then(() => {
+				window.beforePageLoad = null;
+				goNow(url);
+			}).catch(e => console.log(e));
+		}else{
+			goNow(url);
+		}
+	}
+	
+	function goNow(url : string) {
 		if (useDefaultNav(hashMode ? '' : document.location.pathname, url)){
 			document.location = url;
 			return;
@@ -99,19 +110,7 @@ const Router: React.FC<{}> = () => {
 		return setPageState(url).then(() => {
 			html.scrollTo({top: 0, left: 0, behavior: 'instant'});
 		});
-	}, []);
-	
-	const go = useCallback(function(url : string) {
-		if(window.beforePageLoad){
-			window.beforePageLoad(url).then(() => {
-				window.beforePageLoad = null;
-				goNow(url);
-			}).catch(e => console.log(e));
-		}else{
-			goNow(url);
-		}
-	}, [goNow]);
-	
+	}
 	
 	function useDefaultNav(a : string,b : string){
 		if(b.indexOf(':') != -1 || b[0]=='#' || (b[0] == '/' && (b.length>1 && b[1] == '/'))){
@@ -157,7 +156,7 @@ const Router: React.FC<{}> = () => {
 		});
 	}
 	
-	const onPopState = useCallback((e : PopStateEvent) => {
+	const onPopState = (e : PopStateEvent) => {
 		var newScrollTarget : ScrollTarget | null = null;
 		
 		if(e && e.state && e.state.scrollTop !== undefined){
@@ -170,9 +169,9 @@ const Router: React.FC<{}> = () => {
 		setPageState(currentUrl()).then(() => {
 			setScrollTarget(newScrollTarget);
 		});
-	}, [])
+	}
 	
-    const onLinkClick = useCallback((e : MouseEvent) => {
+    const onLinkClick = (e : MouseEvent) => {
         if (e.button != 0 || e.defaultPrevented) {
             // Browser default action for right/ middle clicks
             return;
@@ -210,14 +209,14 @@ const Router: React.FC<{}> = () => {
             }
             cur = cur.parentNode as Node;
         }
-    }, [go]);
+    };
 
-	const scroll = useCallback(() => {
+	const scroll = () => {
 		if (scrollTarget) {
 			var html = document.body.parentNode as HTMLHtmlElement;
 			html.scrollTo({ top: scrollTarget.y, left: scrollTarget.x, behavior: 'instant' });
 		}
-	}, [scrollTarget]);
+	}
 
 	useEffect(() => {
 		if (scrollTimer.current) {
@@ -228,7 +227,7 @@ const Router: React.FC<{}> = () => {
 		if(scrollTarget){
 			scrollTimer.current = setTimeout(scroll, 100);
 		}
-	}, [scrollTarget, scroll]);
+	}, [scrollTarget]);
 	
 	useEffect(() => {
 		
@@ -267,7 +266,7 @@ const Router: React.FC<{}> = () => {
 			document.removeEventListener("contentchange", onContentChange);
 			document.removeEventListener("websocketmessage", onWsMessage);
 		};
-	}, [onLinkClick, onPopState, pageState]);
+	}, []);
 	
 	var { page } = pageState;
 	

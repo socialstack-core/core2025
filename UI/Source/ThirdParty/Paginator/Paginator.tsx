@@ -86,7 +86,7 @@ const Paginator: React.FC<PaginatorProps> = (props) => {
 
 	let totalPages = getTotalPages();
 
-	const changePage = useCallback(function(nextPage: number) {
+	const changePage = function(nextPage: number) {
 		if (!nextPage || nextPage <= 0) {
 			nextPage = 1;
 		}
@@ -102,7 +102,7 @@ const Paginator: React.FC<PaginatorProps> = (props) => {
 		}
 
 		setCurrentPage(nextPage);
-	}, [currentPage, totalPages, props])
+	}
 
 	useEffect(() => {
 		// something external has changed the results 

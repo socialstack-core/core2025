@@ -267,7 +267,7 @@ const Loop = <T extends Content<uint>, I extends ApiIncludes>(props: LoopProps<T
 
 	const filterStr = props.filter ? JSON.stringify(props.filter) : '';
 
-	const load = useCallback((newPageIndex? : number) => {
+	const load = (newPageIndex? : number) => {
 		setErrored(null);
 
 		if(newPageIndex){
@@ -323,7 +323,7 @@ const Loop = <T extends Content<uint>, I extends ApiIncludes>(props: LoopProps<T
 
 			return null;
 		});
-	}, [pageIndex, props])
+	};
 
 	const [results, setResults] = useApi<T[] | null>(() => {
 		return load();

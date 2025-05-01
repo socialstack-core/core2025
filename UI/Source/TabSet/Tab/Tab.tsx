@@ -51,7 +51,7 @@ const Tab: React.FC<React.PropsWithChildren<TabProps>> = ({ label, hash, id, nam
 
 	let tabHash = hash && hash.length ? hash : label.toLowerCase();
 
-	const handleClick = useCallback((e: React.MouseEvent, idx: number) => {
+	const handleClick = (e: React.MouseEvent, idx: number) => {
 		const element: HTMLAnchorElement = (e.target as HTMLAnchorElement);
 
 		if (element.nodeName == "A") {
@@ -62,14 +62,14 @@ const Tab: React.FC<React.PropsWithChildren<TabProps>> = ({ label, hash, id, nam
 		if (onChange instanceof Function) {
 			onChange(idx);
 		}
-	}, [onChange]);
+	};
 
 	useEffect(() => {
 		// javascript available - rework component to use links
 		setTabLink(<>
 			<a href={`#${tabHash}`} onClick={(e) => handleClick(e, index)}>{label}</a>
 		</>)
-	}, [index, label, tabHash, handleClick]);
+	}, [index, label, tabHash]);
 
 	
 
