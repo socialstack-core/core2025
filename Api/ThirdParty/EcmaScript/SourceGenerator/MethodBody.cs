@@ -51,7 +51,7 @@ namespace Api.EcmaScript
                 endpointUrl = endpointUrl[0..^1];
             }
 
-            var caller = ResolveCaller(resolvedReturnType);
+            var caller = ResolveCaller(classMethod.GetPromiseGeneric());
 
             classMethod.Injected = GenerateCall(caller, endpointUrl, bodyParam, parameters, GetHttpMethodFromAttribute(method), classMethod);
 
@@ -114,29 +114,20 @@ namespace Api.EcmaScript
             return endpointUrl.Replace("?&", "?");
         }
 
-        private static string ResolveCaller(Type resolvedReturnType)
+        private static string ResolveCaller(string resolveType)
         {
-            var ecmaService = Services.Get<EcmaService>();
-            var listOfType = GetListOfType(resolvedReturnType);
+            if (resolveType.StartsWith("ApiList"))
+            {
+                var listType = resolveType[8..^1];
 
-            if (listOfType != null)
-            {
-                if (IsContentType(listOfType))
-                {
-                    return "getList<ApiList<" + ecmaService.GetTypeConversion(resolvedReturnType) + ">>";
-                }
-                return "getJson<" + ecmaService.GetTypeConversion(resolvedReturnType) + "[]>";
+                return "getList<" + listType + ">";
             }
-            else if (IsContentType(resolvedReturnType))
+            else if (resolveType == "T")
             {
-                return "getOne<" + resolvedReturnType + ">";
+                return "getOne<T>";
             }
-            else if (resolvedReturnType == typeof(void))
-            {
-                return "getText";
-            }
-
-            return "getJson<" + ecmaService.GetTypeConversion(resolvedReturnType) + ">";
+            
+            return "getText";
         }
 
         private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod, ClassMethod classMethod)

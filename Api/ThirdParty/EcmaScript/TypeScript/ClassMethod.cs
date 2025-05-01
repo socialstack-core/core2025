@@ -45,6 +45,33 @@ namespace Api.EcmaScript.TypeScript
         public List<string> Documentation = [];
 
         /// <summary>
+        /// Returns the promise generic argument
+        /// </summary>
+        /// <returns></returns>
+        public string GetPromiseGeneric()
+        {
+            if (!ReturnType.StartsWith("Promise<") || !ReturnType.EndsWith('>'))
+            {
+                return null;
+            }
+
+            return ReturnType[8..^1];
+        }
+
+        /// <summary>
+        /// Adds an argument to the argument array, stops duplicates
+        /// </summary>
+        /// <param name="newArg"></param>
+        public void AddArgument(ClassMethodArgument newArg)
+        {
+            if (Arguments.Any(arg => arg.Name == newArg.Name))
+            {
+                return;
+            }
+            Arguments.Add(newArg);
+        }
+
+        /// <summary>
         /// Generates the TypeScript method definition as a source code string.
         /// </summary>
         /// <returns>The TypeScript method definition as a formatted string.</returns>
@@ -64,14 +91,35 @@ namespace Api.EcmaScript.TypeScript
             {
                 src += " = (";
             }
+            bool needsComma = false;
 
-            for (int i = 0; i < Arguments.Count; i++)
+            // Add all arguments except "includes" first
+            foreach (var arg in Arguments)
             {
-                if (i > 0) 
+                if (arg.Name == "includes")
+                {
+                    continue;
+                }
+
+                if (needsComma)
                 {
                     src += ", ";
                 }
-                src += Arguments[i].CreateSource();
+
+                src += arg.CreateSource();
+                needsComma = true;
+            }
+
+            // Add "includes" last, if it exists
+            var includes = Arguments.Find(arg => arg.Name == "includes");
+            if (includes is not null)
+            {
+                if (needsComma)
+                {
+                    src += ", ";
+                }
+
+                src += includes.CreateSource();
             }
 
             src += ")";

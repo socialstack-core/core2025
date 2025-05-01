@@ -34,9 +34,17 @@ namespace Api.EcmaScript
             
             if (classMethod.ReturnType == "Promise<SessionResponse>")
             {
-                classMethod.Arguments.Add(new ClassMethodArgument() {
+                classMethod.AddArgument(new ClassMethodArgument() {
                     Name = "setSession", 
                     Type = "(s: SessionResponse) => Session"
+                });
+            }
+            if (classMethod.ReturnType == "Promise<T>" || classMethod.ReturnType == "Promise<ApiList<T>>")
+            {
+                classMethod.AddArgument(new() {
+                    Name = "includes",
+                    Type = "ApiIncludes[]",
+                    DefaultValue = "[]"
                 });
             }
 
@@ -47,7 +55,7 @@ namespace Api.EcmaScript
 
                 if (acceptsPartial && type == typeof(JObject))
                 {
-                    classMethod.Arguments.Add(new ClassMethodArgument() {
+                    classMethod.AddArgument(new ClassMethodArgument() {
                         Name = param.Name,
                         Type = "Partial<T>"
                     });
@@ -63,7 +71,7 @@ namespace Api.EcmaScript
                 // Handle ContentStream<,> type
                 if (type == typeof(ContentStream<,>))
                 {
-                    classMethod.Arguments.Add(new ClassMethodArgument
+                    classMethod.AddArgument(new ClassMethodArgument
                     {
                         Name = param.Name,
                         Type = "Record<string, any>",
@@ -75,7 +83,7 @@ namespace Api.EcmaScript
                 // Handle mapped types from TypeConversions
                 if (ecmaService.TypeConversions.TryGetValue(type, out string mappedType))
                 {
-                    classMethod.Arguments.Add(new ClassMethodArgument
+                    classMethod.AddArgument(new ClassMethodArgument
                     {
                         Name = param.Name,
                         Type = mappedType,
@@ -118,7 +126,7 @@ namespace Api.EcmaScript
                 }
 
                 // Add parameter to the method
-                classMethod.Arguments.Add(new ClassMethodArgument
+                classMethod.AddArgument(new ClassMethodArgument
                 {
                     Name = param.Name,
                     Type = type.Name,

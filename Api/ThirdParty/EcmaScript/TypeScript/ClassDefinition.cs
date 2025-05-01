@@ -45,7 +45,7 @@ namespace Api.EcmaScript.TypeScript
         /// <param name="method"></param>
         public void AddMethod(ClassMethod method)
         {
-            var existing = Children.OfType<ClassMethod>()
+            var existing = GetMethods()
                                    .Where(child => child.Name == method.Name);
             if (existing.Any())
             {
@@ -72,6 +72,15 @@ namespace Api.EcmaScript.TypeScript
             }
 
             Children.Add(method);
+        }
+
+        /// <summary>
+        /// Gets all child methods
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<ClassMethod> GetMethods()
+        {
+            return Children.OfType<ClassMethod>();
         }
 
         /// <summary>
