@@ -34,7 +34,7 @@ export class AdminNavMenuItemApi extends AutoController<AdminNavMenuItem, uint>{
 
     */
     public list = (filters: ListFilter, includes: ApiIncludes[] = []): Promise<ApiList<AdminNavMenuItem>>  => {
-        return getList<AdminNavMenuItem>(this.apiUrl + '/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
+        return getOne<Api.NavMenus.AdminNavMenuItem>(this.apiUrl + '/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
     }
 
 }

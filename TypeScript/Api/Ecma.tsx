@@ -14,7 +14,7 @@ export class EcmaApi{
 
     */
     public testResponse = (): Promise<String>  => {
-        return getText(this.apiUrl + '/test')
+        return getJson<string>(this.apiUrl + '/test')
     }
 
 }

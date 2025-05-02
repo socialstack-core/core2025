@@ -43,7 +43,7 @@ export class SearchEntityApi extends AutoController<SearchEntity, uint>{
 
     */
     public query = (filters: Record<string, string | number | boolean>): Promise<DocumentsResult>  => {
-        return getText(this.apiUrl + '/query', filters)
+        return getJson<DocumentsResult>(this.apiUrl + '/query', filters)
     }
 
     /**
@@ -51,7 +51,7 @@ export class SearchEntityApi extends AutoController<SearchEntity, uint>{
 
     */
     public reset = (): Promise<Boolean>  => {
-        return getText(this.apiUrl + '/reset')
+        return getJson<boolean>(this.apiUrl + '/reset')
     }
 
     /**
@@ -59,7 +59,7 @@ export class SearchEntityApi extends AutoController<SearchEntity, uint>{
 
     */
     public index = (): Promise<Boolean>  => {
-        return getText(this.apiUrl + '/reindex')
+        return getJson<boolean>(this.apiUrl + '/reindex')
     }
 
 }

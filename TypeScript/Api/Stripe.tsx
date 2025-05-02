@@ -27,7 +27,7 @@ export class StripeApi{
 
     */
     public setupIntent = (): Promise<StripeIntentResponse>  => {
-        return getText(this.apiUrl + '/setup')
+        return getJson<StripeIntentResponse>(this.apiUrl + '/setup')
     }
 
     /**
@@ -35,7 +35,7 @@ export class StripeApi{
 
     */
     public webhook = (): Promise<PublicMessage>  => {
-        return getText(this.apiUrl + '/webhook')
+        return getJson<PublicMessage>(this.apiUrl + '/webhook')
     }
 
 }

@@ -41,7 +41,7 @@ export class CouponApi extends AutoController<Coupon, uint>{
 
     */
     public checkCoupon = (couponCode: string, includes: ApiIncludes[] = []): Promise<Coupon>  => {
-        return getText(this.apiUrl + '/check/' + couponCode + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<Api.Payments.Coupon>(this.apiUrl + '/check/' + couponCode + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
 }

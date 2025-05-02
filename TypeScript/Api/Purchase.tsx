@@ -61,7 +61,7 @@ export class PurchaseApi extends AutoController<Purchase, uint>{
 
     */
     public submit = (purchaseOrder: Record<string, string | number | boolean>): Promise<PurchaseStatus>  => {
-        return getText(this.apiUrl + '/submit', purchaseOrder)
+        return getJson<PurchaseStatus>(this.apiUrl + '/submit', purchaseOrder)
     }
 
 }

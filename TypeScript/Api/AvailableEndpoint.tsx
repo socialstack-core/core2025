@@ -30,7 +30,7 @@ export class AvailableEndpointApi{
 
     */
     public get = (): Promise<ApiStructure>  => {
-        return getText(this.apiUrl)
+        return getJson<ApiStructure>(this.apiUrl)
     }
 
 }

@@ -76,7 +76,7 @@ export class StdOutApi{
 
     */
     public updateCerts = (): Promise<PublicMessage>  => {
-        return getText(this.apiUrl + '/certs/update')
+        return getJson<PublicMessage>(this.apiUrl + '/certs/update')
     }
 
     /**
@@ -84,7 +84,7 @@ export class StdOutApi{
 
     */
     public updateWebserverConfig = (): Promise<PublicMessage>  => {
-        return getText(this.apiUrl + '/webserver/apply')
+        return getJson<PublicMessage>(this.apiUrl + '/webserver/apply')
     }
 
     /**
@@ -92,7 +92,7 @@ export class StdOutApi{
 
     */
     public whoAmI = (): Promise<ServerIdentification>  => {
-        return getText(this.apiUrl + '/whoami')
+        return getJson<ServerIdentification>(this.apiUrl + '/whoami')
     }
 
     /**
@@ -117,7 +117,7 @@ export class StdOutApi{
 
     */
     public htmlCache = (): Promise<HtmlCacheStatus>  => {
-        return getText(this.apiUrl + '/cachestatus/html')
+        return getJson<HtmlCacheStatus>(this.apiUrl + '/cachestatus/html')
     }
 
     /**
@@ -125,7 +125,7 @@ export class StdOutApi{
 
     */
     public plainTextBenchmark = (): Promise<IActionResult>  => {
-        return getText(this.apiUrl + '/helloworld')
+        return getJson<IActionResult>(this.apiUrl + '/helloworld')
     }
 
     /**
@@ -133,7 +133,7 @@ export class StdOutApi{
 
     */
     public bufferPoolStatus = (): Promise<BufferPoolStatus>  => {
-        return getText(this.apiUrl + '/bufferpool/status')
+        return getJson<BufferPoolStatus>(this.apiUrl + '/bufferpool/status')
     }
 
     /**
@@ -173,7 +173,7 @@ export class StdOutApi{
 
     */
     public getWsClientCount = (): Promise<WebsocketClientInfo>  => {
-        return getText(this.apiUrl + '/clients')
+        return getJson<WebsocketClientInfo>(this.apiUrl + '/clients')
     }
 
 }

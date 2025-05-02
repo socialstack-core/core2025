@@ -46,7 +46,7 @@ export class PasswordResetRequestApi extends AutoController<PasswordResetRequest
 
     */
     public checkTokenExists = (token: string): Promise<any>  => {
-        return getText(this.apiUrl + '/token/' + token + '')
+        return getJson<Record<string, string | number | boolean>>(this.apiUrl + '/token/' + token + '')
     }
 
     /**
@@ -54,7 +54,7 @@ export class PasswordResetRequestApi extends AutoController<PasswordResetRequest
 
     */
     public loginWithToken = (setSession: (s: SessionResponse) => Session, token: string, newPassword: NewPassword): Promise<SessionResponse>  => {
-        return getText(this.apiUrl + '/login/' + token + '', newPassword)
+        return getJson<SessionResponse>(this.apiUrl + '/login/' + token + '', newPassword)
         .then((s: SessionResponse) => {
         	setSession(s);
         	return s;
@@ -66,7 +66,7 @@ export class PasswordResetRequestApi extends AutoController<PasswordResetRequest
 
     */
     public generate = (id: uint): Promise<ResetToken>  => {
-        return getText(this.apiUrl + '/' + id + '/generate')
+        return getJson<ResetToken>(this.apiUrl + '/' + id + '/generate')
     }
 
 }

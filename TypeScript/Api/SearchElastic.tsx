@@ -105,7 +105,7 @@ export class SearchElasticApi{
 
     */
     public query = (filters: Record<string, string | number | boolean>): Promise<DocumentsResult>  => {
-        return getText(this.apiUrl + '/query', filters)
+        return getJson<DocumentsResult>(this.apiUrl + '/query', filters)
     }
 
     /**
@@ -113,7 +113,7 @@ export class SearchElasticApi{
 
     */
     public taxonomy = (filters: Record<string, string | number | boolean>): Promise<AggregationStructure>  => {
-        return getText(this.apiUrl + '/taxonomy', filters)
+        return getJson<AggregationStructure>(this.apiUrl + '/taxonomy', filters)
     }
 
     /**
@@ -121,7 +121,7 @@ export class SearchElasticApi{
 
     */
     public reset = (): Promise<Boolean>  => {
-        return getText(this.apiUrl + '/reset')
+        return getJson<boolean>(this.apiUrl + '/reset')
     }
 
     /**
@@ -129,7 +129,7 @@ export class SearchElasticApi{
 
     */
     public resetIndex = (indexName: string): Promise<Boolean>  => {
-        return getText(this.apiUrl + '/reset/index/' + indexName + '')
+        return getJson<boolean>(this.apiUrl + '/reset/index/' + indexName + '')
     }
 
     /**
@@ -137,7 +137,7 @@ export class SearchElasticApi{
 
     */
     public deleteIndex = (indexName: string): Promise<Boolean>  => {
-        return getText(this.apiUrl + '/delete/index/' + indexName + '')
+        return getJson<boolean>(this.apiUrl + '/delete/index/' + indexName + '')
     }
 
     /**
@@ -145,7 +145,7 @@ export class SearchElasticApi{
 
     */
     public health = (): Promise<ClusterHealthResponse>  => {
-        return getText(this.apiUrl + '/health')
+        return getJson<ClusterHealthResponse>(this.apiUrl + '/health')
     }
 
     /**
@@ -153,7 +153,7 @@ export class SearchElasticApi{
 
     */
     public shards = (): Promise<CatShardsRecord[]>  => {
-        return getText(this.apiUrl + '/shards')
+        return getJson<CatShardsRecord>(this.apiUrl + '/shards')
     }
 
 }

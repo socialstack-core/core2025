@@ -32,7 +32,7 @@ export class AutoFormApi{
 
     */
     public get = (type: string, name: string): Promise<AutoFormInfo>  => {
-        return getText(this.apiUrl + '/' + type + '/' + name + '')
+        return getJson<AutoFormInfo>(this.apiUrl + '/' + type + '/' + name + '')
     }
 
     /**
@@ -41,7 +41,7 @@ export class AutoFormApi{
 
     */
     public allContentForms = (): Promise<AutoFormStructure>  => {
-        return getText(this.apiUrl + '/all')
+        return getJson<AutoFormStructure>(this.apiUrl + '/all')
     }
 
 }

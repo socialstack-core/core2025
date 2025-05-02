@@ -52,7 +52,7 @@ export class EmailTemplateApi extends AutoController<EmailTemplate, uint>{
 
     */
     public testEmail = (mailTest: EmailTestRequest): Promise<EmailTestResponse>  => {
-        return getText(this.apiUrl + '/test', mailTest)
+        return getJson<EmailTestResponse>(this.apiUrl + '/test', mailTest)
     }
 
 }

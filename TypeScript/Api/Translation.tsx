@@ -33,7 +33,7 @@ export class TranslationApi extends AutoController<Translation, uint>{
 
     */
     public prePopulate = (): Promise<any>  => {
-        return getText(this.apiUrl + '/prepopulate')
+        return getJson<Record<string, string | number | boolean>>(this.apiUrl + '/prepopulate')
     }
 
     /**
@@ -41,7 +41,7 @@ export class TranslationApi extends AutoController<Translation, uint>{
 
     */
     public loadPotFiles = (): Promise<any>  => {
-        return getText(this.apiUrl + '/potfiles')
+        return getJson<Record<string, string | number | boolean>>(this.apiUrl + '/potfiles')
     }
 
 }

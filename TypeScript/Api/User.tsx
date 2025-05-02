@@ -69,7 +69,7 @@ export class UserApi extends AutoController<User, uint>{
 
     */
     public resendVerificationEmail = (setSession: (s: SessionResponse) => Session, body: UserPasswordForgot): Promise<SessionResponse>  => {
-        return getText(this.apiUrl + '/sendverifyemail', body)
+        return getJson<SessionResponse>(this.apiUrl + '/sendverifyemail', body)
         .then((s: SessionResponse) => {
         	setSession(s);
         	return s;
@@ -82,7 +82,7 @@ export class UserApi extends AutoController<User, uint>{
 
     */
     public verifyUser = (setSession: (s: SessionResponse) => Session, userid: uint, token: string, newPassword: OptionalPassword): Promise<SessionResponse>  => {
-        return getText(this.apiUrl + '/verify/' + userid + '/' + token + '', newPassword)
+        return getJson<SessionResponse>(this.apiUrl + '/verify/' + userid + '/' + token + '', newPassword)
         .then((s: SessionResponse) => {
         	setSession(s);
         	return s;
@@ -94,7 +94,7 @@ export class UserApi extends AutoController<User, uint>{
 
     */
     public self = (setSession: (s: SessionResponse) => Session): Promise<SessionResponse>  => {
-        return getText(this.apiUrl + '/self')
+        return getJson<SessionResponse>(this.apiUrl + '/self')
         .then((s: SessionResponse) => {
         	setSession(s);
         	return s;
@@ -106,7 +106,7 @@ export class UserApi extends AutoController<User, uint>{
 
     */
     public logout = (setSession: (s: SessionResponse) => Session): Promise<SessionResponse>  => {
-        return getText(this.apiUrl + '/logout')
+        return getJson<SessionResponse>(this.apiUrl + '/logout')
         .then((s: SessionResponse) => {
         	setSession(s);
         	return s;
@@ -119,7 +119,7 @@ export class UserApi extends AutoController<User, uint>{
 
     */
     public login = (body: UserLogin): Promise<any>  => {
-        return getText(this.apiUrl + '/login', body)
+        return getJson<Record<string, string | number | boolean>>(this.apiUrl + '/login', body)
     }
 
     /**
@@ -127,7 +127,7 @@ export class UserApi extends AutoController<User, uint>{
 
     */
     public impersonate = (setSession: (s: SessionResponse) => Session, id: uint): Promise<SessionResponse>  => {
-        return getText(this.apiUrl + '/' + id + '/impersonate')
+        return getJson<SessionResponse>(this.apiUrl + '/' + id + '/impersonate')
         .then((s: SessionResponse) => {
         	setSession(s);
         	return s;
@@ -139,7 +139,7 @@ export class UserApi extends AutoController<User, uint>{
 
     */
     public unpersonate = (setSession: (s: SessionResponse) => Session): Promise<SessionResponse>  => {
-        return getText(this.apiUrl + '/unpersonate')
+        return getJson<SessionResponse>(this.apiUrl + '/unpersonate')
         .then((s: SessionResponse) => {
         	setSession(s);
         	return s;

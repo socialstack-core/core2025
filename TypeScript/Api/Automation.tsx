@@ -21,7 +21,7 @@ export class AutomationApi{
 
     */
     public get = (): Promise<AutomationStructure>  => {
-        return getText(this.apiUrl + '/list')
+        return getJson<AutomationStructure>(this.apiUrl + '/list')
     }
 
     /**

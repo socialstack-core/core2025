@@ -55,7 +55,7 @@ export class AutoController<T, ID>{
 
     */
     public revisionList = (filters: ListFilter, includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
-        return getList<T>(this.apiUrl + '/revision/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
+        return getOne<T>(this.apiUrl + '/revision/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
     }
 
     /**
@@ -127,7 +127,7 @@ export class AutoController<T, ID>{
 
     */
     public listAll = (includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
-        return getList<T>(this.apiUrl + '/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<T>(this.apiUrl + '/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -137,7 +137,7 @@ export class AutoController<T, ID>{
 
     */
     public list = (filters: ListFilter, includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
-        return getList<T>(this.apiUrl + '/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
+        return getOne<T>(this.apiUrl + '/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
     }
 
     /**
@@ -164,7 +164,7 @@ export class AutoController<T, ID>{
 
     */
     public listPOTUpdate = (): Promise<any>  => {
-        return getText(this.apiUrl + '/list.pot')
+        return getJson<Record<string, string | number | boolean>>(this.apiUrl + '/list.pot')
     }
 
     /**

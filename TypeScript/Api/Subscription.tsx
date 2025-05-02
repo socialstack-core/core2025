@@ -43,7 +43,7 @@ export class SubscriptionApi extends AutoController<Subscription, uint>{
 
     */
     public updateCard = (id: uint, cardUpdate: Record<string, string | number | boolean>): Promise<CardUpdateStatus>  => {
-        return getText(this.apiUrl + '/' + id + '/update-card', cardUpdate)
+        return getJson<CardUpdateStatus>(this.apiUrl + '/' + id + '/update-card', cardUpdate)
     }
 
 }

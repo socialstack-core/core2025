@@ -44,7 +44,7 @@ export class CustomContentTypeApi extends AutoController<CustomContentType, uint
 
     */
     public getAllTypes = (): Promise<String[]>  => {
-        return getText(this.apiUrl + '/alltypes')
+        return getJson<string>(this.apiUrl + '/alltypes')
     }
 
     /**
@@ -52,7 +52,7 @@ export class CustomContentTypeApi extends AutoController<CustomContentType, uint
 
     */
     public getAllTypesPlus = (): Promise<TypeInfo[]>  => {
-        return getText(this.apiUrl + '/allcustomtypesplus')
+        return getJson<TypeInfo>(this.apiUrl + '/allcustomtypesplus')
     }
 
 }

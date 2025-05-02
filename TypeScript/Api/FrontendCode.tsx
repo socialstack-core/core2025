@@ -29,7 +29,7 @@ export class FrontendCodeApi{
 
     */
     public reload = (): Promise<UIReloadResult>  => {
-        return getText(this.apiUrl + '//v1/monitoring/ui-reload')
+        return getJson<UIReloadResult>(this.apiUrl + '//v1/monitoring/ui-reload')
     }
 
     /**
@@ -37,7 +37,7 @@ export class FrontendCodeApi{
 
     */
     public getStaticFileList = (): Promise<StaticFileInfo[]>  => {
-        return getText(this.apiUrl + '//pack/static-assets/list.json')
+        return getJson<StaticFileInfo>(this.apiUrl + '//pack/static-assets/list.json')
     }
 
     /**
@@ -45,7 +45,7 @@ export class FrontendCodeApi{
 
     */
     public getTypeMeta = (): Promise<FileContent>  => {
-        return getText(this.apiUrl + '//pack/type-meta.json')
+        return getJson<FileContent>(this.apiUrl + '//pack/type-meta.json')
     }
 
     /**
@@ -55,7 +55,7 @@ export class FrontendCodeApi{
 
     */
     public getEmailMainJs = (localeId: uint = 1): Promise<FileContent>  => {
-        return getText(this.apiUrl + '//pack/email-static/main.js?localeId=' + localeId + '')
+        return getJson<FileContent>(this.apiUrl + '//pack/email-static/main.js?localeId=' + localeId + '')
     }
 
     /**
@@ -63,7 +63,7 @@ export class FrontendCodeApi{
 
     */
     public getGlobalScss = (bundle: string): Promise<FileContent>  => {
-        return getText(this.apiUrl + '//pack/scss/' + bundle + '')
+        return getJson<FileContent>(this.apiUrl + '//pack/scss/' + bundle + '')
     }
 
     /**
@@ -73,7 +73,7 @@ export class FrontendCodeApi{
 
     */
     public getMainJs = (localeId: uint = 1): Promise<FileContent>  => {
-        return getText(this.apiUrl + '//pack/main.js?localeId=' + localeId + '')
+        return getJson<FileContent>(this.apiUrl + '//pack/main.js?localeId=' + localeId + '')
     }
 
     /**
@@ -83,7 +83,7 @@ export class FrontendCodeApi{
 
     */
     public getAdminMainJs = (localeId: uint = 1): Promise<FileContent>  => {
-        return getText(this.apiUrl + '//en-admin/pack/main.js?localeId=' + localeId + '')
+        return getJson<FileContent>(this.apiUrl + '//en-admin/pack/main.js?localeId=' + localeId + '')
     }
 
     /**
@@ -93,7 +93,7 @@ export class FrontendCodeApi{
 
     */
     public getMainCss = (): Promise<FileContent>  => {
-        return getText(this.apiUrl + '//pack/main.css')
+        return getJson<FileContent>(this.apiUrl + '//pack/main.css')
     }
 
     /**
@@ -103,7 +103,7 @@ export class FrontendCodeApi{
 
     */
     public getAdminMainCss = (): Promise<FileContent>  => {
-        return getText(this.apiUrl + '//en-admin/pack/main.css')
+        return getJson<FileContent>(this.apiUrl + '//en-admin/pack/main.css')
     }
 
 }

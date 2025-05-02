@@ -23,7 +23,7 @@ export class PermissionApi{
 
     */
     public list = (): Promise<PermissionInformation>  => {
-        return getText(this.apiUrl + '/list')
+        return getJson<PermissionInformation>(this.apiUrl + '/list')
     }
 
 }

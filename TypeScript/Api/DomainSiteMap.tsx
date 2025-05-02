@@ -15,7 +15,7 @@ export class DomainSiteMapApi{
 
     */
     public siteMapXML = (): Promise<FileContent>  => {
-        return getText(this.apiUrl + '//sitemap.xml')
+        return getJson<FileContent>(this.apiUrl + '//sitemap.xml')
     }
 
 }

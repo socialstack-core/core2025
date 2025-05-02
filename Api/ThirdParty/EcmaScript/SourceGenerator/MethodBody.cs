@@ -51,7 +51,7 @@ namespace Api.EcmaScript
                 endpointUrl = endpointUrl[0..^1];
             }
 
-            var caller = ResolveCaller(classMethod.GetPromiseGeneric());
+            var caller = ResolveCaller(resolvedReturnType);
 
             classMethod.Injected = GenerateCall(caller, endpointUrl, bodyParam, parameters, GetHttpMethodFromAttribute(method), classMethod);
 
@@ -114,23 +114,32 @@ namespace Api.EcmaScript
             return endpointUrl.Replace("?&", "?");
         }
 
-        private static string ResolveCaller(string resolveType)
-        {
-            if (resolveType.StartsWith("ApiList"))
-            {
-                var listType = resolveType[8..^1];
+		private static string ResolveCaller(Type resolvedReturnType)
+		{
+			var ecmaService = Services.Get<EcmaService>();
+			var listOfType = GetListOfType(resolvedReturnType);
 
-                return "getList<" + listType + ">";
-            }
-            else if (resolveType == "T")
-            {
-                return "getOne<T>";
-            }
-            
-            return "getText";
-        }
+			if (listOfType != null)
+			{
+				if (IsContentType(listOfType))
+				{
+					return "getList<" + ecmaService.GetTypeConversion(resolvedReturnType) + ">";
+				}
+				return "getJson<" + ecmaService.GetTypeConversion(resolvedReturnType) + "[]>";
+			}
+			else if (IsContentType(resolvedReturnType))
+			{
+				return "getOne<" + resolvedReturnType + ">";
+			}
+			else if (resolvedReturnType == typeof(void))
+			{
+				return "getText";
+			}
 
-        private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod, ClassMethod classMethod)
+			return "getJson<" + ecmaService.GetTypeConversion(resolvedReturnType) + ">";
+		}
+
+		private static List<string> GenerateCall(string caller, string endpointUrl, ParameterInfo bodyParam, ParameterInfo[] allParams, string requestMethod, ClassMethod classMethod)
         {
             var urlPart = string.IsNullOrEmpty(endpointUrl) ? "this.apiUrl" : $"this.apiUrl + '/{endpointUrl}'";
 

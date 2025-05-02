@@ -50,7 +50,7 @@ export class HtmlApi{
 
     */
     public robots = (): Promise<FileContent>  => {
-        return getText(this.apiUrl + '/robots.txt')
+        return getJson<FileContent>(this.apiUrl + '/robots.txt')
     }
 
 }

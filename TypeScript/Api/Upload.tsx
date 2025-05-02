@@ -64,7 +64,7 @@ export class UploadApi extends AutoController<Upload, uint>{
 
     */
     public upload = (includes: ApiIncludes[] = []): Promise<Upload>  => {
-        return getText(this.apiUrl + '/create'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<Api.Uploader.Upload>(this.apiUrl + '/create'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -80,7 +80,7 @@ export class UploadApi extends AutoController<Upload, uint>{
 
     */
     public active = (includes: ApiIncludes[] = []): Promise<ApiList<Upload>>  => {
-        return getList<Upload>(this.apiUrl + '/active'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<Api.Uploader.Upload>(this.apiUrl + '/active'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -108,7 +108,7 @@ export class UploadApi extends AutoController<Upload, uint>{
 
     */
     public replace = (sourceRef: string, targetRef: string): Promise<MediaRef[]>  => {
-        return getText(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
+        return getJson<MediaRef>(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
     }
 
     /**
@@ -124,7 +124,7 @@ export class UploadApi extends AutoController<Upload, uint>{
 
     */
     public updateRefs = (update: boolean): Promise<MediaRef[]>  => {
-        return getText(this.apiUrl + '/update-refs?update=' + update + '')
+        return getJson<MediaRef>(this.apiUrl + '/update-refs?update=' + update + '')
     }
 
     /**
@@ -132,7 +132,7 @@ export class UploadApi extends AutoController<Upload, uint>{
 
     */
     public preview = (uploadRef: string): Promise<MediaRef[]>  => {
-        return getText(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
+        return getJson<MediaRef>(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
     }
 
 }

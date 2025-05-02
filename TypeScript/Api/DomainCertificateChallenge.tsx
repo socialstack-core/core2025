@@ -15,7 +15,7 @@ export class DomainCertificateChallengeApi{
 
     */
     public catchAll = (token: string): Promise<FileContent>  => {
-        return getText(this.apiUrl + '/' + token + '')
+        return getJson<FileContent>(this.apiUrl + '/' + token + '')
     }
 
 }

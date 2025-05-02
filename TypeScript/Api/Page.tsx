@@ -62,7 +62,7 @@ export class PageApi extends AutoController<Page, uint>{
 
     */
     public pageState = (pageDetails: PageDetails): Promise<PageStateResult>  => {
-        return getText(this.apiUrl + '/state', pageDetails)
+        return getJson<PageStateResult>(this.apiUrl + '/state', pageDetails)
     }
 
 }
