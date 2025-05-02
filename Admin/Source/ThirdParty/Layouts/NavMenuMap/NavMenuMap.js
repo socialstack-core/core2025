@@ -53,8 +53,6 @@ export default function NavMenuMap(props) {
 	}
 
 	function searchMenu(menu) {
-		debugger;
-
 		if (!menu) {
 			return;
 		}
