@@ -69,10 +69,10 @@ export default (props : LoginFormProps) => {
 	}
 
 	var renderFormFields = () => {
-		var loginBtnStyle = props.flipButtons ? "float: right" : "";
+		var loginBtnStyle: React.CSSProperties = props.flipButtons ? { float: "right" } : {};
 		var loginBtn = <Input type="submit" style={loginBtnStyle} label={props.loginCta || `Login`}/>;
 
-		var rememberChkBoxStyle = props.flipButtons ? "float: right" : "";
+		var rememberChkBoxStyle: React.CSSProperties = props.flipButtons ? { float: "right" } : { };
 		var rememberChkBox = <Input type="checkbox" style={rememberChkBoxStyle} label={`Remember me`} name="remember" />;
 
 		var forgotLinkStyle: React.CSSProperties = props.flipButtons ? { textAlign: 'left' } : {};
