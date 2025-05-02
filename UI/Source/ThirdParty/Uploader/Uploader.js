@@ -1,6 +1,7 @@
 import * as fileRef from 'UI/FileRef';
 import Video from 'UI/Video';
 import Image from 'UI/Image';
+import { useId } from 'react';
 
 var DEFAULT_ABORTED = `Upload aborted`;
 var DEFAULT_ERROR = `Unable to upload`;
@@ -351,13 +352,15 @@ export default class Uploader extends React.Component {
 			uploaderClasses.push("uploader--drag-target");
 		}
 
+		const id = this.props.id || useId();
+
 		return <div className={uploaderClasses.join(' ')}>
 			{/* prompt to upload */}
 			{!this.state.files || !this.state.files.length && <>
 				<div className="uploader__internal">
-					<input id={this.props.id} className="uploader__input" type="file" disabled={this.props.iconOnly} ref={this.inputRef}
+					<input id={id} className="uploader__input" type="file" disabled={this.props.iconOnly} ref={this.inputRef}
 						onChange={e => this.onSelectedFile(e)} title={this.state.tooltip} multiple />
-					<label htmlFor={this.props.id} className="uploader__label">
+					<label htmlFor={id} className="uploader__label">
 						<span className="uploader__label-internal">
 							{this.state.message}
 						</span>
@@ -597,6 +600,8 @@ export default class Uploader extends React.Component {
 
 		var currentXhr = this.state.fileIndex == undefined ? this.state.xhr : this.state.files[this.state.fileIndex].xhr;
 
+		const id = this.props.id || useId();
+
 		return <div className={uploaderClass}>
 			<div className={this.props.iconOnly ? "uploader__internal uploader__internal--icon" : "uploader__internal"}>
 
@@ -609,9 +614,9 @@ export default class Uploader extends React.Component {
 					</div>
 				}
 
-				<input id={this.props.id} className="uploader__input" type="file" disabled={this.props.iconOnly} ref={this.inputRef}
+				<input id={id} className="uploader__input" type="file" disabled={this.props.iconOnly} ref={this.inputRef}
 					onChange={e => this.onSelectedFile(e)} title={loading ? `Loading ...` : tooltip} />
-				<label htmlFor={this.props.id} className={uploaderLabelClass} style={labelStyle}>
+				<label htmlFor={id} className={uploaderLabelClass} style={labelStyle}>
 
 					{/* loading */}
 					{loading && <>

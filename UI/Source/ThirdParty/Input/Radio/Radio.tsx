@@ -1,4 +1,5 @@
 import { DefaultInputType } from 'UI/Input/Default';
+import { useId } from 'react';
 
 type RadioInputType = DefaultInputType & {
 	solid?: boolean,
@@ -16,6 +17,7 @@ declare global {
 const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 	const { field, validationFailure, label, onInputRef, helpFieldId } = props;
 	const { className, solid, onChange, ...attribs } = field;
+	const id = attribs.id || useId();
 
 	const classes = className ? className.split(" ") : [];
 
@@ -53,10 +55,11 @@ const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 					type="radio"
 					onInput={onChange}
 					{...attribs}
+					id={id}
 					checked={value}
 					defaultChecked={defaultValue}
 			/>}
-			<label className="form-check-label" htmlFor={attribs.id}>
+			<label className="form-check-label" htmlFor={id}>
 				{label}
 			</label>
 		</div>

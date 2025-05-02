@@ -1,4 +1,5 @@
 import { DefaultInputType } from 'UI/Input/Default';
+import { useId } from 'react';
 
 type CheckboxInputType = DefaultInputType & {
 	isSwitch?: boolean,
@@ -25,6 +26,7 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 	const { field, config } = props;
 	const { label, validationFailure, onInputRef, helpFieldId } = config;
 	let { isSwitch, solid, className, onChange, style, ...attribs } = field;
+	const id = attribs.id || useId();
 	
 	const classes = className ? className.split(" ") : [];
 
@@ -62,10 +64,11 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 					type="checkbox"
 					onInput={onChange}
 					{...attribs}
+					id={id}
 					checked={value}
 					defaultChecked={defaultValue}
 			/>}
-			<label className="form-check-label" htmlFor={attribs.id}>
+			<label className="form-check-label" htmlFor={id}>
 				{label}
 			</label>
 		</div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactElement } from 'react';
+import { useState, useEffect, useId, ReactElement } from 'react';
 
 const COMPONENT_PREFIX = 'ui-tabset';
 
@@ -14,7 +14,7 @@ interface TabProps {
 	/**
 	 * unique ID
 	 */
-	id: string,
+	id?: string,
 	/**
 	 * radio group name
 	 */
@@ -45,8 +45,9 @@ interface TabProps {
  * Tab component
  */
 const Tab: React.FC<React.PropsWithChildren<TabProps>> = ({ label, hash, id, name, panel, index, selectedIndex, className, onChange, children }) => {
-	const linkId = `${id}_link_${index}`;
-	const panelId = `${id}_panel_${index}`;
+	const fieldId = id || useId();
+	const linkId = `${fieldId}_link_${index}`;
+	const panelId = `${fieldId}_panel_${index}`;
 	const [tabLink, setTabLink] = useState<ReactElement>();
 
 	let tabHash = hash && hash.length ? hash : label.toLowerCase();
