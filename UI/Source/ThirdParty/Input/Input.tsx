@@ -92,6 +92,19 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 	}
 
 	const renderLabel = (pos: string) => {
+		// radio / checkbox have their own label
+		// (use fieldset > legend to associate a heading with groups of radio / checkbox controls)
+		const skipTypes = ['radio', 'checkbox', 'button', 'submit', 'reset'];
+
+		// no label available
+		if (!label || !label.length) {
+			return null;
+		}
+
+		if (skipTypes.includes(type)) {
+			return null;
+		}
+
 		if (labelPosition != pos) {
 			// Don't render here.
 			return null;
