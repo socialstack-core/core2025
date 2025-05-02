@@ -391,15 +391,22 @@ namespace Api.Configuration
 		/// <returns></returns>
 		public async ValueTask InstallConfig(Config cfg, string name, string key, ConfigSet set)
 		{
-			var cfgRow = new Configuration()
+			try
 			{
-				Name = name,
-				Key = key,
-				ConfigJson = JsonConvert.SerializeObject(cfg, Formatting.Indented)
-			};
-			await Create(new Context(), cfgRow, DataOptions.IgnorePermissions);
-			cfg.Id = cfgRow.Id;
-			await set.UpdateInSet(cfg);
+				var cfgRow = new Configuration()
+				{
+					Name = name,
+					Key = key,
+					ConfigJson = JsonConvert.SerializeObject(cfg, Formatting.Indented)
+				};
+				await Create(new Context(), cfgRow, DataOptions.IgnorePermissions);
+				cfg.Id = cfgRow.Id;
+				await set.UpdateInSet(cfg);
+			}
+			catch (Exception ex)
+			{
+				Log.Error(LogTag, ex);
+			}
 		}
 
 		/// <summary>

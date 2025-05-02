@@ -40,7 +40,7 @@ namespace Api.Themes
         public ThemeService(ConfigurationService configService)
         {
             _globalCfg = GetConfig<GlobalThemeConfig>();
-            _current = GetAllConfig<ThemeConfig>();
+            _current = GetAllConfig<ThemeConfig>(null, false);
 
             // If the theme list doesn't contain anything, two are created - admin and main.
             if (_current.Configurations == null || _current.Configurations.Count == 0)
