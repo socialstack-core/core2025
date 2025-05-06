@@ -29,6 +29,7 @@ export type TreeComponentItem = {
     r?: Record<string, TreeComponentItem>,
     // these are children that exist within non-root components.
     c?: TreeComponentItem[]
+    i?: number
 }
 
 export type RegionEditorProps = {

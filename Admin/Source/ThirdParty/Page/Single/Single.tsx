@@ -3,7 +3,7 @@ import CreatePage from "Admin/Page/Create";
 
 const PageEditor: React.FC = () => {
 
-    const path = location.pathname.split('/').filter(part => part.length != 0);
+    const path = location.pathname.toLowerCase().split('/').filter(part => part.length != 0);
 
     const id = parseInt(
         path[path.indexOf('page') + 1]

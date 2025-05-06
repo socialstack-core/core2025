@@ -1,5 +1,6 @@
 import { getTemplates, TemplateModule } from "Admin/Functions/GetPropTypes";
 import Default from "Admin/Layouts/Default"
+import { Scalar, TreeComponentItem } from "Admin/Template/RegionEditor";
 import PageApi, { Page } from "Api/Page";
 import TemplateApi, { Template } from "Api/Template";
 import { useEffect, useState } from "react";
@@ -75,9 +76,8 @@ const CreatePage: React.FC = (): React.ReactElement => {
                                     i: 1
                                 }
                                 
-
                                 values.bodyJson = JSON.stringify(rootElement);
-
+                                
                                 return values;
                             }}
                             onFailed={(error) => {
@@ -143,5 +143,7 @@ const CreatePage: React.FC = (): React.ReactElement => {
         </Default>
     )
 }
+
+
 
 export default CreatePage;

@@ -1,4 +1,6 @@
-import FrontendCodeApi from 'Api/FrontendCode';
+
+// eslint-disable-next-line no-restricted-imports
+import { getJson } from 'UI/Functions/WebRequest';
 
 export interface TypeMeta {
     /**
@@ -471,7 +473,7 @@ function loadCache() {
     }
 
     if (!_cacheLoader) {
-        _cacheLoader = FrontendCodeApi.getTypeMeta()
+        _cacheLoader = getJson<TypeMeta>('/pack/type-meta.json')
         .then(json => {
             for (var k in json.codeModules) {
                 var module = json.codeModules[k];

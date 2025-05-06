@@ -129,11 +129,14 @@ function convertToNodesFromCanvas(node : any, onContentNode? : (node : CanvasNod
 	
 	var result = {} as CanvasNode;
 	var type = node.t;
+
+	var ignoreAdminTypes = ["Admin/Template/Wrapper", "Admin/Template/Slot"];
+	var ignoreMethod = (props: React.PropsWithChildren) => props.children;
 	
 	if(type){
 		if(type.indexOf('/') != -1){
 			result.typeName = type;
-			result.type = require(type).default;
+			result.type = ignoreAdminTypes.includes(type) ? ignoreMethod : require(type).default;
 			var data = node.d || node.data;
 			
 			if(data){
