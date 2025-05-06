@@ -5,18 +5,35 @@ using Api.Startup;
 using Api.Translate;
 using Api.Users;
 
-
 namespace Api.Payments
 {
 	
 	/// <summary>
 	/// A Product
 	/// </summary>
-	[ListAs("Tiers")]
-	[ImplicitFor("Tiers", typeof(Product))]
+
 	[HasVirtualField("Price", typeof(Price), "PriceId")]
-	public partial class Product : VersionedContent<uint>
+
+    [ListAs("Tiers")]
+	[ImplicitFor("Tiers", typeof(Product))]
+
+    [ListAs("OptionalExtras", IsPrimary = false)]
+    [ImplicitFor("OptionalExtras", typeof(Product))]
+
+    [ListAs("Accessories", IsPrimary = false)]
+    [ImplicitFor("Accessories", typeof(Product))]
+
+    [ListAs("Suggestions", IsPrimary = false)]
+    [ImplicitFor("Suggestions", typeof(Product))]
+
+    public partial class Product : VersionedContent<uint>
 	{
+        /// <summary>
+        /// The unique identifier for product
+        /// </summary>
+        [DatabaseField(Length = 200)]
+        public string Sku;
+
         /// <summary>
         /// The name of the product
         /// </summary>
@@ -24,10 +41,16 @@ namespace Api.Payments
 		[Localized]
 		public string Name;
 
-		/// <summary>
-		/// True if this product is billed by usage.
-		/// </summary>
-		[Data("help", "Tick this if this product is billed after it has been used based on the amount of usage it has had.")]
+        /// <summary>
+        /// The slug for product
+        /// </summary>
+        [DatabaseField(Length = 1000)]
+        public string Slug;
+
+        /// <summary>
+        /// True if this product is billed by usage.
+        /// </summary>
+        [Data("help", "Tick this if this product is billed after it has been used based on the amount of usage it has had.")]
 		public bool IsBilledByUsage;
 		
 		/// <summary>
@@ -50,7 +73,9 @@ namespace Api.Payments
 		/// The content of this product.
 		/// </summary>
 		[Localized]
-		public string DescriptionJson;
+        [Data("type", "canvas")]
+        [Data("main", "false")]
+        public string DescriptionJson;
 
 		/// <summary>
 		/// The feature image ref
@@ -88,12 +113,15 @@ namespace Api.Payments
 		/// Indicates if this is a tiered product related to a parent base product
 		/// </summary>
 		public uint TierOfId;
-		
-		/// <summary>
-		/// The JSON block containing a products attributes. Can be null/ empty.
-		/// It is of the form: {"attributes": [{"id": productAttributeId, "type": attributeTypeAsItWasWhenThisWasCreated, "value": xDependingOnAttributeType}]}
-		/// </summary>
-		public string AttributesJson;
+
+        /// <summary>
+        /// The JSON block containing a products attributes. Can be null/ empty.
+        /// It is of the form: {"attributes": [{"id": productAttributeId, "type": attributeTypeAsItWasWhenThisWasCreated, "value": xDependingOnAttributeType}]}
+        /// </summary>
+        ///
+		[Data("contentType", "application/json")]
+        [Data("main", "false")]
+        public string AttributesJson;
 	}
 
 }

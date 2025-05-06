@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using Api.Permissions;
 using Api.Contexts;
 using Api.Eventing;
+using Api.Startup;
+using System;
 
 namespace Api.Payments
 {
@@ -24,7 +26,36 @@ namespace Api.Payments
 
 			InstallAdminPages("Products", "fa:fa-rocket", new string[] { "id", "name", "minQuantity" });
 
-			Cache();
+            HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" };
+            HashSet<string> nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };
+
+            Events.Product.BeforeSettable.AddEventListener((Context ctx, JsonField<Product, uint> field) =>
+            {
+                if (field == null)
+                {
+                    return new ValueTask<JsonField<Product, uint>>(field);
+                }
+
+                // hide the core taxonomy fields as we have product specific ones
+                if (excludeFields.Contains(field.Name))
+                {
+                    field.Writeable = false;
+                    field.Hide = true;
+                }
+
+                // only admin can amend the critical fields
+				// todo move this into a seperate service for all entites? 
+                if (field.ForRole != Roles.Developer && field.ForRole != Roles.Admin && nonAdminExcludeFields.Contains(field.Name))
+                {
+                    field.Writeable = false;
+                    field.Hide = true;
+                }
+
+                return new ValueTask<JsonField<Product, uint>>(field);
+            });
+
+
+            Cache();
 		}
 
 		/// <summary>
