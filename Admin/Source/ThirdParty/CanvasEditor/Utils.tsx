@@ -10,6 +10,11 @@ type RootProp = {
  * @returns
  */
 export function getRootInfo(type: CodeModuleMeta): RootProp[] {
+
+	if (!type || !type.propTypes)
+	{
+		return [];
+	}
 	var {propTypes} = type;
 	
 	if(!propTypes){

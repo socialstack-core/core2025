@@ -240,11 +240,14 @@ export default class CanvasState{
 		}
 		
 		var type = node.t || node.type || node.module;
+
+		var ignoreAdminTypes = ["Admin/Template/Wrapper", "Admin/Template/Slot"];
+		var ignoreMethod = (props) => props.children;
 		
 		if(type){
 			if(type.indexOf('/') != -1){
 				result.typeName = type;
-				result.type = require(type).default;
+				result.type = ignoreAdminTypes.includes(type) ? ignoreMethod : require(type).default;
 				result.typePropTypes = this.propTypeInfo.codeModules[type];
 				var editable = result.type.editable;
 				
