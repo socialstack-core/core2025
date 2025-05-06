@@ -1472,7 +1472,7 @@ namespace Api.CanvasRenderer
         {
             try
             {
-                var rawContent = File.ReadAllText(file.Path);
+                var rawContent = TryReadFile(file.Path);
 
                 // Transform the SCSS now:
                 var transpiledCss = BuildEngine.Invoke(
@@ -1544,19 +1544,38 @@ namespace Api.CanvasRenderer
             }
         }
 
+		private string TryReadFile(string path){
+			for(var i=0;i<20;i++){
+				try{
+					var result = File.ReadAllText(path);
+					return result;
+				}catch(Exception e){
+					if(i==19){
+						throw e;
+					}
+					
+					// Sync wait
+					System.Threading.Thread.Sleep(50);
+				}
+			}
+			
+			// never actually happens
+			return null;
+		}
+
         /// <summary>
         /// Builds the given JS file.
         /// </summary>
         /// <param name="file"></param>
         private void BuildJsFile(SourceFile file)
         {
-
+			
             try
             {
                 // Transform it now (developers only here - we only care about ES8, i.e. minimal changes to source/ react only):
                 var es8JavascriptResult = BuildEngine.Invoke(
                     "transformES8Json",
-                    file.RawSource != null ? file.RawSource : File.ReadAllText(file.Path),
+                    file.RawSource != null ? file.RawSource : TryReadFile(file.Path),
                     file.ModulePath, // Module path
                     file.FullModulePath,
                     TransformOptions
