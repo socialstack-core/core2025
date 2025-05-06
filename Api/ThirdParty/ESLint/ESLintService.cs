@@ -35,7 +35,7 @@ namespace Api.ESLint
 
         private static async Task RunESLint()
         {
-            Log.Info("ESLINT", "Checking JS/TS for validity, please wait...");
+            Log.Info("ESLINT", "Checking JS/TS for validity");
             string fileName;
             string arguments;
 
