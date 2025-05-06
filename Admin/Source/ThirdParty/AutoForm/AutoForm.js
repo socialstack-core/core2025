@@ -582,7 +582,7 @@ class AutoFormInternal extends React.Component {
 						};
 					}
 				}} />
-				{this.renderFormFields()}
+				{this.renderFormFields(true)}
 			</div>
 		}
 
@@ -602,7 +602,7 @@ class AutoFormInternal extends React.Component {
 		</routerCtx.Provider>;
 	}
 
-	renderFormFields() {
+	renderFormFields(isEdit) {
 		const { locale, mainCanvas } = this.state;
 		
 		return <Canvas forcedUpdate={this.state.updateCount} onContentNode={contentNode => {
@@ -610,9 +610,14 @@ class AutoFormInternal extends React.Component {
 			if (!contentNode || !contentNode.props) {
 				return;
 			}
-
+			
 			var data = contentNode.props;
 
+			if(!isEdit && data.readonly){
+				// Readonly fields are not present in 'add' mode
+				return null;
+			}
+			
 			// setup the hint prompts even if no data 
 			if (data.name) {
 
@@ -1191,7 +1196,7 @@ class AutoFormInternal extends React.Component {
 							isEdit ? values => api.update(parsedId, values, includes) :
 								values => api.create(values, includes)}
 							onValues={onValues} onFailed={onFailed} onSuccess={onSuccess}>
-							{this.props.renderFormFields ? this.props.renderFormFields(this.state) : this.renderFormFields()}
+							{this.props.renderFormFields ? this.props.renderFormFields(this.state, isEdit) : this.renderFormFields(isEdit)}
 							{isEdit && <input type="hidden" name="id" value={parsedId} />}
 						</Form>
 					</div>
