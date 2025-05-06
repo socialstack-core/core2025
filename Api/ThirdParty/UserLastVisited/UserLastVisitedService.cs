@@ -6,6 +6,7 @@ using Api.Users;
 using Microsoft.AspNetCore.Http;
 using Api.Pages;
 using Api.Permissions;
+using Api.Startup;
 
 namespace Api.UserLastVisited
 {
@@ -25,7 +26,23 @@ namespace Api.UserLastVisited
         {
 			_users = users;
 			_config = GetConfig<UserLastVisitedConfig>();
-			
+
+			Events.User.BeforeSettable.AddEventListener((Context context, JsonField<User, uint> field) => {
+
+				if (field == null)
+				{
+					return new ValueTask<JsonField<User, uint>>(field);
+				}
+
+				if (field.Name == "LastVisitedUtc")
+				{
+					// Only the C# API can set this internally. It can't be done via the public web API.
+					field.Writeable = false;
+				}
+
+				return new ValueTask<JsonField<User, uint>>(field);
+			});
+
             Events.Page.BeforeNavigate.AddEventListener((Context context, Page page, string url) => {
 			
 				if (_config != null && !_config.Disabled && context.UserId > 0)
