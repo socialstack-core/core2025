@@ -604,8 +604,8 @@ class AutoFormInternal extends React.Component {
 
 	renderFormFields() {
 		const { locale, mainCanvas } = this.state;
-
-		return <Canvas key={this.state.updateCount} onContentNode={contentNode => {
+		
+		return <Canvas forcedUpdate={this.state.updateCount} onContentNode={contentNode => {
 			var content = this.state.value || this.state.fieldData;
 			if (!contentNode || !contentNode.props) {
 				return;
@@ -670,8 +670,8 @@ class AutoFormInternal extends React.Component {
 				content[data.name] = val;
 				this.unsavedChanges = true;
 
-				// Recreate the canvas to redraw the fields:
-				this.setState({ formCanvas: { c: this.state.formCanvas.c } });
+				// Redraw the fields:
+				this.setState({ updateCount: this.state.updateCount + 1 });
 			};
 
 			var value = content[data.name];
