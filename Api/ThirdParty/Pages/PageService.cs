@@ -193,7 +193,6 @@ namespace Api.Pages
 					if (pageType == AdminPageType.Single && contentType == typeof(Page))
 					{
 						canvasNode.Module = "Admin/Page/Single";
-						canvasNode.Data.Clear();
 					}
 
 				return ValueTask.FromResult(page);
