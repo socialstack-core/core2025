@@ -1,15 +1,12 @@
 import AutoEdit from "Admin/Layouts/AutoEdit";
 import CreatePage from "Admin/Page/Create";
+import { useTokens } from "UI/Token";
 
-const PageEditor: React.FC = () => {
+const PageEditor: React.FC = (props: any) => {
 
-    const path = location.pathname.toLowerCase().split('/').filter(part => part.length != 0);
+    const id = useTokens(props.id)
 
-    const id = parseInt(
-        path[path.indexOf('page') + 1]
-    );
-
-    const isEditPage = !Number.isNaN(id);
+    const isEditPage = id.length != 0;
 
     if (isEditPage) {
 
