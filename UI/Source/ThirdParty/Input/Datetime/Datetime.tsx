@@ -1,4 +1,5 @@
 import Default, { DefaultInputType } from 'UI/Input/Default';
+import { isoConvert } from 'UI/Functions/DateTools';
 
 function padded(time: number) {
 	if (time < 10) {
@@ -23,6 +24,9 @@ type DateTimeInputType = DefaultInputType & {
 declare global {
 	interface InputPropsRegistry {
 		'datetime-local': DateTimeInputType;
+		'datetime': DateTimeInputType;
+		'date': DateTimeInputType;
+		'time': DateTimeInputType;
 	}
 }
 
@@ -35,7 +39,7 @@ function toDateString(val?: Date | string) : string | undefined {
 		return val;
 	} else {
 		// It's a date
-		return dateFormatStr(val);
+		return dateFormatStr(isoConvert(val));
 	}
 }
 
@@ -80,7 +84,6 @@ const Datetime: React.FC<CustomInputTypeProps<"datetime-local">> = (props) => {
 	}
 
 	return <Default
-		{...attribs}
 		type="datetime-local"
 		config={
 			{
@@ -90,6 +93,7 @@ const Datetime: React.FC<CustomInputTypeProps<"datetime-local">> = (props) => {
 		}
 		field={
 			{
+				...attribs,
 				value: valueStr,
 				defaultValue: defaultStr,
 				min: minStr,
@@ -102,3 +106,6 @@ const Datetime: React.FC<CustomInputTypeProps<"datetime-local">> = (props) => {
 export default Datetime;
 
 window.inputTypes['datetime-local'] = Datetime;
+window.inputTypes['date'] = Datetime;
+window.inputTypes['time'] = Datetime;
+window.inputTypes['datetime'] = Datetime;
