@@ -191,7 +191,7 @@ namespace Api.Pages
 
 			Events.Page.BeforeAdminPageInstall.AddEventListener((context, page, canvasNode, contentType, pageType) => {
 
-					if (pageType == AdminPageType.Edit && contentType == typeof(Page))
+					if ((pageType == AdminPageType.Edit || pageType == AdminPageType.Add) && contentType == typeof(Page))
 					{
 						canvasNode.Module = "Admin/Page/Single";
 					}
