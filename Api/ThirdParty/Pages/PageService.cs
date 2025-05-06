@@ -7,6 +7,7 @@ using System;
 using Api.Startup;
 using Api.CanvasRenderer;
 using System.Reflection;
+using System.Reflection.Metadata;
 
 namespace Api.Pages
 {
@@ -190,7 +191,7 @@ namespace Api.Pages
 
 			Events.Page.BeforeAdminPageInstall.AddEventListener((context, page, canvasNode, contentType, pageType) => {
 
-					if (pageType == AdminPageType.Single && contentType == typeof(Page))
+					if (pageType == AdminPageType.Edit && contentType == typeof(Page))
 					{
 						canvasNode.Module = "Admin/Page/Single";
 					}
@@ -578,17 +579,46 @@ namespace Api.Pages
 				BodyJson = TemporaryBodyJson,
 				Title = "Edit or create " + tidyPluralName
 			};
-			
+
+			var context = new Context();
+
 			// Trigger an event to state that an admin page is being installed:
 			// - Use this event to inject additional nodes into the page, or change it however you'd like.
-			listPage = await Events.Page.BeforeAdminPageInstall.Dispatch(new Context(), listPage, listPageCanvas, type, AdminPageType.List);
+			listPage = await Events.Page.BeforeAdminPageInstall.Dispatch(context, listPage, listPageCanvas, type, AdminPageType.List);
 			listPage.BodyJson = listPageCanvas.ToJson();
+
+			// Future todo - If the admin page is "pure" (it's not been edited by an actual person) then compare BodyJson as well.
+			// This is why we'll always generate the bodyJson with the event.
+			var editPage = await CreateSinglePage(context, type, childAdminPage, true);
+			var addPage = await CreateSinglePage(context, type, childAdminPage, false);
+
+			await InstallInternal(
+				listPage,
+				editPage,
+				addPage
+			);
+
+			await DeleteOldInternal(typeNameLowercase);
+		}
+
+		private async ValueTask<Page> CreateSinglePage(Context context, Type type, ChildAdminPageOptions childAdminPage, bool isEdit)
+		{
+			var typeName = type.Name;
+			var typeNameLowercase = type.Name.ToLower();
+
+			// "BlogPost" -> "Blog Post".
+			var tidySingularName = Api.Startup.Pluralise.NiceName(type.Name);
+			var tidyPluralName = Api.Startup.Pluralise.Apply(tidySingularName);
 
 			var singlePageCanvas = new CanvasNode("Admin/Layouts/AutoEdit")
 					.With("contentType", typeName)
 					.With("singular", tidySingularName)
-					.With("id", "${primary.id}")
 					.With("plural", tidyPluralName);
+
+			if (isEdit)
+			{
+				singlePageCanvas.With("id", "${primary.id}");
+			}
 
 			if (childAdminPage != null && childAdminPage.ChildType != null)
 			{
@@ -599,32 +629,33 @@ namespace Api.Pages
 					.With("filterField", type.Name + "Id")
 					.With("create", childAdminPage.CreateButton)
 					.With("searchFields", childAdminPage.SearchFields)
-                    .With("filterValue", "${primary.id}")
-                    .With("fields", childAdminPage.Fields ?? (new string[] { "id" }))
+					.With("filterValue", "${primary.id}")
+					.With("fields", childAdminPage.Fields ?? (new string[] { "id" }))
 				);
 			}
 
 			var singlePage = new Page
 			{
-				Url = "/en-admin/" + typeNameLowercase + "/{" + typeNameLowercase + ".id}",
+				Url = isEdit ? "/en-admin/" + typeNameLowercase + "/{" + typeNameLowercase + ".id}" : "/en-admin/" + typeNameLowercase + "/add",
 				BodyJson = TemporaryBodyJson,
-				Title = "Editing " + tidySingularName.ToLower()
+				Title = isEdit ? "Editing " + tidySingularName.ToLower() + " #${" + typeNameLowercase + ".id}" : "Creating " + tidySingularName.ToLower()
 			};
 
 			// Trigger an event to state that an admin page is being installed:
 			// - Use this event to inject additional nodes into the page, or change it however you'd like.
-			singlePage = await Events.Page.BeforeAdminPageInstall.Dispatch(new Context(), singlePage, singlePageCanvas, type, AdminPageType.Single);
-			singlePage.BodyJson = singlePageCanvas.ToJson();
-
-			// Future todo - If the admin page is "pure" (it's not been edited by an actual person) then compare BodyJson as well.
-			// This is why we'll always generate the bodyJson with the event.
-
-			await InstallInternal(
-				listPage,
-				singlePage
+			singlePage = await Events.Page.BeforeAdminPageInstall.Dispatch(
+				context, 
+				singlePage, 
+				singlePageCanvas, 
+				type, 
+				isEdit ? AdminPageType.Edit : AdminPageType.Add
 			);
 
-			await DeleteOldInternal(typeNameLowercase);
+			// If it's an edit page, we'll now turn it in to a graph and feed the ID from the URL in to it.
+
+			singlePage.BodyJson = singlePageCanvas.ToJson();
+
+			return singlePage;
 		}
 
 		/// <summary>
