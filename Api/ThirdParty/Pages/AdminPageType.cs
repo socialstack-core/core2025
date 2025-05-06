@@ -14,7 +14,12 @@ namespace Api.Pages
 		/// <summary>
 		/// Admin pages of the form /en-admin/{CONTENT_TYPE_NAME}/{ID}
 		/// </summary>
-		public static AdminPageType Single = new AdminPageType("single");
+		public static AdminPageType Edit = new AdminPageType("edit");
+		
+		/// <summary>
+		/// Admin pages of the form /en-admin/{CONTENT_TYPE_NAME}/add
+		/// </summary>
+		public static AdminPageType Add = new AdminPageType("add");
 		
 		/// <summary>
 		/// A key for this admin page type.

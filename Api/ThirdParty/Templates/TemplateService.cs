@@ -101,7 +101,7 @@ namespace Api.Templates
         {
             Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode canvasNode, Type type, AdminPageType pageType) => {
 				
-				if (type == typeof(Template) && pageType == AdminPageType.Single)
+				if (type == typeof(Template) && (pageType == AdminPageType.Edit || pageType == AdminPageType.Add))
 				{
 					// clear out any children.
 					canvasNode.Content = [];

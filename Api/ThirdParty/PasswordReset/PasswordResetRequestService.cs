@@ -37,10 +37,10 @@ namespace Api.PasswordResetRequests
 			
 			Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Pages.Page page, CanvasRenderer.CanvasNode canvas, Type contentType, AdminPageType pageType) =>
 			{
-				if (contentType == typeof(User) && pageType == AdminPageType.Single)
+				if (contentType == typeof(User) && pageType == AdminPageType.Edit)
 				{
 					// Installing user admin page for a particular user.
-					// Add the reset box into the user admin page (as a child of the autoform):
+					// Add the reset box into the edit user admin page (as a child of the autoform):
 					var tile = new CanvasNode("Admin/Tile");
 					tile.AppendChild(new CanvasNode("Admin/PasswordResetButton").With("userId", new {
 						name = "user.id",

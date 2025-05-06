@@ -1764,7 +1764,14 @@ svg {
 					var currentChar = pageField[i];
 					if (mode == 0)
 					{
-						if (currentChar == '{')
+						// Optional $
+						if (currentChar == '$' && i < pageField.Length - 1 && pageField[i+1] == '{')
+						{
+							mode = 1;
+							storedIndex = i;
+							i++;
+						}
+						else if (currentChar == '{')
 						{
 							// now in a token.
 							mode = 1;
@@ -1787,7 +1794,8 @@ svg {
 				foreach (var token in tokens)
 				{
 					// remove brackets
-					var noBrackets = token.Substring(1, token.Length - 2);
+					var startLen = token[0] == '$' ? 2 : 1;
+					var noBrackets = token.Substring(startLen, token.Length - 1 - startLen);
 
 					// Let's split it - to get content and its field.
 					var contentAndField = noBrackets.Split(".");
