@@ -140,7 +140,7 @@ namespace Api.Permissions{
 				OnContext = true
 			}.Resolve(ast);
 
-			if (typeof(T) == typeof(Permissions.Role))
+			if (typeof(T) == typeof(Api.Permissions.Role))
 			{
 				// Id=context.RoleId
 
