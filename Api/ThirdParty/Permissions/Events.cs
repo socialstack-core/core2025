@@ -22,6 +22,11 @@ namespace Api.Eventing
 		/// Events on the Role type.
 		/// </summary>
 		public static EventGroup<Role> Role;
+
+		/// <summary>
+		/// Set of events for a contentFieldAccessRule.
+		/// </summary>
+		public static EventGroup<ContentFieldAccessRule> ContentFieldAccessRule;
 		
 	}
 

@@ -33,11 +33,6 @@ namespace Api.Permissions
 		/// The role used by users who aren't logged in.
 		/// </summary>
 		public static Role Public;
-		
-		/// <summary>
-		/// The role used for people who can only edit content.
-		/// </summary>
-		public static Role ContentEditor;
 
 		/// <summary>
 		/// The developer role. Can do everything.
