@@ -43,6 +43,12 @@ namespace Api.Pages
 				Roles.Guest.Grant("page_load");
 				Roles.Public.Grant("page_load");
 				Roles.Member.Grant("page_load");
+
+
+				Roles.Guest.Revoke("permalink_load", "permalink_list");
+				Roles.Public.Revoke("permalink_load", "permalink_list");
+				Roles.Member.Revoke("permalink_load", "permalink_list");
+
 				return new ValueTask<object>(source);
 			});
 		}
