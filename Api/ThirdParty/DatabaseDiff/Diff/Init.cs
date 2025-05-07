@@ -399,6 +399,13 @@ namespace Api.Database
 
 					return entity;
 				});
+				
+				service.EventGroup.CreateAll.AddEventListener(async (Context context, List<T> entity) =>
+				{
+					// Can't bulk create with IDs here
+					await _database.Run(context, createQuery, entity);
+					return entity;
+				});
 
 				service.EventGroup.Update.AddEventListener(async (Context context, T entity, ChangedFields changes, DataOptions opts) => {
 
