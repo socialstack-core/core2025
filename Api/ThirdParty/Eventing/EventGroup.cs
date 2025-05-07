@@ -87,7 +87,12 @@ namespace Api.Eventing
 		/// Called to actually create the result in the data engine during partial complete.
 		/// </summary>
 		public EventHandler<T> CreatePartial;
-
+		
+		/// <summary>
+		/// Called to actually create the result in the data engine.
+		/// </summary>
+		public EventHandler<List<T>> CreateAll;
+		
 		/// <summary>
 		/// Just after an entity has been created. The given object will now have an ID.
 		/// </summary>

@@ -1093,6 +1093,32 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 	}
 
 	/// <summary>
+	/// Bulk creates more than one entity. The set that you provide may be modified inline.
+	/// </summary>
+	public virtual async ValueTask<List<T>> CreateAll(Context context, List<T> set, DataOptions options = DataOptions.Default)
+	{
+		for(var i=0;i<set.Count;i++)
+		{
+			var previousPermState = context.IgnorePermissions;
+			context.IgnorePermissions = (options & DataOptions.PermissionsFlag) != DataOptions.PermissionsFlag;
+			set[i] = await EventGroup.BeforeCreate.Dispatch(context, set[i]);
+			context.IgnorePermissions = previousPermState;
+		}
+
+		set = await EventGroup.CreateAll.Dispatch(context, set);
+
+		for (var i = 0; i < set.Count; i++)
+		{
+			// Handles cache updates and after create event calls.
+			// These are almost always things which complete instantly
+			// so we don't get O(N) waiting behaviour.
+			set[i] = await CreatePartialComplete(context, set[i]);
+		}
+
+		return set;
+	}
+
+	/// <summary>
 	/// Creates a new entity.
 	/// </summary>
 	public virtual async ValueTask<T> Create(Context context, T entity, DataOptions options = DataOptions.Default)
