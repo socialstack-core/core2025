@@ -542,3 +542,28 @@ export const getTemplates = async (): Promise<TemplateModule[]> => {
 
     })
 } 
+
+export const getEntities = (): Promise<CodeModuleType[]> => {
+    return new Promise((resolve, reject) => {
+        const allEntities: CodeModuleType[] = [];
+        getAll().then(typeMeta => {
+            Object.keys(typeMeta.codeModules).forEach(moduleName => {
+                if (!moduleName.startsWith("Api/"))
+                {
+                    return;
+                }
+                var type = typeMeta.codeModules[moduleName].types.find(
+                    item => item.name === "interface" &&
+                            item.extends && item.extends.find(inherit => inherit.instanceName == "VersionedContent")
+                );
+
+                if (type)
+                {
+                    allEntities.push(type);
+                }
+            });
+
+            resolve(allEntities);
+        }).catch(reject);
+    })
+}

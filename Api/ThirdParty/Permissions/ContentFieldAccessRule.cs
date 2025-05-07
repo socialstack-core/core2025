@@ -9,27 +9,37 @@ namespace Api.Permissions
 	/// </summary>
 	public partial class ContentFieldAccessRule : VersionedContent<uint>
 	{
-		// Example fields. None are required:
-		/*
-        /// <summary>
-        /// The name of the contentFieldAccessRule
-        /// </summary>
-        [DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
-		
 		/// <summary>
-		/// The content of this contentFieldAccessRule.
+		/// The full name of the entity. 
 		/// </summary>
-		[Localized]
-		public string BodyJson;
+		public string EntityName;
 
 		/// <summary>
-		/// The feature image ref
+		/// Is the entity a virtual entity, or a real C# one.
 		/// </summary>
-		[DatabaseField(Length = 80)]
-		public string FeatureRef;
-		*/
+		public bool IsVirtualType;
+
+		/// <summary>
+		/// The field on the entity.
+		/// </summary>
+		public string FieldName;
+
+		/// <summary>
+		/// Can read filter string, can be true, false, IsSelf(), etc... 
+		/// leave null to rely on the parent roles inheritence.
+		/// </summary>
+		public string CanRead;
+
+		/// <summary>
+		/// Can write filter string, can be true, false, IsSelf(), etc...
+		/// leave null to rely on the parent roles inheritence.
+		/// </summary>
+		public string CanWrite;
+
+		/// <summary>
+		/// What role does this rule belong to
+		/// </summary>
+		public uint RoleId;
 		
 	}
 

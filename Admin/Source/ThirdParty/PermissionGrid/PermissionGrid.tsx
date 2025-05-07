@@ -2,17 +2,32 @@ import Input from 'UI/Input';
 import Modal from 'UI/Modal';
 import permissionsApi from 'Api/Permission';
 import { useState, useEffect, useRef } from 'react';
+import { CodeModuleType, getAll, getEntities } from 'Admin/Functions/GetPropTypes';
+import Loading from 'UI/Loading';
+import EntityFieldRuleEditor from 'Admin/EntityFieldRuleEditor';
 
 interface PermissionGridProps {
 	editor: boolean;
 	defaultValue?: string;
 	value?: string;
+	onToggleViewAll?: (value: boolean) => void,
+	entities?: CodeModuleType[]
+}
+
+const alphaSort = (a: string, b: string) => {
+    const firstCharA = a.toLowerCase();
+    const firstCharB = b.toLowerCase();
+    if (firstCharA < firstCharB) return -1;
+    if (firstCharA > firstCharB) return 1;
+    return 0;
 }
 
 /**
  * A grid of capabilities and the roles they're active on
  */
 const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (props) => {
+
+
 	const [roles, setRoles] = useState([]);
 	const [customRuleEle, setCustomRuleEle] = useState<HTMLInputElement | null>(null);
 	const [capabilities, setCapabilities] = useState([]);
@@ -21,10 +36,27 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 	const [grants, setGrants] = useState(null);
 	const [dropdownType, setDropdownType] = useState(null);
 	const [editingCell, setEditingCell] = useState(null);
+	const [entities, setEntities] = useState<CodeModuleType[]>();
 
 	useEffect(() => {
 		load();
 	}, [props.editor, props.value, props.defaultValue]);
+
+	useEffect(() => {
+
+		if (!entities)
+		{
+			if (props.entities)
+			{
+				setEntities(props.entities);
+			}
+			else
+			{
+				getEntities().then(setEntities);
+			}
+		}
+
+	}, [entities, props.entities])
 
 	const load = () => {
 
@@ -59,7 +91,7 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 	const updateFilter = (filter : string) => {
 		setFilter(filter);
 		setFilteredCapabilities(
-			capabilities.filter((capability) => capability.key.toLowerCase().includes(filter.toLowerCase()))
+			capabilities.filter((capability) => capability.key.toLowerCase().startsWith(filter.toLowerCase()))
 		);
 	}
 
@@ -76,11 +108,33 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 						{`Capability`}
 					</label>
 					<div className="admin_permission-grid__filter-field input-group">
-						<input type="text" className="form-control" id="permission_filter" placeholder={`Filter by`}
-							value={filter} onKeyUp={(e : KeyboardEvent) => updateFilter(e.target.value)} />
-						<button className="btn btn-outline-secondary" type="button" onClick={() => clearFilter()}>
-							{`Clear`}
-						</button>
+						<select
+							className="form-control" 
+							id="permission_filter"
+							defaultValue={filter}
+							onChange={(ev) => {
+								const el: HTMLSelectElement = ev.target;
+
+								if (el.value.length == 0)
+								{
+									clearFilter();
+								}
+								else
+								{
+									updateFilter(el.value);
+								}
+							}}
+						>
+							<option value=''>{`No filter`}</option>
+							{entities?.sort((a,b) => alphaSort(a.instanceName!, b.instanceName!))
+									  .map(entity => {
+											return (
+												<option value={entity.instanceName}>{entity.instanceName}</option>
+											)
+									   })
+							}
+						</select>
+						
 					</div>
 				</div>
 			</th>
@@ -422,11 +476,29 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 	}
 	
 	if(props.editor) {
-		return renderEditMode();
+		return (
+			<>
+				{renderEditMode()}
+				{filter.length != 0 && 
+					<div className='field-rules'>
+						<EntityFieldRuleEditor key={filter} entity={filter}/>
+					</div>
+				}
+			</>
+		);
 	}
 
-	return  renderList();
-	
+	return (
+		<>
+			{renderList()}
+			{filter.length != 0 && 
+				<div className='field-rules'>
+					<EntityFieldRuleEditor key={filter} entity={filter}/>
+				</div>
+			}
+		</>
+	);
 }
+
 
 export default PermissionGrid;
