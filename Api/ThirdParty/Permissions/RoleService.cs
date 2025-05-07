@@ -77,6 +77,12 @@ namespace Api.Permissions
 					Id = 6,
 					Name = "Public",
 					Key = "public"
+				},
+				new Role()
+				{
+					Id = 7,
+					Name = "ContentEditor",
+					Key = "content-editor"
 				}
 			);
 
@@ -110,6 +116,7 @@ namespace Api.Permissions
 					Roles.Member = map[4];
 					Roles.Banned = map[5];
 					Roles.Public = map[6];
+					Roles.ContentEditor = map[7];
 
 					// Construct the default grants:
 					await Events.CapabilityOnSetup.Dispatch(ctx, null);
