@@ -965,23 +965,7 @@ namespace Api.Startup {
 					for (var i = 0; i < paramCount; i++)
 					{
 						var argInfo = ca.ConstructorArguments[i];
-						var value = argInfo.Value;
-
-						if(value is ICollection<CustomAttributeTypedArgument> col)
-						{
-							// Convert to a string[].
-							var strSet = new string[col.Count];
-							var index = 0;
-
-							foreach (var entry in col)
-							{
-								strSet[index++] = (string)(entry.Value);
-							}
-
-							value = strSet;
-						}
-
-						ctorParSet[i] = value;
+						ctorParSet[i] = ConvertAttribValue(argInfo.Value);
 					}
 
 					var ctor = ca.Constructor;
@@ -1000,10 +984,11 @@ namespace Api.Startup {
 
 						// Set it on the attrib:
 						var fldInfo = member as FieldInfo;
+						var value = ConvertAttribValue(argInfo.TypedValue.Value);
 
 						if (fldInfo != null)
 						{
-							fldInfo.SetValue(newAttrib, argInfo.TypedValue.Value);
+							fldInfo.SetValue(newAttrib, value);
 						}
 						else
 						{
@@ -1011,7 +996,7 @@ namespace Api.Startup {
 
 							if (prop != null)
 							{
-								prop.GetSetMethod().Invoke(newAttrib, new object[] { argInfo.TypedValue.Value });
+								prop.GetSetMethod().Invoke(newAttrib, new object[] { value });
 							}
 						}
 
@@ -1022,6 +1007,38 @@ namespace Api.Startup {
 			}
 
 			return attribs;
+		}
+
+		private static object ConvertAttribValue(object value)
+		{
+			if (value is ICollection<CustomAttributeTypedArgument> col)
+			{
+				// Convert to a string[].
+				var strSet = new string[col.Count];
+				var index = 0;
+
+				foreach (var entry in col)
+				{
+					strSet[index++] = (string)(entry.Value);
+				}
+
+				value = strSet;
+			}
+			else if (value is System.Collections.ObjectModel.ReadOnlyCollection<System.Reflection.CustomAttributeTypedArgument> readOnlyCol)
+			{
+				// Convert to a string[].
+				var strSet = new string[readOnlyCol.Count];
+				var index = 0;
+
+				foreach (var entry in readOnlyCol)
+				{
+					strSet[index++] = (string)(entry.Value);
+				}
+
+				value = strSet;
+			}
+
+			return value;
 		}
 
 		/// <summary>
