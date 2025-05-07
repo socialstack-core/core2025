@@ -87,14 +87,14 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
     </>;
 
     function impersonateUser(userId : uint) {
-        return userApi.impersonate(userId).then(response => {
+        return userApi.impersonate(setSession, userId).then(response => {
             setSession(response);
             window.location.href = '/';
         });
     }
 
     function endImpersonation() {
-        return userApi.unpersonate().then(response => {
+        return userApi.unpersonate(setSession).then(response => {
             window.location.reload();
         });
     }
