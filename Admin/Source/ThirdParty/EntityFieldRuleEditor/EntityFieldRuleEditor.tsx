@@ -6,7 +6,8 @@ import Alert from "UI/Alert";
 import Loading from "UI/Loading";
 
 export type EntityFieldRuleEditorProps = {
-    entity: string | CodeModuleType
+    entity: string | CodeModuleType,
+    role: Role
 }
 
 const EntityFieldRuleEditor: React.FC<EntityFieldRuleEditorProps> = (props: EntityFieldRuleEditorProps) => {
@@ -14,7 +15,6 @@ const EntityFieldRuleEditor: React.FC<EntityFieldRuleEditorProps> = (props: Enti
     const [entity, setEntity] = useState<CodeModuleType>();
     const [error, setError] = useState<string>();
     const [roles, setRoles] = useState<Role[]>();
-    const [currentRole, setCurrentRole] = useState<Role>();
 
     const [entityRules, setEntityRules] = useState<ContentFieldAccessRule[]>();
 
@@ -52,17 +52,17 @@ const EntityFieldRuleEditor: React.FC<EntityFieldRuleEditorProps> = (props: Enti
 
     useEffect(() => {
 
-        if (currentRole && entity) {
+        if (entity) {
             ContentFieldAccessRuleApi.list({
                 query: "entityName = ? AND roleId = ?",
-                args: [entity?.instanceName!, currentRole.id]
+                args: [entity?.instanceName!, props.role.id]
             })
             .then((result) => {
                 setEntityRules(result.results);
             })
         }
 
-    }, [currentRole, entity])
+    }, [entity, props.role])
 
     if (!entity && error)
     {
@@ -98,57 +98,24 @@ const EntityFieldRuleEditor: React.FC<EntityFieldRuleEditorProps> = (props: Enti
             <table className='table table-striped'>
                 <thead>
                     <tr>
-                        <th colSpan={3}>
-                            <div className="admin_permission-grid__filter">
-                                <label htmlFor="permission_filter" className="col-form-label">{`Roles`}</label>
-                                <div className="admin_permission-grid__filter-field input-group">
-                                    <select 
-                                        className="form-control" 
-                                        id="permission_filter"
-                                        onChange={(ev) => {
-                                            const el: HTMLSelectElement = ev.target;
-                                            const role = roles?.find(role => role.id == parseInt(el.value));
-                                            setCurrentRole(role);
-                                        }}
-                                        defaultValue={currentRole?.id}
-                                    >
-                                        <option value=''>{`Choose role`}</option>
-                                        {roles?.map(role => {
-                                            return (
-                                                <option value={role.id}>{role.name}</option>
-                                            )
-                                        })}      
-                                    </select>
-                                </div>
-                            </div>
-                        </th>
-                    </tr>
-                    {currentRole && <tr>
                         <th>{`Field name`}</th>
                         <th>{`Can read`}</th>
                         <th>{`Can write`}</th>
-                    </tr>}
+                    </tr>
                 </thead>
                 <tbody>
-                    {!currentRole && (
-                        <tr>
-                            <td style={{ textAlign: 'center' }} colSpan={3}>{`No role selected`}</td>
-                        </tr>
-                    )}
-                    {currentRole && 
-                        entity?.fields?.map(field => {
+                    {entity?.fields?.map(field => {
 
-                            var rule = entityRules?.find(rule => rule.fieldName == field.name);
+                        var rule = entityRules?.find(rule => rule.fieldName == field.name);
 
-                            return (
-                                <tr>
-                                    <td>{field.name}</td>
-                                    <td>{renderValue(rule?.canRead!)}</td>
-                                    <td>{renderValue(rule?.canWrite!)}</td>
-                                </tr>
-                            )
-                        })
-                    }
+                        return (
+                            <tr>
+                                <td>{field.name}</td>
+                                <td>{renderValue(rule?.canRead!)}</td>
+                                <td>{renderValue(rule?.canWrite!)}</td>
+                            </tr>
+                        )
+                    })}
                 </tbody>
             </table>
         </div>

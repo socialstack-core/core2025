@@ -5,13 +5,15 @@ import { useState, useEffect, useRef } from 'react';
 import { CodeModuleType, getAll, getEntities } from 'Admin/Functions/GetPropTypes';
 import Loading from 'UI/Loading';
 import EntityFieldRuleEditor from 'Admin/EntityFieldRuleEditor';
+import { Role } from 'Api/Role';
 
 interface PermissionGridProps {
 	editor: boolean;
 	defaultValue?: string;
 	value?: string;
 	onToggleViewAll?: (value: boolean) => void,
-	entities?: CodeModuleType[]
+	entities?: CodeModuleType[],
+	currentContent: Role
 }
 
 const alphaSort = (a: string, b: string) => {
@@ -27,8 +29,7 @@ const alphaSort = (a: string, b: string) => {
  */
 const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (props) => {
 
-
-	const [roles, setRoles] = useState([]);
+	const [roles, setRoles] = useState<Role[]>([]);
 	const [customRuleEle, setCustomRuleEle] = useState<HTMLInputElement | null>(null);
 	const [capabilities, setCapabilities] = useState([]);
 	const [filteredCapabilities, setFilteredCapabilities] = useState([]);
@@ -481,7 +482,7 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 				{renderEditMode()}
 				{filter.length != 0 && 
 					<div className='field-rules'>
-						<EntityFieldRuleEditor key={filter} entity={filter}/>
+						<EntityFieldRuleEditor role={props.currentContent} key={filter} entity={filter}/>
 					</div>
 				}
 			</>
@@ -493,7 +494,7 @@ const PermissionGrid: React.FC<React.PropsWithChildren<PermissionGridProps>> = (
 			{renderList()}
 			{filter.length != 0 && 
 				<div className='field-rules'>
-					<EntityFieldRuleEditor key={filter} entity={filter}/>
+					<EntityFieldRuleEditor role={props.currentContent} key={filter} entity={filter}/>
 				</div>
 			}
 		</>
