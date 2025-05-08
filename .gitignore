@@ -9,8 +9,6 @@
 /Api/build
 /Email/public/pack
 /Database/*/index.json
-/TypeScript/tsconfig.generated.json
-/TypeScript/Api/*
 /Logs
 /node_modules
 /package-lock.json
