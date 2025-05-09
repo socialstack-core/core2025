@@ -1,3 +1,4 @@
+using Api.Contexts;
 using Api.SocketServerLibrary;
 using Api.Startup;
 using Api.Users;
@@ -29,7 +30,8 @@ namespace Api.Startup
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <param name="writer"></param>
-		public virtual void WriteJsonUnclosed(T obj, Writer writer)
+		/// <param name="context"></param>
+		public virtual void WriteJsonUnclosed(T obj, Writer writer, Context context, bool isIncludes)
 		{
 
 		}

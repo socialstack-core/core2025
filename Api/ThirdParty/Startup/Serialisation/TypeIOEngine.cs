@@ -1,14 +1,11 @@
+using Api.Contexts;
 using Api.Database;
 using Api.SocketServerLibrary;
-using Api.Startup;
-using Api.Users;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace Api.Startup
 {
@@ -27,7 +24,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Generates a system native write for the given structure.
 		/// </summary>
-		public static TypeReaderWriter<T> Generate<T, ID>(JsonStructure<T,ID> fieldSet)
+		public static TypeReaderWriter<T> Generate<T, ID>(JsonStructure<T,ID> fieldSet, AutoService service)
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 		{
@@ -35,7 +32,7 @@ namespace Api.Startup
 			{
 				fieldSet
 			};
-			return Generate(set)[0];
+			return Generate(set, service)[0];
 		}
 
 		/// <summary>
@@ -426,7 +423,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Generates a system native write for the given structures. This list will usually be the list of all roles for a type on the first run.
 		/// </summary>
-		public static List<TypeReaderWriter<T>> Generate<T, ID>(List<JsonStructure<T, ID>> fieldSets)
+		public static List<TypeReaderWriter<T>> Generate<T, ID>(List<JsonStructure<T, ID>> fieldSets, AutoService service)
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 		{
@@ -450,6 +447,15 @@ namespace Api.Startup
 				// Start building the type:
 				var typeName = typeof(T).Name;
 				TypeBuilder typeBuilder = moduleBuilder.DefineType(typeName + "_RW", TypeAttributes.Public, baseType);
+
+				
+				// Just an empty constructor. The actual pre-defined byte[]'s will be set direct to the fields shortly.
+				ConstructorBuilder ctor0 = typeBuilder.DefineConstructor(
+					MethodAttributes.Public,
+					CallingConventions.Standard,
+					[ typeof(AutoService<T,ID>) ]
+				);
+				ILGenerator constructorBody = ctor0.GetILGenerator();
 
 				// all byte[] fields to initialise:
 				var fieldsToInit = new List<PreGeneratedByteField>();
@@ -490,10 +496,12 @@ namespace Api.Startup
 
 				writerPartialBody.Emit(OpCodes.Ret);
 
-				var writeJsonMethod = typeBuilder.DefineMethod("WriteJsonUnclosed", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), new Type[] {
+				var writeJsonMethod = typeBuilder.DefineMethod("WriteJsonUnclosed", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), [
 					typeof(T),
-					typeof(Writer)
-				});
+					typeof(Writer),
+					typeof(Context),
+					typeof(bool)
+				]);
 				ILGenerator writerBody = writeJsonMethod.GetILGenerator();
 
 				// Write the header:
@@ -554,32 +562,66 @@ namespace Api.Startup
 
 						var fieldName = field.Name;
 						var lowercaseFirst = char.ToLower(fieldName[0]) + fieldName.Substring(1);
+						
+						var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(RandomBoolGenerator), FieldAttributes.Private);
 
 						// The field name:
 						var property = AddField(typeBuilder, fieldsToInit, ",\"" + lowercaseFirst + "\":");
 
+						// Define a label for the end of the conditional block
+						var endOfIfLabel = writerBody.DefineLabel();
+
+						// Create a new instance of RandomBoolGenerator and push it onto the stack
+						constructorBody.Emit(OpCodes.Ldarg_0);
+						constructorBody.Emit(OpCodes.Newobj, typeof(RandomBoolGenerator).GetConstructor(Type.EmptyTypes));
+						constructorBody.Emit(OpCodes.Stfld, fieldBuilder);
+
+						
+						// Get the MethodInfo for RandomBoolGenerator.GetRandomBool
+						var getRandomBoolMethod = typeof(RandomBoolGenerator).GetMethod("GetRandomBool", BindingFlags.Public | BindingFlags.Instance, [
+							typeof(Context),
+							typeof(object),
+							typeof(bool)
+						]);
+
+						// this/instance
+						
+						writerBody.Emit(OpCodes.Ldarg_0); // this
+						writerBody.Emit(OpCodes.Ldfld, fieldBuilder); // .filter_whatever
+
+						
+						writerBody.Emit(OpCodes.Ldarg_3); // context
+						writerBody.Emit(OpCodes.Ldarg_1); // the object
+						writerBody.Emit(OpCodes.Ldarg, 4); // isIncluded
+
+						
+
+						// Call the RandomBoolGenerator.GetRandomBool method with the third argument
+						writerBody.Emit(OpCodes.Callvirt, getRandomBoolMethod);
+						
+						// Branch if false (skip the block if the condition is false)
+						writerBody.Emit(OpCodes.Brfalse, endOfIfLabel);
+						
+						// Code to execute if the condition is true
 						// ,"fieldName":
 						property.Write(writerBody);
-
 						// Value->str:
 						jft.EmitWrite(writerBody, field, nullableType);
+						
+						// Mark the end of the conditional block
+						writerBody.MarkLabel(endOfIfLabel);
+
+
 					}
 				}
 
 				writerBody.Emit(OpCodes.Ret);
 
-				// Just an empty constructor. The actual pre-defined byte[]'s will be set direct to the fields shortly.
-				ConstructorBuilder ctor0 = typeBuilder.DefineConstructor(
-					MethodAttributes.Public,
-					CallingConventions.Standard,
-					Type.EmptyTypes
-				);
-				ILGenerator constructorBody = ctor0.GetILGenerator();
 				constructorBody.Emit(OpCodes.Ret);
 				
 				// Finish the type.
 				Type builtType = typeBuilder.CreateType();
-				var instance = Activator.CreateInstance(builtType) as TypeReaderWriter<T>;
+				var instance = Activator.CreateInstance(builtType, [service]) as TypeReaderWriter<T>;
 
 				foreach (var field in fieldsToInit)
 				{
@@ -949,5 +991,17 @@ namespace Api.Startup
 		/// </summary>
 		public AutoService Service;
 	}
+
+	
+
+		public class RandomBoolGenerator
+		{
+			private static readonly Random _random = new Random();
+		
+			public bool GetRandomBool(Context context, object value, bool isIncludes)
+			{
+				return context.UserId != 1; // where user #1 is your admin user account lol
+			}
+		}
 
 }

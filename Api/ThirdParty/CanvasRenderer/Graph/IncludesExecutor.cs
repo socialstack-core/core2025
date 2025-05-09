@@ -87,7 +87,7 @@ public class IncludesExecutor<T, ID>
 		}
 		else
 		{
-			jsonWriter.WriteJsonUnclosed(entity, writer);
+			jsonWriter.WriteJsonUnclosed(entity, writer, context, true);
 
 			if (functionalIncludes != null)
 			{

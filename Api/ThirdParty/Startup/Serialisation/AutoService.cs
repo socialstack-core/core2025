@@ -124,7 +124,7 @@ public partial class AutoService<T, ID>
 
         if (jsonStructure.TypeIO == null)
         {
-            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure);
+            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this);
         }
 
         // Get the include set (can be null). Must happen first such that if it errors, nothing was written out to the stream.
@@ -160,7 +160,7 @@ public partial class AutoService<T, ID>
             }
             else
             {
-                jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer);
+                jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer, context, false);
 
                 // Execute any functional includes on the root node.
                 if (functionalIncludes != null)
@@ -286,7 +286,7 @@ public partial class AutoService<T, ID>
 
         if (jsonStructure.TypeIO == null)
         {
-            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure);
+            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this);
         }
 
         jsonStructure.TypeIO.WriteJsonPartial((T)entity, writer);
@@ -343,7 +343,7 @@ public partial class AutoService<T, ID>
 
         if (jsonStructure.TypeIO == null)
         {
-            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure);
+            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this);
         }
 
         // Get the include set (can be null):
@@ -360,7 +360,7 @@ public partial class AutoService<T, ID>
         }
         else
         {
-            jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer);
+            jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer, context, false);
 
             // Execute any functional includes on the root node.
             FunctionalInclusionNode[] functionalIncludes = (includeSet == null) ? null : includeSet.RootInclude.FunctionalIncludes;
@@ -640,7 +640,7 @@ public partial class AutoService<T, ID>
 
         if (jsonStructure.TypeIO == null)
         {
-            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure);
+            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this);
         }
 
         // Write the object out:
@@ -650,7 +650,7 @@ public partial class AutoService<T, ID>
         }
         else
         {
-            jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer);
+            jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer, context, false);
 
 			FunctionalInclusionNode[] functionalIncludes = (node == null) ? null : node.FunctionalIncludes;
 
@@ -911,7 +911,7 @@ public partial class AutoService<T, ID>
 
         if (jsonStructure.TypeIO == null)
         {
-            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure);
+            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this);
         }
 
         if (entity == null)
@@ -920,7 +920,7 @@ public partial class AutoService<T, ID>
         }
         else
         {
-            jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer);
+            jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer, context, false);
 			writer.Write((byte)'}');
 		}
 	}
@@ -936,7 +936,7 @@ public partial class AutoService<T, ID>
 
         if (jsonStructure.TypeIO == null)
         {
-            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure);
+            jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this);
         }
 
         if (entity == null)
@@ -945,7 +945,7 @@ public partial class AutoService<T, ID>
         }
         else
         {
-            jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer);
+            jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer, context, false);
 
 			if (functionalIncludes != null)
 			{
