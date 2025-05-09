@@ -4,6 +4,7 @@ using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,11 +19,35 @@ namespace Api.Startup.Routing;
 public class RouteNode
 {
 	/// <summary>
+	/// True if this is a rewrite node. 
+	/// Checked on a very hot path and is almost always false 
+	/// so this is marginally faster than a runtime cast.
+	/// </summary>
+	public readonly bool IsRewrite;
+
+
+	/// <summary>
+	/// A general purpose routing node.
+	/// </summary>
+	public RouteNode()
+	{
+		IsRewrite = this is TerminalRewriteNode;
+	}
+
+	/// <summary>
 	/// Locates a child node by its name specified in the given span.
 	/// </summary>
 	public virtual IntermediateNode FindChildNode(ReadOnlySpan<char> childName)
 	{
 		return null;
+	}
+
+	/// <summary>
+	/// Called after this node was built such that it 
+	/// can set up any further connections with other built nodes if needed.
+	/// </summary>
+	public virtual void PostBuild()
+	{
 	}
 
 	/// <summary>
@@ -345,6 +370,122 @@ public class TerminalNode<State, OutputType, BodyType> : TerminalNode
 }
 
 /// <summary>
+/// A redirection node in the routing tree.
+/// </summary>
+public class TerminalRedirectNode : TerminalNode
+{
+	private readonly string Target;
+
+	/// <summary>
+	/// A redirection node in the routing tree, targeting the given target URL.
+	/// </summary>
+	public TerminalRedirectNode(IntermediateNode[] children,
+		string target,
+		string exactMatch,
+		string fullRoute) : base (children, exactMatch, null, null, fullRoute)
+	{
+		Target = target;
+	}
+
+	/// <summary>
+	/// Run this route node.
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <param name="basicContext"></param>
+	/// <param name="tokenCount"></param>
+	/// <param name="tokens"></param>
+	/// <returns></returns>
+	public override ValueTask<bool> Run(HttpContext httpContext, Context basicContext, int tokenCount, ref Span<TokenMarker> tokens)
+	{
+		var response = httpContext.Response;
+		response.Headers.Location = Target;
+		response.StatusCode = 302;
+		return new ValueTask<bool>(true);
+	}
+
+}
+
+/// <summary>
+/// A rewrite node in the routing tree.
+/// </summary>
+public class TerminalRewriteNode : TerminalNode
+{
+	private BuilderNode BuiltNode;
+
+	/// <summary>
+	/// The node that the request will be rewritten to.
+	/// </summary>
+	public RouteNode GoTo;
+
+	/// <summary>
+	/// The token index set.
+	/// </summary>
+	private readonly int[] TokenIndices;
+
+	/// <summary>
+	/// The token count.
+	/// </summary>
+	private readonly int TokenCount;
+
+	/// <summary>
+	/// A rewrite node in the routing tree, targeting the given target node.
+	/// </summary>
+	public TerminalRewriteNode(
+		BuilderResolvedRoute route,
+		string exactMatch,
+		string fullRoute) : base (Array.Empty<IntermediateNode>(), exactMatch, null, null, fullRoute)
+	{
+		BuiltNode = route.Node;
+		var tokens = route.Tokens;
+		TokenCount = tokens == null ? 0 : tokens.Count;
+		int[] tokenIndexes = null;
+
+		if (TokenCount > 0)
+		{
+			tokenIndexes = new int[TokenCount];
+
+			for (var i = 0; i < TokenCount; i++)
+			{
+				tokenIndexes[i] = RouterTokenLookup.Add(tokens[i]);
+			}
+		}
+
+		TokenIndices = tokenIndexes;
+	}
+
+	/// <summary>
+	/// A rewrite has just happened. 
+	/// This causes the token set to be replaced with any in the target route.
+	/// </summary>
+	/// <param name="tokens"></param>
+	/// <returns></returns>
+	public int ReplaceTokens(ref Span<TokenMarker> tokens)
+	{
+		var count = TokenCount;
+
+		for (var i = 0; i < count; i++)
+		{
+			// If count was non-zero then Tokens
+			// must be not null as they're both readonly.
+			tokens[i] = new TokenMarker(0,0, TokenIndices[i]);
+		}
+
+		return count;
+	}
+
+	/// <summary>
+	/// Called after this node was built such that it 
+	/// can set up any further connections with other built nodes if needed.
+	/// </summary>
+	public override void PostBuild()
+	{
+		// Get the built node from the route:
+		GoTo = BuiltNode.GetBuiltNode();
+	}
+
+}
+
+/// <summary>
 /// A node at the end of a route.
 /// </summary>
 public class TerminalVoidNode<State, BodyType> : TerminalNode
@@ -489,6 +630,19 @@ public class ArrayIntermediateNode : IntermediateNode
 	}
 
 	/// <summary>
+	/// Called after this node was built such that it 
+	/// can set up any further connections with other built nodes if needed.
+	/// </summary>
+	public override void PostBuild()
+	{
+		for (var i = 0; i < Children.Length; i++)
+		{
+			var child = Children[i];
+			child.PostBuild();
+		}
+	}
+
+	/// <summary>
 	/// Locates a child node by its name specified in the given span.
 	/// </summary>
 	public override IntermediateNode FindChildNode(ReadOnlySpan<char> childName)
@@ -542,6 +696,19 @@ public class RootNode : RouteNode
 		for (var i = 0; i < Children.Length; i++)
 		{
 			Children[i].ForEachEndpoint(callback);
+		}
+	}
+
+	/// <summary>
+	/// Called after this node was built such that it 
+	/// can set up any further connections with other built nodes if needed.
+	/// </summary>
+	public override void PostBuild()
+	{
+		for (var i = 0; i < Children.Length; i++)
+		{
+			var child = Children[i];
+			child.PostBuild();
 		}
 	}
 

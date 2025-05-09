@@ -17,17 +17,14 @@ namespace Api.DynamicSiteMap
     [InternalApi]
     public partial class DomainSiteMapController : AutoController
     {
-        private SiteDomainService _siteDomains;
         private DynamicSiteMapService _dynamicMaps;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="dynamicMaps"></param>
-        /// <param name="siteDomains"></param>
-		public DomainSiteMapController(DynamicSiteMapService dynamicMaps, SiteDomainService siteDomains)
+		public DomainSiteMapController(DynamicSiteMapService dynamicMaps)
         {
-            _siteDomains = siteDomains;
 			_dynamicMaps = dynamicMaps;
 		}
 
@@ -43,18 +40,7 @@ namespace Api.DynamicSiteMap
 
             var _cfg = _dynamicMaps.GetConfiguration();
 
-			if (_cfg.UseSiteDomains)
-            {
-                var siteDomain = _siteDomains.GetByDomain(request.Host.Value);
-
-                prefix = "-core";
-
-                if (siteDomain != null)
-                {
-                    prefix = $"-{siteDomain.Code.ToLower()}";
-                }
-            }
-            else if (_cfg.UseLocaleDomains)
+			if (_cfg.UseLocaleDomains)
             {
                 var siteLocaleId = Services.Get<LocaleService>().GetByDomain(request.Host.Value);
 

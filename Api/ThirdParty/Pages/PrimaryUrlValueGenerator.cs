@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System;
 using Api.SocketServerLibrary;
 using Api.Contexts;
+using Api.Startup.Routing;
 namespace Api.Pages;
 
 
@@ -20,8 +21,7 @@ public partial class PrimaryUrlValueGenerator<T, ID> : VirtualFieldValueGenerato
 {
 
 	private PageService _pageService;
-	private UrlGenerationMeta _genMeta;
-	private UrlGenerationCache _cache;
+	private Router _urlRouter;
 
 	/// <summary>
 	/// Generate the value.
@@ -37,11 +37,11 @@ public partial class PrimaryUrlValueGenerator<T, ID> : VirtualFieldValueGenerato
 			_pageService = Services.Get<PageService>();
 		}
 
-		if (_cache == null || _pageService.IsUrlCacheStale(_cache))
+		if (_urlRouter == null || Router.IsStale(_urlRouter))
 		{
-			// Get the current URL generation cache:
-			_cache = await _pageService.GetUrlGenerationCache();
-			var lookup = _cache.GetLookup(UrlGenerationScope.UI);
+			// Get the current router:
+			_urlRouter = Router.CurrentRouter;
+			var lookup = _cache.GetLookup(PageGroup.UI);
 
 			// Obtain URL generation metadata for the current type:
 			lookup.TryGetValue(typeof(T), out _genMeta);

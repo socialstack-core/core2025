@@ -1,3 +1,4 @@
+using Amazon.S3;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
 using Api.Contexts;
@@ -7,6 +8,7 @@ using HtmlAgilityPack;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Routing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -135,6 +137,12 @@ public class RouterBuilder
 			routeNodeSet[i] = NodesByVerb[i].Build(); 
 		}
 
+		// 2nd pass which connects any now built nodes (for the purposes of rewrites typically).
+		for (var i = 0; i < NodesByVerb.Length; i++)
+		{
+			routeNodeSet[i].PostBuild();
+		}
+
 		var router = new Router(routeNodeSet);
 		Router.CurrentRouter = router;
 	}
@@ -179,7 +187,7 @@ public class RouterBuilder
 	public void AddRoute(string route, MethodInfo method, object controllerInstance, string httpVerb)
 	{
 		// NB: The toLower() will lowercase the tokens too.
-		// Binding of the parameters thus needs to be case insensitive..ToLower()
+		// Binding of the parameters thus needs to be case insensitive.
 		route = route.Trim().ToLower();
 		httpVerb = httpVerb.ToUpper();
 
@@ -194,6 +202,30 @@ public class RouterBuilder
 		var tree = NodesByVerb[verbIndex];
 
 		tree.AddRoute(route, method, controllerInstance, httpVerb);
+	}
+
+	/// <summary>
+	/// Adds a rewrite.
+	/// </summary>
+	/// <param name="from"></param>
+	/// <param name="to"></param>
+	public void AddRewrite(string from, string to)
+	{
+		var route = from.Trim().ToLower();
+		var tree = NodesByVerb[GetVerbIndex("GET")];
+		tree.AddRewrite(from, to);
+	}
+
+	/// <summary>
+	/// Adds a 302 non-permanent redirect.
+	/// </summary>
+	/// <param name="from"></param>
+	/// <param name="to"></param>
+	public void AddRedirect(string from, string to)
+	{
+		var route = from.Trim().ToLower();
+		var tree = NodesByVerb[GetVerbIndex("GET")];
+		tree.AddRedirect(from, to);
 	}
 
 }
@@ -218,6 +250,18 @@ public class BuilderNode
 	/// The terminal method, if it has one.
 	/// </summary>
 	public MethodInfo TerminalMethod;
+
+	/// <summary>
+	/// A node to rewrite this request to. 
+	/// Effectively teleports to the targeted node, replacing the 
+	/// current token state with the ones in this rewrite metadata.
+	/// </summary>
+	public BuilderResolvedRoute? Rewrite;
+
+	/// <summary>
+	/// A URL to redirect to. An alternative to TerminalMethod.
+	/// </summary>
+	public string RedirectTo;
 
 	/// <summary>
 	/// The http verb in use at this terminal.
@@ -304,6 +348,7 @@ public class BuilderNode
 			SingularContentService = SingularContentService,
 			ConstructedTerminal = ConstructedTerminal, // When building this is the only one used.
 			TerminalMethod = TerminalMethod,
+			RedirectTo = RedirectTo,
 			ControllerInstance = ControllerInstance,
 			FullRoute = FullRoute,
 			HttpVerb = HttpVerb,
@@ -368,16 +413,43 @@ public class BuilderNode
 		return typeof(EmptyTerminalState);
 	}
 
+	private RouteNode BuiltNode;
+
+	/// <summary>
+	/// The most recent built route node.
+	/// </summary>
+	/// <returns></returns>
+	public RouteNode GetBuiltNode()
+	{
+		return BuiltNode;
+	}
+
 	/// <summary>
 	/// Builds this node as a routing node.
 	/// </summary>
 	/// <returns></returns>
 	public RouteNode Build()
 	{
+		BuiltNode = BuildInternal();
+		return BuiltNode;
+	}
+
+	private RouteNode BuildInternal()
+	{
 		if (Text == null)
 		{
 			// It's a root node.
 			return new RootNode(BuildChildren());
+		}
+
+		if (RedirectTo != null)
+		{
+			return new TerminalRedirectNode(
+				BuildChildren(),
+				RedirectTo,
+				IsToken ? null : Text,
+				FullRoute
+			);
 		}
 
 		if (TerminalMethod == null)
@@ -817,6 +889,8 @@ public class BuilderNode
 
 	private void EmitReadFromSpan(Type valueType, int spanIndex, ILGenerator il, FieldInfo targetField, LocalBuilder pathLocal, LocalBuilder stateStruct)
 	{
+		var afterValueReady = il.DefineLabel();
+
 		// this.field = {everything else};
 		// The Stfld at the end does the field part.
 		il.Emit(OpCodes.Ldloca, stateStruct);
@@ -831,6 +905,38 @@ public class BuilderNode
 
 		// PathLocal holds a ReadOnlySpan<char> with the path in it.
 		// TokenMarker (in tokenMarkerLoc) tells us which region of this path to select via .Slice
+		// but only if it is not in the constant lookup.
+		var nonLookupToken = il.DefineLabel();
+		var afterTokenReady = il.DefineLabel();
+		il.Emit(OpCodes.Ldloc, tokenMarkerLoc);
+		il.Emit(OpCodes.Ldfld, typeof(TokenMarker).GetField(nameof(TokenMarker.LookupIndex)));
+		il.Emit(OpCodes.Dup);
+		il.Emit(OpCodes.Ldc_I4, -1);
+		il.Emit(OpCodes.Ceq);
+		il.Emit(OpCodes.Brtrue, nonLookupToken);
+
+		// There is a lookup index on the stack at the mo.
+		// Look it up in the constant table and then spanify it, unless the target is a string anyway.
+		il.Emit(OpCodes.Call, typeof(RouterTokenLookup).GetMethod(nameof(RouterTokenLookup.Get)));
+
+		if (valueType == typeof(string))
+		{
+			il.Emit(OpCodes.Br, afterValueReady);
+		}
+		else
+		{
+			// string -> span.
+			var toSpan = typeof(System.MemoryExtensions)
+									.GetMethod("AsSpan", new[] { typeof(string) });
+			il.Emit(OpCodes.Call, toSpan);
+			il.Emit(OpCodes.Br, afterTokenReady);
+		}
+
+		il.Emit(OpCodes.Pop);
+		il.MarkLabel(nonLookupToken);
+
+		// Pop the duplicated lookup index.
+		il.Emit(OpCodes.Pop);
 
 		// path.
 		il.Emit(OpCodes.Ldloca, pathLocal);
@@ -855,7 +961,9 @@ public class BuilderNode
 				}
 			)
 		);
-		
+
+		il.MarkLabel(afterTokenReady);
+
 		if (valueType == typeof(string))
 		{
 			var ctor = typeof(string).GetConstructor(new Type[] {
@@ -869,6 +977,8 @@ public class BuilderNode
 			// Emit the parse.
 			EmitParseValueFromSpan(valueType, il);
 		}
+
+		il.MarkLabel(afterValueReady);
 
 		il.Emit(OpCodes.Stfld, targetField);
 	}
@@ -1666,11 +1776,51 @@ public class BuilderNode
 	}
 
 	/// <summary>
+	/// Resolves the given singular node text relative to this one.
+	/// This is only used during route construction: it is not the main route resolver.
+	/// </summary>
+	/// <param name="text"></param>
+	/// <param name="tokenContainer"></param>
+	/// <returns></returns>
+	public BuilderNode Resolve(string text, ref BuilderResolvedRoute tokenContainer)
+	{
+		BuilderNode tokenCapturer = null;
+
+		foreach (var child in Children)
+		{
+			if (child.Text == text)
+			{
+				return child;
+			}
+
+			if (child.IsToken)
+			{
+				tokenCapturer = child;
+			}
+		}
+
+		if (tokenCapturer != null)
+		{
+			// Capture the token now:
+			if (tokenContainer.Tokens == null)
+			{
+				tokenContainer.Tokens = new List<string>();
+			}
+
+			tokenContainer.Tokens.Add(text);
+			return tokenCapturer;
+		}
+
+		return null;
+	}
+
+	/// <summary>
 	/// Adds or gets the given text as a builder node.
 	/// </summary>
 	/// <param name="text"></param>
+	/// <param name="canAdd"></param>
 	/// <returns></returns>
-	public BuilderNode AddOrGet(string text)
+	public BuilderNode AddOrGet(string text, bool canAdd = true)
 	{
 		foreach (var child in Children)
 		{
@@ -1678,6 +1828,11 @@ public class BuilderNode
 			{
 				return child;
 			}
+		}
+
+		if (!canAdd)
+		{
+			throw new Exception("URL route does not exist: " + text);
 		}
 
 		// Not found - add child:
@@ -1704,6 +1859,53 @@ public class BuilderNode
 	}
 
 	/// <summary>
+	/// Adds a rewrite. The target node must exist.
+	/// </summary>
+	/// <param name="route"></param>
+	/// <param name="to"></param>
+	public void AddRewrite(string route, string to)
+	{
+		var current = GetNode(route, false);
+
+		if (current.TerminalMethod != null || current.RedirectTo != null || current.Rewrite != null)
+		{
+			throw new Exception("Ambiguous URL routing detected: " + route + " collides with something else already added.");
+		}
+
+		// - Resolve which node will handle 'to' fully
+		// - This will frequently result in some token values which will then, during the actual rewrite itself 
+		//   replace the current token state entirely.
+
+		// Builder resolver is permitted to allocate
+		var target = Resolve(to);
+
+		if (target.Node == null)
+		{
+			throw new Exception("A rewrite was added to a node that does not exist. Note that rewrite nodes can only safely target true nodes (not other rewrites).");
+		}
+
+		current.Rewrite = target;
+	}
+
+	/// <summary>
+	/// Adds a 302 redirect.
+	/// </summary>
+	/// <param name="route"></param>
+	/// <param name="to"></param>
+	public void AddRedirect(string route, string to)
+	{
+		var current = GetNode(route, false);
+
+		if (current.TerminalMethod != null || current.RedirectTo != to || current.Rewrite != null)
+		{
+			throw new Exception("Ambiguous URL routing detected: " + route + " collides with something else already added.");
+		}
+
+		current.HttpVerb = "GET";
+		current.RedirectTo = to;
+	}
+
+	/// <summary>
 	/// Adds a complete route.
 	/// </summary>
 	/// <param name="route"></param>
@@ -1711,6 +1913,55 @@ public class BuilderNode
 	/// <param name="controllerInstance"></param>
 	/// <param name="httpVerb">For reference use, the http verb of the route.</param>
 	public void AddRoute(string route, MethodInfo controllerMethod, object controllerInstance, string httpVerb)
+	{
+		var current = GetNode(route, false);
+
+		if (current.RedirectTo != null || (current.TerminalMethod != null && current.TerminalMethod != controllerMethod) || current.Rewrite != null)
+		{
+			throw new Exception("Ambiguous URL routing detected: " + route + " collides with something else already added.");
+		}
+
+		current.HttpVerb = httpVerb;
+		current.TerminalMethod = controllerMethod;
+		current.ControllerInstance = controllerInstance;
+	}
+
+	private BuilderResolvedRoute Resolve(string route)
+	{
+		if (route.StartsWith("/"))
+		{
+			route = route.Substring(1);
+		}
+
+		if (route.EndsWith("/"))
+		{
+			route = route.Substring(0, route.Length - 1);
+		}
+
+		var parts = route.Split('/');
+
+		var current = this;
+
+		BuilderResolvedRoute result = new BuilderResolvedRoute();
+
+		for (var i = 0; i < parts.Length; i++)
+		{
+			// NB: the homepage, at "", would still be added as a child node.
+			// parts is always length 1 or more.
+			current = current.Resolve(parts[i], ref result);
+
+			if (current == null)
+			{
+				throw new Exception("Ambiguous token identified: you have more than one route using tokens with different names at the same location. " +
+					"Please make sure they all use the same {name}. A route that was being added was " + route);
+			}
+		}
+
+		result.Node = current;
+		return result;
+	}
+
+	private BuilderNode GetNode(string route, bool mustExist)
 	{
 		if (route.StartsWith("/"))
 		{
@@ -1730,7 +1981,7 @@ public class BuilderNode
 		{
 			// NB: the homepage, at "", would still be added as a child node.
 			// parts is always length 1 or more.
-			current = current.AddOrGet(parts[i]);
+			current = current.AddOrGet(parts[i], !mustExist);
 
 			if (current == null)
 			{
@@ -1739,15 +1990,9 @@ public class BuilderNode
 			}
 		}
 
-		if (current.TerminalMethod != null && current.TerminalMethod != controllerMethod)
-		{
-			throw new Exception("Ambiguous URL routing detected: " + route + " collides with something else already added.");
-		}
-
-		current.HttpVerb = httpVerb;
-		current.TerminalMethod = controllerMethod;
-		current.ControllerInstance = controllerInstance;
+		return current;
 	}
+
 }
 
 /// <summary>

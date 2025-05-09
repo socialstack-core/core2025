@@ -35,11 +35,6 @@ namespace Api.DynamicSiteMap
         public bool UseLocaleDomains { get; set; } = false;
         
         /// <summary>
-        /// Flag to determine if we are mapping pages based on site domains 
-        /// </summary>
-        public bool UseSiteDomains { get; set; } = false;
-
-        /// <summary>
         /// /// Flag to determine if should expose images into the sitemap
         /// </summary>
         public bool IncludeImages { get; set; } = false;

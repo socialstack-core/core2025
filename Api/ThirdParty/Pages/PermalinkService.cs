@@ -8,6 +8,7 @@ using Api.Startup;
 using Microsoft.AspNetCore.JsonPatch.Internal;
 using Api.CanvasRenderer;
 using System;
+using Api.Startup.Routing;
 
 namespace Api.Pages
 {
@@ -44,22 +45,54 @@ namespace Api.Pages
 				_srcDictionary = null;
 				return new ValueTask<Permalink>(link);
 			});
+
+			Events.Router.CollectRoutes.AddEventListener(async (Context context, RouterBuilder builder) => {
+
+				// Collect all permalinks and add them as rewrite routes.
+				var permalinkSet = await GetSourcesByTarget(context);
+
+				foreach (var kvp in permalinkSet)
+				{
+					// The target node in the router is..
+					var target = kvp.Key;
+
+					// The sources for that target are..
+					var sources = kvp.Value;
+
+					for(var i=0;i<sources.Count;i++)
+					{
+						var src = sources[i];
+
+						if (i == 0)
+						{
+							builder.AddRewrite(src.Url, target);
+						}
+						else
+						{
+							// Redirect to the canonical one.
+							builder.AddRedirect(src.Url, sources[0].Url);
+						}
+					}
+				}
+
+				return builder;
+			}, 20); // Ensure permalinks are added after pages
 		}
 
 		private Dictionary<string, List<Permalink>> _srcDictionary;
 
 		/// <summary>
-		/// Gets a dictionary for all source URLs to all target URLs.
+		/// Gets a dictionary for all target URLs to all their sources.
 		/// </summary>
 		/// <param name="context"></param>
 		/// <returns></returns>
-		public async ValueTask<Dictionary<string, List<Permalink>>> GetSourceDictionary(Context context)
+		public async ValueTask<Dictionary<string, List<Permalink>>> GetSourcesByTarget(Context context)
 		{
 			var result = _srcDictionary;
 
 			if (result == null)
 			{
-				result = await CreateSourceDictionary(context);
+				result = await CreateSourcesByTarget(context);
 				_srcDictionary = result;
 			}
 
@@ -72,7 +105,7 @@ namespace Api.Pages
 		/// </summary>
 		/// <param name="context"></param>
 		/// <returns></returns>
-		private async ValueTask<Dictionary<string, List<Permalink>>> CreateSourceDictionary(Context context)
+		private async ValueTask<Dictionary<string, List<Permalink>>> CreateSourcesByTarget(Context context)
 		{
 			var all = await Where().ListAll(context);
 			var result = new Dictionary<string, List<Permalink>>();
@@ -125,6 +158,27 @@ namespace Api.Pages
 		}
 
 		/// <summary>
+		/// Gets the canonical link if there is one. The provided target URL must be absolute and exclude any 
+		/// domain. It should also not end in a trailing /.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="targetUrl"></param>
+		/// <returns></returns>
+		public async ValueTask<string> GetCanonicalLink(Context context, string targetUrl)
+		{
+			var dict = await GetSourcesByTarget(context);
+
+			if (dict.TryGetValue(targetUrl, out List<Permalink> sources))
+			{
+				// The first source is the canonical link.
+				return sources[0].Url;
+			}
+
+			// It is the canonical link.
+			return targetUrl;
+		}
+
+		/// <summary>
 		/// Bulk creates a block of permalinks. Entries will be skipped if the exact pairing already exists.
 		/// </summary>
 		/// <param name="context"></param>
@@ -133,7 +187,9 @@ namespace Api.Pages
 		public async ValueTask BulkCreate(Context context, List<PermalinkUrlTarget> links)
 		{
 			// Get the (usually cached) set of all permalinks:
-			var set = await GetSourceDictionary(context);
+			var set = await GetSourcesByTarget(context);
+
+			// Todo: this doesn't block non-unique sources.
 
 			var setToCreate = new List<Permalink>();
 
@@ -150,6 +206,8 @@ namespace Api.Pages
 				}
 
 				setToCreate.Add(new Permalink() {
+					Url = link.Url,
+					Target = link.Target,
 					CreatedUtc = DateTime.UtcNow,
 					UserId = context.UserId
 				});

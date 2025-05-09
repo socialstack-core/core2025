@@ -8,6 +8,7 @@ using Api.Startup;
 using Api.CanvasRenderer;
 using System.Reflection;
 using System.Reflection.Metadata;
+using Api.Startup.Routing;
 
 namespace Api.Pages
 {
@@ -33,7 +34,7 @@ namespace Api.Pages
 				Install(
 					new Page()
 					{
-						Url = "/",
+						Key = "home",
 						Title = "Homepage",
 						BodyJson = @"{
 							""c"": {
@@ -46,7 +47,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
-						Url = "/en-admin",
+						Key = "admin",
 						Title = "Welcome to the admin area",
 						BodyJson = @"{
 							""c"": {
@@ -56,7 +57,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
-						Url = "/en-admin/login",
+						Key = "admin_login",
 						Title = "Login to the admin area",
 						BodyJson = @"{
 							""c"": {
@@ -76,7 +77,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
-						Url = "/en-admin/stdout",
+						Key = "admin_stdout",
 						Title = "Server log monitoring",
 						BodyJson = @"{
 							""c"": {
@@ -89,7 +90,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
-						Url = "/en-admin/stress-test",
+						Key = "admin_stress",
 						Title = "Stress testing the API",
 						BodyJson = @"{
 							""c"": {
@@ -102,7 +103,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
-						Url = "/en-admin/database",
+						Key = "admin_database",
 						Title = "Developer Database Access",
 						BodyJson = @"{
 							""c"": {
@@ -115,7 +116,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
-						Url = "/en-admin/register",
+						Key = "admin_register",
 						Title = "Create a new account",
 						BodyJson = @"{
 							""c"": {
@@ -135,7 +136,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
-						Url = "/en-admin/permissions",
+						Key = "admin_permissions",
 						Title = "Permissions",
 						BodyJson = @"{
 							""c"": {
@@ -148,7 +149,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
-						Url = "/404",
+						Key = "404",
 						Title = "Page not found",
 						BodyJson = @"{
 							""c"": {
@@ -200,16 +201,6 @@ namespace Api.Pages
 			});
 
 			Events.Page.BeforeCreate.AddEventListener((Context context, Page page) =>
-			{
-				if (string.IsNullOrEmpty(page.Url))
-				{
-					throw new PublicException("A url is required. If you're making a homepage, use /", "page_url_required");
-				}
-
-				return new ValueTask<Page>(page);
-			});
-
-			Events.Page.BeforeUpdate.AddEventListener((Context context, Page page, Page original) =>
 			{
 				if (string.IsNullOrEmpty(page.Url))
 				{
@@ -285,240 +276,7 @@ namespace Api.Pages
 		/// </summary>
 		public void ClearCaches()
 		{
-			_urlGenerationCache = null;
-			_urlLookupCache = null;
-		}
-
-		/// <summary>
-		/// A cache used to identify which pages on the site are the canonical pages for each content type. Not locale sensitive.
-		/// </summary>
-		private UrlGenerationCache _urlGenerationCache;
-
-		/// <summary>
-		/// A cache used to identify which page to use for a particular URL, per locale.
-		/// </summary>
-		private UrlLookupCache[] _urlLookupCache;
-
-		/// <summary>
-		/// Get the page to use for the given URL.
-		/// </summary>
-		public async ValueTask<PageWithTokens> GetPage(Context context, string host, string url, Microsoft.AspNetCore.Http.QueryString searchQuery, bool return404IfNotFound = true)
-		{
-			var urlInfo = new UrlInfo() // Struct
-			{
-				Url = url,
-				Length = url.Length,
-				Start = 0,
-				Host = host
-			};
-
-			var srcUrlInfo = urlInfo;
-
-			var max = urlInfo.Length + urlInfo.Start;
-
-			// Trim end:
-			for (var i = max - 1; i >= urlInfo.Start; i--)
-			{
-				if (urlInfo.Url[i] == ' ')
-				{
-					urlInfo.Length--;
-					max--;
-				}
-				else
-				{
-					break;
-				}
-			}
-
-			// Trim start:
-			for (var i = urlInfo.Start; i < max; i++)
-			{
-				if (urlInfo.Url[i] == ' ')
-				{
-					urlInfo.Start++;
-					urlInfo.Length--;
-				}
-				else
-				{
-					break;
-				}
-			}
-
-			if (urlInfo.Length > 0 && urlInfo.Url[urlInfo.Start] == '/')
-			{
-				urlInfo.Start++;
-				urlInfo.Length--;
-			}
-
-			if (urlInfo.Length > 0 && urlInfo.Url[urlInfo.Start + urlInfo.Length - 1] == '/')
-			{
-				urlInfo.Length--;
-			}
-
-			// It won't contain a ? but just in case:
-			max = urlInfo.Length + urlInfo.Start;
-			for (var i = urlInfo.Start; i < max; i++)
-			{
-				if (urlInfo.Url[i] == '?')
-				{
-					urlInfo.Length = i - urlInfo.Start;
-					break;
-				}
-			}
-
-			// BeforeParseUrl is able to change the context, including the locale:
-			urlInfo = await Events.Page.BeforeParseUrl.Dispatch(context, urlInfo, searchQuery);
-
-			if (urlInfo.RedirectTo != null)
-			{
-				return new PageWithTokens() {
-					StatusCode = 302,
-					RedirectTo = urlInfo.RedirectTo
-				};
-			}
-
-			var ulc = _urlLookupCache;
-
-			if (ulc == null || ulc.Length < context.LocaleId || ulc[context.LocaleId - 1] == null)
-			{
-				var cacheSet = await LoadCaches(context);
-				ulc = cacheSet.LookupCache;
-			}
-
-			var cache = ulc[context.LocaleId - 1];
-
-			var pageInfo = await cache.GetPage(context, urlInfo, searchQuery, srcUrlInfo);
-
-			pageInfo = await Events.Page.BeforeResolveUrl.Dispatch(context, pageInfo, url, searchQuery);
-			pageInfo.UrlInfo = urlInfo;
-
-			if (pageInfo.PageTerminal == null && return404IfNotFound)
-			{
-				pageInfo.PageTerminal = cache.NotFoundTerminal;
-			}
-
-			return pageInfo;
-		}
-
-		/// <summary>
-		/// Cache must be available for this. It will be available if you previously made a call to GetPage.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <returns></returns>
-		public Page GetCachedNotFoundPage(Context context)
-		{
-			var cache = _urlLookupCache[context.LocaleId - 1];
-			return cache.NotFoundPage;
-		}
-
-		private async Task<PageCacheSet> LoadCaches(Context context)
-		{
-			// Get all pages for this locale:
-			var allPages = await Where(DataOptions.IgnorePermissions).ListAll(context);
-
-			var ugc = _urlGenerationCache;
-			var ulc = _urlLookupCache;
-
-			if (ugc == null)
-			{
-				// This cache is not locale sensitive as it exclusively uses the Url field which is not localised.
-
-				// Instance and wait for it to be created:
-				ugc = new UrlGenerationCache();
-
-				// Load now:
-				ugc.Load(allPages);
-
-				_urlGenerationCache = ugc;
-			}
-
-			// Setup url lookup cache as well:
-			var cache = new UrlLookupCache();
-
-			if (ulc == null)
-			{
-				// Create the cache:
-				ulc = new UrlLookupCache[context.LocaleId];
-			}
-			else if (ulc.Length < context.LocaleId)
-			{
-				// Resize the cache:
-				Array.Resize(ref ulc, (int)context.LocaleId);
-			}
-
-			// Add cache to lookup:
-			ulc[context.LocaleId - 1] = cache;
-			await cache.Load(context, allPages);
-			_urlLookupCache = ulc;
-
-			// Next, indicate that the cache has loaded. This is the event you'd use to add in things like custom redirect functions.
-			await Events.Page.AfterLookupReady.Dispatch(context, cache);
-
-
-			return new PageCacheSet()
-			{
-				LookupCache = ulc,
-				GenerationCache = ugc
-			};
-		}
-
-		/// <summary>
-		/// Gets the tree of raw pages for the given context. Don't modify the response.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <returns></returns>
-		public async ValueTask<UrlLookupCache> GetPageTree(Context context){
-
-			// Load the tree:
-			var ulc = _urlLookupCache;
-
-			if (ulc == null || ulc.Length < context.LocaleId || ulc[context.LocaleId - 1] == null)
-			{
-				var cacheSet = await LoadCaches(context);
-				ulc = cacheSet.LookupCache;
-			}
-
-			return ulc[context.LocaleId - 1];
-		}
-
-		/// <summary>
-		/// Gets the URL generation engine for the given piece of generic content. Pages are very often cached so this usually returns instantly.
-		/// </summary>
-		/// <param name="contentType">The contentType you want the meta for.</param>
-		/// <param name="scope">State which type of URL you want - either a frontend URL or admin panel. Default is frontend if not specified.</param>
-		/// <returns>A url which is relative to the site root.</returns>
-		public async ValueTask<UrlGenerationMeta> GetUrlGenerationMeta(Type contentType, UrlGenerationScope scope = null)
-		{
-			var ugc = await GetUrlGenerationCache();
-			var lookup = ugc.GetLookup(scope);
-			lookup.TryGetValue(contentType, out UrlGenerationMeta meta);
-			return meta;
-		}
-
-		/// <summary>
-		/// True if the given cache is stale.
-		/// </summary>
-		/// <param name="cache"></param>
-		/// <returns></returns>
-		public bool IsUrlCacheStale(UrlGenerationCache cache)
-		{
-			return cache != _urlGenerationCache;
-		}
-
-		/// <summary>
-		/// Gets the current URL generation cache. Creates one if it does not currently exist.
-		/// </summary>
-		/// <returns></returns>
-		public async ValueTask<UrlGenerationCache> GetUrlGenerationCache()
-		{
-			var c = _urlGenerationCache;
-			if (c == null)
-			{
-				var cacheSet = await LoadCaches(new Context());
-				c = cacheSet.GenerationCache;
-			}
-
-			return c;
+			Log.Warn(LogTag, "router cache was not updated (todo)");
 		}
 
 		/// <summary>
@@ -528,10 +286,15 @@ namespace Api.Pages
 		/// <param name="contentObject"></param>
 		/// <param name="scope">State which type of URL you want - either a frontend URL or admin panel. Default is frontend if not specified.</param>
 		/// <returns>A url which is relative to the site root.</returns>
-		public async ValueTask<string> GetUrl(Context context, object contentObject, UrlGenerationScope scope = null)
+		public string GetUrl(Context context, object contentObject, PageGroup scope = null)
 		{
-			var ugc = await GetUrlGenerationCache();
-			var lookup = ugc.GetLookup(scope);
+			if (scope == null)
+			{
+				scope = PageGroup.UI;
+			}
+
+			var router = Router.CurrentRouter;
+			var lookup = router.GetLookup(scope);
 
 			if (!lookup.TryGetValue(contentObject.GetType(), out UrlGenerationMeta meta))
 			{
@@ -575,7 +338,7 @@ namespace Api.Pages
 			
 			var listPage = new Page
 			{
-				Url = "/en-admin/" + typeNameLowercase,
+				Key = "admin_" + typeNameLowercase,
 				BodyJson = TemporaryBodyJson,
 				Title = "Edit or create " + tidyPluralName
 			};
@@ -636,10 +399,12 @@ namespace Api.Pages
 
 			var singlePage = new Page
 			{
-				Url = isEdit ? "/en-admin/" + typeNameLowercase + "/{" + typeNameLowercase + ".id}" : "/en-admin/" + typeNameLowercase + "/add",
+				Key = isEdit ? "admin_primary:" + typeNameLowercase : "admin_" + typeNameLowercase + "_add",
 				BodyJson = TemporaryBodyJson,
 				Title = isEdit ? "Editing " + tidySingularName.ToLower() + " #${" + typeNameLowercase + ".id}" : "Creating " + tidySingularName.ToLower()
 			};
+
+			// /${" + typeNameLowercase + ".id}
 
 			// Trigger an event to state that an admin page is being installed:
 			// - Use this event to inject additional nodes into the page, or change it however you'd like.
@@ -705,63 +470,40 @@ namespace Api.Pages
         }
 
 		/// <summary>
-		/// Installs the given page(s). It checks if they exist by their URL (or ID, if you provide that instead), and if not, creates them.
+		/// Installs the given page(s). It checks if they exist by their InstallKey, and if not, creates them.
 		/// </summary>
 		/// <param name="pages"></param>
 		private async ValueTask InstallInternal(params Page[] pages)
 		{
 			var context = new Context();
 
-			// Get the set of pages which we'll match by ID:
-			var idSet = pages.Where(page => page.Id != 0);
-
-			if (idSet.Any())
+			foreach (var page in pages)
 			{
-				IEnumerable<uint> ids = idSet.Select(Page => Page.Id);
-
-				// Get the pages by those IDs:
-				var existingPages = (await Where("Id=[?]", DataOptions.NoCacheIgnorePermissions)
-						.Bind(ids)
-						.ListAll(context)).ToDictionary(page => page.Id);
-
-				// For each page to consider for install..
-				foreach (var page in idSet)
+				if (string.IsNullOrEmpty(page.Key))
 				{
-					// If it doesn't already exist, create it.
-					if (!existingPages.ContainsKey(page.Id))
-					{
-						await Create(context, page, DataOptions.IgnorePermissions);
-					}
+					throw new ArgumentException("An InstallKey is required when installing a page.");
 				}
 			}
-				
-			// Get the set of pages which we'll match by URL:
-			var urlSet = pages.Where(page => page.Id == 0);
 
-			if (urlSet.Any())
+			// Get the pages by those keys:
+			var existingPages = (await Where("InstallKey=[?]", DataOptions.NoCacheIgnorePermissions)
+					.Bind(pages.Select(page => page.Key))
+					.ListAll(context));
+
+			var existingPagesLookup = new Dictionary<string, Page>();
+
+			foreach (var pg in existingPages)
 			{
-				IEnumerable<string> urls = urlSet.Select(Page => Page.Url);
+				existingPagesLookup[pg.Key] = pg;
+			}
 
-				// Get the pages by those URLs:
-				var existingPages = (await Where("Url=[?]", DataOptions.NoCacheIgnorePermissions)
-						.Bind(urls)
-						.ListAll(context));
-
-				var existingPagesLookup = new Dictionary<string, Page>();
-
-				foreach (var pg in existingPages)
+			// For each page to consider for install..
+			foreach (var page in pages)
+			{
+				// If it doesn't already exist, create it.
+				if (!existingPagesLookup.ContainsKey(page.Key))
 				{
-					existingPagesLookup[pg.Url] = pg;
-				}
-
-				// For each page to consider for install..
-				foreach (var page in urlSet)
-				{
-					// If it doesn't already exist, create it.
-					if (!existingPagesLookup.ContainsKey(page.Url))
-					{
-						await Create(context, page, DataOptions.IgnorePermissions);
-					}
+					await Create(context, page, DataOptions.IgnorePermissions);
 				}
 			}
 		}

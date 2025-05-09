@@ -31,7 +31,8 @@ namespace Api.Pages
 		{
 			_htmlService = htmlService;
 		}
-
+		
+		/*
 		/// <summary>
 		/// Lists all available static files.
 		/// </summary>
@@ -44,6 +45,7 @@ namespace Api.Pages
 
 			await _htmlService.BuildMobileHomePage(context, response.Body, mobileMeta);
 		}
+		*/
 
 		/// <summary>
 		/// RTE config popup base HTML.

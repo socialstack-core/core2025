@@ -18,6 +18,16 @@ public class Router
 	public static Router CurrentRouter;
 
 	/// <summary>
+	/// True if the given router is not the current one.
+	/// </summary>
+	/// <param name="router"></param>
+	/// <returns></returns>
+	public static bool IsStale(Router router)
+	{
+		return router != CurrentRouter;
+	}
+
+	/// <summary>
 	/// Max number of tokens allowed in a URL.
 	/// </summary>
 	public static readonly int MaxTokenCount = 4;
@@ -142,13 +152,23 @@ public class Router
 				var finalTerminal = current.FindChildNode(path);
 
 				// Is current a capture token?
-				if (finalTerminal != null && finalTerminal.Capture)
+				if (finalTerminal != null)
 				{
-					// Yes - store the child segment as a token.
-					// It is assumed that URLs that have too many tokens are never added to the tree
-					// to minimise logic on the hot path as much as possible.
-					tokenSet[tokenCount] = new TokenMarker(pathStartIndex, pathMax - pathStartIndex);
-					tokenCount++;
+					if (finalTerminal.IsRewrite)
+					{
+						// It's a rewrite. Tokens are reset to the contents of the rewrite node.
+						var rewrite = (TerminalRewriteNode)finalTerminal;
+						finalTerminal = rewrite.GoTo as IntermediateNode;
+						tokenCount = rewrite.ReplaceTokens(ref tokenSet);
+					}
+					else if (finalTerminal.Capture)
+					{
+						// Yes - store the child segment as a token.
+						// It is assumed that URLs that have too many tokens are never added to the tree
+						// to minimise logic on the hot path as much as possible.
+						tokenSet[tokenCount] = new TokenMarker(pathStartIndex, pathMax - pathStartIndex);
+						tokenCount++;
+					}
 				}
 
 				var terminal = finalTerminal as TerminalNode;
@@ -180,10 +200,16 @@ public class Router
 				return new ValueTask<bool>(false);
 			}
 
-			// Is current a capture token?
-			if (next.Capture)
+			if (next.IsRewrite)
 			{
-				// Yes - store the child segment as a token.
+				// It's a rewrite. Tokens are reset to the contents of the rewrite node.
+				var rewrite = (TerminalRewriteNode)next;
+				next = rewrite.GoTo as IntermediateNode;
+				tokenCount = rewrite.ReplaceTokens(ref tokenSet);
+			}
+			else if (next.Capture) 
+			{
+				// It's a capture token - store the child segment as a token.
 				// It is assumed that URLs that have too many tokens are never added to the tree
 				// to minimise logic on the hot path as much as possible.
 				tokenSet[tokenCount] = new TokenMarker(pathStartIndex, index);
@@ -205,6 +231,10 @@ public class Router
 public struct TokenMarker
 {
 	/// <summary>
+	/// Index in the lookup, if this token is a static one.
+	/// </summary>
+	public readonly int LookupIndex;
+	/// <summary>
 	/// The start of the token region
 	/// </summary>
 	public readonly int Start;
@@ -219,9 +249,11 @@ public struct TokenMarker
 	/// </summary>
 	/// <param name="start"></param>
 	/// <param name="length"></param>
-	public TokenMarker(int start, int length)
+	/// <param name="lookupIndex"></param>
+	public TokenMarker(int start, int length, int lookupIndex = -1)
 	{
 		Start = start;
 		Length = length;
+		LookupIndex = lookupIndex;
 	}
 }

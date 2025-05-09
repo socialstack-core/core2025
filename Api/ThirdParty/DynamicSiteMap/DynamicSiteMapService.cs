@@ -31,7 +31,6 @@ namespace Api.DynamicSiteMap
         private readonly PageService _pageService;
         private readonly FrontendCodeService _frontend;
         private readonly LocaleService _locales;
-        private readonly SiteDomainService _siteDomainService;
         private Capability _pageLoadCapability;
 
         private HashSet<string> _processedPages = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
@@ -52,12 +51,11 @@ namespace Api.DynamicSiteMap
         /// <summary>
         /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
         /// </summary>
-        public DynamicSiteMapService(PageService pageService, FrontendCodeService frontend, LocaleService localeService, SiteDomainService siteDomainService)
+        public DynamicSiteMapService(PageService pageService, FrontendCodeService frontend, LocaleService localeService)
         {
             _pageService = pageService;
             _frontend = frontend;
             _locales = localeService;
-            _siteDomainService = siteDomainService;
 
             _pageLoadCapability = Events.Page.GetLoadCapability();
 			_cfg = GetConfig<DynamicSiteMapServiceConfig>();
@@ -281,29 +279,6 @@ namespace Api.DynamicSiteMap
                     url = url.Length > urlLocale.PagePath.Length + 1 ? url.Substring(urlLocale.PagePath.Length + 1) : "";
                 }
             }
-            else if (_cfg.UseSiteDomains)
-            {
-                // if using site domains all pages will be linked to a domain 
-                // normally "core" is the main/default site domain code
-                siteMapKey = "core";
-
-                // are we processing a sub domain 
-                var urlDomain = _siteDomainService.GetByUrl(pageDocument.Url + "/");
-                if (urlDomain != null && !string.IsNullOrWhiteSpace(urlDomain.Code))
-                {
-                    // get the domain related code, all domains should have a value
-                    siteMapKey = urlDomain.Code;
-                }
-
-                // get the domain settings
-                urlDomain = _siteDomainService.GetByCode(siteMapKey);
-
-                // do we auto generate a sitemap for this domain 
-                if (urlDomain != null && urlDomain.ExcludeFromSiteMap)
-                {
-                    return false;
-                }
-            }
 
             // get a full resolved url
             url = GetUrl(url, ctx.LocaleId);
@@ -416,24 +391,6 @@ namespace Api.DynamicSiteMap
                 return url;
             }
 
-            if (_cfg.UseSiteDomains)
-            {
-                // add trailing '/' to cater for root pages such as /{domain}
-                var urlDomain = _siteDomainService.GetByUrl(url + "/");
-                if (urlDomain != null)
-                {
-                    // swap the domain prefix for the url
-                    return UrlCombine($"https://{urlDomain.Domain}", url.Substring(urlDomain.Code.Length + 1));
-                }
-
-                urlDomain = _siteDomainService.GetByCode("core");
-                if (urlDomain != null)
-                {
-                    // swap the domain prefix for the url
-                    return UrlCombine($"https://{urlDomain.Domain}", url);
-                }
-            }
-
             return UrlCombine(_frontend.GetPublicUrl(localeId), url);
         }
 
@@ -474,13 +431,8 @@ namespace Api.DynamicSiteMap
 
             // update master with link back to sub file
             _masterSiteMapContent[prefix].AppendLine("<url>");
-
-            if (_cfg.UseSiteDomains)
-            {
-                var siteDomain = _siteDomainService.GetByCode(prefix);
-                _masterSiteMapContent[prefix].AppendLine($"<loc>https://{siteDomain.Domain}/sitemap{mapFilePrefix}.xml</loc>");
-            }
-            else if (_cfg.UseLocaleDomains)
+            
+            if (_cfg.UseLocaleDomains)
             {
                 uint id = uint.Parse(prefix);
                 _masterSiteMapContent[prefix].AppendLine($"<loc>{GetUrl($"sitemap{mapFilePrefix}.xml", id)}</loc>");
