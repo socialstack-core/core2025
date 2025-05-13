@@ -607,41 +607,24 @@ namespace Api.Startup
 						if (!string.IsNullOrEmpty(filterString))
 						{
 
-							var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(FilterBase), FieldAttributes.Private);
+							var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(RandomBoolGenerator), FieldAttributes.Private);
 
-							// Emit code for the constructor body
-							constructorBody.Emit(OpCodes.Ldarg_0); 
-							// Stack: [this] — load "this" (the object being constructed)
-
-							constructorBody.Emit(OpCodes.Ldarg_1); 
-							// Stack: [this, service] — load first argument (AutoService instance)
-
+							
+							constructorBody.Emit(OpCodes.Ldarg_0);
+							constructorBody.Emit(OpCodes.Ldarg_1);
 							constructorBody.Emit(OpCodes.Ldstr, filterString); 
-							// Stack: [this, service, filterString] — load the filter string
-
 							constructorBody.Emit(OpCodes.Ldc_I4_1); 
-							// Stack: [this, service, filterString, true] — load boolean true (int 1)
-
 							constructorBody.Emit(OpCodes.Callvirt,
 								typeof(AutoService).GetMethod(
-									nameof(AutoService.GetGeneralFilterFor),
+									nameof(AutoService.GetGeneralFilterFor), 
 									BindingFlags.Instance | BindingFlags.Public,
-									[ typeof(string), typeof(bool) ]
+									[
+										typeof (string), typeof(bool)
+									]
 								)
 							);
-							// Stack before Callvirt: [this, service, filterString, true]
-							// The method is called on 'service' (AutoService instance), with string and bool as arguments
-							// Callvirt pops: service, filterString, true
-							// Pushes the result of GetGeneralFilterFor() (a FilterBase)
-							// Stack after Callvirt: [this, resultOfGetGeneralFilterFor]
 
-							constructorBody.Emit(OpCodes.Stfld, fieldBuilder); 
-							// Pops: [this, resultOfGetGeneralFilterFor]
-							// Assigns the result to the private field defined above
-							// Stack is now empty
-
-							// there there is a bool thats been added to the stack, its now looking like [bool]
-							// true.filter_whatever is incorrect?
+							
 							constructorBody.Emit(OpCodes.Stfld, fieldBuilder);
 							
 							
@@ -1045,5 +1028,17 @@ namespace Api.Startup
 		/// </summary>
 		public AutoService Service;
 	}
+
+	
+
+		public class RandomBoolGenerator
+		{
+			private static readonly Random _random = new Random();
+		
+			public bool GetRandomBool(Context context, object value, bool isIncludes)
+			{
+				return context.UserId != 1; // where user #1 is your admin user account lol
+			}
+		}
 
 }
