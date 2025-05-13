@@ -246,13 +246,14 @@ public class Content : Executor
 		where T : Content<ID>, new()
 		where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 	{
-		var jsonStructure = await svc.GetTypedJsonStructure(new Context());
+		var ctxt = new Context();
+		var jsonStructure = await svc.GetTypedJsonStructure(ctxt);
 
 		var tio = jsonStructure.TypeIO;
 
 		if (tio == null)
 		{
-			jsonStructure.TypeIO = tio = TypeIOEngine.Generate(jsonStructure, svc);
+			jsonStructure.TypeIO = tio = TypeIOEngine.Generate(jsonStructure, svc, ctxt);
 		}
 
 		_typeReadWrite = tio;

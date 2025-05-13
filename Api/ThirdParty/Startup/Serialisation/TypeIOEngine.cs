@@ -1,11 +1,13 @@
 using Api.Contexts;
 using Api.Database;
+using Api.Permissions;
 using Api.SocketServerLibrary;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading.Tasks;
 
 namespace Api.Startup
 {
@@ -24,7 +26,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Generates a system native write for the given structure.
 		/// </summary>
-		public static TypeReaderWriter<T> Generate<T, ID>(JsonStructure<T,ID> fieldSet, AutoService service)
+		public static TypeReaderWriter<T> Generate<T, ID>(JsonStructure<T,ID> fieldSet, AutoService service, Context context)
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 		{
@@ -32,7 +34,7 @@ namespace Api.Startup
 			{
 				fieldSet
 			};
-			return Generate(set, service)[0];
+			return Generate(set, service, context)[0];
 		}
 
 		/// <summary>
@@ -423,7 +425,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Generates a system native write for the given structures. This list will usually be the list of all roles for a type on the first run.
 		/// </summary>
-		public static List<TypeReaderWriter<T>> Generate<T, ID>(List<JsonStructure<T, ID>> fieldSets, AutoService service)
+		public static List<TypeReaderWriter<T>> Generate<T, ID>(List<JsonStructure<T, ID>> fieldSets, AutoService service, Context context)
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 		{
@@ -506,6 +508,15 @@ namespace Api.Startup
 
 				// Write the header:
 				header.Write(writerBody);
+
+				var fieldService = Services.Get<ContentFieldAccessRuleService>();
+
+				var fields = Task.Run(() => 
+					fieldService.Where("RoleId = ? and EntityName = ?")
+								.Bind(context.RoleId)
+								.Bind(typeof(T).Name)
+								.ListAll(new(1, 1, 1))
+				).GetAwaiter().GetResult().Result;
 				
 				if (set.ReadableFields != null){
 
@@ -562,8 +573,28 @@ namespace Api.Startup
 
 						var fieldName = field.Name;
 						var lowercaseFirst = char.ToLower(fieldName[0]) + fieldName.Substring(1);
+
+						var matchingField = fields.Find(rule => rule.FieldName == lowercaseFirst);
+
+						bool? constTrueOrFalse = null;
+						string filterString = null;
 						
-						var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(RandomBoolGenerator), FieldAttributes.Private);
+						if(matchingField is null || string.IsNullOrEmpty(matchingField.CanRead)){
+							constTrueOrFalse = field.Readable;
+						}else if( matchingField.CanRead == "true"){
+							constTrueOrFalse = true;
+						}else if( matchingField.CanRead == "false"){
+							constTrueOrFalse = false;
+						}else{
+							// will be a full filter obj
+							filterString = matchingField.CanRead;
+						}
+
+						if (constTrueOrFalse.HasValue && constTrueOrFalse.Value == false)
+						{
+							// This field is not for us.
+							continue;
+						}
 
 						// The field name:
 						var property = AddField(typeBuilder, fieldsToInit, ",\"" + lowercaseFirst + "\":");
@@ -571,37 +602,60 @@ namespace Api.Startup
 						// Define a label for the end of the conditional block
 						var endOfIfLabel = writerBody.DefineLabel();
 
-						// Create a new instance of RandomBoolGenerator and push it onto the stack
-						constructorBody.Emit(OpCodes.Ldarg_0);
-						constructorBody.Emit(OpCodes.Newobj, typeof(RandomBoolGenerator).GetConstructor(Type.EmptyTypes));
-						constructorBody.Emit(OpCodes.Stfld, fieldBuilder);
-
-						
-						// Get the MethodInfo for RandomBoolGenerator.GetRandomBool
-						var getRandomBoolMethod = typeof(RandomBoolGenerator).GetMethod("GetRandomBool", BindingFlags.Public | BindingFlags.Instance, [
-							typeof(Context),
-							typeof(object),
-							typeof(bool)
-						]);
-
 						// this/instance
 						
-						writerBody.Emit(OpCodes.Ldarg_0); // this
-						writerBody.Emit(OpCodes.Ldfld, fieldBuilder); // .filter_whatever
+						if (!string.IsNullOrEmpty(filterString))
+						{
 
-						
-						writerBody.Emit(OpCodes.Ldarg_3); // context
-						writerBody.Emit(OpCodes.Ldarg_1); // the object
-						writerBody.Emit(OpCodes.Ldarg, 4); // isIncluded
+							var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(FilterBase), FieldAttributes.Private);
 
-						
+							// Emit code for the constructor body
+							constructorBody.Emit(OpCodes.Ldarg_0); 
+							// Stack: [this] — load "this" (the object being constructed)
 
-						// Call the RandomBoolGenerator.GetRandomBool method with the third argument
-						writerBody.Emit(OpCodes.Callvirt, getRandomBoolMethod);
-						
-						// Branch if false (skip the block if the condition is false)
-						writerBody.Emit(OpCodes.Brfalse, endOfIfLabel);
-						
+							constructorBody.Emit(OpCodes.Ldarg_1); 
+							// Stack: [this, service] — load first argument (AutoService instance)
+
+							constructorBody.Emit(OpCodes.Ldstr, filterString); 
+							// Stack: [this, service, filterString] — load the filter string
+
+							constructorBody.Emit(OpCodes.Ldc_I4_1); 
+							// Stack: [this, service, filterString, true] — load boolean true (int 1)
+
+							constructorBody.Emit(OpCodes.Callvirt,
+								typeof(AutoService).GetMethod(
+									nameof(AutoService.GetGeneralFilterFor),
+									BindingFlags.Instance | BindingFlags.Public,
+									[ typeof(string), typeof(bool) ]
+								)
+							);
+							// Stack before Callvirt: [this, service, filterString, true]
+							// The method is called on 'service' (AutoService instance), with string and bool as arguments
+							// Callvirt pops: service, filterString, true
+							// Pushes the result of GetGeneralFilterFor() (a FilterBase)
+							// Stack after Callvirt: [this, resultOfGetGeneralFilterFor]
+
+							constructorBody.Emit(OpCodes.Stfld, fieldBuilder); 
+							// Pops: [this, resultOfGetGeneralFilterFor]
+							// Assigns the result to the private field defined above
+							// Stack is now empty
+
+							// there there is a bool thats been added to the stack, its now looking like [bool]
+							// true.filter_whatever is incorrect?
+							constructorBody.Emit(OpCodes.Stfld, fieldBuilder);
+							
+							
+
+							writerBody.Emit(OpCodes.Ldarg_0); // this
+							writerBody.Emit(OpCodes.Ldfld, fieldBuilder); // .filter_whatever
+							writerBody.Emit(OpCodes.Ldarg_3); // context
+							writerBody.Emit(OpCodes.Ldarg_1); // the object
+							writerBody.Emit(OpCodes.Ldarg, 4); // isIncluded
+							writerBody.Emit(OpCodes.Callvirt, typeof(FilterBase).GetMethod(nameof(FilterBase.Match), BindingFlags.Instance | BindingFlags.Public, [typeof(Context), typeof(object), typeof(bool) ]));
+							
+							// Branch if false (skip the block if the condition is false)
+							writerBody.Emit(OpCodes.Brfalse, endOfIfLabel);
+						}	
 						// Code to execute if the condition is true
 						// ,"fieldName":
 						property.Write(writerBody);
@@ -991,17 +1045,5 @@ namespace Api.Startup
 		/// </summary>
 		public AutoService Service;
 	}
-
-	
-
-		public class RandomBoolGenerator
-		{
-			private static readonly Random _random = new Random();
-		
-			public bool GetRandomBool(Context context, object value, bool isIncludes)
-			{
-				return context.UserId != 1; // where user #1 is your admin user account lol
-			}
-		}
 
 }

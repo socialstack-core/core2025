@@ -72,11 +72,12 @@ namespace Api.CanvasRenderer
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 		{
-			var jsonStructure = await svc.GetTypedJsonStructure(new Context());
+			var ctxt = new Context();
+			var jsonStructure = await svc.GetTypedJsonStructure(ctxt);
 
 			if (jsonStructure.TypeIO == null)
 			{
-				jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, svc);
+				jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, svc, ctxt);
 			}
 
 			_typeReadWrite = jsonStructure.TypeIO;
