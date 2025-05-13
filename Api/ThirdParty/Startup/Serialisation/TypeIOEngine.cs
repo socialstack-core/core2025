@@ -518,10 +518,10 @@ namespace Api.Startup
 								.ListAll(new(1, 1, 1))
 				).GetAwaiter().GetResult().Result;
 				
-				if (set.ReadableFields != null){
+				if (set.Fields != null){
 
 					// Add each field
-					foreach(var field in set.ReadableFields)
+					foreach(var field in set.Fields.Values)
 					{
 						if(field == null || field.Name == "Type")
 						{
