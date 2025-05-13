@@ -42,10 +42,11 @@ namespace Api.Pages
 		public string Description;
 
 		/// <summary>
-		/// Prevent this page from being indexed by search crawlers.
+		/// Allow this page from being indexed by search crawlers. 
+		/// It is opt-in to avoid any automatic indexing of private pages.
 		/// </summary>
-		[Data("hint", "Prevent search crawlers from indexing this page")]
-		public bool NoIndex;
+		[Data("hint", "Allow search crawlers and the sitemap to index this page")]
+		public bool CanIndex;
 
 		/// <summary>
 		/// Prevent links on this page from being followed by search crawlers.
@@ -58,6 +59,11 @@ namespace Api.Pages
 		/// Typically happens on the homepage.
 		/// </summary>
 		public bool PreferIfLoggedIn;
+
+		/// <summary>
+		/// A temporarily held URL value which is used during page creation to create a new permalink.
+		/// </summary>
+		public string Url { get; set; }
 	}
 	
 }

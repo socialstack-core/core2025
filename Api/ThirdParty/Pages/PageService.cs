@@ -9,6 +9,7 @@ using Api.CanvasRenderer;
 using System.Reflection;
 using System.Reflection.Metadata;
 using Api.Startup.Routing;
+using Api.Automations;
 
 namespace Api.Pages
 {
@@ -34,6 +35,7 @@ namespace Api.Pages
 				Install(
 					new Page()
 					{
+						Url = "/",
 						Key = "home",
 						Title = "Homepage",
 						BodyJson = @"{
@@ -47,6 +49,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
+						Url = "/en-admin/",
 						Key = "admin",
 						Title = "Welcome to the admin area",
 						BodyJson = @"{
@@ -57,6 +60,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
+						Url = "/en-admin/login",
 						Key = "admin_login",
 						Title = "Login to the admin area",
 						BodyJson = @"{
@@ -77,6 +81,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
+						Url = "/en-admin/stdout",
 						Key = "admin_stdout",
 						Title = "Server log monitoring",
 						BodyJson = @"{
@@ -90,6 +95,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
+						Url = "/en-admin/stress",
 						Key = "admin_stress",
 						Title = "Stress testing the API",
 						BodyJson = @"{
@@ -103,6 +109,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
+						Url = "/en-admin/database",
 						Key = "admin_database",
 						Title = "Developer Database Access",
 						BodyJson = @"{
@@ -116,6 +123,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
+						Url = "/en-admin/register",
 						Key = "admin_register",
 						Title = "Create a new account",
 						BodyJson = @"{
@@ -136,6 +144,7 @@ namespace Api.Pages
 					},
 					new Page()
 					{
+						Url = "/en-admin/permissions",
 						Key = "admin_permissions",
 						Title = "Permissions",
 						BodyJson = @"{
@@ -198,16 +207,6 @@ namespace Api.Pages
 					}
 
 				return ValueTask.FromResult(page);
-			});
-
-			Events.Page.BeforeCreate.AddEventListener((Context context, Page page) =>
-			{
-				if (string.IsNullOrEmpty(page.Url))
-				{
-					throw new PublicException("A url is required. If you're making a homepage, use /", "page_url_required");
-				}
-
-				return new ValueTask<Page>(page);
 			});
 
 			Events.Page.AfterUpdate.AddEventListener((Context context, Page page) =>
@@ -280,35 +279,48 @@ namespace Api.Pages
 		}
 
 		/// <summary>
-		/// Gets the URL for the given piece of generic content. Pages are very often cached so this usually returns instantly.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="contentObject"></param>
-		/// <param name="scope">State which type of URL you want - either a frontend URL or admin panel. Default is frontend if not specified.</param>
-		/// <returns>A url which is relative to the site root.</returns>
-		public string GetUrl(Context context, object contentObject, PageGroup scope = null)
-		{
-			if (scope == null)
-			{
-				scope = PageGroup.UI;
-			}
-
-			var router = Router.CurrentRouter;
-			var lookup = router.GetLookup(scope);
-
-			if (!lookup.TryGetValue(contentObject.GetType(), out UrlGenerationMeta meta))
-			{
-				// URL is unknown.
-				return "/";
-			}
-
-			return meta.Generate(contentObject);
-		}
-
-		/// <summary>
 		/// Used as a temporary piece of JSON when setting up admin pages to help avoid people setting the bodyJson field incorrectly.
 		/// </summary>
 		private readonly string TemporaryBodyJson = "{\"content\":\"Don't set this field - its about to be overwritten by the contents of the Canvas object that you've been given.\"}";
+
+		/// <summary>
+		/// Installs a singular general use admin panel page. The url given is relative to the admin home (usually /en-admin/).
+		/// </summary>
+		/// <returns></returns>
+		public async ValueTask InstallAdminPage(string relativeUrl, string title, CanvasNode pageCanvas, Type contentObjectType = null, AdminPageType pageType = null)
+		{
+			if (relativeUrl == null)
+			{
+				relativeUrl = "";
+			}
+
+			if (pageType == null)
+			{
+				pageType = AdminPageType.Generic;
+			}
+
+			var context = new Context();
+
+			if (!relativeUrl.StartsWith("/"))
+			{
+				relativeUrl = "/" + relativeUrl;
+			}
+
+			var adminPage = new Page
+			{
+				Url = "/en-admin" + relativeUrl,
+				Key = "admin" + (relativeUrl == "/" ? "" :  relativeUrl.ToLower().Replace('/', '_')),
+				BodyJson = "",
+				Title = title
+			};
+
+			// Trigger an event to state that an admin page is being installed:
+			// - Use this event to inject additional nodes into the page, or change it however you'd like.
+			adminPage = await Events.Page.BeforeAdminPageInstall.Dispatch(context, adminPage, pageCanvas, contentObjectType, pageType);
+			adminPage.BodyJson = pageCanvas.ToJson();
+
+			await InstallInternal(context, adminPage);
+		}
 
 		/// <summary>
 		/// Installs generic admin pages using the given fields to display on the list page.
@@ -338,6 +350,7 @@ namespace Api.Pages
 			
 			var listPage = new Page
 			{
+				Url = "/en-admin/" + typeNameLowercase,
 				Key = "admin_" + typeNameLowercase,
 				BodyJson = TemporaryBodyJson,
 				Title = "Edit or create " + tidyPluralName
@@ -356,12 +369,11 @@ namespace Api.Pages
 			var addPage = await CreateSinglePage(context, type, childAdminPage, false);
 
 			await InstallInternal(
+				context,
 				listPage,
 				editPage,
 				addPage
 			);
-
-			await DeleteOldInternal(typeNameLowercase);
 		}
 
 		private async ValueTask<Page> CreateSinglePage(Context context, Type type, ChildAdminPageOptions childAdminPage, bool isEdit)
@@ -399,6 +411,7 @@ namespace Api.Pages
 
 			var singlePage = new Page
 			{
+				Url = "/en-admin/" + typeNameLowercase + "/" + (isEdit ? "${" + typeNameLowercase + ".id}" : "add"),
 				Key = isEdit ? "admin_primary:" + typeNameLowercase : "admin_" + typeNameLowercase + "_add",
 				BodyJson = TemporaryBodyJson,
 				Title = isEdit ? "Editing " + tidySingularName.ToLower() + " #${" + typeNameLowercase + ".id}" : "Creating " + tidySingularName.ToLower()
@@ -433,60 +446,60 @@ namespace Api.Pages
 			{
 				Task.Run(async () =>
 				{
-					await InstallInternal(pages);
+					await InstallInternal(new Context(), pages);
 				});
 			}
 			else
 			{
 				Events.Service.AfterStart.AddEventListener(async (Context ctx, object src) =>
 				{
-					await InstallInternal(pages);
+					await InstallInternal(ctx, pages);
 					return src;
 				});
 			}
 		}
-			
+		
+		private uint? _adminHomePageId;
+
 		/// <summary>
-		/// Used to uninstall internal pages that were once in use such as /en-admin/typeName/:id or /en-admin/typeName/:adminId
+		/// Gets the ID of the admin panel homepage.
 		/// </summary>
-		/// <param name="typeName"></param>
+		/// <param name="context"></param>
 		/// <returns></returns>
-		private async ValueTask DeleteOldInternal(string typeName)
-        {
-			var context = new Context();
+		private async ValueTask<uint?> GetAdminHomeId(Context context)
+		{
+			if (_adminHomePageId.HasValue)
+			{
+				return _adminHomePageId.Value;
+			}
 
-			// We need to look for both old types.
-			var adminIdUrl = "/en-admin/" + typeName + "/:adminId";
-			var oldIdUrl = "/en-admin/" + typeName + "/:id";
+			var adminHome = await Where("Key=?", DataOptions.NoCacheIgnorePermissions).Bind("admin").First(context);
 
-			// Get any pages by those URLs:
-			var pages = await Where("Url=? or Url=?", DataOptions.NoCacheIgnorePermissions).Bind(adminIdUrl).Bind(oldIdUrl).ListAll(context);
+			if (adminHome != null)
+			{
+				_adminHomePageId = adminHome.Id;
+			}
 
-			foreach (var page in pages)
-            {
-				// If we have any pages from the previous hit, time to delete them!
-				await Delete(context, page.Id, DataOptions.IgnorePermissions);
-            }
-        }
+			return _adminHomePageId;
+		}
 
 		/// <summary>
 		/// Installs the given page(s). It checks if they exist by their InstallKey, and if not, creates them.
 		/// </summary>
+		/// <param name="context"></param>
 		/// <param name="pages"></param>
-		private async ValueTask InstallInternal(params Page[] pages)
+		private async ValueTask InstallInternal(Context context, params Page[] pages)
 		{
-			var context = new Context();
-
 			foreach (var page in pages)
 			{
 				if (string.IsNullOrEmpty(page.Key))
 				{
-					throw new ArgumentException("An InstallKey is required when installing a page.");
+					throw new ArgumentException("A Key is required when installing a page.");
 				}
 			}
 
 			// Get the pages by those keys:
-			var existingPages = (await Where("InstallKey=[?]", DataOptions.NoCacheIgnorePermissions)
+			var existingPages = (await Where("Key=[?]", DataOptions.NoCacheIgnorePermissions)
 					.Bind(pages.Select(page => page.Key))
 					.ListAll(context));
 

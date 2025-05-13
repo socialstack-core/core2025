@@ -1,16 +1,10 @@
-using Amazon.S3;
 using Api.AvailableEndpoints;
-using Api.CanvasRenderer;
 using Api.Contexts;
 using Api.Database;
 using Api.Eventing;
-using HtmlAgilityPack;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.AspNetCore.Routing;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -53,6 +47,11 @@ public class RouterBuilder
 				NodesByVerb[i] = copyFrom.NodesByVerb[i].Clone();
 			}
 		}
+
+		NodesByVerb[0].HttpVerb = "GET";
+		NodesByVerb[1].HttpVerb = "POST";
+		NodesByVerb[2].HttpVerb = "DELETE";
+		NodesByVerb[3].HttpVerb = "PUT";
 	}
 
 	/// <summary>
@@ -200,8 +199,7 @@ public class RouterBuilder
 		}
 
 		var tree = NodesByVerb[verbIndex];
-
-		tree.AddRoute(route, method, controllerInstance, httpVerb);
+		tree.AddRoute(route, method, controllerInstance);
 	}
 
 	/// <summary>
@@ -212,8 +210,26 @@ public class RouterBuilder
 	public void AddRewrite(string from, string to)
 	{
 		var route = from.Trim().ToLower();
-		var tree = NodesByVerb[GetVerbIndex("GET")];
-		tree.AddRewrite(from, to);
+		GetGetNode().AddRewrite(from, to);
+	}
+
+	/// <summary>
+	/// Gets a builder node by uppercase verb, e.g. "GET".
+	/// </summary>
+	/// <param name="verb"></param>
+	/// <returns></returns>
+	public BuilderNode GetVerbNode(string verb)
+	{
+		return NodesByVerb[GetVerbIndex(verb)];
+	}
+	
+	/// <summary>
+	/// Gets the "GET" builder node.
+	/// </summary>
+	/// <returns></returns>
+	public BuilderNode GetGetNode()
+	{
+		return NodesByVerb[GetVerbIndex("GET")];
 	}
 
 	/// <summary>
@@ -226,6 +242,190 @@ public class RouterBuilder
 		var route = from.Trim().ToLower();
 		var tree = NodesByVerb[GetVerbIndex("GET")];
 		tree.AddRedirect(from, to);
+	}
+
+}
+
+/// <summary>
+/// The behaviour for a router terminal.
+/// </summary>
+public class TerminalBehaviour 
+{
+
+	/// <summary>
+	/// Clones this behaviour.
+	/// </summary>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
+	public virtual TerminalBehaviour Clone()
+	{
+		throw new NotImplementedException();
+	}
+
+	/// <summary>
+	/// True if the behaviours are the same type and target.
+	/// </summary>
+	/// <returns></returns>
+	public virtual bool Equals(TerminalBehaviour behaviour)
+	{
+		return false;
+	}
+
+	/// <summary>
+	/// Constructs this node in to a readonly tree node.
+	/// </summary>
+	/// <returns></returns>
+	public virtual TerminalNode Build(BuilderNode node)
+	{
+		throw new NotImplementedException();
+	}
+
+}
+
+/// <summary>
+/// Used to create a redirection.
+/// </summary>
+public class TerminalRedirect  : TerminalBehaviour 
+{
+
+	/// <summary>
+	/// The redirection target.
+	/// </summary>
+	public string RedirectTo;
+
+	/// <summary>
+	/// Creates a new terminal redirect.
+	/// </summary>
+	/// <param name="redirectTo"></param>
+	public TerminalRedirect(string redirectTo)
+	{
+		RedirectTo = redirectTo;
+	}
+
+	/// <summary>
+	/// Clones this behaviour.
+	/// </summary>
+	/// <returns></returns>
+	public override TerminalBehaviour Clone()
+	{
+		return new TerminalRedirect(RedirectTo);
+	}
+
+	/// <summary>
+	/// True if the behaviours are the same type and target.
+	/// </summary>
+	/// <returns></returns>
+	public override bool Equals(TerminalBehaviour behaviour)
+	{
+		var node = behaviour as TerminalRedirect;
+		return node != null && node.RedirectTo == RedirectTo;
+	}
+
+	/// <summary>
+	/// Constructs this node in to a readonly tree node.
+	/// </summary>
+	/// <returns></returns>
+	public override TerminalNode Build(BuilderNode node)
+	{
+		return new TerminalRedirectNode(
+				node.BuildChildren(),
+				RedirectTo,
+				node.IsToken ? null : node.Text,
+				node.FullRoute
+			);
+	}
+
+}
+
+/// <summary>
+/// Used to create an API endpoint.
+/// </summary>
+public class TerminalMethod  : TerminalBehaviour 
+{
+
+	/// <summary>
+	/// The redirection target.
+	/// </summary>
+	public MethodInfo Method;
+
+	/// <summary>
+	/// Creates a new terminal method.
+	/// </summary>
+	/// <param name="method"></param>
+	public TerminalMethod(MethodInfo method)
+	{
+		Method = method;
+	}
+
+	/// <summary>
+	/// Clones this behaviour.
+	/// </summary>
+	/// <returns></returns>
+	public override TerminalBehaviour Clone()
+	{
+		return new TerminalMethod(Method);
+	}
+
+	/// <summary>
+	/// True if the behaviours are the same type and target.
+	/// </summary>
+	/// <returns></returns>
+	public override bool Equals(TerminalBehaviour behaviour)
+	{
+		var mtd = behaviour as TerminalMethod;
+		return mtd != null && mtd.Method == Method;
+	}
+
+	/// <summary>
+	/// Constructs this node in to a readonly tree node.
+	/// </summary>
+	/// <returns></returns>
+	public override TerminalNode Build(BuilderNode node)
+	{
+		return node.BuildTerminalMethodNode(Method);
+	}
+
+}
+
+/// <summary>
+/// A rewrite at this node.
+/// </summary>
+public class TerminalRewrite  : TerminalBehaviour 
+{
+	/// <summary>
+	/// A node to rewrite this request to. 
+	/// Effectively teleports to the targeted node, replacing the 
+	/// current token state with the ones in this rewrite metadata.
+	/// </summary>
+	public BuilderResolvedRoute? Rewrite;
+
+	/// <summary>
+	/// Creates a new terminal method.
+	/// </summary>
+	/// <param name="rewrite"></param>
+	public TerminalRewrite(BuilderResolvedRoute? rewrite)
+	{
+		Rewrite = rewrite;
+	}
+
+	/// <summary>
+	/// True if the behaviours are the same type and target.
+	/// </summary>
+	/// <returns></returns>
+	public override bool Equals(TerminalBehaviour behaviour)
+	{
+		var node = behaviour as TerminalRewrite;
+		// Not accurate but it achieves the goal for now!
+		return node != null && node.Rewrite != null && Rewrite != null;
+	}
+
+	/// <summary>
+	/// Clones this behaviour.
+	/// </summary>
+	/// <returns></returns>
+	public override TerminalBehaviour Clone()
+	{
+		return new TerminalRewrite(Rewrite);
 	}
 
 }
@@ -247,21 +447,9 @@ public class BuilderNode
 	public object ControllerInstance;
 
 	/// <summary>
-	/// The terminal method, if it has one.
+	/// The terminal behaviour, if this node has one.
 	/// </summary>
-	public MethodInfo TerminalMethod;
-
-	/// <summary>
-	/// A node to rewrite this request to. 
-	/// Effectively teleports to the targeted node, replacing the 
-	/// current token state with the ones in this rewrite metadata.
-	/// </summary>
-	public BuilderResolvedRoute? Rewrite;
-
-	/// <summary>
-	/// A URL to redirect to. An alternative to TerminalMethod.
-	/// </summary>
-	public string RedirectTo;
+	public TerminalBehaviour Terminal;
 
 	/// <summary>
 	/// The http verb in use at this terminal.
@@ -336,6 +524,30 @@ public class BuilderNode
 	private TypeBuilder StateTypeBuilder;
 
 	/// <summary>
+	/// Sets the given behaviour as this routes terminal.
+	/// </summary>
+	/// <param name="behaviour"></param>
+	public void SetTerminal(TerminalBehaviour behaviour)
+	{
+		if (behaviour == null)
+		{
+			Terminal = null;
+			return;
+		}
+
+		if (Terminal != null)
+		{
+			// Are they the same? If so, do nothing.
+			if (!behaviour.Equals(Terminal))
+			{
+				throw new Exception("There's already a terminal at this route (" + FullRoute + ")");
+			}
+		}
+
+		Terminal = behaviour;
+	}
+
+	/// <summary>
 	/// A deep clone of this node. Retains any cached built information.
 	/// </summary>
 	/// <returns></returns>
@@ -347,8 +559,7 @@ public class BuilderNode
 			_requiresFullContext = _requiresFullContext,
 			SingularContentService = SingularContentService,
 			ConstructedTerminal = ConstructedTerminal, // When building this is the only one used.
-			TerminalMethod = TerminalMethod,
-			RedirectTo = RedirectTo,
+			Terminal = Terminal == null ? null : Terminal.Clone(),
 			ControllerInstance = ControllerInstance,
 			FullRoute = FullRoute,
 			HttpVerb = HttpVerb,
@@ -371,7 +582,42 @@ public class BuilderNode
 	/// <summary>
 	/// True if this node is a capture token.
 	/// </summary>
-	public bool IsToken => Text != null && Text.StartsWith('{') && Text.EndsWith('}');
+	public bool IsToken => Text != null && Text.EndsWith('}') && (Text.StartsWith('{') || Text.StartsWith("${"));
+
+	/// <summary>
+	/// Collect all token names in this route. Null if there are none.
+	/// </summary>
+	/// <returns></returns>
+	public List<string> GetAllTokens()
+	{
+		List<string> result = null;
+
+		// Pushing them in backwards:
+		var cur = this;
+		while (cur != null)
+		{
+			if (cur.IsToken)
+			{
+				var tokenName = Text.StartsWith('{') ? Text.Substring(1, Text.Length - 2) : Text.Substring(2, Text.Length - 3);
+
+				if (result == null)
+				{
+					result = new List<string>();
+				}
+
+				result.Add(tokenName);
+			}
+
+			cur = cur.Parent;
+		}
+
+		if (result != null)
+		{
+			result.Reverse();
+		}
+
+		return result;
+	}
 
 	/// <summary>
 	/// Gets the token index of this node.
@@ -442,51 +688,50 @@ public class BuilderNode
 			return new RootNode(BuildChildren());
 		}
 
-		if (RedirectTo != null)
-		{
-			return new TerminalRedirectNode(
-				BuildChildren(),
-				RedirectTo,
-				IsToken ? null : Text,
-				FullRoute
-			);
-		}
-
-		if (TerminalMethod == null)
-		{
-			return new ArrayIntermediateNode(BuildChildren(), IsToken ? null : Text);
-		}
-
 		if (ConstructedTerminal != null)
 		{
 			return ConstructedTerminal;
 		}
 
-		var bodyType = GetBodyType();
+		if (Terminal != null)
+		{
+			return Terminal.Build(this);
+		}
+
+		return new ArrayIntermediateNode(BuildChildren(), IsToken ? null : Text);
+	}
+
+	/// <summary>
+	/// Constructs a terminal method.
+	/// </summary>
+	/// <returns></returns>
+	public TerminalNode BuildTerminalMethodNode(MethodInfo method)
+	{
+		var bodyType = GetBodyType(method);
 
 		if (_constructedMethod == null)
 		{
-			Validate();
-			_requiresFullContext = IsFullContextRequired();
+			Validate(method);
+			_requiresFullContext = IsFullContextRequired(method);
 			InitModule();
 
-			if (IsVoidNode())
+			if (IsVoidNode(method))
 			{
-				BuildBinder();
+				BuildBinder(method);
 				BuildBodyLoader(bodyType);
-				BuildVoidTerminalMethod(bodyType);
+				BuildVoidTerminalMethod(bodyType, method);
 
 				// Close the type and set the values now.
 				var mainType = TypeBuilder.CreateType();
 
 				_terminalStateType = (StateTypeBuilder == null) ? typeof(EmptyTerminalState) : StateTypeBuilder.CreateType();
-				
+
 				_constructedMethod = mainType.GetMethod("TerminalInvoke")
 					.CreateDelegate(
 						typeof(TerminalVoidMethod<,>)
 							.MakeGenericType(_terminalStateType, bodyType)
 					);
-				
+
 				_constructedBinder = mainType.GetMethod("TerminalBinder")
 					.CreateDelegate(
 						typeof(TerminalBinderMethod<>)
@@ -495,10 +740,10 @@ public class BuilderNode
 			}
 			else
 			{
-				BuildBinder();
+				BuildBinder(method);
 				BuildBodyLoader(bodyType);
 
-				var outputType = BuildTerminalMethod(bodyType);
+				var outputType = BuildTerminalMethod(bodyType, method);
 				BuildSerialiser(outputType, bodyType);
 
 				// Close the type and set the values now.
@@ -528,9 +773,9 @@ public class BuilderNode
 			}
 		}
 
-		var returnType = TerminalMethod.ReturnType;
+		var returnType = method.ReturnType;
 
-		if (IsVoidNode())
+		if (IsVoidNode(method))
 		{
 			// It's a void node.
 			var voidNodeType = typeof(TerminalVoidNode<,>).MakeGenericType(_terminalStateType, bodyType);
@@ -548,7 +793,7 @@ public class BuilderNode
 
 			ConstructedTerminal = voidObj as TerminalNode;
 			ConstructedTerminal.BuilderSource = this;
-			return voidObj as RouteNode;
+			return ConstructedTerminal;
 		}
 
 		// It's a full node otherwise. Underlying return type is..
@@ -577,22 +822,22 @@ public class BuilderNode
 
 		ConstructedTerminal = obj as TerminalNode;
 		ConstructedTerminal.BuilderSource = this;
-		return obj as RouteNode;
+		return ConstructedTerminal;
 	}
 
 	/// <summary>
 	/// Performs some validation on a controller method.
 	/// </summary>
 	/// <exception cref="Exception"></exception>
-	private void Validate()
+	private void Validate(MethodInfo method)
 	{
-		var returnType = TerminalMethod.ReturnType;
+		var returnType = method.ReturnType;
 
 		// Some common validations
 		if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
 		{
 			throw new Exception("Please use ValueTask in all controller return types. " +
-				"The following controller method used Task instead: " + TerminalMethod.ToString() + " in " + TerminalMethod.DeclaringType.Name);
+				"The following controller method used Task instead: " + method.ToString() + " in " + method.DeclaringType.Name);
 		}
 
 		if (
@@ -603,13 +848,13 @@ public class BuilderNode
 			throw new Exception("Avoid returning lists or arrays of content types from your endpoints. " +
 			"Instead, return a ContentStream. You can create a stream from a list, " +
 				"although you should generally aim to use the ContentStream API to its full performance potential. " +
-				"The endpoint was: " + TerminalMethod.Name + " in " + TerminalMethod.DeclaringType.Name);
+				"The endpoint was: " + method.Name + " in " + method.DeclaringType.Name);
 		}
 	}
 
-	private bool IsVoidNode()
+	private bool IsVoidNode(MethodInfo method)
 	{
-		var returnType = TerminalMethod.ReturnType;
+		var returnType = method.ReturnType;
 		return (returnType == typeof(void) || returnType == typeof(ValueTask));
 	}
 
@@ -640,9 +885,9 @@ public class BuilderNode
 	private static MethodInfo _newtonsoftDeserialise;
 	private static MethodInfo _newtonsoftSerialise;
 
-	private bool IsFullContextRequired()
+	private bool IsFullContextRequired(MethodInfo method)
 	{
-		var parameters = TerminalMethod.GetParameters();
+		var parameters = method.GetParameters();
 
 		for (var i = 0; i < parameters.Length; i++)
 		{
@@ -655,7 +900,7 @@ public class BuilderNode
 		return false;
 	}
 	
-	private Type GetBodyType()
+	private Type GetBodyType(MethodInfo method)
 	{
 		if (HttpVerb == "GET" || HttpVerb == "DELETE")
 		{
@@ -664,7 +909,7 @@ public class BuilderNode
 
 		// POST or PUT
 
-		var parameters = TerminalMethod.GetParameters();
+		var parameters = method.GetParameters();
 
 		for (var i = 0; i < parameters.Length; i++)
 		{
@@ -716,7 +961,7 @@ public class BuilderNode
 
 	}
 
-	private void BuildBinder()
+	private void BuildBinder(MethodInfo method)
 	{
 		if (_newtonsoftDeserialise == null)
 		{
@@ -741,7 +986,7 @@ public class BuilderNode
 
 		// Set _constructedBinder
 		// If there are no tokens, the binder simply returns null.
-		var parameters = TerminalMethod.GetParameters();
+		var parameters = method.GetParameters();
 		var hasBindable = false;
 
 		for (var i = 0; i < parameters.Length; i++)
@@ -877,7 +1122,7 @@ public class BuilderNode
 
 			if (offset == -1)
 			{
-				throw new Exception("Token could not be found: " + parameter.Name + " (in " + TerminalMethod.Name + ")");
+				throw new Exception("Token could not be found: " + parameter.Name + " (in " + method.Name + ")");
 			}
 
 			EmitReadFromSpan(parameter.ParameterType, offset, il, bindField, pathLocal, stateLoc);
@@ -983,7 +1228,7 @@ public class BuilderNode
 		il.Emit(OpCodes.Stfld, targetField);
 	}
 
-	private void BuildVoidTerminalMethod(Type bodyType)
+	private void BuildVoidTerminalMethod(Type bodyType, MethodInfo method)
 	{
 		var stateType = GetTerminalStateType();
 
@@ -1002,12 +1247,12 @@ public class BuilderNode
 		);
 
 		var il = methodBuilder.GetILGenerator();
-		EmitInvokeTerminalMethod(il, bodyType);
+		EmitInvokeTerminalMethod(il, bodyType, method);
 	}
 
-	private Type BuildTerminalMethod(Type bodyType)
+	private Type BuildTerminalMethod(Type bodyType, MethodInfo method)
 	{
-		var outputType = TerminalMethod.ReturnType;
+		var outputType = method.ReturnType;
 
 		if (outputType.IsGenericType && outputType.GetGenericTypeDefinition() == typeof(ValueTask<>))
 		{
@@ -1031,7 +1276,7 @@ public class BuilderNode
 		);
 
 		var il = methodBuilder.GetILGenerator();
-		EmitInvokeTerminalMethod(il, bodyType);
+		EmitInvokeTerminalMethod(il, bodyType, method);
 		return outputType;
 	}
 
@@ -1309,11 +1554,11 @@ public class BuilderNode
 		il.Emit(OpCodes.Newobj, valueTaskCtor);
 	}
 
-	private void EmitInvokeTerminalMethod(ILGenerator il, Type bodyType)
+	private void EmitInvokeTerminalMethod(ILGenerator il, Type bodyType, MethodInfo method)
 	{
-		var parameters = TerminalMethod.GetParameters();
+		var parameters = method.GetParameters();
 
-		if (!TerminalMethod.IsStatic)
+		if (!method.IsStatic)
 		{
 			if (_controllerInstanceFld == null)
 			{
@@ -1447,7 +1692,7 @@ public class BuilderNode
 					{
 						throw new Exception(
 							"Unable to bind a body parameter '" + parameter.Name + "' for a get/delete endpoint as it has no body. " +
-							"The parameter is on " + TerminalMethod.Name + " in " + TerminalMethod.DeclaringType.Name
+							"The parameter is on " + method.Name + " in " + method.DeclaringType.Name
 						);
 					}
 					else if (parameter.ParameterType == bodyType)
@@ -1458,7 +1703,7 @@ public class BuilderNode
 					{
 						throw new Exception(
 							"Unable to bind parameter '" + parameter.Name + "' - you might be missing a [FromRoute] or [FromQuery]. " +
-							"The parameter is on " + TerminalMethod.Name + " in " +TerminalMethod.DeclaringType.Name
+							"The parameter is on " + method.Name + " in " + method.DeclaringType.Name
 						);
 					}
 				}
@@ -1477,10 +1722,10 @@ public class BuilderNode
 
 		// The 'this' reference (a class object, instance method) is now on the stack
 		// Invoke the method
-		il.Emit(OpCodes.Callvirt, TerminalMethod);
+		il.Emit(OpCodes.Callvirt, method);
 
 		// If the terminal method itself did not return a ValueTask, wrap it now.
-		var retType = TerminalMethod.ReturnType;
+		var retType = method.ReturnType;
 
 		if (retType != typeof(void) && retType != typeof(ValueTask) && !(retType.IsGenericType && retType.GetGenericTypeDefinition() == typeof(ValueTask<>)))
 		{
@@ -1729,7 +1974,7 @@ public class BuilderNode
 	/// </summary>
 	/// <returns></returns>
 	/// <exception cref="Exception"></exception>
-	private IntermediateNode[] BuildChildren()
+	public IntermediateNode[] BuildChildren()
 	{
 		var imSet = new List<IntermediateNode>();
 
@@ -1839,7 +2084,8 @@ public class BuilderNode
 		var newChild = new BuilderNode() {
 			Text = text,
 			FullRoute = FullRoute + "/" + text,
-			Parent = this
+			Parent = this,
+			HttpVerb = HttpVerb
 		};
 
 		if (newChild.IsToken)
@@ -1867,11 +2113,6 @@ public class BuilderNode
 	{
 		var current = GetNode(route, false);
 
-		if (current.TerminalMethod != null || current.RedirectTo != null || current.Rewrite != null)
-		{
-			throw new Exception("Ambiguous URL routing detected: " + route + " collides with something else already added.");
-		}
-
 		// - Resolve which node will handle 'to' fully
 		// - This will frequently result in some token values which will then, during the actual rewrite itself 
 		//   replace the current token state entirely.
@@ -1884,7 +2125,7 @@ public class BuilderNode
 			throw new Exception("A rewrite was added to a node that does not exist. Note that rewrite nodes can only safely target true nodes (not other rewrites).");
 		}
 
-		current.Rewrite = target;
+		current.SetTerminal(new TerminalRewrite(target));
 	}
 
 	/// <summary>
@@ -1895,14 +2136,18 @@ public class BuilderNode
 	public void AddRedirect(string route, string to)
 	{
 		var current = GetNode(route, false);
+		current.SetTerminal(new TerminalRedirect(to));
+	}
 
-		if (current.TerminalMethod != null || current.RedirectTo != to || current.Rewrite != null)
-		{
-			throw new Exception("Ambiguous URL routing detected: " + route + " collides with something else already added.");
-		}
-
-		current.HttpVerb = "GET";
-		current.RedirectTo = to;
+	/// <summary>
+	/// Adds custom behaviour for a route.
+	/// </summary>
+	/// <param name="route"></param>
+	/// <param name="behaviour"></param>
+	public void AddCustomBehaviour(string route, TerminalBehaviour behaviour)
+	{
+		var current = GetNode(route, false);
+		current.SetTerminal(behaviour);
 	}
 
 	/// <summary>
@@ -1911,19 +2156,11 @@ public class BuilderNode
 	/// <param name="route"></param>
 	/// <param name="controllerMethod"></param>
 	/// <param name="controllerInstance"></param>
-	/// <param name="httpVerb">For reference use, the http verb of the route.</param>
-	public void AddRoute(string route, MethodInfo controllerMethod, object controllerInstance, string httpVerb)
+	public void AddRoute(string route, MethodInfo controllerMethod, object controllerInstance)
 	{
 		var current = GetNode(route, false);
-
-		if (current.RedirectTo != null || (current.TerminalMethod != null && current.TerminalMethod != controllerMethod) || current.Rewrite != null)
-		{
-			throw new Exception("Ambiguous URL routing detected: " + route + " collides with something else already added.");
-		}
-
-		current.HttpVerb = httpVerb;
-		current.TerminalMethod = controllerMethod;
 		current.ControllerInstance = controllerInstance;
+		current.SetTerminal(new TerminalMethod(controllerMethod));
 	}
 
 	private BuilderResolvedRoute Resolve(string route)

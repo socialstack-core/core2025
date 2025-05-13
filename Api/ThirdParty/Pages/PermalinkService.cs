@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.JsonPatch.Internal;
 using Api.CanvasRenderer;
 using System;
 using Api.Startup.Routing;
+using static Mysqlx.Expect.Open.Types.Condition.Types;
 
 namespace Api.Pages
 {
@@ -20,12 +21,13 @@ namespace Api.Pages
 	/// canonical one. Requests that arrived via the old ones will be redirected.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
+	[LoadPriority(9)]
 	public partial class PermalinkService : AutoService<Permalink>
     {
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public PermalinkService() : base(Events.Permalink)
+		public PermalinkService(PageService pages) : base(Events.Permalink)
         {
 			Events.Permalink.BeforeUpdate.AddEventListener((Context context, Permalink toUpdate, Permalink orig) => {
 				throw new PublicException("Permalinks cannot be edited", "permalink/is-permanent");
@@ -41,6 +43,31 @@ namespace Api.Pages
 				return new ValueTask<Permalink>(link);
 			});
 
+			Events.Page.BeforeCreate.AddEventListener((Context context, Page page) =>
+			{
+				if (string.IsNullOrEmpty(page.Url) && string.IsNullOrEmpty(page.Key))
+				{
+					throw new PublicException("A url is required. If you're making a homepage, use /", "page_url_required");
+				}
+
+				return new ValueTask<Page>(page);
+			});
+
+			Events.Page.AfterCreate.AddEventListener(async (Context context, Page page) =>
+			{
+				// Create a permalink targeting this page:
+				if (!string.IsNullOrEmpty(page.Url))
+				{
+					await Create(context, new Permalink()
+					{
+						Url = page.Url,
+						Target = "page:" + page.Id,
+					}, DataOptions.IgnorePermissions);
+				}
+
+				return page;
+			});
+
 			Events.Permalink.AfterDelete.AddEventListener((Context context, Permalink link) => {
 				_srcDictionary = null;
 				return new ValueTask<Permalink>(link);
@@ -51,6 +78,9 @@ namespace Api.Pages
 				// Collect all permalinks and add them as rewrite routes.
 				var permalinkSet = await GetSourcesByTarget(context);
 
+				// A lookup by content type.
+				Dictionary<Type, PrimaryUrlLookup> primaryLookup = new Dictionary<Type, PrimaryUrlLookup>();
+
 				foreach (var kvp in permalinkSet)
 				{
 					// The target node in the router is..
@@ -59,12 +89,61 @@ namespace Api.Pages
 					// The sources for that target are..
 					var sources = kvp.Value;
 
+					if (target == null)
+					{
+						continue;
+					}
+
+					var addedPage = false;
+
+					if (target.StartsWith("page:"))
+					{
+						addedPage = true;
+
+						var getNode = builder.GetGetNode();
+
+						if (sources.Count > 0 && uint.TryParse(target.Substring(5), out uint pageId))
+						{
+							// Pages are cached so we can ask for it here without a time penalty.
+							var page = await pages.Get(context, pageId, DataOptions.IgnorePermissions);
+
+							if (page != null)
+							{
+								var linkUrl = sources[0].Url;
+
+								// Is the page primary content of some kind?
+								if (PageKeyIsPrimary(page.Key, out AutoService primaryContentService, out bool isAdminGroup, out string specificContentId))
+								{
+									if (!isAdminGroup)
+									{
+										if (!primaryLookup.TryGetValue(primaryContentService.ServicedType, out PrimaryUrlLookup urlLookup))
+										{
+											urlLookup = primaryContentService.CreatePrimaryUrlLookup();
+											primaryLookup[primaryContentService.ServicedType] = urlLookup;
+										}
+
+										urlLookup.Add(linkUrl, specificContentId);
+									}
+								}
+
+								getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, primaryContentService, specificContentId));
+
+							}
+						}
+					}
+
 					for(var i=0;i<sources.Count;i++)
 					{
 						var src = sources[i];
 
 						if (i == 0)
 						{
+							if (addedPage)
+							{
+								// Note that it might not have actually added it due to the ID failing to parse, or the page not existing.
+								// This is ok: we'll favour robustness in this scenario.
+								continue;
+							}
 							builder.AddRewrite(src.Url, target);
 						}
 						else
@@ -80,6 +159,65 @@ namespace Api.Pages
 		}
 
 		private Dictionary<string, List<Permalink>> _srcDictionary;
+
+		/// <summary>
+		/// True if the given page Key is a primary content one. See Page.Key for more details. 
+		/// Returns the relevant service and also a specific content ID if there is one.
+		/// </summary>
+		/// <param name="key"></param>
+		/// <param name="service"></param>
+		/// <param name="isAdminGroup"></param>
+		/// <param name="specificContentId"></param>
+		/// <returns></returns>
+		private bool PageKeyIsPrimary(string key, out AutoService service, out bool isAdminGroup, out string specificContentId)
+		{
+			// By definition:
+			// primary:user
+			// admin_primary:user
+			// primary:user:42
+			// admin_primary:user:42 (not that this would ever happen, but we support it anyway!)
+
+			if (key == null)
+			{
+				service = null;
+				isAdminGroup = false;
+				specificContentId = null;
+				return false;
+			}
+
+			isAdminGroup = key.StartsWith("admin_");
+
+			var primaryIndex = key.IndexOf("primary:");
+
+			if (primaryIndex == -1)
+			{
+				service = null;
+				specificContentId = null;
+				return false;
+			}
+
+			// The index of the first letter of the type.
+			var typeStart = primaryIndex + 8;
+
+			var specificContentIndex = key.IndexOf(':', typeStart);
+
+			var typeName = (specificContentIndex == -1) ? 
+				key.Substring(typeStart) : 
+				key.Substring(typeStart, specificContentIndex - typeStart);
+
+			service = Services.Get(typeName);
+
+			if (specificContentIndex == -1)
+			{
+				specificContentId = null;
+			}
+			else
+			{
+				specificContentId = key.Substring(specificContentIndex);
+			}
+
+			return service != null;
+		}
 
 		/// <summary>
 		/// Gets a dictionary for all target URLs to all their sources.

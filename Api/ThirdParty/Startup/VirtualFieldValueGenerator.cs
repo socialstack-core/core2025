@@ -8,6 +8,21 @@ namespace Api.Startup;
 
 
 /// <summary>
+/// Weakly typed VirtualFieldValueGenerator.
+/// </summary>
+public partial class VirtualFieldValueGenerator {
+
+	/// <summary>
+	/// Sets the AutoService object which will be of type AutoService{T,ID}.
+	/// </summary>
+	/// <param name="svc"></param>
+	public virtual void SetService(AutoService svc)
+	{
+	}
+
+}
+
+/// <summary>
 /// Inherit this to define a virtual field value generator.
 /// Value generators let you define custom code for an includable name.
 /// primaryUrl is an example of a value generator (it's in the Pages module).
@@ -18,9 +33,24 @@ namespace Api.Startup;
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="ID"></typeparam>
 public partial class VirtualFieldValueGenerator<T, ID>
+	: VirtualFieldValueGenerator
 	where T : Content<ID>, new()
 	where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 {
+
+	/// <summary>
+	/// The service for the content object.
+	/// </summary>
+	public AutoService<T, ID> Service;
+
+	/// <summary>
+	/// Sets the AutoService object which will be of type AutoService{T,ID}.
+	/// </summary>
+	/// <param name="svc"></param>
+	public override void SetService(AutoService svc)
+	{
+		Service = svc as AutoService<T, ID>;
+	}
 
 	/// <summary>
 	/// Generate the value.

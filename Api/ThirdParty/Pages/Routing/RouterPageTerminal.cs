@@ -1,8 +1,11 @@
 using Api.CanvasRenderer;
 using Api.Contexts;
+using Api.Database;
 using Api.Pages;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Api.Startup.Routing;
@@ -29,11 +32,9 @@ public class RouterPageTerminal : TerminalNode
 	public readonly string TokenNamesJson;
 
 	/// <summary>
-	/// The set of token metadata, if there were any in the canonical URL.
+	/// The HtmlService instance.
 	/// </summary>
-	public readonly PageUrlToken[] TokenNames;
-
-	private readonly HtmlService _htmlService;
+	protected readonly HtmlService _htmlService;
 
 	/// <summary>
 	/// The page generator.
@@ -44,27 +45,37 @@ public class RouterPageTerminal : TerminalNode
 	/// Creates a new page terminal.
 	/// </summary>
 	/// <param name="children"></param>
+	/// <param name="tokens"></param>
 	/// <param name="page"></param>
-	/// <param name="primaryContentType"></param>
+	/// <param name="primaryType"></param>
 	/// <param name="exactMatch"></param>
 	/// <param name="fullRoute"></param>
-	public RouterPageTerminal(IntermediateNode[] children, Type primaryContentType, Page page, string exactMatch, string fullRoute) 
+	public RouterPageTerminal(IntermediateNode[] children, List<string> tokens, Type primaryType, Page page, string exactMatch, string fullRoute) 
 		: base(children, exactMatch, null, null, fullRoute)
 	{
 		Page = page;
 		_htmlService = Services.Get<HtmlService>();
-		Generator = new CanvasGenerator(page.BodyJson, primaryContentType);
+		Generator = new CanvasGenerator(page.BodyJson, primaryType);
+
+		if (tokens == null)
+		{
+			TokenNamesJson = "null";
+		}
+		else
+		{
+			TokenNamesJson = Newtonsoft.Json.JsonConvert.SerializeObject(tokens);
+		}
 	}
 
 	/// <summary>
 	/// Execute this page node.
 	/// </summary>
 	/// <param name="httpContext"></param>
-	/// <param name="context"></param>
+	/// <param name="basicContext"></param>
 	/// <param name="tokenCount"></param>
 	/// <param name="tokens"></param>
 	/// <returns></returns>
-	public override ValueTask<bool> Run(HttpContext httpContext, Context context, int tokenCount, ref Span<TokenMarker> tokens)
+	public override ValueTask<bool> Run(HttpContext httpContext, Context basicContext, int tokenCount, ref Span<TokenMarker> tokens)
 	{
 		// Map to the non web specific page renderer:
 		var pageWithTokens = new PageWithTokens()
@@ -73,6 +84,147 @@ public class RouterPageTerminal : TerminalNode
 			Host = httpContext.Request.Host
 		};
 
-		return _htmlService.RouteRequest(httpContext, context, pageWithTokens);
+		if (tokenCount > 0)
+		{
+			var url = httpContext.Request.Path.Value;
+
+			pageWithTokens.TokenValues = Router.ConvertTokens(tokenCount, url, ref tokens);
+		}
+
+		return _htmlService.RouteBasicContextRequest(httpContext, basicContext, pageWithTokens);
+	}
+
+	/// <summary>
+	/// Gets the primary object from this terminal, if it has one.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="pageWithTokens"></param>
+	/// <returns></returns>
+	public virtual ValueTask<object> GetPrimaryObject(Context context, PageWithTokens pageWithTokens)
+	{
+		// Load the primary content
+		return new ValueTask<object>(null);
+	}
+
+	/// <summary>
+	/// Gets the primary service if there is one.
+	/// </summary>
+	/// <returns></returns>
+	public virtual AutoService GetPrimaryService()
+	{
+		return null;
+	}
+
+}
+
+/// <summary>
+/// A page terminal for a page which has primary content of the specified type.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="ID"></typeparam>
+public class RouterPageTerminal<T, ID> : RouterPageTerminal
+	where T : Content<ID>, new()
+	where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
+{
+
+	private readonly AutoService<T, ID> PrimaryService;
+
+	private readonly ID? SpecificContentId;
+
+	/// <summary>
+	/// Creates a new page terminal.
+	/// </summary>
+	/// <param name="children"></param>
+	/// <param name="tokens"></param>
+	/// <param name="page"></param>
+	/// <param name="primaryService"></param>
+	/// <param name="specificContentId"></param>
+	/// <param name="exactMatch"></param>
+	/// <param name="fullRoute"></param>
+	public RouterPageTerminal(IntermediateNode[] children, List<string> tokens, AutoService<T, ID> primaryService, string specificContentId, Page page, string exactMatch, string fullRoute)
+		: base(children, tokens, primaryService.ServicedType, page, exactMatch, fullRoute)
+	{
+		PrimaryService = primaryService;
+
+		if (specificContentId != null)
+		{
+			// This is the fallback primary content page otherwise.
+			SpecificContentId = primaryService.ConvertId(ulong.Parse(specificContentId));
+		}
+	}
+
+	/// <summary>
+	/// Execute this page node.
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <param name="basicContext"></param>
+	/// <param name="tokenCount"></param>
+	/// <param name="tokens"></param>
+	/// <returns></returns>
+	public override ValueTask<bool> Run(HttpContext httpContext, Context basicContext, int tokenCount, ref Span<TokenMarker> tokens)
+	{
+		// Map to the non web specific page renderer:
+		var pageWithTokens = new PageWithTokens()
+		{
+			PageTerminal = this,
+			PrimaryService = PrimaryService,
+			Host = httpContext.Request.Host
+		};
+
+		if (tokenCount > 0)
+		{
+			var url = httpContext.Request.Path.Value;
+			pageWithTokens.TokenValues = Router.ConvertTokens(tokenCount, url, ref tokens);
+		}
+
+		// This call internally sets PrimaryObject as well.
+		return RunPrimary(httpContext, basicContext, pageWithTokens);
+	}
+
+	/// <summary>
+	/// Gets the primary service if there is one.
+	/// </summary>
+	/// <returns></returns>
+	public override AutoService GetPrimaryService()
+	{
+		return PrimaryService;
+	}
+
+	/// <summary>
+	/// Gets the primary object from this terminal.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="pageWithTokens"></param>
+	/// <returns></returns>
+	public override async ValueTask<object> GetPrimaryObject(Context context, PageWithTokens pageWithTokens)
+	{
+		// The terminal either has a constant ID (for specific content permalinks)
+		// or the ID is deriveable from the token values.
+		if (SpecificContentId.HasValue)
+		{
+			return await PrimaryService.Get(context, SpecificContentId.Value);
+		}
+
+		// Derive the ID.
+		return await PrimaryService.Get(context, default);
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <param name="basicContext"></param>
+	/// <param name="pageWithTokens"></param>
+	/// <returns></returns>
+	private async ValueTask<bool> RunPrimary(HttpContext httpContext, Context basicContext, PageWithTokens pageWithTokens)
+	{
+		// Full context is required:
+		var context = await httpContext.Request.GetContext(basicContext);
+
+		// Get the PO:
+		pageWithTokens.PrimaryObject = await GetPrimaryObject(context, pageWithTokens);
+
+		// Route the request, rendering the page itself
+		return await _htmlService.RouteRequest(httpContext, context, pageWithTokens);
 	}
 }

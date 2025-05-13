@@ -25,6 +25,10 @@ public class RouteNode
 	/// </summary>
 	public readonly bool IsRewrite;
 
+	/// <summary>
+	/// Sets a locale in to the context.
+	/// </summary>
+	public uint LocaleId;
 
 	/// <summary>
 	/// A general purpose routing node.
@@ -385,6 +389,15 @@ public class TerminalRedirectNode : TerminalNode
 		string fullRoute) : base (children, exactMatch, null, null, fullRoute)
 	{
 		Target = target;
+	}
+
+	/// <summary>
+	/// The target of this node.
+	/// </summary>
+	/// <returns></returns>
+	public string GetTarget()
+	{
+		return Target;
 	}
 
 	/// <summary>

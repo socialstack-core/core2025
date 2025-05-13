@@ -19,10 +19,6 @@ public partial class PrimaryUrlValueGenerator<T, ID> : VirtualFieldValueGenerato
 	where T : Content<ID>, new()
 	where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 {
-
-	private PageService _pageService;
-	private Router _urlRouter;
-
 	/// <summary>
 	/// Generate the value.
 	/// </summary>
@@ -30,34 +26,20 @@ public partial class PrimaryUrlValueGenerator<T, ID> : VirtualFieldValueGenerato
 	/// <param name="forObject"></param>
 	/// <param name="writer"></param>
 	/// <returns></returns>
-	public override async ValueTask GetValue(Context context, T forObject, Writer writer)
+	public override ValueTask GetValue(Context context, T forObject, Writer writer)
 	{
-		if (_pageService == null)
-		{
-			_pageService = Services.Get<PageService>();
-		}
+		var url = Service.GetPrimaryUrl(context, forObject);
 
-		if (_urlRouter == null || Router.IsStale(_urlRouter))
-		{
-			// Get the current router:
-			_urlRouter = Router.CurrentRouter;
-			var lookup = _cache.GetLookup(PageGroup.UI);
-
-			// Obtain URL generation metadata for the current type:
-			lookup.TryGetValue(typeof(T), out _genMeta);
-		}
-
-		if (_genMeta == null)
+		if (url == null)
 		{
 			writer.WriteASCII("null");
-			return;
+			return new ValueTask();
 		}
 
-		// Generate the URL:
-		var pageUrl = _genMeta.Generate(forObject);
-
 		// Write the URL string:
-		writer.WriteEscaped(pageUrl);
+		writer.WriteEscaped(url);
+
+		return new ValueTask();
 	}
 
 	/// <summary>

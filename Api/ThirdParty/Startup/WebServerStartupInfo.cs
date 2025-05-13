@@ -173,15 +173,7 @@ namespace Api.Startup
 				try
 				{
 					var context = await httpContext.Request.GetBasicContext();
-					var handled = await router.HandleRequest(httpContext, context);
-
-					if (!handled)
-					{
-						// Regular page renderer. Get full context and then render the page.
-						await httpContext.Request.GetContext(context);
-						await htmlService.RouteRequest(httpContext, context);
-						return;
-					}
+					await router.HandleRequest(httpContext, context);
 				}
 				catch (PublicException publicError)
 				{

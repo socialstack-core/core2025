@@ -22,6 +22,7 @@ using System.Collections.Concurrent;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using static Org.BouncyCastle.Math.EC.ECCurve;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Api.Pages
 {
@@ -327,8 +328,6 @@ namespace Api.Pages
 				writer.WriteS(terminal.TokenNamesJson);
 			}
 
-			writer.WriteASCII(",\"tokens\":");
-
 			if (pageAndTokens.TokenValues != null)
 			{
 				writer.WriteASCII(",\"tokens\":[");
@@ -413,7 +412,7 @@ namespace Api.Pages
 			var writer = Writer.GetPooled();
 			writer.Start(null);
 			var blockPageBytes = File.ReadAllBytes("UI/public/block.html");
-			writer.Write(blockPageBytes);
+			writer.Write(blockPageBytes, 0, blockPageBytes.Length);
 			return writer;
 		}
 
@@ -629,18 +628,18 @@ namespace Api.Pages
 			writer.WriteASCII(pageTitle);
 			writer.WriteASCII("</title>");
 
-			if (page != null && (page.NoIndex || page.NoFollow))
+			if (page != null && (!page.CanIndex || page.NoFollow))
 			{
 				writer.WriteASCII("<meta name='robots' content='");
 
-				if (page.NoIndex)
+				if (!page.CanIndex)
 				{
 					writer.WriteASCII("noindex");
 				}
 
 				if (page.NoFollow)
 				{
-					if (page.NoIndex)
+					if (!page.CanIndex)
 					{
 						writer.WriteASCII(",nofollow");
 					}
@@ -838,9 +837,9 @@ namespace Api.Pages
 			HandleCustomScriptList(_config.BeforeMainJs, writer);
 
 			writer.WriteASCII("<script>");
-			writer.Write(_configJson);
+			writer.Write(_configJson, 0, _configJson.Length);
 			writer.WriteASCII(_frontend.GetServiceUrls(locale.Id));
-			writer.WriteASCII(_frontend.InlineJavascriptHeader);
+			writer.Write(_frontend.InlineJavascriptHeader, 0, _frontend.InlineJavascriptHeader.Length);
 			writer.WriteASCII("</script>");
 
 			if (isAdmin)
@@ -1114,6 +1113,21 @@ namespace Api.Pages
 		/// Performs the main routing and generates HTML when needed.
 		/// </summary>
 		/// <param name="httpContext">The http context</param>
+		/// <param name="basicContext">The main API context (the basic, partially loaded variant)</param>
+		/// <param name="pageAndTokens">The page and its tokens being rendered.</param>
+		/// <returns></returns>
+		public async ValueTask<bool> RouteBasicContextRequest(HttpContext httpContext, Context basicContext, PageWithTokens pageAndTokens)
+		{
+			// Full context is required for pages:
+			var context = await httpContext.Request.GetContext(basicContext);
+
+			return await RouteRequest(httpContext, context, pageAndTokens);
+		}
+
+		/// <summary>
+		/// Performs the main routing and generates HTML when needed.
+		/// </summary>
+		/// <param name="httpContext">The http context</param>
 		/// <param name="context">The main API context</param>
 		/// <param name="pageAndTokens">The page and its tokens being rendered.</param>
 		/// <returns></returns>
@@ -1138,7 +1152,7 @@ namespace Api.Pages
 			// Route the URL through the URL tree.
 
 			response.ContentType = "text/html";
-			response.Headers["Content-Encoding"] = "gzip";
+			// response.Headers["Content-Encoding"] = "gzip";
 
 			var writer = Writer.GetPooled();
 			writer.Start(null);
@@ -1170,7 +1184,7 @@ namespace Api.Pages
 				context.RoleId == 6
 			);
 
-			if (pullFromCache)
+			if (!pullFromCache)
 			{
 				response.Headers["Cache-Control"] = "no-store";
 				response.Headers["Pragma"] = "no-cache";

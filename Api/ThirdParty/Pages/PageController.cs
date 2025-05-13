@@ -6,6 +6,9 @@ using Api.CanvasRenderer;
 using Api.Eventing;
 using Api.SocketServerLibrary;
 using Microsoft.AspNetCore.Http;
+using Api.Startup.Routing;
+using System;
+using System.Collections.Generic;
 
 namespace Api.Pages
 {
@@ -64,33 +67,59 @@ namespace Api.Pages
 				await svcWaiter.Task;
 			}
 
-			// we first need to get the pageAndTokens
-			var pageAndTokens = await _pageService.GetPage(context, request.Host.Value, pageDetails.Url, Microsoft.AspNetCore.Http.QueryString.Empty, true);
+            // Construct the pageWithTokens via first locating the terminal in the router.
+            var terminalWithTokens = Router.CurrentRouter.ResolveWithTokens(context, pageDetails.Url);
 
-            if (pageAndTokens.RedirectTo != null)
+            if (terminalWithTokens == null)
+            {
+                response.StatusCode = 404;
+                return;
+            }
+
+            var redirectTerminal = terminalWithTokens.Value.TerminalNode as TerminalRedirectNode;
+
+			if (redirectTerminal != null)
             {
                 // Redirecting to the given url, as a 302:
                 var writer = Writer.GetPooled();
                 writer.Start(null);
 
                 writer.WriteASCII("{\"redirect\":");
-                writer.WriteEscaped(pageAndTokens.RedirectTo);
+                writer.WriteEscaped(redirectTerminal.GetTarget());
                 writer.Write((byte)'}');
                 await writer.CopyToAsync(response.Body);
                 writer.Release();
                 return;
             }
-        
-            await Events.Page.BeforeNavigate.Dispatch(context, pageAndTokens.Page, pageDetails.Url);
+
+			var pageTerminal = terminalWithTokens.Value.TerminalNode as RouterPageTerminal;
+
+			if (pageTerminal == null)
+			{
+				response.StatusCode = 404;
+				return;
+			}
+
+            // Build the pageAndTokens, collecting the primary content too:
+            var pageWithTokens = new PageWithTokens() {
+                PageTerminal = pageTerminal,
+                Host = request.Host,
+                TokenValues = terminalWithTokens.Value.Tokens
+            };
+
+            pageWithTokens.PrimaryService = pageTerminal.GetPrimaryService();
+			pageWithTokens.PrimaryObject = await pageTerminal.GetPrimaryObject(context, pageWithTokens);
+
+			await Events.Page.BeforeNavigate.Dispatch(context, pageWithTokens);
 
             response.ContentType = "application/json";
-			await _htmlService.RenderState(context, pageAndTokens, response, pageDetails.Url);
+			await _htmlService.RenderState(context, response, pageWithTokens);
 		}
 
-        /// <summary>
-        /// Used when getting the page state.
-        /// </summary>
-        public class PageDetails
+		/// <summary>
+		/// Used when getting the page state.
+		/// </summary>
+		public class PageDetails
         {
             /// <summary>
             /// The url of the page we are getting the state for.
