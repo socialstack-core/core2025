@@ -5,7 +5,6 @@ using Api.Pages;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Api.Startup.Routing;
@@ -57,6 +56,11 @@ public class RouterPageTerminal : TerminalNode
 		_htmlService = Services.Get<HtmlService>();
 		Generator = new CanvasGenerator(page.BodyJson, primaryType);
 
+		if (!string.IsNullOrEmpty(page.Key))
+		{
+			IsAdmin = page.Key.Contains("admin_") || page.Key == "admin";
+		}
+
 		if (tokens == null)
 		{
 			TokenNamesJson = "null";
@@ -103,7 +107,7 @@ public class RouterPageTerminal : TerminalNode
 	public virtual ValueTask<object> GetPrimaryObject(Context context, PageWithTokens pageWithTokens)
 	{
 		// Load the primary content
-		return new ValueTask<object>(null);
+		return new ValueTask<object>((object)null);
 	}
 
 	/// <summary>
@@ -129,6 +133,8 @@ public class RouterPageTerminal<T, ID> : RouterPageTerminal
 
 	private readonly AutoService<T, ID> PrimaryService;
 
+	private readonly int IdTokenIndex;
+
 	private readonly ID? SpecificContentId;
 
 	/// <summary>
@@ -139,12 +145,14 @@ public class RouterPageTerminal<T, ID> : RouterPageTerminal
 	/// <param name="page"></param>
 	/// <param name="primaryService"></param>
 	/// <param name="specificContentId"></param>
+	/// <param name="idTokenIndex"></param>
 	/// <param name="exactMatch"></param>
 	/// <param name="fullRoute"></param>
-	public RouterPageTerminal(IntermediateNode[] children, List<string> tokens, AutoService<T, ID> primaryService, string specificContentId, Page page, string exactMatch, string fullRoute)
+	public RouterPageTerminal(IntermediateNode[] children, List<string> tokens, AutoService<T, ID> primaryService, string specificContentId, int idTokenIndex, Page page, string exactMatch, string fullRoute)
 		: base(children, tokens, primaryService.ServicedType, page, exactMatch, fullRoute)
 	{
 		PrimaryService = primaryService;
+		IdTokenIndex = idTokenIndex;
 
 		if (specificContentId != null)
 		{
@@ -205,8 +213,21 @@ public class RouterPageTerminal<T, ID> : RouterPageTerminal
 			return await PrimaryService.Get(context, SpecificContentId.Value);
 		}
 
-		// Derive the ID.
-		return await PrimaryService.Get(context, default);
+		// Id token is mandatory but just in case.
+		if (IdTokenIndex == -1 || pageWithTokens.TokenValues == null)
+		{
+			return null;
+		}
+
+		var tokenValue = pageWithTokens.TokenValues[IdTokenIndex];
+
+		if (!ulong.TryParse(tokenValue, out ulong uId))
+		{
+			// The URL contains a bad ID.
+			return null;
+		}
+
+		return await PrimaryService.Get(context, PrimaryService.ConvertId(uId));
 	}
 
 	/// <summary>

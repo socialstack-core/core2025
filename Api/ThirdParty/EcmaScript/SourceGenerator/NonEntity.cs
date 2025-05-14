@@ -14,6 +14,9 @@ namespace Api.EcmaScript
     public static partial class SourceGenerator
     {
 
+        /// <summary>
+        /// 
+        /// </summary>
         public static readonly Dictionary<Type, Dictionary<string, string>> FieldOverwrites = [];
 
         /// <summary>

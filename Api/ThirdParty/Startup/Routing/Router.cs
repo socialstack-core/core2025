@@ -29,6 +29,15 @@ public class Router
 	}
 
 	/// <summary>
+	/// Ask the router to rebuild. Often requested repeatedly in quick succession, 
+	/// so this internally buffers and will at most be a 100ms delay.
+	/// </summary>
+	public static void RequestRebuild()
+	{
+		RouterBuilder.RequestRebuild();
+	}
+
+	/// <summary>
 	/// Max number of tokens allowed in a URL.
 	/// </summary>
 	public static readonly int MaxTokenCount = 4;

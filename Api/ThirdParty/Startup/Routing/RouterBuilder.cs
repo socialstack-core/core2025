@@ -13,6 +13,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace Api.Startup.Routing;
 
@@ -54,6 +55,46 @@ public class RouterBuilder
 		NodesByVerb[3].HttpVerb = "PUT";
 	}
 
+	private static bool _rebuildRequested = false;
+	private static object _rebuildLock = new object();
+
+	/// <summary>
+	/// Ask the router to rebuild. Often requested repeatedly in quick succession, 
+	/// so this internally buffers and will at most be a 100ms delay.
+	/// </summary>
+	public static void RequestRebuild()
+	{
+		if (BuiltInBuilder == null)
+		{
+			// First run has not happened yet. Ignore this request.
+			return;
+		}
+
+		lock (_rebuildLock)
+		{
+			if (_rebuildRequested)
+			{
+				// Already one pending.
+				return;
+			}
+
+			_rebuildRequested = true;
+		}
+
+		_ = Task.Run(async () => {
+
+			await Task.Delay(100);
+
+			lock (_rebuildLock)
+			{
+				_rebuildRequested = false;
+			}
+
+			await Rebuild();
+			
+		});
+	}
+	
 	/// <summary>
 	/// Called once to do the initial setup of the router builder.
 	/// </summary>
@@ -63,6 +104,10 @@ public class RouterBuilder
 		var builder = new RouterBuilder(null);
 		builder.AddBuiltInControllers();
 		BuiltInBuilder = builder;
+
+		// Build the base one such that it can reuse the built controllers in all future calls:
+		builder.Build();
+
 		await Rebuild();
 	}
 
@@ -1985,12 +2030,18 @@ public class BuilderNode
 		{
 			var child = Children[i];
 			var built = child.Build();
+
+			if (built == null)
+			{
+				continue;
+			}
+
 			var intNode = built as IntermediateNode;
 
 			if (intNode == null)
 			{
 				// This implies something is wrong.
-				Console.WriteLine("A URL tree seemingly encountered a root not actually at the root of the tree. Something is likely incorrect!");
+				Log.Warn("router", "A URL tree seemingly encountered a root not actually at the root of the tree. Something is likely incorrect!");
 				continue;
 			}
 

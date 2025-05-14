@@ -1,15 +1,12 @@
 using Api.Database;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Api.Permissions;
 using Api.Contexts;
 using Api.Eventing;
 using Api.Startup;
-using Microsoft.AspNetCore.JsonPatch.Internal;
-using Api.CanvasRenderer;
 using System;
 using Api.Startup.Routing;
-using static Mysqlx.Expect.Open.Types.Condition.Types;
+using System.Runtime.Intrinsics.Arm;
 
 namespace Api.Pages
 {
@@ -40,6 +37,15 @@ namespace Api.Pages
 					AddToDictionary(link, _srcDictionary);
 				}
 
+				Router.RequestRebuild();
+
+				return new ValueTask<Permalink>(link);
+			});
+
+			Events.Permalink.AfterDelete.AddEventListener((Context context, Permalink link) => {
+
+				Router.RequestRebuild();
+
 				return new ValueTask<Permalink>(link);
 			});
 
@@ -58,16 +64,59 @@ namespace Api.Pages
 				// Create a permalink targeting this page:
 				if (!string.IsNullOrEmpty(page.Url))
 				{
+					string target = null;
+					
+					if (!string.IsNullOrEmpty(page.Key))
+					{
+						if (PageKeyIsPrimary(page.Key, out AutoService svc, out bool isAdminGroup, out string specificContentId))
+						{
+							// The page key is pointing at primary content, so the permalink should do so as well.
+							// Page keys are a superset, so we'll need to construct a new target locator.
+							target = CreatePrimaryTargetLocator(svc.ServicedType, specificContentId, isAdminGroup);
+						}
+					}
+
+					if (target == null)
+					{
+						target = "page:" + page.Id;
+					}
+
 					await Create(context, new Permalink()
 					{
 						Url = page.Url,
-						Target = "page:" + page.Id,
+						Target = target,
 					}, DataOptions.IgnorePermissions);
 				}
+
+				Router.RequestRebuild();
 
 				return page;
 			});
 
+			Events.Page.AfterUpdate.AddEventListener((Context context, Page page) =>
+			{
+				// Need to update the two caches. We'll just wipe them for now:
+				Router.RequestRebuild();
+
+				return new ValueTask<Page>(page);
+			});
+
+			Events.Page.AfterDelete.AddEventListener((Context context, Page page) =>
+			{
+				// Need to update the two caches. We'll just wipe them for now:
+				Router.RequestRebuild();
+
+				return new ValueTask<Page>(page);
+			});
+
+			Events.Page.Received.AddEventListener((Context context, Page page, int mode) => {
+
+				// Doesn't matter what the change was - we'll wipe the caches.
+				Router.RequestRebuild();
+
+				return new ValueTask<Page>(page);
+			});
+		
 			Events.Permalink.AfterDelete.AddEventListener((Context context, Permalink link) => {
 				_srcDictionary = null;
 				return new ValueTask<Permalink>(link);
@@ -96,7 +145,57 @@ namespace Api.Pages
 
 					var addedPage = false;
 
-					if (target.StartsWith("page:"))
+					if (TargetIsPrimaryLocator(target, out AutoService pTargetService, out bool pTargetIsAdmin, out string pTargetContentId))
+					{
+						addedPage = true;
+
+						var getNode = builder.GetGetNode();
+
+						if (sources.Count > 0)
+						{
+							// Pages are cached so we can ask for it here without a time penalty.
+							var page = await pages.Where("Key=?", DataOptions.IgnorePermissions).Bind(target).First(context);
+
+							if (page == null && pTargetContentId != null)
+							{
+								//  Try fallback locator (e.g. primary:user)
+								var fallback = CreatePrimaryTargetLocator(pTargetService.ServicedType, null, pTargetIsAdmin);
+								page = await pages.Where("Key=?", DataOptions.IgnorePermissions).Bind(fallback).First(context);
+							}
+
+							if (page != null)
+							{
+								var linkUrl = sources[0].Url;
+
+								// (mandatory on these targets)
+								if (PageKeyIsPrimary(page.Key, out AutoService _, out bool _, out string pageSpecificContentId))
+								{
+									var specificContentId = pTargetContentId;
+
+									if (specificContentId == null)
+									{
+										// Currently from the key lookup this won't happen,
+										// but it's considered for fancier page key matching later.
+										specificContentId = pageSpecificContentId;
+									}
+
+									if (!pTargetIsAdmin)
+									{
+										if (!primaryLookup.TryGetValue(pTargetService.ServicedType, out PrimaryUrlLookup urlLookup))
+										{
+											urlLookup = pTargetService.CreatePrimaryUrlLookup();
+											primaryLookup[pTargetService.ServicedType] = urlLookup;
+										}
+
+										urlLookup.Add(linkUrl, specificContentId);
+									}
+
+									getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, pTargetService, specificContentId));
+								}
+							}
+						}
+					}
+					else if (target.StartsWith("page:"))
 					{
 						addedPage = true;
 
@@ -161,6 +260,59 @@ namespace Api.Pages
 		private Dictionary<string, List<Permalink>> _srcDictionary;
 
 		/// <summary>
+		/// Creates a target string for a permalink which points at the primary page for the given piece of content. See Permalink.Target for more info.
+		/// These permalinks are of the form "primary:user:x" or "primary:user" if the object is null. When the routing tree is being updated, they are resolved 
+		/// to the actual target page which would either be the fallback primary user page or a specific one if it exists.
+		/// This way, if overriding pages for a specific content object are created, historical permalinks remain permanent.
+		/// </summary>
+		/// <param name="svc">The service that the object originated from.</param>
+		/// <param name="targetObject"></param>
+		/// <param name="adminGroup">Optionally generate it as a permalink to the admin panel primary page (usually of the form /en-admin/user/x).</param>
+		/// <returns></returns>
+		public string CreatePrimaryTargetLocator<T, ID>(AutoService<T, ID> svc, Content<ID> targetObject = null, bool adminGroup = false)
+			where T : Content<ID>, new()
+			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
+		{
+			return CreatePrimaryTargetLocator(svc.ServicedType, targetObject == null ? null : targetObject.Id.ToString(), adminGroup);
+		}
+
+		private string CreatePrimaryTargetLocator(Type servicedType, string specificContentId, bool adminGroup)
+		{
+			var contentType = servicedType.Name.ToLower();
+
+			if (specificContentId == null)
+			{
+				if (adminGroup)
+				{
+					return "admin_primary:" + contentType;
+				}
+
+				return "primary:" + contentType;
+			}
+
+			if (adminGroup)
+			{
+				return "admin_primary:" + contentType + ":" + specificContentId;
+			}
+
+			return "primary:" + contentType + ":" + specificContentId;
+		}
+
+		/// <summary>
+		/// True if a permalink target is a primary: or admin_primary: locator.
+		/// </summary>
+		/// <param name="key"></param>
+		/// <param name="service"></param>
+		/// <param name="isAdminGroup"></param>
+		/// <param name="specificContentId"></param>
+		/// <returns></returns>
+		public bool TargetIsPrimaryLocator(string key, out AutoService service, out bool isAdminGroup, out string specificContentId)
+		{
+			// Page keys are a superset of the locator format.
+			return PageKeyIsPrimary(key, out service, out isAdminGroup, out specificContentId);
+		}
+
+		/// <summary>
 		/// True if the given page Key is a primary content one. See Page.Key for more details. 
 		/// Returns the relevant service and also a specific content ID if there is one.
 		/// </summary>
@@ -205,7 +357,7 @@ namespace Api.Pages
 				key.Substring(typeStart) : 
 				key.Substring(typeStart, specificContentIndex - typeStart);
 
-			service = Services.Get(typeName);
+			service = Services.Get(typeName + "service");
 
 			if (specificContentIndex == -1)
 			{

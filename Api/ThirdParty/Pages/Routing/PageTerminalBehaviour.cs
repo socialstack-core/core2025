@@ -1,5 +1,6 @@
 using Api.Pages;
 using System;
+using System.Collections.Generic;
 
 namespace Api.Startup.Routing;
 
@@ -80,6 +81,21 @@ public class PageTerminalBehaviour : TerminalBehaviour
 			);
 		}
 
+		int tokenIndex = -1;
+
+		if (SpecificContentId == null)
+		{
+			// An .id token is mandatory (see also: Permalink.Target)
+			var idTokenText = PrimaryService.ServicedType.Name.ToLower() + ".id";
+			tokenIndex = GetTokenIndex(tokens, idTokenText);
+
+			if (tokenIndex == -1)
+			{
+				Log.Warn("page", "Invalid page route for '" + node.FullRoute + "'. It targets a primary content page but does not have a ${" + idTokenText + "} token in the Url. If you are using other non-ID tokens, you need to instead generate permalinks. This is such that historical URLs are preserved if your fields change.");
+				return null;
+			}
+		}
+
 		// Page with primary content
 		var rpt = typeof(RouterPageTerminal<,>).MakeGenericType(PrimaryService.ServicedType, PrimaryService.IdType);
 
@@ -88,12 +104,39 @@ public class PageTerminalBehaviour : TerminalBehaviour
 			tokens,
 			PrimaryService,
 			SpecificContentId,
+			tokenIndex,
 			Page,
 			node.IsToken ? null : node.Text,
 			node.FullRoute
 		});
 
 		return result as RouterPageTerminal;
+	}
+
+	/// <summary>
+	/// Case sensitive search for a specific token index. -1 if not found.
+	/// </summary>
+	/// <param name="tokens"></param>
+	/// <param name="token"></param>
+	/// <returns></returns>
+	private int GetTokenIndex(List<string> tokens, string token)
+	{
+		if (tokens == null)
+		{
+			return -1;
+		}
+
+		var tokenLower = token.ToLower();
+
+		for (var i = 0; i < tokens.Count; i++)
+		{
+			if (tokens[i].ToLower() == tokenLower)
+			{
+				return i;
+			}
+		}
+
+		return -1;
 	}
 
 }

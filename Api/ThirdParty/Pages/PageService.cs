@@ -209,73 +209,12 @@ namespace Api.Pages
 				return ValueTask.FromResult(page);
 			});
 
-			Events.Page.AfterUpdate.AddEventListener((Context context, Page page) =>
-			{
-				// Need to update the two caches. We'll just wipe them for now:
-				ClearCaches();
-
-				return new ValueTask<Page>(page);
-			});
-
-			Events.Page.AfterDelete.AddEventListener((Context context, Page page) =>
-			{
-				// Need to update the two caches. We'll just wipe them for now:
-				ClearCaches();
-
-				return new ValueTask<Page>(page);
-			});
-
-			Events.Page.AfterCreate.AddEventListener((Context context, Page page) =>
-			{
-				ClearCaches();
-
-				return new ValueTask<Page>(page);
-			});
-
-			Events.Page.Received.AddEventListener((Context context, Page page, int mode) => {
-
-				// Doesn't matter what the change was - we'll wipe the caches.
-				ClearCaches();
-
-				return new ValueTask<Page>(page);
-			});
-
-			Events.Service.AfterStart.AddEventListener((Context context, object svc) => {
-
-				// Just in case anything during startup loaded the
-				// page tree before all services were ready.
-				ClearCaches();
-
-				return new ValueTask<object>(svc);
-			});
-
-			Events.Service.AfterCreate.AddEventListener((Context context, AutoService svc) => {
-
-				// A service has started up. This can mean we now have a new data type
-				// replacing one which was previously used and cached by the URL tree.
-				if (!svc.IsMapping)
-				{
-					ClearCaches();
-				}
-
-				return new ValueTask<AutoService>(svc);
-			});
-
 			// Pages must always have the cache on for any release site.
 			// That's because the HtmlService has a release only cache which depends on the sync messages for pages, as well as e.g. the url gen cache.
 #if !DEBUG
 			Cache();
 #endif
 
-		}
-
-		/// <summary>
-		/// Clears the page lookup tree and URL generation caches.
-		/// They will be regenerated when next requested.
-		/// </summary>
-		public void ClearCaches()
-		{
-			Log.Warn(LogTag, "router cache was not updated (todo)");
 		}
 
 		/// <summary>
