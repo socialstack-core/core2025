@@ -55,7 +55,7 @@ namespace Api.EcmaScript
                     AddMethodParams(method, classMethod, script, true);
 
                     // Add the method body
-                    AddMethodBody(method, classMethod, script, baseUrl, resolvedReturnType);
+                    AddMethodBody(method, classMethod, script, baseUrl, resolvedReturnType, false);
 
                     // Add the method to the class
                     target.AddMethod(classMethod);
@@ -68,11 +68,10 @@ namespace Api.EcmaScript
 
                 if (collectionOfType != null)
                 {
+                    isContentList = true;
                     // Import ApiList if it's a content type.
                     if (IsContentType(collectionOfType))
                     {
-                        isContentList = true;
-
                         script.AddImport(new Import
                         {
                             Symbols = ["ApiList"],
@@ -198,7 +197,7 @@ namespace Api.EcmaScript
                 }
 
                 // Add the method body
-                AddMethodBody(method, apiMethod, script, baseUrl, resolvedReturnType);
+                AddMethodBody(method, apiMethod, script, baseUrl, resolvedReturnType, isContentList);
 
                 // Add the method to the class
                 target.AddMethod(apiMethod);

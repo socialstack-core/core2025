@@ -18,7 +18,7 @@ namespace Api.EcmaScript
         /// <param name="script"></param>
         /// <param name="baseUrl"></param>
         /// <param name="resolvedReturnType"></param>
-        public static void AddMethodBody(MethodInfo method, ClassMethod classMethod, Script script, string baseUrl, Type resolvedReturnType)
+        public static void AddMethodBody(MethodInfo method, ClassMethod classMethod, Script script, string baseUrl, Type resolvedReturnType, bool returnsList)
         {
             var ecmaService = Services.Get<EcmaService>();
             var endpointUrl = GetEndpointUrl(method) ?? "";
@@ -51,7 +51,7 @@ namespace Api.EcmaScript
                 endpointUrl = endpointUrl[0..^1];
             }
 
-            var caller = ResolveCaller(resolvedReturnType);
+            var caller = ResolveCaller(resolvedReturnType, returnsList);
 
             classMethod.Injected = GenerateCall(caller, endpointUrl, bodyParam, parameters, GetHttpMethodFromAttribute(method), classMethod);
 
@@ -114,7 +114,7 @@ namespace Api.EcmaScript
             return endpointUrl.Replace("?&", "?");
         }
 
-		private static string ResolveCaller(Type resolvedReturnType)
+		private static string ResolveCaller(Type resolvedReturnType, bool returnsList = false)
 		{
 			var ecmaService = Services.Get<EcmaService>();
 			var listOfType = GetListOfType(resolvedReturnType);
@@ -135,6 +135,10 @@ namespace Api.EcmaScript
 			{
 				return "getText";
 			}
+            else if (returnsList)
+            {
+                return "getList<" + ecmaService.GetTypeConversion(resolvedReturnType) + ">";
+            }
 
 			return "getJson<" + ecmaService.GetTypeConversion(resolvedReturnType) + ">";
 		}

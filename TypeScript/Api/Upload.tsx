@@ -107,8 +107,8 @@ export class UploadApi extends AutoController<Upload, uint>{
       Replace any existing refs with new ones
 
     */
-    public replace = (sourceRef: string, targetRef: string): Promise<MediaRef[]>  => {
-        return getJson<MediaRef>(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
+    public replace = (sourceRef: string, targetRef: string): Promise<ApiList<MediaRef>>  => {
+        return getList<MediaRef>(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
     }
 
     /**
@@ -123,16 +123,16 @@ export class UploadApi extends AutoController<Upload, uint>{
       Upgrade refs such that any ref fields hold the latest version of a specified ref.
 
     */
-    public updateRefs = (update: boolean): Promise<MediaRef[]>  => {
-        return getJson<MediaRef>(this.apiUrl + '/update-refs?update=' + update + '')
+    public updateRefs = (update: boolean): Promise<ApiList<MediaRef>>  => {
+        return getList<MediaRef>(this.apiUrl + '/update-refs?update=' + update + '')
     }
 
     /**
       Preview any media refs changes
 
     */
-    public preview = (uploadRef: string): Promise<MediaRef[]>  => {
-        return getJson<MediaRef>(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
+    public preview = (uploadRef: string): Promise<ApiList<MediaRef>>  => {
+        return getList<MediaRef>(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
     }
 
 }

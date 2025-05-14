@@ -43,16 +43,16 @@ export class CustomContentTypeApi extends AutoController<CustomContentType, uint
       All custom types which will include deleted ones.
 
     */
-    public getAllTypes = (): Promise<String[]>  => {
-        return getJson<string>(this.apiUrl + '/alltypes')
+    public getAllTypes = (): Promise<ApiList<String>>  => {
+        return getList<string>(this.apiUrl + '/alltypes')
     }
 
     /**
       Gets all custom types excluding deleted ones.
 
     */
-    public getAllTypesPlus = (): Promise<TypeInfo[]>  => {
-        return getJson<TypeInfo>(this.apiUrl + '/allcustomtypesplus')
+    public getAllTypesPlus = (): Promise<ApiList<TypeInfo>>  => {
+        return getList<TypeInfo>(this.apiUrl + '/allcustomtypesplus')
     }
 
 }

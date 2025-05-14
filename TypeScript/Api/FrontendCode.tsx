@@ -36,8 +36,8 @@ export class FrontendCodeApi{
       Lists all available static files.
 
     */
-    public getStaticFileList = (): Promise<StaticFileInfo[]>  => {
-        return getJson<StaticFileInfo>(this.apiUrl + '//pack/static-assets/list.json')
+    public getStaticFileList = (): Promise<ApiList<StaticFileInfo>>  => {
+        return getList<StaticFileInfo>(this.apiUrl + '//pack/static-assets/list.json')
     }
 
     /**

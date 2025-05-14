@@ -152,8 +152,8 @@ export class SearchElasticApi{
       Exposes details of the current shards in the elastic store
 
     */
-    public shards = (): Promise<CatShardsRecord[]>  => {
-        return getJson<CatShardsRecord>(this.apiUrl + '/shards')
+    public shards = (): Promise<ApiList<CatShardsRecord>>  => {
+        return getList<CatShardsRecord>(this.apiUrl + '/shards')
     }
 
 }
