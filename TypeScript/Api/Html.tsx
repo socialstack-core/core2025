@@ -34,7 +34,7 @@ export class HtmlApi{
 
     */
     public getMobileHtml = (mobileMeta: MobilePageMeta): Promise<string>  => {
-        return getText(this.apiUrl + '//pack/static-assets/mobile-html', mobileMeta)
+        return getText(this.apiUrl + '/pack/static-assets/mobile-html', mobileMeta)
     }
 
     /**
@@ -42,7 +42,7 @@ export class HtmlApi{
 
     */
     public getRteConfigPage = (): Promise<string>  => {
-        return getText(this.apiUrl + '//pack/rte.html')
+        return getText(this.apiUrl + '/pack/rte.html')
     }
 
     /**

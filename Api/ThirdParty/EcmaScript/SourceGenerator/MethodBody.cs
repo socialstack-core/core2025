@@ -151,6 +151,9 @@ namespace Api.EcmaScript
             {
                 urlPart += "+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : '')";
             }
+
+            urlPart = urlPart.Replace("//", "/");
+
             List<string> inject = [];
 
             if (bodyParam != null)
