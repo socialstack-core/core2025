@@ -11,7 +11,9 @@ import {getOne, getList, getJson, getText} from 'UI/Functions/WebRequest'
   A Product
 */
 export type Product = VersionedContent<uint> & {
+    sku?: string,
     name?: string,
+    slug?: string,
     isBilledByUsage: boolean,
     billingFrequency: uint,
     minQuantity: ulong,

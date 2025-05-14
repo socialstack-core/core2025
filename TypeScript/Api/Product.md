@@ -65,7 +65,9 @@ The following fields are available on this entity:
 
 | Name             | Type      | Nullable | Summary                  |
 | ---------------- | --------- | -------- | ------------------------ |
+| Sku              | `String`  | Yes      | No description available |
 | Name             | `String`  | Yes      | No description available |
+| Slug             | `String`  | Yes      | No description available |
 | IsBilledByUsage  | `Boolean` | No       | No description available |
 | BillingFrequency | `UInt32`  | No       | No description available |
 | MinQuantity      | `UInt64`  | No       | No description available |

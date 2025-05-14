@@ -53,7 +53,12 @@ This entity works with some core components, such as Form & Loop
 
 *Auto-generated from a .NET entity inside the Api/ directory*
 
-A Permalink
+A Permalink. The most recent permalink for a given target URL is canonical.
+            If there is no such source URL, the target is canonical.
+            Unlike a redirect, a permalink is primarily a URL rewrite. Their purpose is to allow very complex URLs
+            for e.g. products with deeply nested categories, whilst not breaking the URL when any of the products change.
+            Instead older permalinks just become redirects to the latest, canonical one.
+            Has an index which blocks creation of duplicates at the cluster level.
 
 ---
 
@@ -63,8 +68,10 @@ A Permalink
 
 The following fields are available on this entity:
 
-| Name | Type | Nullable | Summary |
-| ---- | ---- | -------- | ------- |
+| Name   | Type     | Nullable | Summary                  |
+| ------ | -------- | -------- | ------------------------ |
+| Url    | `String` | Yes      | No description available |
+| Target | `String` | Yes      | No description available |
 
 # Permalink API
 

@@ -8,9 +8,16 @@ import {getOne, getList, getJson, getText} from 'UI/Functions/WebRequest'
 
 // Module
 /*
-  A Permalink
+  A Permalink. The most recent permalink for a given target URL is canonical.
+            If there is no such source URL, the target is canonical.
+            Unlike a redirect, a permalink is primarily a URL rewrite. Their purpose is to allow very complex URLs
+            for e.g. products with deeply nested categories, whilst not breaking the URL when any of the products change.
+            Instead older permalinks just become redirects to the latest, canonical one.
+            Has an index which blocks creation of duplicates at the cluster level.
 */
 export type Permalink = VersionedContent<uint> & {
+    url?: string,
+    target?: string,
 }
 
 /**

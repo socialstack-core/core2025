@@ -5,7 +5,7 @@
 /**
 */
 export class ApiIncludes{
-    public text: string;
+    public text: string = '';
 
     /**
 
@@ -75,6 +75,12 @@ export class ApiIncludes{
 
     /*
     */
+    get productcategories(): ApiIncludes {
+        return new ApiIncludes(this.text, 'productcategories');
+    }
+
+    /*
+    */
     get productquantities(): ApiIncludes {
         return new ApiIncludes(this.text, 'productquantities');
     }
@@ -83,6 +89,24 @@ export class ApiIncludes{
     */
     get tiers(): ApiIncludes {
         return new ApiIncludes(this.text, 'tiers');
+    }
+
+    /*
+    */
+    get optionalextras(): ApiIncludes {
+        return new ApiIncludes(this.text, 'optionalextras');
+    }
+
+    /*
+    */
+    get accessories(): ApiIncludes {
+        return new ApiIncludes(this.text, 'accessories');
+    }
+
+    /*
+    */
+    get suggestions(): ApiIncludes {
+        return new ApiIncludes(this.text, 'suggestions');
     }
 
     /*
@@ -243,6 +267,23 @@ export class PriceIncludes extends ApiIncludes{
 /**
 */
 export class ProductAttributeIncludes extends ApiIncludes{
+    /*
+    */
+    get creatorUser(): UserIncludes {
+        return new UserIncludes(this.text, 'creatorUser');
+    }
+
+}
+
+/**
+*/
+export class ProductCategoryIncludes extends ApiIncludes{
+    /*
+    */
+    get productCategory(): ProductCategoryIncludes {
+        return new ProductCategoryIncludes(this.text, 'productCategory');
+    }
+
     /*
     */
     get creatorUser(): UserIncludes {
@@ -549,6 +590,17 @@ export class CategoryIncludes extends ApiIncludes{
 /**
 */
 export class UploadIncludes extends ApiIncludes{
+    /*
+    */
+    get creatorUser(): UserIncludes {
+        return new UserIncludes(this.text, 'creatorUser');
+    }
+
+}
+
+/**
+*/
+export class ContentFieldAccessRuleIncludes extends ApiIncludes{
     /*
     */
     get creatorUser(): UserIncludes {

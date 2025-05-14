@@ -27,7 +27,7 @@ export type FileContent = {
 /**
 */
 export class HtmlApi{
-    public apiUrl: string;
+    public apiUrl: string = '';
 
     /**
       Lists all available static files.

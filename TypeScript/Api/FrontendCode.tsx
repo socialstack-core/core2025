@@ -22,7 +22,7 @@ export type StaticFileInfo = {
 /**
 */
 export class FrontendCodeApi{
-    public apiUrl: string;
+    public apiUrl: string = '';
 
     /**
       Reloads a prebuilt UI

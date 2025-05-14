@@ -8,7 +8,7 @@ import {getOne, getList, getJson, getText} from 'UI/Functions/WebRequest'
 /**
 */
 export class DomainSiteMapApi{
-    public apiUrl: string;
+    public apiUrl: string = '';
 
     /**
       Exposes the dynamic site map file

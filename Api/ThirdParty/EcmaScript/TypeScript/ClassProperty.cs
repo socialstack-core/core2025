@@ -66,19 +66,21 @@ namespace Api.EcmaScript.TypeScript
         {
             var src = "".PadLeft(4) + $"{Visibility} {PropertyName}: {PropertyType}";
 
-            if (!string.IsNullOrEmpty(DefaultValue))
+            if (PropertyType == "string")
             {
-                src += " = ";
-                if (PropertyType == "string")
+                if (DefaultValue == null)
                 {
-                    src += $"'{DefaultValue.Replace("'", "\\'")}'";
+                    DefaultValue = "";
                 }
-                else
+                src += $" = '{DefaultValue.Replace("'", "\\'")}'"; 
+            } 
+            else 
+            {
+                if (!string.IsNullOrEmpty(DefaultValue))
                 {
-                    src += DefaultValue;
+                    src += " = " + DefaultValue +  " as " + PropertyType;
                 }
             }
-
             src += ";" + Environment.NewLine;
 
             return src;

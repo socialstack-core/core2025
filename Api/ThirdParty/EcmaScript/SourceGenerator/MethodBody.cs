@@ -129,7 +129,7 @@ namespace Api.EcmaScript
 			}
 			else if (IsContentType(resolvedReturnType))
 			{
-				return "getOne<" + resolvedReturnType + ">";
+				return "getOne<" + resolvedReturnType.Name + ">";
 			}
 			else if (resolvedReturnType == typeof(void))
 			{

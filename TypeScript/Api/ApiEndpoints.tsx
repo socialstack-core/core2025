@@ -19,7 +19,7 @@ export type ListFilter = {
 /**
 */
 export class AutoController<T, ID>{
-    public apiUrl: string;
+    public apiUrl: string = '';
 
     public includes?: ApiIncludes;
 
