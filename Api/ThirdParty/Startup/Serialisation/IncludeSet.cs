@@ -433,7 +433,9 @@ namespace Api.Startup
 				var baseGenType = field.VirtualInfo.ValueGeneratorType;
 				var typeToInstance = field.VirtualInfo.ValueGeneratorType.MakeGenericType(Service.ServicedType, Service.IdType);
 				var valueGenerator = Activator.CreateInstance(typeToInstance); // as VirtualFieldValueGenerator<T, ID>;
-				functionalInclude.ValueGenerator = valueGenerator;
+				var baseValueGen = valueGenerator as VirtualFieldValueGenerator;
+				baseValueGen.SetService(Service);
+				functionalInclude.ValueGenerator = baseValueGen;
 
 				// Doesn't generate a node because nested functional includes don't make sense.
 				return null;
@@ -628,7 +630,7 @@ namespace Api.Startup
 		/// For example, you ask for pages and include tags.primaryUrl. The root include node service is the pageservice, and the 1st child (tags) service is the tagService.
 		/// The value generator for tags.primaryUrl is therefore a VirtualFieldValueGenerator for the tag type.
 		/// </summary>
-		public object ValueGenerator;
+		public VirtualFieldValueGenerator ValueGenerator;
 
 		/// <summary>
 		/// Sets the header for this node.

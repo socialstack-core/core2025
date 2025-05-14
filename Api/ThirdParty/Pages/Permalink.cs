@@ -19,12 +19,22 @@ namespace Api.Pages
 	public partial class Permalink : VersionedContent<uint>
 	{
 		/// <summary>
-		/// The source URL. Always an absolute path ("/hello-world")
+		/// The source URL. Always an absolute path ("/hello-world") which can contain ${tokens}. These token values appear 
+		/// in the JS via useRouter, and in the C# via the PageWithTokens struct.
 		/// </summary>
 		public string Url;
 
 		/// <summary>
-		/// The target URL. Always an absolute path ("/hello-world")
+		/// The target. Can be an absolute path ("/hello-world") but is almost always a constant 'target locator'.
+		/// Currently supported target locators are:
+		/// - A specific page "page:42"
+		/// - Primary page target locator (see the PermalinkService.CreatePrimaryTargetLocator method). "primary:user:42", "primary:user", "admin_primary:user", "admin_primary:user:42"
+		/// 
+		/// If your locator does specify a primary page but does not specify the content ID (i.e. it's pointing at general use primary page) then your Url must contain an ${type.id} token.
+		/// For example, /users/${user.id} targeting "primary:user"
+		/// /users/${user.id} targeting "page:42" which in turn has a key of "primary:user"
+		/// Essentially when the ID is not known, it will be resolved from an ID token. If you want a fancier URL with a slug etc, then you must generate that as a dedicated permalink. 
+		/// This is to achieve the main goal of permalinks: historical URLs are preserved when your potentially more dynamic (non-ID slugs) fields change.
 		/// </summary>
 		public string Target;
 	}
@@ -35,12 +45,12 @@ namespace Api.Pages
 	public struct PermalinkUrlTarget
 	{
 		/// <summary>
-		/// The source URL. Always an absolute path ("/hello-world")
+		/// The source URL. See Permalink.Url for more details.
 		/// </summary>
 		public string Url;
 
 		/// <summary>
-		/// The target URL. Always an absolute path ("/hello-world")
+		/// The target. See Permalink.Target for more details.
 		/// </summary>
 		public string Target;
 	}

@@ -32,38 +32,24 @@ namespace Api.Translate
             // Example admin page install:
             InstallAdminPages(null, null, new string[] { "id", "module", "original", "translation" });
 
-            Events.Service.AfterStart.AddEventListener((Context context, object sender) => {
+            Events.Service.AfterStart.AddEventListener(async (Context context, object sender) => {
 
                 // This route is suggested rather than dependency injection
                 // Because some projects (particularly fully headless and micro instances) don't have a page service installed.
                 var pageService = Services.Get<PageService>();
 
-                pageService.Install(
-                    new Page()
-                    {
-                        Url = "/en-admin/translation/upload",
-                        Title = "Translation Upload",
-                        BodyJson = @"{
-	                            ""c"": {
-		                            ""t"": ""Admin/Layouts/Default"",
-		                            ""d"": {},
-		                            ""c"": {
-			                            ""t"": ""Admin/Tile"",
-			                            ""d"": {},
-			                            ""c"": {
-				                            ""t"": ""Admin/TranslationUpload"",
-				                            ""d"": {},
-				                            ""i"": 2
-			                            },
-			                            ""i"": 3
-		                            },
-		                            ""i"": 4
-	                            },
-	                            ""i"": 5
-                            }"
-                    });
+                await pageService.InstallAdminPage(
+					"translation/upload",
+					"Translation Upload",
+					new CanvasNode("Admin/Layouts/Default").AppendChild(
+						new CanvasNode("Admin/Tile")
+                            .AppendChild(
+                                new CanvasNode("Admin/TranslationUpload")
+                            )
+					)
+                );
 
-                return new ValueTask<object>(sender);
+                return sender;
             });
 
         }

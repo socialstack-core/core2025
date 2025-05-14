@@ -12,7 +12,7 @@ namespace Api.Startup;
 /// </summary>
 public partial class StdOutController : AutoController
 {
-
+	/*
 	/// <summary>
 	/// Page cache status.
 	/// </summary>
@@ -26,6 +26,7 @@ public partial class StdOutController : AutoController
 
 		return Services.Get<HtmlService>().GetCacheStatus();
 	}
+	*/
 
 	/// <summary>
 	/// Plaintext benchmark.

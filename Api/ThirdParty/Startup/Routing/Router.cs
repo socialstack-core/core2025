@@ -1,6 +1,7 @@
 using Api.Contexts;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Api.Startup.Routing;
@@ -18,10 +19,34 @@ public class Router
 	public static Router CurrentRouter;
 
 	/// <summary>
+	/// True if the given router is not the current one.
+	/// </summary>
+	/// <param name="router"></param>
+	/// <returns></returns>
+	public static bool IsStale(Router router)
+	{
+		return router != CurrentRouter;
+	}
+
+	/// <summary>
+	/// Ask the router to rebuild. Often requested repeatedly in quick succession, 
+	/// so this internally buffers and will at most be a 100ms delay.
+	/// </summary>
+	public static void RequestRebuild()
+	{
+		RouterBuilder.RequestRebuild();
+	}
+
+	/// <summary>
 	/// Max number of tokens allowed in a URL.
 	/// </summary>
 	public static readonly int MaxTokenCount = 4;
 
+	/// <summary>
+	/// The terminal to use when a 404 occurs.
+	/// </summary>
+	public TerminalNode Status_404;
+	
 	/// <summary>
 	/// The set of router trees by HTTP verb.
 	/// </summary>
@@ -58,9 +83,104 @@ public class Router
 	/// <returns></returns>
 	public ValueTask<bool> HandleRequest(HttpContext httpContext, Context basicContext)
 	{
+		// Max of N tokens (4 is the default).
+		var tokenCount = 0;
+		Span<TokenMarker> tokenSet = stackalloc TokenMarker[MaxTokenCount];
 		var req = httpContext.Request;
-		var method = req.Method;
 
+		ReadOnlySpan<char> path;
+
+		if (req.Path.HasValue)
+		{
+			path = req.Path.Value.AsSpan();
+		}
+		else
+		{
+			path = ReadOnlySpan<char>.Empty;
+		}
+
+		var node = Resolve(req.Method, path, basicContext, ref tokenCount, ref tokenSet);
+
+		if (node == null)
+		{
+			httpContext.Response.StatusCode = 404;
+
+			if (Status_404 != null)
+			{
+				return Status_404.Run(httpContext, basicContext, tokenCount, ref tokenSet);
+			}
+
+			return new ValueTask<bool>(true);
+		}
+
+		return node.Run(httpContext, basicContext, tokenCount, ref tokenSet);
+	}
+
+	/// <summary>
+	/// Converts a set of tokens to a heap List.
+	/// </summary>
+	/// <param name="tokenCount"></param>
+	/// <param name="tokens"></param>
+	/// <param name="url"></param>
+	/// <returns></returns>
+	public static List<string> ConvertTokens(int tokenCount, string url, ref Span<TokenMarker> tokens)
+	{
+		var result = new List<string>();
+
+		for (var i = 0; i < tokenCount; i++)
+		{
+			var token = tokens[i];
+
+			if (token.LookupIndex == -1)
+			{
+				result.Add(url.Substring(token.Start, token.Length));
+			}
+			else
+			{
+				result.Add(RouterTokenLookup.Get(token.LookupIndex));
+			}
+		}
+
+		return result;
+	}
+
+	/// <summary>
+	/// Resolves the given URL to a terminal, allocating the token set as a 
+	/// List on the heap making it more portable through async code. 
+	/// The majority of routing generally avoids using this.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="url"></param>
+	/// <returns></returns>
+	public TerminalWithTokens? ResolveWithTokens(Context context, string url)
+	{
+		var tokenCount = 0;
+		Span<TokenMarker> tokenSet = stackalloc TokenMarker[MaxTokenCount];
+		var terminal = Resolve("GET", url.AsSpan(), context, ref tokenCount, ref tokenSet);
+
+		if (terminal == null)
+		{
+			return null;
+		}
+
+		return new TerminalWithTokens
+		{
+			TerminalNode = terminal,
+			Tokens = tokenCount == 0 ? null : ConvertTokens(tokenCount, url, ref tokenSet)
+		};
+	}
+
+	/// <summary>
+	/// Resolves the given request in to a specific terminal node.
+	/// </summary>
+	/// <param name="method">GET, POST etc</param>
+	/// <param name="path">The URL</param>
+	/// <param name="context">Either a basic context or a regular context.</param>
+	/// <param name="tokenCount"></param>
+	/// <param name="tokenSet"></param>
+	/// <returns>Null if the route did not resolve (it was a 404).</returns>
+	public TerminalNode Resolve(string method, ReadOnlySpan<char> path, Context context, ref int tokenCount, ref Span<TokenMarker> tokenSet)
+	{
 		int verbIndex;
 
 		switch (method)
@@ -78,19 +198,16 @@ public class Router
 				verbIndex = 3;
 				break;
 			default:
-				return new ValueTask<bool>(false);
+				return null;
 		}
 
 		// The requested path is..
-		ReadOnlySpan<char> path;
 		int pathStartIndex;
-		int pathMax = 0;
+		int pathMax = path.Length;
 
-		if (req.Path.HasValue)
+		if (pathMax > 0)
 		{
 			// If it starts with a /, ignore it.
-			path = req.Path.Value.AsSpan();
-			pathMax = path.Length;
 			var startsWithSlash = (path[0] == '/');
 			var endsWithSlash = (pathMax > 1 && path[pathMax - 1] == '/');
 
@@ -121,13 +238,8 @@ public class Router
 		}
 		else
 		{
-			path = ReadOnlySpan<char>.Empty;
 			pathStartIndex = 0;
 		}
-
-		// Max of N tokens (4 is the default).
-		var tokenCount = 0;
-		Span<TokenMarker> tokenSet = stackalloc TokenMarker[MaxTokenCount];
 
 		// Initial node is..
 		var current = TreesByVerb[verbIndex];
@@ -142,23 +254,32 @@ public class Router
 				var finalTerminal = current.FindChildNode(path);
 
 				// Is current a capture token?
-				if (finalTerminal != null && finalTerminal.Capture)
+				if (finalTerminal != null)
 				{
-					// Yes - store the child segment as a token.
-					// It is assumed that URLs that have too many tokens are never added to the tree
-					// to minimise logic on the hot path as much as possible.
-					tokenSet[tokenCount] = new TokenMarker(pathStartIndex, pathMax - pathStartIndex);
-					tokenCount++;
+					if (finalTerminal.LocaleId != 0)
+					{
+						context.LocaleId = finalTerminal.LocaleId;
+					}
+
+					if (finalTerminal.IsRewrite)
+					{
+						// It's a rewrite. Tokens are reset to the contents of the rewrite node.
+						var rewrite = (TerminalRewriteNode)finalTerminal;
+						finalTerminal = rewrite.GoTo as IntermediateNode;
+						tokenCount = rewrite.ReplaceTokens(ref tokenSet);
+					}
+					else if (finalTerminal.Capture)
+					{
+						// Yes - store the child segment as a token.
+						// It is assumed that URLs that have too many tokens are never added to the tree
+						// to minimise logic on the hot path as much as possible.
+						tokenSet[tokenCount] = new TokenMarker(pathStartIndex, pathMax - pathStartIndex);
+						tokenCount++;
+					}
 				}
 
 				var terminal = finalTerminal as TerminalNode;
-
-				if (terminal == null)
-				{
-					return new ValueTask<bool>(false);
-				}
-
-				return terminal.Run(httpContext, basicContext, tokenCount, ref tokenSet);
+				return terminal;
 			}
 
 			ReadOnlySpan<char> childSegment;
@@ -177,13 +298,24 @@ public class Router
 			if (next == null)
 			{
 				// 404
-				return new ValueTask<bool>(false);
+				return null;
 			}
 
-			// Is current a capture token?
-			if (next.Capture)
+			if (next.LocaleId != 0)
 			{
-				// Yes - store the child segment as a token.
+				context.LocaleId = next.LocaleId;
+			}
+			
+			if (next.IsRewrite)
+			{
+				// It's a rewrite. Tokens are reset to the contents of the rewrite node.
+				var rewrite = (TerminalRewriteNode)next;
+				next = rewrite.GoTo as IntermediateNode;
+				tokenCount = rewrite.ReplaceTokens(ref tokenSet);
+			}
+			else if (next.Capture) 
+			{
+				// It's a capture token - store the child segment as a token.
 				// It is assumed that URLs that have too many tokens are never added to the tree
 				// to minimise logic on the hot path as much as possible.
 				tokenSet[tokenCount] = new TokenMarker(pathStartIndex, index);
@@ -205,6 +337,10 @@ public class Router
 public struct TokenMarker
 {
 	/// <summary>
+	/// Index in the lookup, if this token is a static one.
+	/// </summary>
+	public readonly int LookupIndex;
+	/// <summary>
 	/// The start of the token region
 	/// </summary>
 	public readonly int Start;
@@ -219,9 +355,27 @@ public struct TokenMarker
 	/// </summary>
 	/// <param name="start"></param>
 	/// <param name="length"></param>
-	public TokenMarker(int start, int length)
+	/// <param name="lookupIndex"></param>
+	public TokenMarker(int start, int length, int lookupIndex = -1)
 	{
 		Start = start;
 		Length = length;
+		LookupIndex = lookupIndex;
 	}
+}
+
+/// <summary>
+/// A terminal node with converted token values.
+/// </summary>
+public struct TerminalWithTokens
+{
+	/// <summary>
+	/// The terminal.
+	/// </summary>
+	public TerminalNode TerminalNode;
+
+	/// <summary>
+	/// Converted token set.
+	/// </summary>
+	public List<string> Tokens;
 }

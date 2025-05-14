@@ -43,7 +43,7 @@ namespace Api.UserLastVisited
 				return new ValueTask<JsonField<User, uint>>(field);
 			});
 
-            Events.Page.BeforeNavigate.AddEventListener((Context context, Page page, string url) => {
+            Events.Page.BeforeNavigate.AddEventListener((Context context, PageWithTokens pageTokens) => {
 			
 				if (_config != null && !_config.Disabled && context.UserId > 0)
 				{
@@ -62,7 +62,7 @@ namespace Api.UserLastVisited
 					});		
 				}
 
-                return new ValueTask<Page>(page);
+                return new ValueTask<PageWithTokens>(pageTokens);
             });
 		}
 	}    
