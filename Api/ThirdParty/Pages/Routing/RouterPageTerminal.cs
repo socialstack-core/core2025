@@ -119,6 +119,22 @@ public class RouterPageTerminal : TerminalNode
 		return null;
 	}
 
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = Page == null || string.IsNullOrEmpty(Page.Title) ? "Untitled Page" : Page.Title,
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Page",
+		};
+	}
+
 }
 
 /// <summary>

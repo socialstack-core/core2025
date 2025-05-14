@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Org.BouncyCastle.Asn1.X509;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,9 +40,40 @@ public class RouteNode
 	}
 
 	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public virtual RouterNodeMetadata? GetMetadata()
+	{
+		return null;
+	}
+
+	/// <summary>
 	/// Locates a child node by its name specified in the given span.
 	/// </summary>
 	public virtual IntermediateNode FindChildNode(ReadOnlySpan<char> childName)
+	{
+		return null;
+	}
+
+	/// <summary>
+	/// True if this node has 1 or more child.
+	/// </summary>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
+	public bool HasChildren()
+	{
+		var kids = GetChildren();
+
+		return kids != null && kids.Length > 0;
+	}
+	
+	/// <summary>
+	/// Gets the raw children of this node, if it has any.
+	/// </summary>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
+	public virtual IntermediateNode[] GetChildren()
 	{
 		return null;
 	}
@@ -371,6 +403,22 @@ public class TerminalNode<State, OutputType, BodyType> : TerminalNode
 		return true;
 	}
 
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = "",
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Method",
+		};
+	}
+
 }
 
 /// <summary>
@@ -414,6 +462,22 @@ public class TerminalRedirectNode : TerminalNode
 		response.Headers.Location = Target;
 		response.StatusCode = 302;
 		return new ValueTask<bool>(true);
+	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = Target,
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Redirect",
+		};
 	}
 
 }
@@ -494,6 +558,22 @@ public class TerminalRewriteNode : TerminalNode
 	{
 		// Get the built node from the route:
 		GoTo = BuiltNode.GetBuiltNode();
+	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = BuiltNode.FullRoute,
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Rewrite",
+		};
 	}
 
 }
@@ -577,6 +657,23 @@ public class TerminalVoidNode<State, BodyType> : TerminalNode
 		await Method(this, httpContext, basicContext, state, body);
 		return true;
 	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = "",
+			ChildKey = ExactMatch,
+			HasChildren = HasChildren(),
+			FullRoute = FullRoute,
+			Type = "Method",
+		};
+	}
+
 }
 
 /// <summary>
@@ -609,6 +706,7 @@ public class IntermediateNode : RouteNode
 			ExactMatch = exactMatch;
 		}
 	}
+
 }
 
 /// <summary>
@@ -679,7 +777,15 @@ public class ArrayIntermediateNode : IntermediateNode
 		// No matches.
 		return null;
 	}
-	
+
+	/// <summary>
+	/// Gets the raw children of this node.
+	/// </summary>
+	/// <returns></returns>
+	public override IntermediateNode[] GetChildren()
+	{
+		return Children;
+	}
 }
 
 /// <summary>
@@ -749,5 +855,13 @@ public class RootNode : RouteNode
 		// No matches.
 		return null;
 	}
-	
+
+	/// <summary>
+	/// Gets the raw children of this node.
+	/// </summary>
+	/// <returns></returns>
+	public override IntermediateNode[] GetChildren()
+	{
+		return Children;
+	}
 }

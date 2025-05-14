@@ -76,6 +76,102 @@ public class Router
 	}
 
 	/// <summary>
+	/// Resolves the URL to the routing node it directly maps to.
+	/// This method is only for exploration of the routing tree, using the route as the key.
+	/// This is because it does not handle redirection or rewrites.
+	/// Tokens are matched but you won't be given their value.
+	/// </summary>
+	/// <param name="method"></param>
+	/// <param name="url"></param>
+	/// <returns></returns>
+	public RouteNode AbsoluteResolve(string method, string url)
+	{
+		var current = GetByVerb(method);
+
+		if (string.IsNullOrEmpty(url))
+		{
+			return current;
+		}
+
+		var path = url.AsSpan();
+
+		// The requested path is..
+		int pathStartIndex;
+		int pathMax = path.Length;
+
+		if (pathMax > 0)
+		{
+			// If it starts with a /, ignore it.
+			var startsWithSlash = (path[0] == '/');
+			var endsWithSlash = (pathMax > 1 && path[pathMax - 1] == '/');
+
+			if (startsWithSlash)
+			{
+				pathStartIndex = 1;
+
+				if (endsWithSlash)
+				{
+					pathMax--; // Yes this is correct! The max only moves down 1 as the paths actual true end is only moving 1 place.
+					path = path.Slice(1, pathMax - 1); // The subpath however gets 2 chars shorter.
+				}
+				else
+				{
+					path = path.Slice(1);
+				}
+			}
+			else if (endsWithSlash)
+			{
+				pathMax--;
+				path = path.Slice(0, pathMax);
+				pathStartIndex = 0;
+			}
+			else
+			{
+				pathStartIndex = 0;
+			}
+		}
+		else
+		{
+			pathStartIndex = 0;
+		}
+
+		while (true)
+		{
+			int index = path.IndexOf('/');
+
+			if (index == -1)
+			{
+				// It's the whole remaining segment.
+				return current.FindChildNode(path);
+			}
+
+			ReadOnlySpan<char> childSegment;
+
+			if (index == 0)
+			{
+				childSegment = ReadOnlySpan<char>.Empty;
+			}
+			else
+			{
+				childSegment = path.Slice(0, index);
+			}
+
+			var next = current.FindChildNode(childSegment);
+
+			if (next == null)
+			{
+				// 404
+				return null;
+			}
+
+			// Move along the path:
+			path = path.Slice(index + 1);
+			pathStartIndex += index + 1;
+			current = next;
+		}
+	}
+
+	/// <summary>
 	/// Handle the given request.
 	/// </summary>
 	/// <param name="httpContext"></param>
@@ -168,6 +264,36 @@ public class Router
 			TerminalNode = terminal,
 			Tokens = tokenCount == 0 ? null : ConvertTokens(tokenCount, url, ref tokenSet)
 		};
+	}
+
+	/// <summary>
+	/// Gets the root route node for a given HTTP verb.
+	/// </summary>
+	/// <param name="method"></param>
+	/// <returns></returns>
+	public RouteNode GetByVerb(string method)
+	{
+		int verbIndex;
+
+		switch (method)
+		{
+			case "GET":
+				verbIndex = 0;
+				break;
+			case "POST":
+				verbIndex = 1;
+				break;
+			case "DELETE":
+				verbIndex = 2;
+				break;
+			case "PUT":
+				verbIndex = 3;
+				break;
+			default:
+				return null;
+		}
+
+		return TreesByVerb[verbIndex];
 	}
 
 	/// <summary>
