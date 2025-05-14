@@ -136,12 +136,22 @@ namespace Api.Pages
 			}
 
             // Construct the pageWithTokens via first locating the terminal in the router.
-            var terminalWithTokens = Router.CurrentRouter.ResolveWithTokens(context, pageDetails.Url);
+            var router = Router.CurrentRouter;
 
-            if (terminalWithTokens == null)
+            if (router == null)
             {
                 response.StatusCode = 404;
                 return;
+            }
+
+            var terminalWithTokens = router.ResolveWithTokens(context, pageDetails.Url);
+
+            if (terminalWithTokens == null)
+            {
+                terminalWithTokens = new TerminalWithTokens()
+                {
+                    TerminalNode = router.Status_404
+                };
             }
 
             var redirectTerminal = terminalWithTokens.Value.TerminalNode as TerminalRedirectNode;

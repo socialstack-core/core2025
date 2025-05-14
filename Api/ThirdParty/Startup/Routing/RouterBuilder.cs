@@ -188,8 +188,19 @@ public class RouterBuilder
 		}
 
 		var router = new Router(routeNodeSet);
+
+		if (Status_404 != null)
+		{
+			router.Status_404 = Status_404.Build(null);
+		}
+
 		Router.CurrentRouter = router;
 	}
+
+	/// <summary>
+	/// The behaviour to use for a 404 response.
+	/// </summary>
+	public TerminalBehaviour Status_404;
 
 	/// <summary>
 	/// Adds all the built in controllers.

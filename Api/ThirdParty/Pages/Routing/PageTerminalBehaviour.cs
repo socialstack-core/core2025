@@ -66,6 +66,19 @@ public class PageTerminalBehaviour : TerminalBehaviour
 	/// <returns></returns>
 	public override TerminalNode Build(BuilderNode node)
 	{
+		if (node == null)
+		{
+			// Typically a standalone status page such as 404.
+			return new RouterPageTerminal(
+				null,
+				null,
+				null,
+				Page,
+				null,
+				""
+			);
+		}
+
 		var tokens = node.GetAllTokens();
 
 		if (PrimaryService == null)
