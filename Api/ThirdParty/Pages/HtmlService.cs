@@ -1412,6 +1412,11 @@ svg {
 
 			string constantPageJson = null;
 
+			if (string.IsNullOrEmpty(page.BodyJson))
+			{
+				page.BodyJson = "{}";
+			}
+
 			if (isAdmin || terminal.Generator == null)
 			{
 				constantPageJson = page.BodyJson;
@@ -1428,6 +1433,10 @@ svg {
 					await terminal.Generator.Generate(context, w, pageAndTokens.PrimaryObject);
 					constantPageJson = w.ToUTF8String();
 					w.Release();
+				}
+				else
+				{
+					constantPageJson = page.BodyJson;
 				}
 			}
 
