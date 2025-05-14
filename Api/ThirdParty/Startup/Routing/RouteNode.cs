@@ -226,11 +226,6 @@ public class TerminalNode : ArrayIntermediateNode
 	public readonly object ControllerInstance;
 
 	/// <summary>
-	/// The complete original route to this node.
-	/// </summary>
-	public readonly string FullRoute;
-
-	/// <summary>
 	/// The node which constructed this one.
 	/// </summary>
 	public BuilderNode BuilderSource;
@@ -249,9 +244,8 @@ public class TerminalNode : ArrayIntermediateNode
 		object controllerInstance,
 		object service,
 		string fullRoute
-	) : base(children, exactMatch)
+	) : base(children, fullRoute, exactMatch)
 	{
-		FullRoute = fullRoute;
 		Service = service;
 		ControllerInstance = controllerInstance;
 		_ctxService = Services.Get<ContextService>();
@@ -692,11 +686,19 @@ public class IntermediateNode : RouteNode
 	public readonly string ExactMatch;
 
 	/// <summary>
+	/// The complete original route to this node.
+	/// </summary>
+	public readonly string FullRoute;
+
+	/// <summary>
 	/// Create a new intermediate node.
 	/// </summary>
 	/// <param name="exactMatch"></param>
-	public IntermediateNode(string exactMatch)
+	/// <param name="fullRoute"></param>
+	public IntermediateNode(string fullRoute, string exactMatch)
 	{
+		FullRoute = fullRoute;
+
 		if (exactMatch == null)
 		{
 			Capture = true;
@@ -705,6 +707,22 @@ public class IntermediateNode : RouteNode
 		{
 			ExactMatch = exactMatch;
 		}
+	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = "",
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Group",
+		};
 	}
 
 }
@@ -718,12 +736,13 @@ public class ArrayIntermediateNode : IntermediateNode
 	/// The children set, sorted alphabetically with wildcards always last.
 	/// </summary>
 	private readonly IntermediateNode[] Children;
-	
+
 	/// <summary>
 	/// </summary>
 	/// <param name="childSet"></param>
+	/// <param name="fullRoute"></param>
 	/// <param name="exactMatch"></param>
-	public ArrayIntermediateNode(IntermediateNode[] childSet, string exactMatch) : base(exactMatch)
+	public ArrayIntermediateNode(IntermediateNode[] childSet, string fullRoute, string exactMatch) : base(fullRoute, exactMatch)
 	{
 		Children = childSet;
 	}

@@ -6,7 +6,7 @@ namespace Api.Startup.Routing;
 public struct RouterNodeMetadata
 {
 	/// <summary>
-	/// "Page", "Redirect", "Rewrite", "Method"
+	/// "Page", "Redirect", "Rewrite", "Method", "Group"
 	/// </summary>
 	public string Type;
 	

@@ -252,7 +252,15 @@ public class Router
 	{
 		var tokenCount = 0;
 		Span<TokenMarker> tokenSet = stackalloc TokenMarker[MaxTokenCount];
-		var terminal = Resolve("GET", url.AsSpan(), context, ref tokenCount, ref tokenSet);
+
+		var pathSpan = url.AsSpan();
+		var queryStart = pathSpan.IndexOf('?');
+		if (queryStart != -1)
+		{
+			pathSpan = pathSpan.Slice(0, queryStart);
+		}
+
+		var terminal = Resolve("GET", pathSpan, context, ref tokenCount, ref tokenSet);
 
 		if (terminal == null)
 		{

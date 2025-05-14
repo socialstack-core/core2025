@@ -754,7 +754,7 @@ public class BuilderNode
 			return Terminal.Build(this);
 		}
 
-		return new ArrayIntermediateNode(BuildChildren(), IsToken ? null : Text);
+		return new ArrayIntermediateNode(BuildChildren(), FullRoute, IsToken ? null : Text);
 	}
 
 	/// <summary>
