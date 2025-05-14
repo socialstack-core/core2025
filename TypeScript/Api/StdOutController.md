@@ -61,14 +61,6 @@ Gets the latest block of text from the stdout.
 await StdOutControllerApi.getLog({ filtering: LogFilteringModel });
 ```
 
-### `GET /api/monitoring/cachestatus/html`
-
-Page cache status.
-
-```ts
-await StdOutControllerApi.htmlCache();
-```
-
 ### `GET /api/monitoring/helloworld`
 
 Plaintext benchmark.

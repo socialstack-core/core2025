@@ -166,17 +166,6 @@ export class TemplateIncludes extends ApiIncludes{
 
 /**
 */
-export class SearchEntityIncludes extends ApiIncludes{
-    /*
-    */
-    get creatorUser(): UserIncludes {
-        return new UserIncludes(this.text, 'creatorUser');
-    }
-
-}
-
-/**
-*/
 export class TagIncludes extends ApiIncludes{
     /*
     */
@@ -445,17 +434,6 @@ export class NavMenuItemIncludes extends ApiIncludes{
 /**
 */
 export class EmailTemplateIncludes extends ApiIncludes{
-    /*
-    */
-    get creatorUser(): UserIncludes {
-        return new UserIncludes(this.text, 'creatorUser');
-    }
-
-}
-
-/**
-*/
-export class SiteDomainIncludes extends ApiIncludes{
     /*
     */
     get creatorUser(): UserIncludes {

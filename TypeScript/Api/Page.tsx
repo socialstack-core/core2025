@@ -8,17 +8,17 @@ import {getOne, getList, getJson, getText} from 'UI/Functions/WebRequest'
 
 // Module
 /*
-  A page.
+  A page. Pages are accessed via associated permalink(s).
 */
 export type Page = VersionedContent<uint> & {
-    url?: string,
     title?: string,
+    key?: string,
     bodyJson?: string,
     description?: string,
-    noIndex: boolean,
+    canIndex: boolean,
     noFollow: boolean,
     preferIfLoggedIn: boolean,
-    excludeFromSearch: boolean,
+    url?: string,
 }
 
 /*

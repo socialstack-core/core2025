@@ -64,15 +64,13 @@ A tag.
 
 The following fields are available on this entity:
 
-| Name        | Type      | Nullable | Summary                  |
-| ----------- | --------- | -------- | ------------------------ |
-| Order       | `Int32`   | No       | No description available |
-| IsPrice     | `Boolean` | No       | No description available |
-| Name        | `String`  | Yes      | No description available |
-| Description | `String`  | Yes      | No description available |
-| FeatureRef  | `String`  | Yes      | No description available |
-| IconRef     | `String`  | Yes      | No description available |
-| HexColor    | `String`  | Yes      | No description available |
+| Name        | Type     | Nullable | Summary                  |
+| ----------- | -------- | -------- | ------------------------ |
+| Name        | `String` | Yes      | No description available |
+| Description | `String` | Yes      | No description available |
+| FeatureRef  | `String` | Yes      | No description available |
+| IconRef     | `String` | Yes      | No description available |
+| HexColor    | `String` | Yes      | No description available |
 
 # Tag API
 
