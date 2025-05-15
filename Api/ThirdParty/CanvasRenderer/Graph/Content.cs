@@ -378,6 +378,10 @@ public class Content : Executor
 				// Writer to put it in:
 				compileEngine.EmitWriter();
 
+				// Context and isIncluded:
+				compileEngine.EmitLoadUserContext();
+				compileEngine.CodeBody.Emit(OpCodes.Ldc_I4_0);
+
 				// Invoke the write method:
 				var writeJsonMethod = _typeReadWrite.GetType().GetMethod("WriteJsonUnclosed");
 				compileEngine.CodeBody.Emit(OpCodes.Callvirt, writeJsonMethod);
