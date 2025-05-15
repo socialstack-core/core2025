@@ -53,7 +53,7 @@ This entity works with some core components, such as Form & Loop
 
 *Auto-generated from a .NET entity inside the Api/ directory*
 
-A page.
+A page. Pages are accessed via associated permalink(s).
 
 ---
 
@@ -63,16 +63,16 @@ A page.
 
 The following fields are available on this entity:
 
-| Name              | Type      | Nullable | Summary                  |
-| ----------------- | --------- | -------- | ------------------------ |
-| Url               | `String`  | Yes      | No description available |
-| Title             | `String`  | Yes      | No description available |
-| BodyJson          | `String`  | Yes      | No description available |
-| Description       | `String`  | Yes      | No description available |
-| NoIndex           | `Boolean` | No       | No description available |
-| NoFollow          | `Boolean` | No       | No description available |
-| PreferIfLoggedIn  | `Boolean` | No       | No description available |
-| ExcludeFromSearch | `Boolean` | No       | No description available |
+| Name             | Type      | Nullable | Summary                                                                                    |
+| ---------------- | --------- | -------- | ------------------------------------------------------------------------------------------ |
+| Title            | `String`  | Yes      | No description available                                                                   |
+| Key              | `String`  | Yes      | No description available                                                                   |
+| BodyJson         | `String`  | Yes      | No description available                                                                   |
+| Description      | `String`  | Yes      | No description available                                                                   |
+| CanIndex         | `Boolean` | No       | No description available                                                                   |
+| NoFollow         | `Boolean` | No       | No description available                                                                   |
+| PreferIfLoggedIn | `Boolean` | No       | No description available                                                                   |
+| Url              | `String`  | Yes      | A temporarily held URL value which is used during page creation to create a new permalink. |
 
 # Page API
 

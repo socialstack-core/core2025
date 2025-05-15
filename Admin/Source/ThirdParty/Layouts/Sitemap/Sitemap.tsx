@@ -5,419 +5,81 @@ import { useRouter } from 'UI/Router';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
 import Icon from 'UI/Icon';
+import Link from 'UI/Link';
 import Input from 'UI/Input';
 import Form from 'UI/Form';
-import pageApi, { Page } from 'Api/Page';
+import Table from 'UI/Table';
+import Loading from 'UI/Loading';
+import pageApi, { Page, RouterTreeNodeDetail } from 'Api/Page';
 
 export default function Sitemap(props) {
-	const [ sitemap, setSitemap ] = useState(false);
+	const [ currentNode, setCurrentNode ] = useState<RouterTreeNodeDetail | null>(null);
 	const [ showCloneModal, setShowCloneModal] = useState(false);
 	const [ showConfirmModal, setShowConfirmModal ] = useState(false);
-	const { setPage } = useRouter();
-
-	function buildSitemap(results) {
-		var map = [];
-
-		var rootPage = {
-			children: {},
-			pages: [],
-			redirection: null,
-			urlTokenNames: null,
-			urlTokenNamesJson: null,
-			urlTokens: null,
-			wildcard: null
-		};
-
-		for (const node of results) {
-			var pg = addPage(node.url, rootPage);
-
-			// skipped?
-			if (pg == null) {
-				continue;
-			}
-
-			if (pg.pages == null) {
-				pg.pages = [];
-			}
-
-			node.url = trimSlashes(node.url);
-
-			// if there are >1, ensure that the page at the start of the set is the one that is favoured (if any)
-			if (node.preferIfLoggedIn) {
-				pg.pages.unshift(node);
-			} else {
-				pg.pages.push(node);
-			}
-
-			map.push({
-				pageId: node.id,
-				url: node.url
-			});
-
-		}
-
-		return sortNode(rootPage);
-	}
-
-	function addPage(url : string, rootPage : Page) {
-
-		if (!url || !url.length) {
-			return null;
-		}
-
-		var tokenSet = [];
-		url = trimSlashes(url);
-
-		// url parts
-		var pg = rootPage;
-		var cumulativeParts = [];
-
-		if (url.length) {
-			var parts = url.split('/');
-			var skip = false;
-
-			for (var i = 0; i < parts.length; i++) {
-				var part = parts[i];
-				var token = null;
-
-				if (part.length) {
-
-					// old-style tokens
-					if (part[0] == ':') {
-						token = part.substring(1);
-						tokenSet.push({
-							rawToken: token
-						});
-
-					} else if (part[0] == '{') {
-						// new-style tokens
-						token = (part[part.length - 1] == '}') ?
-							part.substring(1, part.length - 1) : part.substring(1);
-
-						var dotIndex = token.indexOf('.');
-
-						if (dotIndex != -1) {
-							var contentType = token.substring(0, dotIndex);
-							var fieldName = token.substring(dotIndex + 1);
-
-							/*
-							var type = Api.Database.ContentTypes.GetType(contentType);
-	
-							if (type == null) {
-								//Console.WriteLine("[WARN] Bad page URL using a type that doesn't exist. It was " + url + " using type " + contentType);
-								skip = true;
-								break;
-							}
-							*/
-
-							//var service = Api.Startup.Services.GetByContentType(type);
-
-							tokenSet.push({
-								//contentType: type,
-								contentType: contentType,
-								//contentTypeId = Api.Database.ContentTypes.GetId(type),
-								fieldName: fieldName,
-								//fieldOrProperty: null,
-								isId: fieldName.toLowerCase() == "id",
-								rawToken: token,
-								//service: service,
-								typeName: contentType
-							});
-
-						} else {
-							tokenSet.push({
-								rawToken: token
-							});
-						}
-
-					}
-
-				}
-
-				if (token != null) {
-					// Anything. Treat these tokens as *:
-					part = "{" + token + "}";
-				}
-
-				cumulativeParts.push(part);
-				var next = Object.entries(pg.children).filter(page => page[0] == part);
-
-				if (!next.length) {
-					pg.children[part] = next = {
-						children: {},
-						pages: [],
-						redirection: null,
-						urlTokenNames: null,
-						urlTokenNamesJson: null,
-						urlTokens: null,
-						parts: [...cumulativeParts],
-						wildcard: null
-					};
-
-					if (token != null) {
-						// It's the wildcard one:
-						pg.wildcard = next;
-					}
-				} else {
-					next = next[0][1];
-				}
-
-				pg = next;
-			}
-
-			if (skip) {
-				return null;
-			}
-
-		}
-
-		pg.urlTokens = tokenSet;
-		pg.urlTokenNames = tokenSet.map(token => token.rawToken);
-
-		if (pg.urlTokenNames == null || !pg.urlTokenNames.length) {
-			pg.urlTokenNamesJson = "null";
-		}
-		else {
-			pg.urlTokenNamesJson = JSON.stringify(pg.urlTokenNames);
-		}
-
-		return pg;
-	}
-
-	// sort object keys alphabetically
-	function sortNode(node) {
-		const sortedChildren = Object.fromEntries(
-			Object.keys(node.children).sort().map(key => [key, node.children[key]])
-		);
-		node.children = sortedChildren;
-
-		Object.entries(node.children).map(([key, value]) => {
-			return sortNode(node.children[key]);
-		});
-
-		return node;
-	}
-
-	// strip leading and trailing slashes
-	function trimSlashes(url : string) {
-
-		if (url) {
-
-			if (url[0] == '/') {
-				url = url.substring(1);
-			}
-
-			if (url.length && url[url.length - 1] == '/') {
-				url = url.substring(0, url.length - 1);
-			}
-
-		}
-
-		return url;
-	}
+	const { setPage, pageState } = useRouter();
 
 	useEffect(() => {
-		reloadPages();
-	}, []);
+		// todo: query strings should originate from pageState. 
+		// This is to enable SSR support on them in general.
 
-	function reloadPages() {
-		pageApi.list().then(resp => {
-			setSitemap(buildSitemap(resp.results));
+		var urlParams = new URLSearchParams(location.search);
+		var url = urlParams.get("url") || "";
+
+		pageApi.getRouterTreeNodePath(url).then(resp => {
+			setCurrentNode(resp);
 		});
-	}
-
-	function cloneBranchClick(e) {
-		e.stopPropagation();
-		// TODO
-	}
-
-	function renderNode(node, isRoot) {
-		var hasParameter = node.urlTokens && node.urlTokens.length > 0;
-
-		if (!node.pages || node.pages.length == 0 && Object.keys(node.children).length) {
-			var title = "";
-
-			if (node.parts) {
-				node.parts.forEach(part => {
-					title += `/${part}`;
-				});
-			}
-
-			var largeIcon = 'fa-file';
-			var isAdmin = title.startsWith('/en-admin');
-			
-			/* when available, add buttons={[cloneBranchButton]} to <Collapsible />
-			var cloneBranchButton = {
-				icon: 'far fa-fw fa-copy',
-				text: `Save branch as ...`,
-				showLabel: true,
-				variant: 'secondary',
-				onClick: cloneBranchClick,
-				children: []
-			};
-			*/
-
-			return <>
-				<Collapsible compact expanderLeft title={title}
-					open={isRoot} alwaysOpen={isRoot} className="sitemap-expander"
-					icon={isAdmin ? <Icon type='fa-cog'/> : <Icon type='fa-file'/>}>
-					{renderNodeChildren(node)}
-				</Collapsible>
-			</>;
-		}
-
-		return <>
-			{
-				node.pages.map((page : Page) => {
-					// ensure all pages are prefixed with a path separator
-					let pageUrl = page.url || '';
-
-					if (!pageUrl.startsWith("/")) {
-						pageUrl = "/" + page.url;
-					}
-
-					var editClick = function (e : MouseEvent) {
-						e.stopPropagation();
-
-						let editUrl = '/' + window.location.pathname.replace(/^\/+|\/+$/g, '') + '/' + page.id;
-
-						// open target in new tab if clicked via middle mouse button / shift-clicked
-						if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
-							const newWindow = window.open(editUrl, '_blank', 'noopener, noreferrer');
-
-							if (newWindow) {
-								newWindow.opener = null;
-							}
-
-						} else {
-							setPage(editUrl);
-						}
-
-					};
-
-					var cloneClick = function (e : MouseEvent) {
-						e.stopPropagation();
-						setShowCloneModal(page);
-					}
-
-					var removeClick = function (e : MouseEvent) {
-						e.stopPropagation();
-						setShowConfirmModal(page);
-					}
-
-					var optionsButton = {
-						icon: <Icon type='fa-edit' />,
-						text: `Edit`,
-						showLabel: true,
-						variant: 'secondary',
-						onClick: editClick,
-						children: []
-					};
-
-					var isPage = page.type == "Page";
-					var largeIcon = page.url == '/' ? <Icon type='fa-home'/> : <Icon type='fa-file'/>;
-
-					let allowLaunch = !hasParameter;
-					let allowClone = true;
-					let allowRemove = true;
-
-					if (pageUrl.startsWith('/en-admin')) {
-						largeIcon = <Icon type='fa-cog'/>;
-						//allowLaunch = false;
-						//allowClone = false;
-						allowRemove = false;
-					}
-
-					if (allowLaunch) {
-						optionsButton.children.push({
-							icon: <Icon type='fa-external-link' regular fixedWidth/>,
-							text: `Launch`,
-							onClick: window.location.origin + pageUrl,
-							target: '_blank'
-						});
-					}
-
-					if (allowClone) {
-						optionsButton.children.push({
-							icon: <Icon type='fa-copy' regular fixedWidth/>,
-							text: `Save as ...`,
-							onClick: cloneClick
-						});
-					}
-
-					var hasChildren = Object.keys(node.children).length;
-
-					/* TODO
-					if (allowClone && hasChildren) {
-						optionsButton.children.push({
-							icon: 'far fa-fw fa-copy',
-							text: `Save branch as ...`,
-							onClick: cloneBranchClick
-						});
-					}
-					*/
-
-					if (allowRemove) {
-						optionsButton.children.push({
-							separator: true
-						});
-						optionsButton.children.push({
-							icon: <Icon type='fa-trash' regular fixedWidth/>,
-							text: `Remove`,
-							onClick: removeClick
-						});
-					}
-
-					var jsx = <>
-						{page.preferIfLoggedIn && <>
-							<i className={'sitemap-expander--prefers-logged-in fa fa-fw fa-user-circle'} title={`Preferred if logged in`}></i>
-						</>}
-						<span className="info">
-							{!isPage ? undefined : `ID: #${page.id}`}
-						</span>
-					</>;
-
-					return <>
-						<Collapsible compact expanderLeft title={pageUrl} subtitle={page.title}
-							jsx={jsx} buttons={[optionsButton]}
-							open={isRoot} alwaysOpen={isRoot} className="sitemap-expander"
-							defaultClick={(hasChildren != 0 || !isPage) ? undefined : editClick} icon={largeIcon}>
-							{renderNodeChildren(node)}
-						</Collapsible>
-					</>;
-				})
-			}
-		</>;
-	}
-
-	function renderNodeChildren(node) {
-		return <>
-			{
-				Object.entries(node.children).map(([key, value]) => {
-					return renderNode(node.children[key], false);
-				})
-			}
-		</>;
-	}
-
+	}, [pageState]);
+	
 	function removePage(page : Page) {
 		pageApi.delete(page.id).then(response => {
 			window.location.reload();
 		});
 	}
 
-	function getPageDescription(page : Page) {
-		let hasUrl = page.url && page.url.trim().length;
+	var addUrl = window.location.href.replace(/\/+$/g, '') + '/add';
 
-		if (page.title && page.title.trim().length) {
-			return `${page.title} (${hasUrl ? page.url + ', ' : ''}ID: ${page.id})`;
-		} else {
-			return hasUrl ? `${page.url} (ID: ${page.id})` : `ID: ${page.id}`;
+	var renderCurrentNode = () => {
+		if (!currentNode) {
+			return null;
 		}
 
-	}
+		// Group up the ones with children first (the directories)
+		var dirs = currentNode.children?.filter(child => child.hasChildren);
+		var files = currentNode.children?.filter(child => {
+			// Anything but pure intermediate nodes
+			return child.type && child.type != "Group";
+		});
 
-	var addUrl = window.location.href.replace(/\/+$/g, '') + '/add';
+		var currentPath = window.location.pathname;
+		var baseUrl = currentPath + "?url=";
+
+		return <table className="table">
+			<tbody>
+				{
+					dirs && dirs.map(dir => {
+						return <tr>
+							<td>
+								<Icon type='fa-folder' /> <Link href={baseUrl + dir.fullRoute}>{dir.childKey || (dirs!.length == 1 ? '* (anything)' : '* (anything else)')}</Link>
+							</td>
+						</tr>
+					})
+				}
+				{
+					files && files.map(file => {
+						var fileName = file.childKey || (files!.length == 1 ? '* (anything)' : '* (anything else)');
+
+						return <tr>
+							<td>
+								<h4>{fileName}</h4>
+								<h6>{file.name}</h6>
+							</td>
+						</tr>
+					})
+				}
+			</tbody>
+		</table>
+
+	};
 
 	return (
 		<Default>
@@ -441,7 +103,7 @@ export default function Sitemap(props) {
 				</header>
 				<div className="sitemap__wrapper">
 					<div className="sitemap__internal">
-						{showCloneModal && <>
+						{/*showCloneModal && <>
 							<Modal visible onClose={() => setShowCloneModal(false)} title={`Save Page As`}>
 								<p>
 									<strong>{`Cloning from:`}</strong> <br />
@@ -485,8 +147,10 @@ export default function Sitemap(props) {
 									{`Are you sure you wish to do this?`}
 								</p>
 							</ConfirmModal>
-						</>}
-						{sitemap && renderNode(sitemap, true)}
+						</>*/}
+						{
+							currentNode ? renderCurrentNode() : <Loading />
+						}
 					</div>
 					{!props.noCreate && <>
 						<footer className="admin-page__footer">

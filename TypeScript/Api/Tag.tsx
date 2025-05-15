@@ -12,8 +12,6 @@ import {getOne, getList, getJson, getText} from 'UI/Functions/WebRequest'
             These are the primary taxonomy mechanism; any site content can be grouped up in multiple tags.
 */
 export type Tag = VersionedContent<uint> & {
-    order: int,
-    isPrice: boolean,
     name?: string,
     description?: string,
     featureRef?: string,

@@ -12,6 +12,9 @@ namespace Api.Vcs
     public partial class GitService : AutoService
     {
 
+        /// <summary>
+        /// 
+        /// </summary>
         public GitService()
         {
             InstallHooks();

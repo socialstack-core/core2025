@@ -8,17 +8,30 @@ import {getOne, getList, getJson, getText} from 'UI/Functions/WebRequest'
 
 // Module
 /*
-  A page.
+  A page. Pages are accessed via associated permalink(s).
 */
 export type Page = VersionedContent<uint> & {
-    url?: string,
     title?: string,
+    key?: string,
     bodyJson?: string,
     description?: string,
-    noIndex: boolean,
+    canIndex: boolean,
     noFollow: boolean,
     preferIfLoggedIn: boolean,
-    excludeFromSearch: boolean,
+    url?: string,
+}
+
+/*
+*/
+export type RouterTreeNodeDetail = {
+    children?: RouterNodeMetadata[],
+    self?: RouterNodeMetadata,
+}
+
+/*
+*/
+export type RouterTreeLocation = {
+    url?: string,
 }
 
 /*
@@ -55,6 +68,26 @@ export class PageApi extends AutoController<Page, uint>{
     }
 
     /**
+      Gets information about a router tree node. Exclusively explores the http 'GET' tree.
+      @param {context} - Api.AvailableEndpoints.XmlDocMember
+      @param {location} - Api.AvailableEndpoints.XmlDocMember
+
+    */
+    public getRouterTreeNode = (location: RouterTreeLocation): Promise<RouterTreeNodeDetail>  => {
+        return getJson<RouterTreeNodeDetail>(this.apiUrl + '/tree', location)
+    }
+
+    /**
+      Gets information about a router tree node. Exclusively explores the http 'GET' tree.
+      @param {context} - Api.AvailableEndpoints.XmlDocMember
+      @param {url} - Api.AvailableEndpoints.XmlDocMember
+
+    */
+    public getRouterTreeNodePath = (url: string): Promise<RouterTreeNodeDetail>  => {
+        return getJson<RouterTreeNodeDetail>(this.apiUrl + '/tree?url=' + url + '')
+    }
+
+    /**
       Attempts to get the page state of a page given the url and the version. Not available to the SSR or websocket APIs.
       @param {httpContext} - Api.AvailableEndpoints.XmlDocMember
       @param {context} - Api.AvailableEndpoints.XmlDocMember
@@ -65,6 +98,16 @@ export class PageApi extends AutoController<Page, uint>{
         return getJson<PageStateResult>(this.apiUrl + '/state', pageDetails)
     }
 
+}
+
+/*
+*/
+export type RouterNodeMetadata = {
+    type?: string,
+    hasChildren?: boolean,
+    fullRoute?: string,
+    childKey?: string,
+    name?: string,
 }
 
 export default new PageApi();

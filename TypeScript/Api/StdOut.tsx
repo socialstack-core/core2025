@@ -29,12 +29,6 @@ export type LogFilteringModel = {
 
 /*
 */
-export type HtmlCacheStatus = {
-    locales?: HtmlCachedLocaleStatus[],
-}
-
-/*
-*/
 export type IActionResult = {
 }
 
@@ -113,14 +107,6 @@ export class StdOutApi{
     }
 
     /**
-      Page cache status.
-
-    */
-    public htmlCache = (): Promise<HtmlCacheStatus>  => {
-        return getJson<HtmlCacheStatus>(this.apiUrl + '/cachestatus/html')
-    }
-
-    /**
       Plaintext benchmark.
 
     */
@@ -176,13 +162,6 @@ export class StdOutApi{
         return getJson<WebsocketClientInfo>(this.apiUrl + '/clients')
     }
 
-}
-
-/*
-*/
-export type HtmlCachedLocaleStatus = {
-    localeId?: int,
-    cachedPages?: HtmlCachedPageStatus[],
 }
 
 export default new StdOutApi();

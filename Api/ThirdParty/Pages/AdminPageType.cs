@@ -22,6 +22,11 @@ namespace Api.Pages
 		public static AdminPageType Add = new AdminPageType("add");
 		
 		/// <summary>
+		/// Admin pages for anything else.
+		/// </summary>
+		public static AdminPageType Generic = new AdminPageType("generic");
+		
+		/// <summary>
 		/// A key for this admin page type.
 		/// </summary>
 		public string Key;

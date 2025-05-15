@@ -1546,12 +1546,15 @@ namespace Api.CanvasRenderer
 
 		private string TryReadFile(string path){
 			for(var i=0;i<20;i++){
-				try{
+				try
+                {
 					var result = File.ReadAllText(path);
 					return result;
-				}catch(Exception e){
+				}
+                catch(Exception)
+                {
 					if(i==19){
-						throw e;
+						throw;
 					}
 					
 					// Sync wait

@@ -62,39 +62,6 @@ namespace Api.Translate
 				return locale;
 			});
 
-			Events.Page.BeforeParseUrl.AddEventListener(async (Context context, Pages.UrlInfo url, Microsoft.AspNetCore.Http.QueryString query) => {
-
-				// Does the locale have a page prefix?
-				// If so, apply it now.
-				var locale = await context.GetLocale();
-				if (!string.IsNullOrEmpty(locale.PagePath))
-				{
-					// Act like this pagePath is in the URL all the time.
-					var strippedUrl = url.AllocateString();
-
-					if (string.IsNullOrEmpty(strippedUrl))
-					{
-						url.Url = locale.PagePath;
-					}
-					else
-					{
-						if (strippedUrl.StartsWith("en-admin"))
-						{
-							// No changes
-							return url;
-						}
-
-						url.Url = locale.PagePath + "/" + strippedUrl;
-					}
-
-					url.Start = 0;
-					url.Length = url.Url.Length;
-				}
-
-				return url;
-
-			});
-
 			Events.ContextAfterAnonymous.AddEventListener((Context context, Context result, HttpRequest request) =>
 			{
 				if (_multiDomain)

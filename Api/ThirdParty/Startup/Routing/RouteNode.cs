@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Org.BouncyCastle.Asn1.X509;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,11 +20,70 @@ namespace Api.Startup.Routing;
 public class RouteNode
 {
 	/// <summary>
+	/// True if this is a rewrite node. 
+	/// Checked on a very hot path and is almost always false 
+	/// so this is marginally faster than a runtime cast.
+	/// </summary>
+	public readonly bool IsRewrite;
+
+	/// <summary>
+	/// Sets a locale in to the context.
+	/// </summary>
+	public uint LocaleId;
+
+	/// <summary>
+	/// A general purpose routing node.
+	/// </summary>
+	public RouteNode()
+	{
+		IsRewrite = this is TerminalRewriteNode;
+	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public virtual RouterNodeMetadata? GetMetadata()
+	{
+		return null;
+	}
+
+	/// <summary>
 	/// Locates a child node by its name specified in the given span.
 	/// </summary>
 	public virtual IntermediateNode FindChildNode(ReadOnlySpan<char> childName)
 	{
 		return null;
+	}
+
+	/// <summary>
+	/// True if this node has 1 or more child.
+	/// </summary>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
+	public bool HasChildren()
+	{
+		var kids = GetChildren();
+
+		return kids != null && kids.Length > 0;
+	}
+	
+	/// <summary>
+	/// Gets the raw children of this node, if it has any.
+	/// </summary>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
+	public virtual IntermediateNode[] GetChildren()
+	{
+		return null;
+	}
+
+	/// <summary>
+	/// Called after this node was built such that it 
+	/// can set up any further connections with other built nodes if needed.
+	/// </summary>
+	public virtual void PostBuild()
+	{
 	}
 
 	/// <summary>
@@ -165,11 +226,6 @@ public class TerminalNode : ArrayIntermediateNode
 	public readonly object ControllerInstance;
 
 	/// <summary>
-	/// The complete original route to this node.
-	/// </summary>
-	public readonly string FullRoute;
-
-	/// <summary>
 	/// The node which constructed this one.
 	/// </summary>
 	public BuilderNode BuilderSource;
@@ -188,9 +244,8 @@ public class TerminalNode : ArrayIntermediateNode
 		object controllerInstance,
 		object service,
 		string fullRoute
-	) : base(children, exactMatch)
+	) : base(children, fullRoute, exactMatch)
 	{
-		FullRoute = fullRoute;
 		Service = service;
 		ControllerInstance = controllerInstance;
 		_ctxService = Services.Get<ContextService>();
@@ -342,6 +397,179 @@ public class TerminalNode<State, OutputType, BodyType> : TerminalNode
 		return true;
 	}
 
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = "",
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Method",
+		};
+	}
+
+}
+
+/// <summary>
+/// A redirection node in the routing tree.
+/// </summary>
+public class TerminalRedirectNode : TerminalNode
+{
+	private readonly string Target;
+
+	/// <summary>
+	/// A redirection node in the routing tree, targeting the given target URL.
+	/// </summary>
+	public TerminalRedirectNode(IntermediateNode[] children,
+		string target,
+		string exactMatch,
+		string fullRoute) : base (children, exactMatch, null, null, fullRoute)
+	{
+		Target = target;
+	}
+
+	/// <summary>
+	/// The target of this node.
+	/// </summary>
+	/// <returns></returns>
+	public string GetTarget()
+	{
+		return Target;
+	}
+
+	/// <summary>
+	/// Run this route node.
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <param name="basicContext"></param>
+	/// <param name="tokenCount"></param>
+	/// <param name="tokens"></param>
+	/// <returns></returns>
+	public override ValueTask<bool> Run(HttpContext httpContext, Context basicContext, int tokenCount, ref Span<TokenMarker> tokens)
+	{
+		var response = httpContext.Response;
+		response.Headers.Location = Target;
+		response.StatusCode = 302;
+		return new ValueTask<bool>(true);
+	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = Target,
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Redirect",
+		};
+	}
+
+}
+
+/// <summary>
+/// A rewrite node in the routing tree.
+/// </summary>
+public class TerminalRewriteNode : TerminalNode
+{
+	private BuilderNode BuiltNode;
+
+	/// <summary>
+	/// The node that the request will be rewritten to.
+	/// </summary>
+	public RouteNode GoTo;
+
+	/// <summary>
+	/// The token index set.
+	/// </summary>
+	private readonly int[] TokenIndices;
+
+	/// <summary>
+	/// The token count.
+	/// </summary>
+	private readonly int TokenCount;
+
+	/// <summary>
+	/// A rewrite node in the routing tree, targeting the given target node.
+	/// </summary>
+	public TerminalRewriteNode(
+		BuilderResolvedRoute route,
+		string exactMatch,
+		string fullRoute) : base (Array.Empty<IntermediateNode>(), exactMatch, null, null, fullRoute)
+	{
+		BuiltNode = route.Node;
+		var tokens = route.Tokens;
+		TokenCount = tokens == null ? 0 : tokens.Count;
+		int[] tokenIndexes = null;
+
+		if (TokenCount > 0)
+		{
+			tokenIndexes = new int[TokenCount];
+
+			for (var i = 0; i < TokenCount; i++)
+			{
+				tokenIndexes[i] = RouterTokenLookup.Add(tokens[i]);
+			}
+		}
+
+		TokenIndices = tokenIndexes;
+	}
+
+	/// <summary>
+	/// A rewrite has just happened. 
+	/// This causes the token set to be replaced with any in the target route.
+	/// </summary>
+	/// <param name="tokens"></param>
+	/// <returns></returns>
+	public int ReplaceTokens(ref Span<TokenMarker> tokens)
+	{
+		var count = TokenCount;
+
+		for (var i = 0; i < count; i++)
+		{
+			// If count was non-zero then Tokens
+			// must be not null as they're both readonly.
+			tokens[i] = new TokenMarker(0,0, TokenIndices[i]);
+		}
+
+		return count;
+	}
+
+	/// <summary>
+	/// Called after this node was built such that it 
+	/// can set up any further connections with other built nodes if needed.
+	/// </summary>
+	public override void PostBuild()
+	{
+		// Get the built node from the route:
+		GoTo = BuiltNode.GetBuiltNode();
+	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = BuiltNode.FullRoute,
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Rewrite",
+		};
+	}
+
 }
 
 /// <summary>
@@ -423,6 +651,23 @@ public class TerminalVoidNode<State, BodyType> : TerminalNode
 		await Method(this, httpContext, basicContext, state, body);
 		return true;
 	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = "",
+			ChildKey = ExactMatch,
+			HasChildren = HasChildren(),
+			FullRoute = FullRoute,
+			Type = "Method",
+		};
+	}
+
 }
 
 /// <summary>
@@ -441,11 +686,19 @@ public class IntermediateNode : RouteNode
 	public readonly string ExactMatch;
 
 	/// <summary>
+	/// The complete original route to this node.
+	/// </summary>
+	public readonly string FullRoute;
+
+	/// <summary>
 	/// Create a new intermediate node.
 	/// </summary>
 	/// <param name="exactMatch"></param>
-	public IntermediateNode(string exactMatch)
+	/// <param name="fullRoute"></param>
+	public IntermediateNode(string fullRoute, string exactMatch)
 	{
+		FullRoute = fullRoute;
+
 		if (exactMatch == null)
 		{
 			Capture = true;
@@ -455,6 +708,23 @@ public class IntermediateNode : RouteNode
 			ExactMatch = exactMatch;
 		}
 	}
+
+	/// <summary>
+	/// Gets metadata about this node. Root nodes have none and return null.
+	/// </summary>
+	/// <returns></returns>
+	public override RouterNodeMetadata? GetMetadata()
+	{
+		return new RouterNodeMetadata()
+		{
+			Name = "",
+			HasChildren = HasChildren(),
+			ChildKey = ExactMatch,
+			FullRoute = FullRoute,
+			Type = "Group",
+		};
+	}
+
 }
 
 /// <summary>
@@ -466,12 +736,13 @@ public class ArrayIntermediateNode : IntermediateNode
 	/// The children set, sorted alphabetically with wildcards always last.
 	/// </summary>
 	private readonly IntermediateNode[] Children;
-	
+
 	/// <summary>
 	/// </summary>
 	/// <param name="childSet"></param>
+	/// <param name="fullRoute"></param>
 	/// <param name="exactMatch"></param>
-	public ArrayIntermediateNode(IntermediateNode[] childSet, string exactMatch) : base(exactMatch)
+	public ArrayIntermediateNode(IntermediateNode[] childSet, string fullRoute, string exactMatch) : base(fullRoute, exactMatch)
 	{
 		Children = childSet;
 	}
@@ -485,6 +756,19 @@ public class ArrayIntermediateNode : IntermediateNode
 		for (var i = 0; i < Children.Length; i++)
 		{
 			Children[i].ForEachEndpoint(callback);
+		}
+	}
+
+	/// <summary>
+	/// Called after this node was built such that it 
+	/// can set up any further connections with other built nodes if needed.
+	/// </summary>
+	public override void PostBuild()
+	{
+		for (var i = 0; i < Children.Length; i++)
+		{
+			var child = Children[i];
+			child.PostBuild();
 		}
 	}
 
@@ -512,7 +796,15 @@ public class ArrayIntermediateNode : IntermediateNode
 		// No matches.
 		return null;
 	}
-	
+
+	/// <summary>
+	/// Gets the raw children of this node.
+	/// </summary>
+	/// <returns></returns>
+	public override IntermediateNode[] GetChildren()
+	{
+		return Children;
+	}
 }
 
 /// <summary>
@@ -546,6 +838,19 @@ public class RootNode : RouteNode
 	}
 
 	/// <summary>
+	/// Called after this node was built such that it 
+	/// can set up any further connections with other built nodes if needed.
+	/// </summary>
+	public override void PostBuild()
+	{
+		for (var i = 0; i < Children.Length; i++)
+		{
+			var child = Children[i];
+			child.PostBuild();
+		}
+	}
+
+	/// <summary>
 	/// Locates a child node by its name specified in the given span.
 	/// </summary>
 	public override IntermediateNode FindChildNode(ReadOnlySpan<char> childName)
@@ -569,5 +874,13 @@ public class RootNode : RouteNode
 		// No matches.
 		return null;
 	}
-	
+
+	/// <summary>
+	/// Gets the raw children of this node.
+	/// </summary>
+	/// <returns></returns>
+	public override IntermediateNode[] GetChildren()
+	{
+		return Children;
+	}
 }

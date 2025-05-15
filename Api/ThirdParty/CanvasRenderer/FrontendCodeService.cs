@@ -32,7 +32,7 @@ namespace Api.CanvasRenderer
 		/// <summary>
 		/// The inline header. This should be served inline in the html. It includes preact, preact hooks and the ss module require function, totalling 13kb.
 		/// </summary>
-		public string InlineJavascriptHeader;
+		public byte[] InlineJavascriptHeader;
 
 		/// <summary>
 		/// True if we're in prebuilt mode.
@@ -284,7 +284,7 @@ namespace Api.CanvasRenderer
 				
 				var headerFile = _config.React ? "inline_header_react" : "inline_header";
 
-				InlineJavascriptHeader = File.ReadAllText(dllPath + "/Api/ThirdParty/CanvasRenderer/"+ headerFile + ".js");
+				InlineJavascriptHeader = File.ReadAllBytes(dllPath + "/Api/ThirdParty/CanvasRenderer/"+ headerFile + ".js");
 				serviceUrlByLocale = null;
 
 				var prebuilt = _config.Prebuilt;

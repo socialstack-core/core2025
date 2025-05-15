@@ -203,9 +203,19 @@ namespace Api.PasswordResetRequests
 		public string Password;
 	}
 
+	/// <summary>
+	/// A password reset token.
+	/// </summary>
 	public struct ResetToken
 	{
+		/// <summary>
+		/// The token itself.
+		/// </summary>
 		public string Token;
+
+		/// <summary>
+		/// A url containing the token.
+		/// </summary>
 		public string Url;
 	}
 }

@@ -933,7 +933,7 @@ class AutoFormInternal extends React.Component {
 		// check for overriding "parent" property
 		// can be used to override the default parent breadcrumb link in the event the parent page is not available
 		// (e.g. /navmenu lists all nested menus, /navmenuitem/[id] describes a submenu, but /navmenuitem does not exist)
-		let parentUrl = this.props.parent && this.props.parent.trim().length ? `/en-admin/${this.props.parent}` : `/en-admin/${this.props.endpoint}`;
+		let parentUrl = this.props.parent && this.props.parent.trim().length ? `/en-admin/${this.props.parent.toLowerCase()}` : `/en-admin/${this.props.endpoint.toLowerCase()}`;
 
 		if (mainCanvas) {
 			// Check for a field called url on the object:

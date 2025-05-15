@@ -24,19 +24,11 @@ namespace Api.Automations
 
 				var automationsPageCanvas = new CanvasNode("Admin/Layouts/Automations");
 
-				var listPage = new Page
-				{
-					Url = "/en-admin/automations",
-					BodyJson = "",
-					Title = "Automations"
-				};
-
-				// Trigger an event to state that an admin page is being installed:
-				// - Use this event to inject additional nodes into the page, or change it however you'd like.
-				listPage = await Events.Page.BeforeAdminPageInstall.Dispatch(new Context(), listPage, automationsPageCanvas, typeof(AutomationStructure), AdminPageType.List);
-				listPage.BodyJson = automationsPageCanvas.ToJson();
-
-				pages.Install(listPage);
+				await pages.InstallAdminPage(
+					"automations",
+					"Automations",
+					automationsPageCanvas
+				);
 
 				// Add nav menu item too.
 				await adminNav.InstallAdminEntry("/en-admin/automations", "fa:fa-clock", "Automations");

@@ -6,16 +6,6 @@ import {getOne, getList, getJson, getText} from 'UI/Functions/WebRequest'
 // Module
 /*
 */
-export type MobilePageMeta = {
-    apiHost?: string,
-    localeId?: uint,
-    cordova?: boolean,
-    includePages?: boolean,
-    customJs?: string,
-}
-
-/*
-*/
 export type FileContent = {
     mimeType?: string,
     rawBytes?: int[],
@@ -28,14 +18,6 @@ export type FileContent = {
 */
 export class HtmlApi{
     public apiUrl: string = '';
-
-    /**
-      Lists all available static files.
-
-    */
-    public getMobileHtml = (mobileMeta: MobilePageMeta): Promise<string>  => {
-        return getText(this.apiUrl + '/pack/static-assets/mobile-html', mobileMeta)
-    }
 
     /**
       RTE config popup base HTML.
