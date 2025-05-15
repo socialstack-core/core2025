@@ -3,7 +3,8 @@ import TemplateApi, { Template } from "Api/Template";
 import { FormEventHandler, useEffect, useState } from "react";
 import { ApiList } from "UI/Functions/WebRequest";
 import Input from "UI/Input";
-import RegionEditor, { Scalar, TreeComponentItem } from "Admin/Template/RegionEditor";
+import RegionEditor from "Admin/Template/RegionEditor";
+import { DocumentRootTreeNode } from "../RegionEditor/types";
 
 export type TemplateConfigProps = {
     existing?: Template
@@ -28,10 +29,10 @@ const TemplateConfig: React.FC<TemplateConfigProps> = (props: TemplateConfigProp
     // the JSON can be serialized before putting in the POST data.
     // when a template is chosen from "Inherits", this should override 
     // this value.
-    const [templateJson, setTemplateJson] = useState<TreeComponentItem | null>();
+    const [templateJson, setTemplateJson] = useState<DocumentRootTreeNode>();
 
-    // holds the generated renderedJson
-    const [renderedJson, setRenderedJson] = useState<TreeComponentItem | null>();
+    // when the template is updated, this is used for the key
+    const [updateNo, setUpdateNo] = useState(0)
 
 
     // load in templates if they aren't loaded in, runs once.
@@ -65,7 +66,7 @@ const TemplateConfig: React.FC<TemplateConfigProps> = (props: TemplateConfigProp
                             setPossibleTemplates(possibleOptions.results)
 
                             // set the default template JSON
-                            const d: Record<string, Scalar> = {}
+                            const d: Record<string, any> = {}
 
                             chosenLayout.types.types.some((type: CodeModuleType) => {
                                 if (type.name === 'interface') {
@@ -147,19 +148,22 @@ const TemplateConfig: React.FC<TemplateConfigProps> = (props: TemplateConfigProp
                     })}
                 </Input>
             }
-            <input type='hidden' name='bodyJson' value={JSON.stringify(renderedJson)}/>
+            <input type='hidden' name='bodyJson' value={JSON.stringify(templateJson ?? {})}/>
             {chosenLayout && templateJson && 
                 <div className='component-config'>
                     <h4>Regions</h4>
                     <RegionEditor
-                        templateJson={templateJson}
-                        currentLayout={chosenLayout}
-                        currentTemplate={chosenTemplate ?? undefined}
-                        existing={props.existing}
-                        onChange={(newTree: TreeComponentItem) => {
-                            setRenderedJson(newTree)
+                        templateDocument={templateJson ?? {}}
+                        extends={chosenTemplate == null ? undefined : chosenTemplate}
+                        layoutFile={chosenLayout}
+                        onChange={(previous, latest) => {
+
+                            console.log({ previous, latest })
+
+                            setTemplateJson(latest);
+                            setUpdateNo(updateNo + 1)
                         }}
-                        key={chosenLayout.name + ":" + chosenTemplate?.id}
+                        key={'update-' + updateNo}
                     />
                 </div>
             }

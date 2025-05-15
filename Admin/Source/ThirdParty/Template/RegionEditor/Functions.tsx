@@ -1,74 +1,5 @@
 import { CodeModuleMeta, CodeModuleType, getAll, TemplateModule } from "Admin/Functions/GetPropTypes";
-import { CoreRegionConfig, Scalar, TreeComponentItem } from "./RegionEditor";
-
-
-export const templateConfigToCanvasJson = (config: Record<string, CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>>, layout: TemplateModule): TreeComponentItem => {
-
-    const tree: TreeComponentItem = {
-        t: layout.name,
-        d: {},
-        r: {}
-    }
-
-    Object.keys(config).forEach(prop => {
-
-        const item = config[prop];
-
-        // we need a parent for the collection here, 
-        // so we specify Admin/Template/Wrapper, this
-        // can be easily filtered out by the collapse function
-        tree.r![item.propName] = {
-            t: 'Admin/Template/Wrapper',
-            d: {
-                $isLocked: Boolean(item.isLockedByParent || item.$isLocked)
-            },
-            c: []
-        }
-
-        // the components are already in the right format
-        // so we just push them
-        item.components!.forEach(component => {
-
-            if (component.t === "Admin/Template/Wrapper") {
-                return;
-            }
-            if (component.t === "Admin/Template/Slot") {
-                
-                if (!component.d?.multipleAllowed && component.c && component.c.length > 1) {
-                    // this shouldn't happen.
-                    // every change that happens triggers this function
-                    // if an error occurs then it should be shown.
-                    throw new Error(`The component ${component.d.$editorLabel ?? component.t} inside ${item.propName} cannot contain more than 1 component`)
-                }
-    
-                if (component.d?.permitted && (component.d.permitted as string[]).length != 0) {
-                    // when a permitted array is empty, its an allow all by default. 
-                    // when its populated with any items, only the items specified are allowed in there
-    
-                    const permitted: string[] = component.d.permitted as string[];
-                    
-                    component.c?.forEach(child => {
-                        if (!permitted.includes(child.t)) {
-                            throw new Error(`You cannot use the component ${child.d.$editorLabel ?? child.t} inside ${item.propName} > ${component.d.$editorLabel ?? component.t}`)
-                        }
-                        // for the case of ! not allowing a certain component
-                        if (permitted.includes("!" + child.t)) {
-                            throw new Error(`You cannot use the component ${child.d.$editorLabel ?? child.t} inside ${item.propName} > ${component.d.$editorLabel ?? component.t}`)
-                        }
-                    })
-                }
-            }
-
-
-            tree.r![item.propName].c?.push(component)
-        });
-    
-
-    })
-
-    return tree;
-
-}
+import { RegionCanvasTreeNode, RegionConfiguration } from "./types";
 
 export const canAddChildren = (componentName:string): Promise<boolean> => {
     return new Promise((resolve, reject) => {
@@ -104,6 +35,7 @@ export const canAddChildren = (componentName:string): Promise<boolean> => {
 
                 const childrenEnabledPropTypes: string[] = [
                     "React.PropsWithChildren", 
+                    "PropsWithChildren"
                     // add more here.
                 ]
 
@@ -168,3 +100,53 @@ export const getPropsForComponent = (type: CodeModuleMeta) => {
 
     return iface.fields;
 } 
+
+/**
+ * This takes multiple configs and bundles them together in an overlaying manner.
+ * @param baseConfig 
+ * @param overlayingConfig 
+ * @returns 
+ */
+export const compileRegionConfig = (baseConfig: RegionConfiguration | null = null, overlayingConfig: RegionConfiguration): RegionConfiguration => {
+
+    return {
+        /**
+         * isLocked can be set by the parent template locking, or by the current template. This differs from isLockedByParent 
+         * as isLockedByParent only marks if the isLocked field is a result of the parent template.
+        */
+        isLocked: baseConfig?.isLocked ?? overlayingConfig.isLocked ?? false,
+        /**
+         * Templates can have > 1 inheritence chain length, which means we need to check if the parent template of the parent has locked this,
+         * the parent, or simply just the editor.
+         */
+        isLockedByParent: baseConfig?.isLocked ?? baseConfig?.isLockedByParent ?? false,
+        /**
+         * The editor label should be set in the baseConfig, but baseConfig can be null. If a name
+         * cannot be resolved, we fallback to 'Unnamed region'.
+         */
+        editorLabel: baseConfig?.editorLabel ?? overlayingConfig.editorLabel ?? `Unnamed region`,
+        /**
+         * When left empty, allowed components is limited strictly to the children allowed to the current role.
+         * the restriction on these get tighter the further down the chain we go.
+         */
+        allowedComponents: baseConfig?.allowedComponents ?? overlayingConfig.allowedComponents ?? [],
+        /**
+         * Does this region support more than one child?
+         */
+        childrenSupported: baseConfig?.childrenSupported ?? overlayingConfig.childrenSupported ?? false,
+        /**
+         * Are children allowed to be added to this region?
+         */
+        childrenAllowed: baseConfig?.childrenAllowed ?? overlayingConfig.childrenAllowed ?? true,
+        /**
+         * If multiple children are allowed, this will be true. If not, then false.
+         */
+        multipleChildrenAllowed: baseConfig?.multipleChildrenAllowed ?? overlayingConfig.multipleChildrenAllowed ?? true,
+
+        /**
+         * Is a region or child optional?
+         */
+        isOptional: baseConfig?.isOptional ?? overlayingConfig.isOptional ?? false
+    }
+
+}

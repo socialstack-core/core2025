@@ -1,17 +1,15 @@
-import { CodeModuleMeta, getAll } from "Admin/Functions/GetPropTypes";
-import { Scalar, TreeComponentItem } from "Admin/Template/RegionEditor"
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
 import Input from "UI/Input";
-import { getPropsForComponent } from "../RegionEditor/Functions";
 import Alert from "UI/Alert";
-import PropInput from "./PropInputMap";
-import Modal from "UI/Modal";
-import { sortComponentOrder } from "../Functions";
+import { CodeModuleMeta, getAll } from "Admin/Functions/GetPropTypes";
+import { EditorCanvasTreeNode, RegionDefaultRC } from "../RegionEditor/types";
+import { getPropsForComponent } from "../RegionEditor/Functions";
+
 
 export type ComponentPropEditorProps = {
-    item: TreeComponentItem
-    modules?: Record<string, CodeModuleMeta>,
-    onChange?: (item: TreeComponentItem) => void
+    item: EditorCanvasTreeNode
+    onChange?: (replaceItem: EditorCanvasTreeNode) => void, 
+    isRegion: boolean
 }
 
 /*
@@ -22,8 +20,8 @@ const ComponentPropEditor: React.FC<ComponentPropEditorProps> = (props:Component
     const { item } = props;
 
     // this can be null when configuring non-physical components. 
-    const [codeModule, setCodeModule] = useState<CodeModuleMeta | null>(null);
-    const [allModules, setAllModules] = useState<Record<string, CodeModuleMeta> | null>(null);
+    const [codeModule, setCodeModule] = useState<CodeModuleMeta>();
+    const [allModules, setAllModules] = useState<Record<string, CodeModuleMeta>>();
 
     useEffect(() => {
 
@@ -41,9 +39,14 @@ const ComponentPropEditor: React.FC<ComponentPropEditorProps> = (props:Component
 
     }, [item, allModules])
 
-    if (item.d.$isMeta && allModules) {
-        // if allModules is null, it will flow down to !codeModule if statement and return loading.
-        return <NonPhysicalPropEditor {...props} modules={allModules!}/>
+    if (props.isRegion) {
+        return (
+            <PhysicalComponentPropEditor 
+                {...props} 
+                onChange={props.onChange}
+                allModules={allModules}
+            />
+        );
     }
 
     if (!codeModule) {
@@ -51,7 +54,7 @@ const ComponentPropEditor: React.FC<ComponentPropEditorProps> = (props:Component
         // but that is terrible, we need a gucci spinner, with lights and backup dancers.
 
         // look at this fine art
-        return <p>Loading</p>
+        return <Alert variant="info">{`Loading...`}</Alert>
     }
     // here we can assume that all the necessary loading has happened and we don't need to do any more
     // as mentioned above getAll is cached, so we probably wont even see the fancy loader above, unless
@@ -61,287 +64,107 @@ const ComponentPropEditor: React.FC<ComponentPropEditorProps> = (props:Component
                 {...props} 
                 tsInfo={codeModule} 
                 onChange={props.onChange}
+                allModules={allModules}
             />
 }
 
-const NonPhysicalPropEditor: React.FC<ComponentPropEditorProps> = (props: ComponentPropEditorProps): React.ReactElement => {
+export type PhysicalComponentProps = ComponentPropEditorProps & {
+    tsInfo?: CodeModuleMeta,
+    allModules?: Record<string, CodeModuleMeta>
+}
 
-    // this is a pretty much hardcoded component, meta components only need certain information.
-    const { item } = props;
+const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: PhysicalComponentProps): React.ReactElement => {
+
+    const { tsInfo, item, onChange, allModules } = props;
+    
+    let fields;
+
+    if (tsInfo) {
+
+        fields = getPropsForComponent(tsInfo);
+
+        if (!fields) {
+            return <Alert variant="danger">{`There was an issue reading this component`}</Alert>
+        }
+    }
+
+    const value = JSON.stringify(item);
 
     return (
-        <div className='component-prop-editor'>
-            <Input 
-                type='text'
-                label={`Name`}
-                onInput={(ev: React.KeyboardEvent<HTMLInputElement>) => {
-                    item.d.$editorLabel = (ev.target as HTMLInputElement).value;
-                }} 
-                defaultValue={item.d.$editorLabel as string}
-            />
+        <div className='configurer component-prop-editor'>
             <Input
                 type='checkbox'
                 label={`Is optional?`}
-                defaultChecked={Boolean(item.d.isOptional)}
+                defaultChecked={Boolean(item.rc?.isOptional)}
                 onChange={(ev: React.ChangeEvent) => {
                     const target: HTMLInputElement = (ev.target as HTMLInputElement);
-                    item.d.isOptional = target.checked;
+
+                    if (!item.rc) {
+                        item.rc = {...RegionDefaultRC}
+                        item.rc.editorLabel = item.t;
+                    }
+
+                    item.rc.isOptional = target.checked;
                 }}
             />
             <Input
                 type='checkbox'
                 label={`Allow multiple children?`}
-                defaultChecked={Boolean(item.d.multipleAllowed)}
+                defaultChecked={Boolean(item.rc?.multipleChildrenAllowed)}
                 onChange={(ev: React.ChangeEvent) => {
                     const target: HTMLInputElement = (ev.target as HTMLInputElement);
-                    item.d.multipleAllowed = target.checked;
+
+                    if (!item.rc) {
+                        item.rc = {...RegionDefaultRC}
+                        item.rc.editorLabel = item.t;
+                    }
+
+                    item.rc.multipleChildrenAllowed = target.checked;
                 }}
             />
-            <PermittedChildEditor item={item}/>
-        </div>
-    )
-}
-
-export type PhysicalComponentProps = ComponentPropEditorProps & {
-    tsInfo: CodeModuleMeta
-}
-
-const PhysicalComponentPropEditor: React.FC<PhysicalComponentProps> = (props: PhysicalComponentProps): React.ReactElement => {
-
-    const { tsInfo, item, onChange } = props;
-
-    const fields = getPropsForComponent(tsInfo);
-
-    if (!fields) {
-        return <Alert variant="danger">{`There was an issue reading this component`}</Alert>
-    }
-
-    const value = JSON.stringify(stripIllegalAttributes(item));
-
-    return (
-        <Input
-            defaultValue={value}
-            type='canvas'
-            key={value}
-            onCanvasChange={(source:string) => {
-                var edited = JSON.parse(source);
-                
-                reconcileEditorProperties(item, edited);
-
-                onChange && onChange(canvasNodeToTreeComponent(item,edited))
-            }}
-            label={`Component preview`} 
-            className='component-preview'
-        />
-    )
-}
-
-const stripIllegalAttributes = (item: TreeComponentItem) => {
-    const stripped:TreeComponentItem = {
-        t: item.t,
-        d: {},
-        c: []
-    };
-
-    Object.keys(item.d).forEach(key => {
-        if (key.startsWith('$'))
-        {
-            return;
-        }
-        stripped.d[key] = item.d[key]
-    })
-
-    if (Array.isArray(item.c))
-    {
-        item.c?.forEach(child => {
-            stripped.c!.push(stripIllegalAttributes(child));
-        })
-    } else {
-        item.c = []
-    }
-
-    return stripped;
-}
-
-const reconcileEditorProperties = (originalItem: TreeComponentItem, newItem: TreeComponentItem) => {
-
-    if (!Array.isArray(newItem.c)) {
-        newItem = newItem.c as unknown as TreeComponentItem;
-    }
-    if (originalItem.d)
-    {
-        if (!newItem.d)
-        {
-            newItem.d = {};
-        }
-        Object.keys(originalItem.d).forEach(key => {
-            if (key.startsWith('$'))
-            {
-                newItem.d[key] = originalItem.d[key];
-            }
-        })
-
-        if (originalItem.d.multipleAllowed) {
-            newItem.d.multipleAllowed = originalItem.d.multipleAllowed;
-        }
-        if (originalItem.d.permitted) {
-            newItem.d.permitted = originalItem.d.permitted;
-        }
-    }
-
-    if (Array.isArray(originalItem.c) && Array.isArray(newItem.c)) {
-        newItem.c.forEach((newItemChild, idx) => {
-            reconcileEditorProperties(originalItem.c![idx], newItemChild); 
-        })
-    }
-
-}
-
-const canvasNodeToTreeComponent = (item: TreeComponentItem, node: any):TreeComponentItem => {
-    
-    const newConfig:TreeComponentItem = {
-        t: item.t,
-        d: node.d ?? {},
-        c: Array.isArray(node.c) ? node.c : [node.c]
-    };
-    
-    Object.assign(newConfig.d, item.d)
-
-    return newConfig;
-}
-
-type PermittedChildEditorProps = {
-    item: TreeComponentItem
-}
-
-// this component is used to restrict what components can go inside the current one
-const PermittedChildEditor: React.FC<PermittedChildEditorProps> = (props: PermittedChildEditorProps): React.ReactElement => {
-
-    const { item } = props;
-    const [allComponents, setAllComponents] = useState<Record<string, CodeModuleMeta>>()
-    const [isSelectingModal, setIsSelectingModal] = useState<boolean>();
-    const [filter, setFilter] = useState<string>()
-    const [_, forceUpdate] = useReducer(x => x + 1, 0)
-    
-    // load all components in.
-    useEffect(() => {
-
-        if (!allComponents) {
-            getAll().then(result => setAllComponents(result.codeModules))
-        }
-
-    }, [allComponents])
-
-
-    
-    if (!item.d.permitted) {
-        // lets initialise the array, so long as its empty, ALL components can be placed under here
-        item.d.permitted = [];
-    }
-
-    return (
-        <div className='permitted-child-editor'>
-            {(item.d.permitted as []).length == 0 ? 
-                <p>{`All components can currently be placed in this component`}</p> :
-                <div className='component-list'>
-                    {item.d.permitted.map(permitted => {
-                        return (
-                            <div 
-                                className={'component-item listed'}
-                            >
-                                {permitted}
-                                <i 
-                                    className='fas fa-trash delete-icon'
-                                    onClick={() => {
-                                        if (item.d.permitted!.includes(permitted)) {
-                                            // remove it. 
-                                            item.d.permitted!.splice(
-                                                item.d.permitted!.indexOf(permitted), 
-                                                1
-                                            )
-                                        } else {
-                                            // add it
-                                            item.d.permitted!.push(permitted)
-                                        }
-                                        forceUpdate();
-                                    }}     
-                                />
-                            </div>
-                        )
-                    })}
-                </div>
-            }
-            <button 
-                onClick={() => setIsSelectingModal(true)} 
-                type='button'
-            >
-                {`Edit restrictions`}
-            </button>
-            {isSelectingModal && (
-                <Modal
-                    visible={true}
-                    title={`Enabled components for ${item.d.$editorLabel ?? item.t}`}
-                    onClose={() => setIsSelectingModal(false)}
-                    noFooter
-                >
-                    <Input
-                        type='text'
-                        onInput={(ev) => {
-                            const target: HTMLInputElement = (ev.target as HTMLInputElement)
-
-                            setFilter(target.value)
-                        }}
-                        placeholder={`Search components`}
-                        defaultValue={filter}
-                    />
-                    {allComponents ? sortComponentOrder(Object.keys(allComponents)).map((componentName => {
-
-                        const ignoreStartsWith = ["Api/", "Admin/", "UI/Templates", "UI/Functions", "Email/Templates"];
-
-                        if (ignoreStartsWith.find(a => componentName.startsWith(a))) {
-                            return null;
-                        }
-                        if (componentName.includes(".")) {
-                            // no component should include a .
-                            // the ones this filter removes 
-                            // will show items not meant to be used 
-                            // as components.
-                            return null;
-                        }
-
-                        if (filter && filter.length != 0) {
-                            if (!componentName.toLowerCase().includes(filter.toLowerCase())) {
-                                return null;
-                            }
-                        }
-
-                        return (
-                            <div 
-                                onClick={() => {
-                                    if (item.d.permitted!.includes(componentName)) {
-                                        // remove it. 
-                                        item.d.permitted!.splice(
-                                            item.d.permitted!.indexOf(componentName), 
-                                            1
-                                        )
-                                    } else {
-                                        // add it
-                                        item.d.permitted!.push(componentName)
-                                    }
-                                    forceUpdate();
-                                }} 
-                                className={'component-item' + (item.d.permitted!.includes(componentName) ? ' active' : '')}
-                            >
-                                <i className={'fas fa-' + (item.d.permitted!.includes(componentName) ? 'toggle-on' : 'toggle-off')}/>
-                                {componentName}
-                            </div>
-                        )
-                    })) : <p>Loading...</p>}
-                </Modal>
+            {allModules && (
+                <PermittedModuleEditor
+                    allModules={allModules}
+                    node={item}
+                />
             )}
+            {!props.isRegion && (<Input
+                defaultValue={value}
+                type='canvas'
+                key={value}
+                onCanvasChange={(source:string) => {
+                    var edited: EditorCanvasTreeNode = JSON.parse(source);
+
+                    if (!edited.rc) {
+                        edited.rc = {...RegionDefaultRC}
+                        edited.rc.editorLabel = item.t;
+                    }
+
+                    if (!edited.rc.childrenAllowed) {
+                        edited.c = []; // reset.
+                    }
+
+                    onChange && onChange(edited)
+                }}
+                label={`Component preview`} 
+                className='component-preview'
+            />)}
         </div>
     )
+}
 
-} 
+type PermittedModuleEditorProps = {
+    allModules: Record<string, CodeModuleMeta>,
+    node: EditorCanvasTreeNode
+}
+
+const PermittedModuleEditor = (props: PermittedModuleEditorProps) => {
+    
+    return (
+        <div className='permitted-editor'>
+            
+        </div>
+    )
+}
 
 export default ComponentPropEditor;

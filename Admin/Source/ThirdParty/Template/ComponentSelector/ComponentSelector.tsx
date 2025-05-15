@@ -1,5 +1,4 @@
 import { CodeModuleMeta, getAll, TypeMeta } from "Admin/Functions/GetPropTypes";
-import { Scalar } from "Admin/Template/RegionEditor";
 import { useEffect, useState } from "react";
 import Alert from "UI/Alert";
 import Input from "UI/Input";
@@ -13,8 +12,8 @@ import ComponentGroupRenderer from "./ComponentGroup";
 export type ComponentSelectorProps = {
     onClose?: () => void,
     title: string,
-    onComponentSelected: (componentPath:string, componentProps?: Record<string, Scalar | Scalar[]>) => void,
-    extra?: Record<string, Record<string, Scalar | Scalar[]>>,
+    onComponentSelected: (componentPath:string, componentProps?: Record<string, any>) => void,
+    extra?: Record<string, Record<string, any>>,
     extraLabel?: string,
     permitted?: string[]
 }
@@ -70,7 +69,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
                 setAllowedComponents([]);
             })
         }
-    }, [allowedComponents])
+    }, [allowedComponents, session?.role?.id])
 
     useEffect(() => {
         // we need the components available to actually choose one. 
@@ -124,7 +123,7 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
             });
         }
 
-    }, [components])
+    }, [components, props.permitted])
 
     const { extra } = props;
 
@@ -158,7 +157,6 @@ const ComponentSelector: React.FC<ComponentSelectorProps> = (props: ComponentSel
 
                                             if (!allowedComponents.includes(componentName))
                                             {
-                                                console.log('Skipped')
                                                 // omit the item
                                                 return;
                                             }

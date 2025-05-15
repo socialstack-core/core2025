@@ -1,619 +1,443 @@
-import { CodeModuleTypeField, TemplateModule } from "Admin/Functions/GetPropTypes";
-import ComponentPropEditor from "Admin/Template/ComponentPropEditor";
-import ComponentSelector from "Admin/Template/ComponentSelector";
-import TemplateApi, { Template } from "Api/Template";
-import { createRef, useEffect, useState } from "react";
+import { TemplateModule } from "Admin/Functions/GetPropTypes";
+import { CanvasTreeNode, DocumentRootTreeNode, EditorCanvasTreeNode, RegionCanvasTreeNode, RegionDefaultRC } from "./types";
+import Loading from "UI/Loading";
 import Alert from "UI/Alert";
+import { Template } from "Api/Template";
+import { Children, useEffect, useState } from "react";
+import ComponentSelector from "Admin/Template/ComponentSelector";
+import { canAddChildren } from "./Functions";
 import Modal from "UI/Modal";
-import { canAddChildren, templateConfigToCanvasJson } from "./Functions";
-import PropInput from "../ComponentPropEditor/PropInputMap";
+import Input from "UI/Input";
+import ComponentPropEditor from "Admin/Template/ComponentPropEditor";
 
-
-export type Scalar = string | number | boolean | null | undefined;
-
-export type RegionEditorFields = {
-    $isLocked?: boolean,
-    permitted?: string[],
-    $editorLabel?: string,
-    multipleAllowed?: boolean
-}
-
-export type TreeComponentItem = {
-    // the component type (i.e UI/Functions/SomeComponent)
-    t: string,
-    // the initialising props, don't change this to "any" or "unknown", just 
-    // adjoin it to the accepted V types below
-    d: Record<string, Scalar | Scalar[]> & RegionEditorFields,
-    // roots, these are different to children, these tell the canvas
-    // when a prop is a React Component to render the component 
-    r?: Record<string, TreeComponentItem>,
-    // these are children that exist within non-root components.
-    c?: TreeComponentItem[]
-    i?: number
-}
-
+/**
+ * This is the props for the region editor.
+ */
 export type RegionEditorProps = {
-    templateJson: TreeComponentItem,
-    currentTemplate?: Template,
-    currentLayout: TemplateModule,
-    onChange?: (newTree: TreeComponentItem) => void,
-    existing?: Template
-}
-
-const assignParentLock = (child: TreeComponentItem, isExisting: boolean = false) => {
+    /**
+     * This holds the template document root tree node, this is as far up the tree as we can go.
+     */
+    templateDocument: DocumentRootTreeNode,
+    /**
+     * When a change is made to the template, this will be called with the previous and latest version of the template.
+     * @param previous - The previous version of the template.
+     * @param latest - The latest version of the template.
+     * @returns {void}
+     */
+    onChange?: (previous: DocumentRootTreeNode, latest: DocumentRootTreeNode) => void,
     
-    if (!isExisting) {
-        if (child.d.$isLocked) {
-            child.d.isLockedByParent = true;
-        }
-        child.d.isFromParent = true;
-    }
-    child.c?.forEach(subChild => {
-        assignParentLock(subChild, isExisting);
-    })
+    /**
+     * This holds the base file, the file feeds the region editor with the base rules,
+     * the template then "layers" on top of this.
+     */
+    layoutFile?: TemplateModule,
+    /**
+     * This marks the template it extends, we can take the config from this and ensure all rules are being followed.
+     */
+    extends?: Template
 }
 
-/*
-* When choosing ReactNode props, this should re-create the whole tree but only
-* affect the changed item, lets say a user changes a header element, anything else
-* should be left alone. Any descendants of the header will then be removed. Although
-* the header property should be assigned to the prop, it will of course have to be added to the
-* children tree. 
-*/
+/**
+ * The region editor works with <c>DocumentRootTreeNode</c> only, this renders the full editor.
+ * @param props 
+ * @returns 
+ */
+const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps) => {
 
-const RegionEditor: React.FC<RegionEditorProps> = (props: RegionEditorProps): React.ReactNode => {
+    // templateDocument is the actual template's JSON structure but parsed.
+    // layoutFile is the file inside UI/Templates that ixt implements.
+    const { templateDocument, layoutFile } = props;
 
-    const { currentLayout, currentTemplate, templateJson } = props;
-    const { types } = currentLayout.types;
+    // this is the region in which a component is being added.
+    const [isSelectingComponent, setIsSelectingComponent] = useState<string>();
 
-    // make sure we can find the props:MyProps type first, if we can't show an error
-    const layoutProps = types.find(type => type.instanceName?.includes('Props') && (type.name == 'interface' || type.name === 'type' || type.name === 'union'));
+    const [isConfiguring, setIsConfiguring] = useState<boolean>();
 
-    // this exists purely for the template root component
-    const [templateConfig, setTemplateConfig] = useState<Record<string, Scalar>>({});
-    const [error, setError] = useState<string | undefined>();
+    // no hooks beyond this point
 
-    // this holds the config for all fields, when this is updated
-    // the full template is updated.
-    const [fullConfig, setFullConfig] = useState<Record<string, CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>>>({});
+    if (!layoutFile) {
+        return (<Loading />)
+    }
 
-    // this only fires when the "inherits" field is changed. 
-    useEffect(() => {
-
-        const json: TreeComponentItem = JSON.parse(currentTemplate?.bodyJson ?? '{}') ?? {};
-        
-        if (json.d) {
-            // sets the initial config
-            setTemplateConfig(json.d as Record<string, Scalar>);
-
-            if (json.r) {
-                Object.keys(json.r).forEach((componentKeyName: string) => {
-
-                    const cfg = json.r![componentKeyName]
-
-                    fullConfig[componentKeyName] = {
-                        enabled: true,
-                        propName: componentKeyName,
-                        components: cfg.c,
-                        isLockedByParent: Boolean(cfg.d.$isLocked),
-                        $isLocked: Boolean(cfg.d.$isLocked) ,
-                        multipleAllowed: typeof cfg.d.multipleAllowed !== 'undefined' ? cfg.d.multipleAllowed : true
-                    }
-
-                    cfg.c?.forEach((child) => {
-                        assignParentLock(child, Boolean(props.existing))
-                    })
-                });
-            }
-        }
-
-        json.c?.forEach((child: TreeComponentItem) => {
-            assignParentLock(child);
-        })
-
-    }, [currentTemplate, fullConfig, props?.existing])
-
-    if (!layoutProps) {
+    // if fields is null, return an error.
+    if (!layoutFile.types.types[0].fields) {
         return (
-            <Alert type='error'>{`Invalid template: Cannot find a props type in this template, please ensure the template's props use`}</Alert>
+            <Alert type="danger">{`This is an invalid template`}</Alert>
         )
     }
 
-
-    // get the fields, from here we iterate over them
-    // and then these directly reflect on the template
-    const { fields } = layoutProps;
-
-    const onChange = (update: CoreRegionConfig & Record<string, Scalar | TreeComponentItem[]>) => {
-        
-        setError(undefined);
-        fullConfig[update.propName] = {...update};
-
-        setFullConfig({...fullConfig});
-
-        // now to valid any rules 
-        try
-        {
-            const convertedJson = templateConfigToCanvasJson(fullConfig, currentLayout)
-            Object.assign(convertedJson.d, templateConfig);
-
-            props.onChange && props.onChange(convertedJson)
-        }
-        catch(e)
-        {
-            setError((e as Error).message);
-        }
-
-        console.log(fullConfig)
-    }
-
+    // regions can be empty, though they shouldn't be
+    const regions = layoutFile.types.types[0].fields?.filter(field => field.fieldType.instanceName == "React.ReactNode");
     
-
-    const configFields = (currentLayout as any).types.types[0].fields?.filter((field:CodeModuleTypeField) => !['React.ReactNode', 'React.ReactElement'].includes(field?.fieldType?.instanceName!))
-
-    // TODO: Make sure multipleAllowed is transferred from the parent to the current template!!!
 
     return (
         <div className='region-editor'>
-            {error && <Alert variant='danger'>{error}</Alert>}
-            {fields?.map(field => field.fieldType.instanceName === 'React.ReactNode' && <RegionLevelEditor setError={setError} config={fullConfig[field.name]} onChange={onChange} field={field} />)}
+            {regions.map((region, idx) => {
+                
+                // lets check if the region is in the template document
+                let correspondingNode: RegionCanvasTreeNode = templateDocument.r![region.name] as RegionCanvasTreeNode;
 
-            {currentLayout && templateJson && 
-                configFields && configFields.length != 0 && 
-                // Optimization Level: Interstellar
-                // By skipping this block when there are no configurable fields,
-                // we prevent React from allocating ~2KB of memory for elements, fibers, and closure baggage.
-                // That’s enough to store ~300 cat emojis 🐱
-                // You’re welcome, planet Earth.
-                (
-                    <div className='template-component-configuration'>
-                        <h4>Configuration</h4>
-                        <div className='configurable-items'>
-                            {(currentLayout as any).types.types[0].fields.map((layoutConfig: CodeModuleTypeField) => {
-                                if (['React.ReactNode', 'React.ReactElement'].includes(layoutConfig?.fieldType?.instanceName!))
-                                {
-                                    return;
-                                }
+                if (!correspondingNode) {
+                    // the region has not been created yet, so lets create an empty minimal node.
+                    const newRegion: RegionCanvasTreeNode = {
+                        t: 'Admin/Template/Region',
+                        c: [],
+                        d: {},
+                        rc: {...RegionDefaultRC}
+                    };
+                    newRegion.rc!.editorLabel = region.name;
+                    
+                    // lets spawn a new document
+                    const newDocument = {...templateDocument}
+                    
+                    // set the newly generated region up
+                    newDocument.r![region.name] = newRegion;
 
-                                return (
-                                    <PropInput
-                                        type={layoutConfig}
-                                        onInput={(value: Scalar) => {
-                                            templateConfig[layoutConfig.name] = value;
-                                            
-                                            setTemplateConfig({...templateConfig})
+                    // and call onChange
+                    props.onChange && props.onChange(templateDocument, newDocument);
+                    return;
 
-                                            const convertedJson = templateConfigToCanvasJson(fullConfig, currentLayout)
-                                            Object.assign(convertedJson.d, templateConfig);
+                }
+                
+                // if the region has no region config, create a default one.
+                if (!correspondingNode.rc) {
+                    correspondingNode.rc = {...RegionDefaultRC};
+                    correspondingNode.rc.editorLabel = region.name;
 
-                                            props.onChange && props.onChange(convertedJson)
+                    props.onChange && props.onChange(templateDocument, templateDocument);
+                    return;
+                }
+                
+                const { rc } = correspondingNode;
+
+                return (
+                    <div key={idx} className='region'>
+                        <div className='main-info'>
+                            <h3>{region.name} {rc.isLockedByParent && <i>{`Locked by parent`}</i>}</h3>
+                            {
+                                // if the region is locked by the parent, we can't do anything to it. 
+                                !rc?.isLockedByParent && (
+                                    <button
+                                        type='button'
+                                        onClick={() => {
+
+                                            const newDocument = {...templateDocument};
+
+                                            const targetRegion: RegionCanvasTreeNode = newDocument.r![region.name]! as RegionCanvasTreeNode;
+
+                                            if (!targetRegion.rc) {
+                                                targetRegion.rc = {...RegionDefaultRC};
+                                                targetRegion.rc.editorLabel = region.name;
+                                            }
+
+                                            targetRegion.rc.isLocked = !targetRegion.rc?.isLocked;
+
+                                            props.onChange && props.onChange(templateDocument, newDocument);
+
                                         }}
-                                        value={templateConfig[layoutConfig.name] as string}
-                                    />
+                                    >
+                                        {rc.isLocked ? <i className='fas fa-lock'></i> : <i className='fas fa-lock-open'></i>}
+                                    </button>
                                 )
-                            })}
+                            }
+                            
+                            {!rc?.isLocked && (
+                                <button 
+                                    type='button'
+                                    onClick={() => setIsConfiguring(true)}
+                                >
+                                    <i className='fas fa-cog' />
+                                </button>   
+                            )}
+                            {!rc.isLocked && (
+                                <button
+                                    type='button'
+                                    title={`Add component`}
+                                    onClick={() => {
+                                        setIsSelectingComponent(region.name)
+                                    }}
+                                >
+                                    <i className='fas fa-plus' />
+                                </button>
+                            )}
+                            {isConfiguring && (
+                                <Modal
+                                    visible
+                                    title={`Configure ${correspondingNode.rc?.editorLabel ?? correspondingNode.t}`}
+                                    onClose={() => {
+                                        setIsConfiguring(false)
+
+                                        const newDocument = {...templateDocument};
+
+                                        const targetRegion: RegionCanvasTreeNode = newDocument.r![region.name]! as RegionCanvasTreeNode;
+
+                                        if (!targetRegion.rc) {
+                                            targetRegion.rc = {...RegionDefaultRC};
+                                            targetRegion.rc.editorLabel = region.name;
+                                        }
+
+                                        props.onChange && props.onChange(templateDocument, newDocument);
+                                    }}
+                                    noFooter
+                                >
+                                    <ComponentPropEditor
+                                        item={correspondingNode}
+                                        onChange={() => {
+
+                                            const newDocument = {...templateDocument};
+
+                                            const targetRegion: RegionCanvasTreeNode = newDocument.r![region.name]! as RegionCanvasTreeNode;
+
+                                            if (!targetRegion.rc) {
+                                                targetRegion.rc = {...RegionDefaultRC};
+                                                targetRegion.rc.editorLabel = region.name;
+                                            }
+
+                                            props.onChange && props.onChange(templateDocument, newDocument);
+                                        }}
+                                        isRegion={true}
+                                    />
+                                </Modal>
+                            )}
                         </div>
+                        
+
+                        {Array.isArray(correspondingNode.c) && correspondingNode.c.length != 0 && (
+                            <div className="child-regions">
+                                {correspondingNode.c.map((childNode, idx) => {
+                                    return (
+                                        <CanvasNodeEditor 
+                                            key={'child-' + idx + '-' + childNode.t} 
+                                            node={childNode} 
+                                            onChange={() => {
+                                                const newDocument = {...templateDocument};
+
+                                                const targetRegion: RegionCanvasTreeNode = newDocument.r![region.name]! as RegionCanvasTreeNode;
+
+                                                if (!targetRegion.rc) {
+                                                    targetRegion.rc = {...RegionDefaultRC};
+                                                    targetRegion.rc.editorLabel = region.name;
+                                                }
+
+                                                props.onChange && props.onChange(templateDocument, newDocument);
+                                            }}
+                                            onDelete={(toDelete) => {
+                                                const newDocument = {...templateDocument};
+
+                                                const targetRegion: RegionCanvasTreeNode = newDocument.r![region.name]! as RegionCanvasTreeNode;
+
+                                                if (!targetRegion.rc) {
+                                                    targetRegion.rc = {...RegionDefaultRC};
+                                                    targetRegion.rc.editorLabel = region.name;
+                                                }
+
+                                                targetRegion.c!.splice(
+                                                    targetRegion.c!.indexOf(toDelete), 1
+                                                )
+
+                                                props.onChange && props.onChange(templateDocument, newDocument);
+                                            }}
+                                        />
+                                    )
+                                })}
+                            </div>
+                        )} 
                     </div>
                 )
-            }
+            })}
+            {isSelectingComponent && (
+                // select a component to add to the region.
+                <ComponentSelector
+                    title={`Add component to ${isSelectingComponent}`}
+                    onComponentSelected={(path, componentProps) => {
+                        
+                        // clone the current document
+                        const newDocument = {...templateDocument};
+                        
+                        // grab the current region
+                        const targetRegion: RegionCanvasTreeNode = newDocument.r![isSelectingComponent]! as RegionCanvasTreeNode;
+
+                        if (!Array.isArray(targetRegion.c)) {
+                            targetRegion.c = [];
+                        }
+
+                        // add the new component to the region
+                        targetRegion.c.push({
+                            t: path,
+                            d: componentProps,
+                            c: []
+                        })
+
+                        props.onChange && props.onChange(templateDocument, newDocument);
+
+                    }}
+                    onClose={() => {
+                        setIsSelectingComponent(undefined)
+                    }}
+                />
+            )}
         </div>
     )
-
 }
 
-type RegionLevelEditorProps = {
-    field: CodeModuleTypeField,
-    config: CoreRegionConfig & Record<string, any>, 
-    onChange: (config: CoreRegionConfig & Record<string, Scalar>) => void,
-    setError: Function
+type CanvasNodeEditorProps = {
+    node: RegionCanvasTreeNode,
+    onChange: () => void,
+    onDelete: (toDelete: EditorCanvasTreeNode) => void
 }
 
-export type CoreRegionConfig = {
-    enabled: boolean,
-    propName: string,
-    components?: TreeComponentItem[],
-    isLockedByParent?: boolean
-}
+/**
+ * This is for editing the non-root components of the template, its used recursively
+ * @param {CanvasNodeEditorProps} props 
+ * @returns 
+ */
+const CanvasNodeEditor = (props: CanvasNodeEditorProps) => {
 
-const RegionLevelEditor: React.FC<RegionLevelEditorProps> = (props: RegionLevelEditorProps): React.ReactElement => {
+    const { node } = props;
 
-    // holds the state as to whether the select component modal should show
-    // this one specifically exists to top level props component selection
-    const [showSelectComponentModal, setShowSelectComponentModal] = useState(false)
+    const [supportsChildren, setSupportsChildren] = useState<boolean>();
+    const [isSelectingComponent, setIsSelectingComponent] = useState<boolean>();
+    const [isRenaming, setIsRenaming] = useState<boolean>();
+    const [isConfiguring, setIsConfiguring] = useState<boolean>();
 
-    const { field } = props;
-    let { config } = props;
-
-    // takes the checked state whenever emitChange is called, as opposed to storing the value
-    // and having to sync states.
-    const enabledRef: React.RefObject<HTMLInputElement | null> = createRef<HTMLInputElement>();
-
-    // this config is a sub item of the actual full config. This is a per-component
-    // level, this isn't the full template config that will properly create the template.
-    if (!config) {
-        config = {
-            enabled: !field.optional,
-            propName: field.name
+    useEffect(() => {
+        if (typeof supportsChildren === "undefined") {
+            canAddChildren(node.t).then((result) => {
+                setSupportsChildren(result);
+            })
         }
-    }
+    }, [supportsChildren])
 
-    // When a change is made, this needs to be called, this then
-    // passes back the changes to the parent component (which should only be RegionEditor)
-    // the parent component will then pass the new config back to here where it will render accordingly.
-    const emitChange = () => {
-
-        if (!config.components) {
-            config.components = []
+    const toggleLock = () => {
+        if (!node.rc) {
+            node.rc = {...RegionDefaultRC};
+            node.rc.editorLabel = node.t;
         }
-
-        // get the checked status before passing to parent handler.
-        props.onChange(config);
-    }
-
-    // this is for the meta components (i.e ones that don't physically exist)
-    // but act as things like a placeholder etc...
-    const extraComponents: Record<string, Record<string, Scalar | Scalar[]>> = {
-        'Admin/Template/Slot': {
-            // the name is editable, so we start with untitled slot
-            // $editorLabel is purely a UX feature, it allows areas to 
-            // be effectively named as to remind a user what its purpose is.
-            $editorLabel: 'Untitled-Slot',
-            // creates this value by default,
-            // this is just a marker that its not a real component.
-            $isMeta: true,
-            // start off with it being optional, can always enforce it when ready
-            optional: true,
-            // whether the slot can hold multiple child components
-            multipleAllowed: false,
-            // what components are permitted?
-            permitted: [],
-            // not locked by default
-            $isLocked: false,
-        }
+        
+        node.rc.isLocked = !node.rc.isLocked;
+        
+        props.onChange();
     }
 
     return (
-        <div className='region'>
-            <div className='enablement'>
-                <input 
-                    type='checkbox' 
-                    ref={enabledRef} 
-                    onClick={() => {
-
-                        // when the input element has mounted, and is checked
-                        // check if there is a component, if there isn't 
-                        // the user should be prompted to choose one,
-                        // if one isn't chosen, this should be reset back to false
-                        if (enabledRef.current && enabledRef.current.checked) {
-                            if (!config.component) {
-                                setShowSelectComponentModal(true)
-                                return;
-                            }
-                        }
-
-                        // if the checkbox is de-checked, this should remove any
-                        // configuration tied to it.
-                        if (enabledRef.current && !enabledRef.current.checked) {
-                            config.component = undefined;
-                            config.enabled = false;
-                            config.componentProps = {};
-
-                            emitChange();
-                        }
-                    }} 
-                    checked={Boolean(config['enabled'])}
-                />
-            </div>
-            <div 
-                className='main-info'
-                onClick={() => {
-
-                    if (config.isLockedByParent) {
-                        return;
-                    }
-                    setShowSelectComponentModal(true)
-                }}
-            >
-                <h3>{field.name} {config.$isLocked && <i className='lock-status'>(locked)</i>}</h3>
-                {!config.isLockedByParent && (
-                    <button  
-                        type={'button'}
-                    >+</button>
-                )}
-                
-                {!config.isLockedByParent && (
-                    <button 
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            config.$isLocked = !config.$isLocked;
-                            emitChange();
-                        }}
-                    >
-                        <i className={'fas fa-lock' + (!config.$isLocked ? '-open' : '')}/>
-                    </button>
-                )}
-            </div>
-            <div className='child-regions'>
-                {config.components?.map((component, idx) => {
-                    return (
-                        <ChildRegionEditor 
-                            deleteFunc={() => {
-                                const components: TreeComponentItem[] = [];
-
-                                config.components?.forEach(child => {
-                                    if (child === component) {
-                                        return;
-                                    }
-
-                                    components.push(child);
-                                })
-
-                                config.components = components;
-
-                                emitChange();
-                            }} 
-                            onChange={(overriding?: TreeComponentItem) => {
-                                if (overriding)
-                                {
-                                    config.components![idx] = overriding;
-                                    emitChange();
-                                }
-                            }}
-                            item={component}
-                        />
+        <div className='child-section region-inner'>
+            <div className='main-info'>
+                <h4>{node.rc?.editorLabel ?? node.t}</h4>
+                {
+                    // if the component is locked by the parent, we can't do anything to it. 
+                    !node.rc?.isLockedByParent && (
+                        node.rc?.isLocked ? <i onClick={() => toggleLock()} className='fas fa-lock'></i> : <i onClick={() => toggleLock()} className='fas fa-lock-open'></i>
                     )
-                })}
-            </div>
-            {
-                showSelectComponentModal && (
+                }
+
+                {!node.rc?.isLocked && supportsChildren && node.rc?.childrenAllowed !== false && (
+                    // if the component is locked, we cannot add a component to it.
+                    <i className='fas fa-plus' onClick={() => setIsSelectingComponent(true)} />
+                )}
+                {isSelectingComponent && (node.rc?.childrenAllowed !== false) && (
                     <ComponentSelector
-                        title={`Choose component for ${field.name}`}
-                        onClose={() => {
-                            if (!config.components || config.components.length == 0) {
-                                config.enabled = false;
-                                config.component = undefined;
+                        title={`Add component to ${isSelectingComponent}`}
+                        onComponentSelected={(path, componentProps) => {
+                            
+                            if (!Array.isArray(node.c)) {
+                                node.c = [];
                             }
-                            emitChange();
-                            setShowSelectComponentModal(false)
-                        }}
-                        extra={extraComponents}
-                        extraLabel={`Structure`}
-                        onComponentSelected={(component, props) => {
 
-                            config.enabled = true;
-
-                            if (!config.components) {
-                                config.components = [];
-                            }
-                            config.components.push({
-                                t: component,
-                                d: props ?? {},
+                            node.c.push({
+                                t: path,
+                                d: componentProps ?? {},
                                 c: []
                             })
 
-                            emitChange();
-                            setShowSelectComponentModal(false)
+                            props.onChange && props.onChange();
+                            
+                        }}
+                        onClose={() => {
+                            setIsSelectingComponent(false)
                         }}
                     />
-                )
-            }
-        </div>
-    )
-
-}
-
-type ChildRegionEditorProps = {
-    item: TreeComponentItem,
-    name?: string,
-    deleteFunc: () => void,
-    onChange: Function
-}
-
-const ChildRegionEditor: React.FC<ChildRegionEditorProps> = (props:ChildRegionEditorProps): React.ReactElement => {
-    
-    // destructuring
-    const { item } = props;
-
-    // useStates
-    const [isRenaming, setIsRenaming] = useState(false)
-    const [isConfigureMode, setIsConfigureMode] = useState(false)
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-    const [canHaveChildren, setCanHaveChildren] = useState<boolean>();
-
-
-    // useful vars
-    const itemName: string = (
-        props.name ?? 
-        item.d.$editorLabel as string ?? 
-        (
-            item.t.includes('/') ? 
-                item.t.substring(item.t.lastIndexOf('/') + 1, item.t.length) : 
-                item.t
-        )
-    );
-    
-    useEffect(() => {
-        canAddChildren(item.t)
-            .then(result => {
-                if (result) {
-
-                    if (item.d.isLockedByParent) {
-                        setCanHaveChildren(false)
-                        return;
-                    }
-
-                    // are multiple children allowed?
-                    if (item.d.multipleAllowed === true) {
-                        setCanHaveChildren(result)
-                    } else {
-                        // because JS sucks and null/undefined are falsy
-                        // we need to check if they've actually been set
-                        // if not, we expect standard behaviour to prevail.
-                        if (item.d.multipleAllowed === false) {
-                            // if its limited to 1, don't allow the user to see the + button
-                            // if item.c exists, and its empty, allow the user to add a child
-                            if (item.c && Array.isArray(item.c) && item.c.length == 0) {
-                                setCanHaveChildren(true)
-                            } else {
-                                // so in this instance, the limit has been reached and the user
-                                // cannot add any more children, so we set canHaveChildren to false                
-                                setCanHaveChildren(false)
-                            }
-                        } else {
-                            setCanHaveChildren(result)
-                        }
-                    }
-
-                } else {
-                    setCanHaveChildren(result)
-                }
-            })
-            .catch((err) => {
-                console.error(err);
-            })
-    }, [canHaveChildren, item])
-
-    return (
-        <div className='child-section'>
-            
-            <div className='main'>
-                {isRenaming ? 
-                    <input 
-                        type='text' 
-                        onInput={(ev) => {
-                            const target: HTMLInputElement = ev.target as HTMLInputElement;
-                            item.d.$editorLabel = target.value.length == 0 ? `Untitled-Component` : target.value.replaceAll(" ", "-");
-                        }}
-                        onKeyDown={(ev: React.KeyboardEvent<HTMLInputElement>) => {
-                            if (['Enter', 'Escape'].includes(ev.key)) {
-                                setIsRenaming(false)
-                                props.onChange()
-                            }
-                        }}
-                        onBlur={() => { 
-                            setIsRenaming(false)
-                            props.onChange() 
-                        }}
-                        defaultValue={itemName}
-                    />
-                : 
-                    <h4 onClick={(e) => {
-                        e.detail == 2 && !item.d.isLockedByParent && setIsRenaming(true) 
-                    }}>
-                        {itemName} 
-                        {
-                            item.d.$isLocked && 
-                            <i className='lock-status'>(locked)</i>
-                        }
-                    </h4>
-                }
-                {!isRenaming && !item.d.isLockedByParent && (
-                    <>
-                        {!item.d.isFromParent && <i onClick={() => setIsRenaming(true)} className='fas fa-pencil'/>}
-                        {!item.d.isFromParent && <i onClick={() => setIsConfigureMode(true)} className='fas fa-cog'/>}
-                        {canHaveChildren && <i onClick={() => setIsAddModalOpen(true)} className='fas fa-plus'/>}
-                        {!item.d.isFromParent && <i className='fas fa-trash' onClick={() => {
-                            props.deleteFunc()
-                        }}/>}
-                        <i
-                            onClick={() => {
-                                item.d.$isLocked = !item.d.$isLocked;
-                                props.onChange();
-                            }} 
-                            className={'fas fa-lock' + (!item.d.$isLocked ? '-open' : '')}
-                        />
-                    </>
+                )}
+                {!node.rc?.isLocked && (
+                    <i className='fas fa-edit' onClick={() => setIsRenaming(true)}  />
+                )}
+                {!node.rc?.isLocked && (
+                    <i className='fas fa-cog' onClick={() => setIsConfiguring(true)} />   
+                )}
+                {!node.rc?.isLocked && (
+                    <i className='fas fa-trash' onClick={() => props.onDelete(node)}/>
                 )}
             </div>
-            <div className='child-children'>
-                {item.r && Object.keys(item.r).map((key, idx) => {
-                    const child = item.r![key];
-
+            <div className="child-regions">
+                {node.c && node.c.map((childNode, idx) => {
                     return (
-                        <ChildRegionEditor 
-                            deleteFunc={() => {
-                                const newR: Record<string, TreeComponentItem> = {};
-
-                                Object.keys(item.r!).forEach(existingKey => {
-                                    if (existingKey === key) {
-                                        return;
-                                    }
-                                    newR[key] = item.r![existingKey];
-                                })
-
-                                item.r = newR;
+                        <CanvasNodeEditor
+                            node={childNode}
+                            key={idx}
+                            onChange={() => {
                                 props.onChange();
-                            }} 
-                            item={child} 
-                            onChange={props.onChange}
-                            name={child.d.$editorLabel as string ?? key}
-                        />
-                    )
-                })}
-                {Array.isArray(item.c) && item.c.map((child) => {
-                    return (
-                        <ChildRegionEditor 
-                            deleteFunc={() => {
-                                const newItems: TreeComponentItem[] = [];
-
-                                item.c?.forEach(item => {
-                                    if (item === child) {
-                                        return;
-                                    }
-                                    newItems.push(item);
-                                })
-
-                                item.c = newItems;
+                            }}
+                            onDelete={(toDelete) => {
+                                node.c!.splice(
+                                    node.c!.indexOf(toDelete), 1
+                                )
                                 props.onChange();
-                            }} 
-                            item={child} 
-                            onChange={props.onChange}
-                            name={child.d.$editorLabel as string ?? child.t}
+                            }}
                         />
                     )
                 })}
             </div>
-            {isConfigureMode && (
+            {isConfiguring && (
                 <Modal
-                    visible={true}
-                    title={`Configuration for ${itemName}`}
+                    visible
+                    title={`Configure ${node.rc?.editorLabel ?? node.t}`}
                     onClose={() => {
-                        setIsConfigureMode(false)
+                        setIsConfiguring(false)
                         props.onChange();
                     }}
                     noFooter
                 >
                     <ComponentPropEditor
-                        item={item}
-                        onChange={(t) => {
-                            props.onChange(t);
+                        item={node}
+                        onChange={() => {
+                            props.onChange();
                         }}
+                        isRegion={false}
                     />
                 </Modal>
             )}
-            {isAddModalOpen && (
-                <ComponentSelector
-                    title={`Add component to ${itemName}`}
-                    onClose={() => setIsAddModalOpen(false)}
-                    permitted={item.d.permitted}
-                    onComponentSelected={(component, d) => {
-                        if (!item.c) {
-                            item.c = [];
-                        }
-                        item.c.push({
-                            t: component, 
-                            d: d ?? {},
-                            c: [],
-                            r: {} 
-                        })
-
+            {isRenaming && (
+                <Modal
+                    visible
+                    title={`Rename ${node.rc?.editorLabel ?? node.t}`}
+                    onClose={() => {
+                        setIsRenaming(false)
                         props.onChange();
-                        setIsAddModalOpen(false)
                     }}
-                />
+                    noFooter
+                >
+                    <Input
+                        type='text'
+                        value={node.rc?.editorLabel ?? node.t}
+                        onInput={(ev) => {
+                            const target = ev.target as HTMLInputElement;
+
+                            if (!node.rc) {
+                                node.rc = {...RegionDefaultRC};
+                                node.rc.editorLabel = node.t;
+                            }
+                            node.rc.editorLabel = target.value;
+                        }}
+                        onKeyDown={(ev) => {
+                            if (ev.keyCode == 13) {
+                                ev.stopPropagation();
+                                ev.preventDefault();
+
+                                setIsRenaming(false);
+                                props.onChange();
+                            }
+                        }}
+                    />
+                </Modal>
             )}
         </div>
     )

@@ -2,7 +2,6 @@ import TemplateConfig from "Admin/Template/TemplateConfig";
 import { Template } from "Api/Template"
 import Input from "UI/Input";
 import TemplateTypeSelector from "../TemplateTypeSelector";
-import { Scalar } from "Admin/Template/RegionEditor";
 import Default from "Admin/Layouts/Default";
 import { useState, useEffect } from "react";
 import Form from "UI/Form";
@@ -82,7 +81,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = (props: TemplateEditorProp
                                     }
                                 }
 
-                                return validateTemplate(template, (errorInfo: Record<string, Scalar>) => {
+                                return validateTemplate(template, (errorInfo: Record<string, any>) => {
                                     const { field } = errorInfo;
 
                                     switch(field) {

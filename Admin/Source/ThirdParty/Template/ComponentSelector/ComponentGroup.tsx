@@ -7,15 +7,29 @@ type ComponentGroupProps = {
     filter: string | undefined
 }
 
-const ComponentGroupRenderer: React.FC<ComponentGroupProps> = (props: ComponentGroupProps): React.ReactElement => {
+const ComponentGroupRenderer: React.FC<ComponentGroupProps> = (props: ComponentGroupProps): React.ReactNode => {
 
     const { group, groupName, filter } = props;
+
+    const visibleComponents = Object.keys(group).filter((componentName) => {
+        if (filter && filter.length != 0) {
+            // do a check whether the group name contains the query
+            if (!componentName.toLowerCase().includes(filter.toLowerCase())) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    if (visibleComponents.length == 0) {
+        return null;
+    }
 
     return (
         <div className='component-group'>
             <div className='group-head'>{groupName}</div>
             <div className='group-content'>
-                {Object.keys(group).map((componentName) => {
+                {visibleComponents.map((componentName) => {
 
                     // first, check if there is a query applied
                     // people will want to search for components
