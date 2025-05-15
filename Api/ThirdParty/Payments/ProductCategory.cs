@@ -56,12 +56,6 @@ namespace Api.Payments
         public string IconRef;
 
         /// <summary>
-        /// The legacy id of the category (cell ref etc)
-        /// </summary>
-        [DatabaseField(Length = 80)]
-        public string LegacyId;
-
-        /// <summary>
         /// The link to the parent of this product category 
         /// </summary>
         /// 
