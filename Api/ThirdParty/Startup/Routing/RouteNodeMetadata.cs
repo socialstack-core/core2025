@@ -29,4 +29,14 @@ public struct RouterNodeMetadata
 	/// A display name.
 	/// </summary>
 	public string Name;
+
+	/// <summary>
+	/// An ID for an associated content object, if there is one.
+	/// </summary>
+	public ulong ContentId;
+
+	/// <summary>
+	/// An admin edit URL if this object has one.
+	/// </summary>
+	public string EditUrl;
 }

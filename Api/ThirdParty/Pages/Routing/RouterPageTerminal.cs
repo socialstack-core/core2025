@@ -131,6 +131,8 @@ public class RouterPageTerminal : TerminalNode
 			HasChildren = HasChildren(),
 			ChildKey = ExactMatch,
 			FullRoute = FullRoute,
+			ContentId = (ulong)Page.Id,
+			EditUrl = "/en-admin/page/" + Page.Id,
 			Type = "Page",
 		};
 	}

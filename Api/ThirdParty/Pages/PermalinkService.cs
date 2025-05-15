@@ -153,52 +153,55 @@ namespace Api.Pages
 
 					var addedPage = false;
 
-					if (TargetIsPrimaryLocator(target, out AutoService pTargetService, out bool pTargetIsAdmin, out string pTargetContentId))
+					if (target.StartsWith("primary:") || target.StartsWith("admin_primary:"))
 					{
 						addedPage = true;
 
-						var getNode = builder.GetGetNode();
-
-						if (sources.Count > 0)
+						if (TargetIsPrimaryLocator(target, out AutoService pTargetService, out bool pTargetIsAdmin, out string pTargetContentId))
 						{
-							// Pages are cached so we can ask for it here without a time penalty.
-							var page = await pages.Where("Key=?", DataOptions.IgnorePermissions).Bind(target).First(context);
+							var getNode = builder.GetGetNode();
 
-							if (page == null && pTargetContentId != null)
+							if (sources.Count > 0)
 							{
-								//  Try fallback locator (e.g. primary:user)
-								var fallback = CreatePrimaryTargetLocator(pTargetService.ServicedType, null, pTargetIsAdmin);
-								page = await pages.Where("Key=?", DataOptions.IgnorePermissions).Bind(fallback).First(context);
-							}
+								// Pages are cached so we can ask for it here without a time penalty.
+								var page = await pages.Where("Key=?", DataOptions.IgnorePermissions).Bind(target).First(context);
 
-							if (page != null)
-							{
-								var linkUrl = sources[0].Url;
-
-								// (mandatory on these targets)
-								if (PageKeyIsPrimary(page.Key, out AutoService _, out bool _, out string pageSpecificContentId))
+								if (page == null && pTargetContentId != null)
 								{
-									var specificContentId = pTargetContentId;
+									//  Try fallback locator (e.g. primary:user)
+									var fallback = CreatePrimaryTargetLocator(pTargetService.ServicedType, null, pTargetIsAdmin);
+									page = await pages.Where("Key=?", DataOptions.IgnorePermissions).Bind(fallback).First(context);
+								}
 
-									if (specificContentId == null)
-									{
-										// Currently from the key lookup this won't happen,
-										// but it's considered for fancier page key matching later.
-										specificContentId = pageSpecificContentId;
-									}
+								if (page != null)
+								{
+									var linkUrl = sources[0].Url;
 
-									if (!pTargetIsAdmin)
+									// (mandatory on these targets)
+									if (PageKeyIsPrimary(page.Key, out AutoService _, out bool _, out string pageSpecificContentId))
 									{
-										if (!primaryLookup.TryGetValue(pTargetService.ServicedType, out PrimaryUrlLookup urlLookup))
+										var specificContentId = pTargetContentId;
+
+										if (specificContentId == null)
 										{
-											urlLookup = pTargetService.CreatePrimaryUrlLookup();
-											primaryLookup[pTargetService.ServicedType] = urlLookup;
+											// Currently from the key lookup this won't happen,
+											// but it's considered for fancier page key matching later.
+											specificContentId = pageSpecificContentId;
 										}
 
-										urlLookup.Add(linkUrl, specificContentId);
-									}
+										if (!pTargetIsAdmin)
+										{
+											if (!primaryLookup.TryGetValue(pTargetService.ServicedType, out PrimaryUrlLookup urlLookup))
+											{
+												urlLookup = pTargetService.CreatePrimaryUrlLookup();
+												primaryLookup[pTargetService.ServicedType] = urlLookup;
+											}
 
-									getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, pTargetService, specificContentId));
+											urlLookup.Add(linkUrl, specificContentId);
+										}
+
+										getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, pTargetService, specificContentId));
+									}
 								}
 							}
 						}
