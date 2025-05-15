@@ -64,7 +64,7 @@ export class UploadApi extends AutoController<Upload, uint>{
 
     */
     public upload = (includes: ApiIncludes[] = []): Promise<Upload>  => {
-        return getOne<Upload>(this.apiUrl + '/create'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<Upload>(this.apiUrl + '/create'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -80,7 +80,7 @@ export class UploadApi extends AutoController<Upload, uint>{
 
     */
     public active = (includes: ApiIncludes[] = []): Promise<ApiList<Upload>>  => {
-        return getOne<Upload>(this.apiUrl + '/active'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<Upload>(this.apiUrl + '/active'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**

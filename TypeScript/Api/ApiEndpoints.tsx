@@ -36,7 +36,7 @@ export class AutoController<T, ID>{
 
     */
     public loadRevision = (id: ID, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -45,7 +45,7 @@ export class AutoController<T, ID>{
 
     */
     public deleteRevision = (id: ID, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -55,7 +55,7 @@ export class AutoController<T, ID>{
 
     */
     public revisionList = (filters: ListFilter, includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
-        return getOne<T>(this.apiUrl + '/revision/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
+        return getOne<T>(this.apiUrl + '/revision/list'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
     }
 
     /**
@@ -64,7 +64,7 @@ export class AutoController<T, ID>{
 
     */
     public updateRevision = (id: ID, body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
+        return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
     /**
@@ -73,7 +73,7 @@ export class AutoController<T, ID>{
 
     */
     public publishRevision = (id: ID, body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl + '/publish/' + id + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
+        return getOne<T>(this.apiUrl + '/publish/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
     /**
@@ -82,7 +82,7 @@ export class AutoController<T, ID>{
 
     */
     public createDraft = (body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl + '/draft'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
+        return getOne<T>(this.apiUrl + '/draft'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
     /**
@@ -91,7 +91,7 @@ export class AutoController<T, ID>{
 
     */
     public load = (id: ID, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl + '/' + id + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<T>(this.apiUrl + '/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -100,7 +100,7 @@ export class AutoController<T, ID>{
 
     */
     public delete = (id: ID, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl + '/' + id + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<T>(this.apiUrl + '/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -127,7 +127,7 @@ export class AutoController<T, ID>{
 
     */
     public listAll = (includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
-        return getOne<T>(this.apiUrl + '/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<T>(this.apiUrl + '/list'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
     /**
@@ -137,7 +137,7 @@ export class AutoController<T, ID>{
 
     */
     public list = (filters: ListFilter, includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
-        return getOne<T>(this.apiUrl + '/list'+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
+        return getOne<T>(this.apiUrl + '/list'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
     }
 
     /**
@@ -146,7 +146,7 @@ export class AutoController<T, ID>{
 
     */
     public create = (body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
+        return getOne<T>(this.apiUrl+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
     /**
@@ -155,7 +155,7 @@ export class AutoController<T, ID>{
 
     */
     public update = (id: ID, body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
-        return getOne<T>(this.apiUrl + '/' + id + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
+        return getOne<T>(this.apiUrl + '/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
     /**

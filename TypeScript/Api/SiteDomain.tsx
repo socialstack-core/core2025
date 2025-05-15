@@ -38,7 +38,7 @@ export class SiteDomainApi extends AutoController<SiteDomain, uint>{
 
     */
     public getByCode = (code: string, includes: ApiIncludes[] = []): Promise<SiteDomain>  => {
-        return getOne<SiteDomain>(this.apiUrl + '/code/' + code + ''+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
+        return getOne<SiteDomain>(this.apiUrl + '/code/' + code + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
 }

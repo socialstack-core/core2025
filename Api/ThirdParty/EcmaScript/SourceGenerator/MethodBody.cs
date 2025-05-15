@@ -149,7 +149,7 @@ namespace Api.EcmaScript
 
             if (classMethod.Arguments.Any(arg => arg.Type == "ApiIncludes[]"))
             {
-                urlPart += "+ (includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : '')";
+                urlPart += "+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : '')";
             }
 
             urlPart = urlPart.Replace("//", "/");
