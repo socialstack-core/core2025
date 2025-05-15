@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Api.Contexts;
 using Api.Startup;
-using Api.Redirects;
 using Api.Translate;
 using System.Linq;
 using System.IO;
@@ -16,7 +15,6 @@ namespace Api.CloudHosts
 	/// </summary>
 	public partial class NGINX : WebServer
     {
-		private RedirectService _redirectService;
 		private LocaleService _localeService;
 		private List<Locale> _allLocales;
 		/// <summary>
@@ -40,7 +38,6 @@ namespace Api.CloudHosts
 		public override async ValueTask Apply(Context context)
 		{
 			_localeService ??= Services.Get<LocaleService>();
-			_redirectService ??= Services.Get<RedirectService>(); // In Startup namespace
 			
 			// Start constructing new NGINX config.
 			var configFile = new NGINXConfigFile();
@@ -68,15 +65,15 @@ namespace Api.CloudHosts
 			// Apply the default config in to it for the given set of hostnames.
 			configFile.SetupDefaults(nginxConfigPath, certInfo);
 
-			// Add the redirects - get them all from the DB:
-			var redirects = await _redirectService.Where("", DataOptions.IgnorePermissions).ListAll(context);
-
 			// Get the configurable context, the one into which we can put our custom redirect rules:
 			var cfgContext = configFile.GetConfigurableContext();
 			
 			// case insensitive list to stop duplicate redirects
 			var redirectsList = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
 			
+			/*
+			 * These redirects are obsoleted: use permalinks instead. They are much more powerful.
+			 * 
 			// For each redirect:
 			foreach (var redirect in redirects)
 			{
@@ -103,6 +100,7 @@ namespace Api.CloudHosts
 				cfgContext.AddLocationContext($"= " + from).AddDirective($"return", statusCode + to);
 				cfgContext.AddLocationContext($"= " + from + "/").AddDirective($"return", statusCode + to);
 			}
+			*/
 
 			// locales can also be optionally redirected
 			var locales = GetAllLocales(context);
