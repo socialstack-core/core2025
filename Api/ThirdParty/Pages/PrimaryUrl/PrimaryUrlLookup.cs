@@ -15,11 +15,20 @@ public class PrimaryUrlLookup
 	/// </summary>
 	/// <param name="url"></param>
 	/// <param name="specificContentId"></param>
-	public virtual void Add(string url, string specificContentId)
+	public virtual void Add(string url, ulong specificContentId)
 	{
 		
 	}
-	
+
+	/// <summary>
+	/// Get the autoservice for this lookup.
+	/// </summary>
+	/// <returns></returns>
+	public virtual AutoService GetService()
+	{
+		return null;
+	}
+
 }
 
 /// <summary>
@@ -77,9 +86,9 @@ public class PrimaryUrlLookup<T, ID> : PrimaryUrlLookup
 	/// </summary>
 	/// <param name="url"></param>
 	/// <param name="specificContentId"></param>
-	public override void Add(string url, string specificContentId)
+	public override void Add(string url, ulong specificContentId)
 	{
-		if (specificContentId == null)
+		if (specificContentId == 0)
 		{
 			// todo: this URL can contain tokens
 			FallbackUrl = url;
@@ -91,8 +100,16 @@ public class PrimaryUrlLookup<T, ID> : PrimaryUrlLookup
 			SpecificLookup = new Dictionary<ID, string>();
 		}
 
-		// Parse specificContentId in to ID
-		// SpecificLookup[id] = url;
+		SpecificLookup[Service.ConvertId(specificContentId)] = url;
+	}
+
+	/// <summary>
+	/// Get the autoservice for this lookup.
+	/// </summary>
+	/// <returns></returns>
+	public override AutoService GetService()
+	{
+		return Service;
 	}
 
 }

@@ -197,7 +197,14 @@ namespace Api.Pages
 												primaryLookup[pTargetService.ServicedType] = urlLookup;
 											}
 
-											urlLookup.Add(linkUrl, specificContentId);
+											ulong specificId = 0;
+
+											if (specificContentId != null)
+											{
+												ulong.TryParse(specificContentId, out specificId);
+											}
+
+											urlLookup.Add(linkUrl, specificId);
 										}
 
 										getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, pTargetService, specificContentId));
@@ -232,7 +239,14 @@ namespace Api.Pages
 											primaryLookup[primaryContentService.ServicedType] = urlLookup;
 										}
 
-										urlLookup.Add(linkUrl, specificContentId);
+										ulong specificId = 0;
+
+										if (specificContentId != null)
+										{
+											ulong.TryParse(specificContentId, out specificId);
+										}
+
+										urlLookup.Add(linkUrl, specificId);
 									}
 								}
 
@@ -262,6 +276,13 @@ namespace Api.Pages
 							builder.AddRedirect(src.Url, sources[0].Url);
 						}
 					}
+				}
+
+				foreach (var kvp in primaryLookup)
+				{
+					// Set to the target svc.
+					var svc = kvp.Value.GetService();
+					svc.UpdatePrimaryUrlLookup(kvp.Value);
 				}
 
 				return builder;
@@ -376,7 +397,7 @@ namespace Api.Pages
 			}
 			else
 			{
-				specificContentId = key.Substring(specificContentIndex);
+				specificContentId = key.Substring(specificContentIndex + 1);
 			}
 
 			return service != null;

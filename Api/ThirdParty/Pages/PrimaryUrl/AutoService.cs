@@ -37,6 +37,15 @@ public partial class AutoService<T, ID> {
 	{
 		return new PrimaryUrlLookup<T, ID>(this);
 	}
+
+	/// <summary>
+	/// Updates the primary URL lookup. Must have originated by calling CreatePrimaryUrlLookup and then populating it.
+	/// </summary>
+	/// <param name="lookup"></param>
+	public override void UpdatePrimaryUrlLookup(PrimaryUrlLookup lookup)
+	{
+		UIPrimaryUrlLookup = lookup as PrimaryUrlLookup<T, ID>;
+	}
 }
 
 
@@ -47,6 +56,15 @@ public partial class AutoService {
 	/// </summary>
 	/// <returns></returns>
 	public virtual PrimaryUrlLookup CreatePrimaryUrlLookup()
+	{
+		throw new NotImplementedException();
+	}
+
+	/// <summary>
+	/// Updates the primary URL lookup. Must have originated by calling CreatePrimaryUrlLookup and then populating it.
+	/// </summary>
+	/// <param name="lookup"></param>
+	public virtual void UpdatePrimaryUrlLookup(PrimaryUrlLookup lookup)
 	{
 		throw new NotImplementedException();
 	}
