@@ -261,6 +261,13 @@ public class RouterPageTerminal<T, ID> : RouterPageTerminal
 		// Get the PO:
 		pageWithTokens.PrimaryObject = await GetPrimaryObject(context, pageWithTokens);
 
+		// On these routes, the PO is mandatory.
+		if (pageWithTokens.PrimaryObject == null)
+		{
+			// 404
+			return false;
+		}
+
 		// Route the request, rendering the page itself
 		return await _htmlService.RouteRequest(httpContext, context, pageWithTokens);
 	}

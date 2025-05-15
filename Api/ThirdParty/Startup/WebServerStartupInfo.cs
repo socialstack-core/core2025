@@ -173,7 +173,15 @@ namespace Api.Startup
 				try
 				{
 					var context = await httpContext.Request.GetBasicContext();
-					await router.HandleRequest(httpContext, context);
+					var handled = await router.HandleRequest(httpContext, context);
+
+					if (!handled)
+					{
+						// This mainly occurs when primary content was not found.
+						// I.e. the page existed and thus so did the route, but the
+						// route could not handle the request without the content.
+						await router.Run404(httpContext, context);
+					}
 				}
 				catch (PublicException publicError)
 				{

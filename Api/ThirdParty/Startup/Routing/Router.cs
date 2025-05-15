@@ -1,4 +1,6 @@
+using Api.CanvasRenderer;
 using Api.Contexts;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -199,17 +201,28 @@ public class Router
 
 		if (node == null)
 		{
-			httpContext.Response.StatusCode = 404;
-
-			if (Status_404 != null)
-			{
-				return Status_404.Run(httpContext, basicContext, tokenCount, ref tokenSet);
-			}
-
-			return new ValueTask<bool>(true);
+			return Run404(httpContext, basicContext);
 		}
 
 		return node.Run(httpContext, basicContext, tokenCount, ref tokenSet);
+	}
+
+	/// <summary>
+	/// Displays a 404 page.
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <param name="basicContext"></param>
+	/// <returns></returns>
+	public ValueTask<bool> Run404(HttpContext httpContext, Context basicContext)
+	{
+		httpContext.Response.StatusCode = 404;
+		if (Status_404 != null)
+		{
+			Span<TokenMarker> tokenSet = stackalloc TokenMarker[MaxTokenCount];
+			return Status_404.Run(httpContext, basicContext, 0, ref tokenSet);
+		}
+
+		return new ValueTask<bool>(true);
 	}
 
 	/// <summary>
