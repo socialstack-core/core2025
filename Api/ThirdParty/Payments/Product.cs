@@ -108,20 +108,11 @@ namespace Api.Payments
 		/// Indicates if this is a variant product related to a parent base product
 		/// </summary>
 		public uint VariantOfId;
-
+		
 		/// <summary>
 		/// Indicates if this is a tiered product related to a parent base product
 		/// </summary>
 		public uint TierOfId;
-
-        /// <summary>
-        /// The JSON block containing a products attributes. Can be null/ empty.
-        /// It is of the form: {"attributes": [{"id": productAttributeId, "type": attributeTypeAsItWasWhenThisWasCreated, "value": xDependingOnAttributeType}]}
-        /// </summary>
-        ///
-		[Data("contentType", "application/json")]
-        [Data("main", "false")]
-        public string AttributesJson;
 	}
 
 }
