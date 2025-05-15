@@ -7,6 +7,7 @@ using Api.Eventing;
 using Api.Startup;
 using Api.Emails;
 using System;
+using Api.Pages;
 
 namespace Api.Payments
 {
@@ -26,7 +27,7 @@ namespace Api.Payments
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public PurchaseService(PaymentMethodService paymentMethods, PaymentGatewayService gateways, ProductQuantityService prodQuantities, ProductService products, EmailTemplateService emails, PriceService prices) : base(Events.Purchase)
+		public PurchaseService(PaymentMethodService paymentMethods, PageService pages, PaymentGatewayService gateways, ProductQuantityService prodQuantities, ProductService products, EmailTemplateService emails, PriceService prices) : base(Events.Purchase)
         {
 			_paymentMethods = paymentMethods;
 			_gateways = gateways;
@@ -34,6 +35,75 @@ namespace Api.Payments
 			_products = products;
 			_prices = prices;
 
+			pages.Install(
+				new Page()
+				{
+					Url = "/cart/",
+					Key = "cart_view",
+					Title = "View your shopping cart",
+					BodyJson = @"{
+						""c"": {
+							""t"": ""UI/Payments/Cart"",
+							""i"": 4
+						},
+						""i"": 5
+					}"
+				},
+				new Page()
+				{
+					Url = "/cart/checkout",
+					Key = "cart_checkout",
+					Title = "Review your cart",
+					BodyJson = @"{
+						""c"": {
+							""t"": ""UI/Payments/Checkout"",
+							""i"": 4
+						},
+						""i"": 5
+					}"
+				},
+				new Page()
+				{
+					Url = "/cart/purchases/${purchase.id}",
+					Key = "primary:purchase",
+					Title = "Viewing purchase",
+					BodyJson = @"{
+						""c"": {
+							""g"": {
+								""c"": [
+									{
+										""t"": ""Component"",
+										""d"": {
+											""componentType"": ""UI/Payments/Purchase/View""
+										},
+										""l"": {
+											""purchase"": {
+												""n"": 1,
+												""f"": ""output""
+											}
+										},
+										""x"": 465,
+										""y"": 36,
+										""r"": true
+									},
+									{
+										""t"": ""Content"",
+										""d"": {
+											""contentType"": ""primary"",
+											""includes"": ""productQuantities""
+										},
+										""x"": 83,
+										""y"": 25.5
+									}
+								]
+							},
+							""i"": 2
+						},
+						""i"": 3
+					}"
+				}
+			);
+			
 			InstallEmails(
 				new EmailTemplate()
 				{

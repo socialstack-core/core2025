@@ -31,6 +31,11 @@ namespace Api.Eventing
 		public static EventGroup<ProductAttribute> ProductAttribute;
 		
 		/// <summary>
+		/// Set of events for a product template.
+		/// </summary>
+		public static EventGroup<ProductTemplate> ProductTemplate;
+		
+		/// <summary>
 		/// Set of events for a product attribute group.
 		/// </summary>
 		public static EventGroup<ProductAttributeGroup> ProductAttributeGroup;

@@ -1,39 +1,28 @@
 using System;
 using Api.Database;
+using Api.Startup;
 using Api.Translate;
 using Api.Users;
 
 
 namespace Api.Payments
 {
-	
+
 	/// <summary>
 	/// A ProductAttributeValue
 	/// </summary>
+	[HasVirtualField("attribute", typeof(ProductAttribute), "ProductAttributeId")]
 	public partial class ProductAttributeValue : VersionedContent<uint>
 	{
-		// Example fields. None are required:
-		/*
-        /// <summary>
-        /// The name of the productAttributeValue
-        /// </summary>
-        [DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
-		
 		/// <summary>
-		/// The content of this productAttributeValue.
+		/// The attribute that this is a value for.
 		/// </summary>
-		[Localized]
-		public string BodyJson;
+		public uint ProductAttributeId;
 
 		/// <summary>
-		/// The feature image ref
+		/// The raw, unitless value.
 		/// </summary>
-		[DatabaseField(Length = 80)]
-		public string FeatureRef;
-		*/
-		
+		public string Value;
 	}
 
 }

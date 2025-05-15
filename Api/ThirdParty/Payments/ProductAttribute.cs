@@ -25,6 +25,12 @@ namespace Api.Payments
 		/// variants and each one has its own potentially localised price.
 		/// </summary>
 		public int ProductAttributeType;
+
+		/// <summary>
+		/// e.g. "mm", "cm", "kg". Metric units, lowercase and short form. 
+		/// If imperial units is desired, the UI should convert them.
+		/// </summary>
+		public string Units;
 		
 	}
 
