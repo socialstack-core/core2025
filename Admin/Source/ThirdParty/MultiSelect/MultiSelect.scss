@@ -44,11 +44,10 @@
 
 	&__avatar {
 
-		> img {
+		img {
 			object-fit: contain;
-		}
-
-		> .fa {
+			max-width:32px;
+			max-height:32px;
 		}
 
 	}
