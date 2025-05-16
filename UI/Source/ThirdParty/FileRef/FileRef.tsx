@@ -385,6 +385,19 @@ class FileRefInfo {
     }
 
     /**
+     * True if this value is a content ref.
+     * @returns
+     */
+    isRef() {
+        if (this.handler !== undefined) {
+            return this.handler.name == "contentFile";
+        }
+
+        return false;
+    }
+
+
+    /**
      * True if this ref is an image.
      * @returns
      */
@@ -454,6 +467,15 @@ export function parse (ref: FileRefIsh): FileRefInfo | null {
 var imgTypes = ['png', 'jpeg', 'jpg', 'gif', 'mp4', 'svg', 'bmp', 'apng', 'avif', 'webp'];
 var vidTypes = ['mp4', 'webm', 'avif'];
 var allVidTypes = ['avi', 'wmv', 'ts', 'm3u8', 'ogv', 'flv', 'h264', 'h265', 'webm', 'ogg', 'mp4', 'mkv', 'mpeg', '3g2', '3gp', 'mov', 'media', 'avif'];
+
+
+/*
+* Convenience method for identifying refs.
+*/
+export function isRef(ref : FileRefIsh) {
+    var info = parse(ref);
+    return info ? info.isRef() : false;
+}
 
 /*
 * Convenience method for identifying image refs.

@@ -129,9 +129,9 @@ export default class MultiSelect extends React.Component {
 
 				let val = tempObject[key].toString();
 
-				if (fileRef.isImage(val) || fileRef.isVideo(val)) {
-					mediaRefFieldName = key;
-					return false;
+				if (fileRef.isRef(val)) {
+				 	mediaRefFieldName = key;
+				 	return false;
 				}
 
 				return true;
