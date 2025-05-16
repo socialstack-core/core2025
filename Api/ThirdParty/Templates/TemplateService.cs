@@ -38,7 +38,7 @@ namespace Api.Templates
 					return node;
 				}
 
-				if (node.Module == "Admin/Template")
+				if (node.Module == "Admin/Template/Wrapper")
 				{
 					// Sub in the template
 					var templateIdJson = node.Source["tid"];

@@ -1,0 +1,58 @@
+.permitted-components {
+  border: 1px solid #ccc;
+
+  .group-item {
+    .group-item-head {
+      height: 50px;
+      line-height: 50px;
+      text-indent: 20px;
+      background: #cccccc30;
+      border: 1px solid #ccc;
+      border-left: 0px;
+      border-right: 0px;
+
+      h3 {
+        margin: 0px;
+        line-height: 50px;
+        font-size: 16px;
+      }
+    }
+    .group-item-body {
+        padding:5px;
+
+        .group-component {
+
+            &.active {
+                background:#66bc69;
+            }
+
+            width:calc(33% - 5px);
+            margin:2px;
+            border:1px solid #ccc;
+            display: inline-block;
+            height:70px;
+            cursor:pointer;
+
+            i {
+                display: block;
+                line-height: 40px;
+                text-align: center;
+                width: 100%;
+            }
+
+            span {
+                display: block;
+                line-height: 30px;
+                font-size:14px;
+                font-weight:300;
+                text-align: center;
+            }
+
+        }
+    }
+  }
+
+  .group-item:nth-child(1) > .group-item-head {
+    border-top: 0px;
+  }
+}
