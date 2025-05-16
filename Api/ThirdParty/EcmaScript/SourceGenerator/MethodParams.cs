@@ -42,9 +42,9 @@ namespace Api.EcmaScript
             if (classMethod.ReturnType == "Promise<T>" || classMethod.ReturnType == "Promise<ApiList<T>>")
             {
                 classMethod.AddArgument(new() {
-                    Name = "includes",
+                    Name = "includes?",
                     Type = "ApiIncludes[]",
-                    DefaultValue = "[]"
+                    DefaultValue = ""
                 });
             }
 

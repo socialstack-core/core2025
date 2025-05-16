@@ -49,7 +49,7 @@ namespace Api.EcmaScript
         {
             classDef.Children.Add(new ClassProperty
             {
-                PropertyName = "includes?",
+                PropertyName = "includes",
                 PropertyType = "ApiIncludes",
                 DefaultValue = null
             });

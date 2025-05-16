@@ -63,7 +63,7 @@ export class UploadApi extends AutoController<Upload, uint>{
       Upload a file with efficient support for huge ones.
 
     */
-    public upload = (includes: ApiIncludes[] = []): Promise<Upload>  => {
+    public upload = (includes?: ApiIncludes[]): Promise<Upload>  => {
         return getOne<Upload>(this.apiUrl + '/create'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
@@ -79,7 +79,7 @@ export class UploadApi extends AutoController<Upload, uint>{
       List any active media items
 
     */
-    public active = (includes: ApiIncludes[] = []): Promise<ApiList<Upload>>  => {
+    public active = (includes?: ApiIncludes[]): Promise<ApiList<Upload>>  => {
         return getOne<Upload>(this.apiUrl + '/active'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 

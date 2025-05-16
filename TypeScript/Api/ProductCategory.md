@@ -70,7 +70,6 @@ The following fields are available on this entity:
 | Description | `String`  | Yes      | No description available |
 | FeatureRef  | `String`  | Yes      | No description available |
 | IconRef     | `String`  | Yes      | No description available |
-| LegacyId    | `String`  | Yes      | No description available |
 | ParentId    | `UInt32?` | Yes      | No description available |
 
 # ProductCategory API

@@ -16,7 +16,6 @@ export type ProductCategory = VersionedContent<uint> & {
     description?: string,
     featureRef?: string,
     iconRef?: string,
-    legacyId?: string,
     parentId?: uint,
 }
 

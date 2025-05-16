@@ -33,7 +33,7 @@ export class AdminNavMenuItemApi extends AutoController<AdminNavMenuItem, uint>{
       @param {context} - Api.AvailableEndpoints.XmlDocMember
 
     */
-    public list = (filters: ListFilter, includes: ApiIncludes[] = []): Promise<ApiList<AdminNavMenuItem>>  => {
+    public list = (filters: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<AdminNavMenuItem>>  => {
         return getOne<AdminNavMenuItem>(this.apiUrl + '/list'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
     }
 

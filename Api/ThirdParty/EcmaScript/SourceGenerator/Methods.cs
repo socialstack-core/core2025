@@ -182,16 +182,16 @@ namespace Api.EcmaScript
                 if (IsContentType(resolvedReturnType))
                 {
                     apiMethod.AddArgument(new() {
-                        Name = "includes", 
-                        DefaultValue = "[]",
+                        Name = "includes?", 
+                        DefaultValue = "",
                         Type = "ApiIncludes[]"
                     });
                 }
                 else if (IsEntity(resolvedReturnType))
                 {
                     apiMethod.AddArgument(new() {
-                        Name = "includes", 
-                        DefaultValue = "[]",
+                        Name = "includes?", 
+                        DefaultValue = "",
                         Type = "ApiIncludes[]"
                     });
                 }

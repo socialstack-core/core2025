@@ -24,7 +24,6 @@ export type Product = VersionedContent<uint> & {
     stock?: uint,
     variantOfId: uint,
     tierOfId: uint,
-    attributesJson?: string,
 }
 
 /**

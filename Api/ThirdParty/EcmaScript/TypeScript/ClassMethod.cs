@@ -64,7 +64,7 @@ namespace Api.EcmaScript.TypeScript
         /// <param name="newArg"></param>
         public void AddArgument(ClassMethodArgument newArg)
         {
-            if (Arguments.Any(arg => arg.Name == newArg.Name))
+            if (Arguments.Any(arg => arg.Name.Replace("?", "") == newArg.Name.Replace("?", "")))
             {
                 return;
             }
@@ -96,7 +96,7 @@ namespace Api.EcmaScript.TypeScript
             // Add all arguments except "includes" first
             foreach (var arg in Arguments)
             {
-                if (arg.Name == "includes")
+                if (arg.Name.Replace("?", "") == "includes")
                 {
                     continue;
                 }
@@ -111,7 +111,7 @@ namespace Api.EcmaScript.TypeScript
             }
 
             // Add "includes" last, if it exists
-            var includes = Arguments.Find(arg => arg.Name == "includes");
+            var includes = Arguments.Find(arg => arg.Name.Replace("?", "") == "includes");
             if (includes is not null)
             {
                 if (needsComma)

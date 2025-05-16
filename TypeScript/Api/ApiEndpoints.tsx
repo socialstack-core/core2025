@@ -21,7 +21,7 @@ export type ListFilter = {
 export class AutoController<T, ID>{
     public apiUrl: string = '';
 
-    public includes?: ApiIncludes;
+    public includes: ApiIncludes;
 
     /**
 
@@ -35,7 +35,7 @@ export class AutoController<T, ID>{
             Returns the data for 1 entity revision.
 
     */
-    public loadRevision = (id: ID, includes: ApiIncludes[] = []): Promise<T>  => {
+    public loadRevision = (id: ID, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
@@ -44,7 +44,7 @@ export class AutoController<T, ID>{
             Deletes an entity
 
     */
-    public deleteRevision = (id: ID, includes: ApiIncludes[] = []): Promise<T>  => {
+    public deleteRevision = (id: ID, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
@@ -54,7 +54,7 @@ export class AutoController<T, ID>{
             See the filter documentation for more details on what you can request here.
 
     */
-    public revisionList = (filters: ListFilter, includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
+    public revisionList = (filters: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>>  => {
         return getOne<T>(this.apiUrl + '/revision/list'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
     }
 
@@ -63,7 +63,7 @@ export class AutoController<T, ID>{
             Updates an entity revision with the given RevisionId.
 
     */
-    public updateRevision = (id: ID, body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
+    public updateRevision = (id: ID, body: Partial<T>, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl + '/revision/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
@@ -72,7 +72,7 @@ export class AutoController<T, ID>{
             Publishes the given posted object as an extension to the given revision (if body is not null).
 
     */
-    public publishRevision = (id: ID, body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
+    public publishRevision = (id: ID, body: Partial<T>, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl + '/publish/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
@@ -81,7 +81,7 @@ export class AutoController<T, ID>{
             Creates a draft.
 
     */
-    public createDraft = (body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
+    public createDraft = (body: Partial<T>, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl + '/draft'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
@@ -90,7 +90,7 @@ export class AutoController<T, ID>{
             Returns the data for 1 entity.
 
     */
-    public load = (id: ID, includes: ApiIncludes[] = []): Promise<T>  => {
+    public load = (id: ID, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl + '/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
@@ -99,7 +99,7 @@ export class AutoController<T, ID>{
             Deletes an entity
 
     */
-    public delete = (id: ID, includes: ApiIncludes[] = []): Promise<T>  => {
+    public delete = (id: ID, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl + '/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
@@ -126,7 +126,7 @@ export class AutoController<T, ID>{
             Lists all entities of this type available to this user.
 
     */
-    public listAll = (includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
+    public listAll = (includes?: ApiIncludes[]): Promise<ApiList<T>>  => {
         return getOne<T>(this.apiUrl + '/list'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 
@@ -136,7 +136,7 @@ export class AutoController<T, ID>{
             See the filter documentation for more details on what you can request here.
 
     */
-    public list = (filters: ListFilter, includes: ApiIncludes[] = []): Promise<ApiList<T>>  => {
+    public list = (filters: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>>  => {
         return getOne<T>(this.apiUrl + '/list'+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), filters)
     }
 
@@ -145,7 +145,7 @@ export class AutoController<T, ID>{
             Creates a new entity. Returns the ID. Includes everything by default.
 
     */
-    public create = (body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
+    public create = (body: Partial<T>, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 
@@ -154,7 +154,7 @@ export class AutoController<T, ID>{
             Updates an entity with the given ID. Includes everything by default.
 
     */
-    public update = (id: ID, body: Partial<T>, includes: ApiIncludes[] = []): Promise<T>  => {
+    public update = (id: ID, body: Partial<T>, includes?: ApiIncludes[]): Promise<T>  => {
         return getOne<T>(this.apiUrl + '/' + id + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''), body)
     }
 

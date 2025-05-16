@@ -40,7 +40,7 @@ export class CouponApi extends AutoController<Coupon, uint>{
       @param {couponCode} - Api.AvailableEndpoints.XmlDocMember
 
     */
-    public checkCoupon = (couponCode: string, includes: ApiIncludes[] = []): Promise<Coupon>  => {
+    public checkCoupon = (couponCode: string, includes?: ApiIncludes[]): Promise<Coupon>  => {
         return getOne<Coupon>(this.apiUrl + '/check/' + couponCode + ''+ (Array.isArray(includes) && includes.length != 0 ? '?includes=' + includes.map(include => include.toString()).join(', ') : ''))
     }
 

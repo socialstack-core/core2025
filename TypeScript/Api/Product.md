@@ -78,7 +78,6 @@ The following fields are available on this entity:
 | Stock            | `UInt32?` | Yes      | No description available |
 | VariantOfId      | `UInt32`  | No       | No description available |
 | TierOfId         | `UInt32`  | No       | No description available |
-| AttributesJson   | `String`  | Yes      | No description available |
 
 # Product API
 

@@ -13,6 +13,7 @@ import {getOne, getList, getJson, getText} from 'UI/Functions/WebRequest'
 export type ProductAttribute = VersionedContent<uint> & {
     name?: string,
     productAttributeType: int,
+    units?: string,
 }
 
 /**

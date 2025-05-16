@@ -108,6 +108,8 @@ export type RouterNodeMetadata = {
     fullRoute?: string,
     childKey?: string,
     name?: string,
+    contentId?: ulong,
+    editUrl?: string,
 }
 
 export default new PageApi();

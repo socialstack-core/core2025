@@ -67,6 +67,7 @@ The following fields are available on this entity:
 | -------------------- | -------- | -------- | ------------------------ |
 | Name                 | `String` | Yes      | No description available |
 | ProductAttributeType | `Int32`  | No       | No description available |
+| Units                | `String` | Yes      | No description available |
 
 # ProductAttribute API
 
