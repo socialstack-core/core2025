@@ -71,7 +71,6 @@ const CreatePage: React.FC = (): React.ReactElement => {
                                 // set the layout and template to the values.
 
                                 const rootElement = JSON.parse(chosenTemplate?.bodyJson ?? "{}");
-                                rootElement.t = chosenTemplate?.baseTemplate;
 
                                 values.bodyJson = JSON.stringify(rootElement);
                                 

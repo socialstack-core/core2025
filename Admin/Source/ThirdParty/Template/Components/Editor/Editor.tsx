@@ -87,7 +87,7 @@ const Editor: React.FC<CanvasDocumentEditorProps> = (props) => {
             if (!loaded) {
                 const newDocument: CanvasDocument = {
                     r: {},  // Regions will be populated later
-                    t: '',   // Template type (empty initially)
+                    t: props.uiTemplateFile.name,   // Template type (empty initially)
                     c: [],   // Components (empty initially)
                     d: {},   // Custom data (empty initially)
                     ec: {    // Editor configuration
@@ -115,8 +115,12 @@ const Editor: React.FC<CanvasDocumentEditorProps> = (props) => {
 
                 setDocument(newDocument);
             }
+        } else {
+            if (!document.t) {
+                document.t = props.uiTemplateFile.name
+            }
         }
-    }, [props.value, document, props.dbParentTemplate, targetProp?.fields]);
+    }, [props.value, document, props.dbParentTemplate, props.uiTemplateFile, targetProp?.fields]);
 
     /**
      * If the template property (`targetProp`) is not found, show an error message.
