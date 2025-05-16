@@ -607,7 +607,7 @@ namespace Api.Startup
 						if (!string.IsNullOrEmpty(filterString))
 						{
 
-							var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(RandomBoolGenerator), FieldAttributes.Private);
+							var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(FilterBase), FieldAttributes.Private);
 
 							
 							constructorBody.Emit(OpCodes.Ldarg_0);
@@ -1028,17 +1028,5 @@ namespace Api.Startup
 		/// </summary>
 		public AutoService Service;
 	}
-
-	
-
-		public class RandomBoolGenerator
-		{
-			private static readonly Random _random = new Random();
-		
-			public bool GetRandomBool(Context context, object value, bool isIncludes)
-			{
-				return context.UserId != 1; // where user #1 is your admin user account lol
-			}
-		}
 
 }
