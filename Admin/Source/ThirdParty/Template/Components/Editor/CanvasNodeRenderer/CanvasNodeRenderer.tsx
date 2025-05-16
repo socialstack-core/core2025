@@ -189,6 +189,23 @@ const CanvasNodeRenderer: React.FC<CanvasNodeRendererProps> = (props: CanvasNode
                             setIsAddingChild(false);
                             onChange();
                         }}
+                        onMetaSelect={(name: string) => {
+                            node.c.push({
+                                t: name,
+                                ec: {
+                                    isLocked: false,
+                                    isLockedByParent: false,
+                                    multipleChildrenAllowed: true,
+                                    allowedComponents: []
+                                },
+                                d: {},
+                                c: []
+                            })
+                            
+                            setIsAddingChild(false);
+                            onChange();
+
+                        }}
                     />
                 </Modal>
             )}

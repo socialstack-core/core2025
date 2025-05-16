@@ -33,6 +33,8 @@ export type CanvasNodeComponentSelectorProps = {
      * @param component - The metadata describing the selected component.
      */
     onSelect: (name: string, component: CodeModuleMeta) => void;
+
+    onMetaSelect?: (name: string) => void
 };
 
 /**
@@ -95,6 +97,30 @@ const CanvasNodeComponentSelector: React.FC<CanvasNodeComponentSelectorProps> = 
                                 }
                             }}
                         />
+                    </div>
+
+                    {/* Add custom slot component here */}
+                    
+                    <div className='group-item' key={'template-meta'}>
+
+                        {/* Display the group label/header */}
+                        <div className='group-item-head'>
+                            <h3>{`Template Editor`}</h3>
+                        </div>
+                        
+                        {/* Render all matching items in this group */}
+                        <div className='group-item-body'>
+                            <div
+                                key={'Admin/Template/Slot'}
+                                className='group-component'
+                                onClick={() => {
+                                    props.onMetaSelect && props.onMetaSelect('Admin/Template/Slot');
+                                }}
+                            >
+                                <i className='fas fa-puzzle-piece' />
+                                <span>{`Slot`}</span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Loop through each component group */}
