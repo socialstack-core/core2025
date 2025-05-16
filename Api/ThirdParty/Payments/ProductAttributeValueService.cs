@@ -18,8 +18,7 @@ namespace Api.Payments
 		/// </summary>
 		public ProductAttributeValueService() : base(Events.ProductAttributeValue)
         {
-			// Example admin page install:
-			// InstallAdminPages("ProductAttributeValues", "fa:fa-rocket", new string[] { "id", "name" });
+			Cache();
 		}
 	}
     

@@ -20,6 +20,8 @@ namespace Api.Payments
         {
 			// Example admin page install:
 			InstallAdminPages("Product Attributes", "fa:fa-rocket", new string[] { "id", "name" });
+
+			Cache();
 		}
 	}
     
