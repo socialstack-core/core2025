@@ -1,6 +1,5 @@
 import { getTemplates, TemplateModule } from "Admin/Functions/GetPropTypes";
 import Default from "Admin/Layouts/Default"
-import { Scalar, TreeComponentItem } from "Admin/Template/RegionEditor";
 import PageApi, { Page } from "Api/Page";
 import TemplateApi, { Template } from "Api/Template";
 import { useEffect, useState } from "react";
@@ -71,11 +70,9 @@ const CreatePage: React.FC = (): React.ReactElement => {
 
                                 // set the layout and template to the values.
 
-                                const rootElement = {
-                                    c: JSON.parse(chosenTemplate?.bodyJson ?? "{}") ?? {},
-                                    i: 1
-                                }
-                                
+                                const rootElement = JSON.parse(chosenTemplate?.bodyJson ?? "{}");
+                                rootElement.t = chosenTemplate?.baseTemplate
+
                                 values.bodyJson = JSON.stringify(rootElement);
                                 
                                 return values;
