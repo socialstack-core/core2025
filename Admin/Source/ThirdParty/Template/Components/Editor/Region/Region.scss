@@ -1,0 +1,65 @@
+:root {
+    --region-height: 60px;
+}
+
+.region {
+
+    background:#cccccc30;
+    margin:5px;
+    border:1px solid #ccc;
+    border-radius:4px;
+    min-height: var(--region-height);
+
+    .main {
+        h3 {
+            width: fit-content;
+            line-height: var(--region-height);
+            display: inline-block;
+            font-size:16px;
+            text-indent: calc(var(--region-height) / 2);
+        }
+        .actions {
+            display: inline-block;
+            line-height: var(--region-height);
+            margin-left:20px;
+
+            i {
+                height:40px;
+                width:40px;
+                text-align: center;
+                line-height: 40px;
+                cursor:pointer;
+                border:1px solid transparent;
+                background: transparent;
+                transition: all 0.2s linear;
+
+                &:hover {
+                    border-color:#cccccc;
+                    background: #cccccc30;
+                }
+            }
+        }
+    }
+
+    // collapsible edits, to make it work nicer
+    // with the UI.
+    details.collapsible {
+        border-bottom:1px solid #ccc;
+    }
+    summary {
+        outline:0px;
+        height: 0px;
+
+        &:focus{
+            outline:0px !important;
+            box-shadow: none !important;
+        }
+        border:1px solid #ccc;
+    }
+    .collapsible-title {
+        font-size: 16px;
+    }
+    .collapsible-content {
+        border-top:1px solid #ccc;
+    }
+}
