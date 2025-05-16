@@ -50,6 +50,10 @@ namespace Api.EcmaScript
         /// </summary>
         private static void ProcessFields(Type nonEntityType, TypeDefinition nonEntity, Script containingScript, int currentDepth)
         {
+            if (currentDepth >= 1)
+            {
+                return;
+            }
             foreach (var field in nonEntityType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 // Skip if the field is not declared by the current type.
@@ -75,7 +79,7 @@ namespace Api.EcmaScript
                             continue;
                         }
                     }
-                    
+
                     var fieldType = OnField(field.FieldType, containingScript, currentDepth + 1);
                     nonEntity.AddProperty(LcFirst(field.Name) + (isNullable ? "?" : ""), fieldType);
                 }
@@ -87,6 +91,10 @@ namespace Api.EcmaScript
         /// </summary>
         private static void ProcessProperties(Type nonEntityType, TypeDefinition nonEntity, Script containingScript, int currentDepth)
         {
+            if (currentDepth >= 1)
+            {
+                return;
+            }
             foreach (var property in nonEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 // Skip if the property is not declared by the current type.
