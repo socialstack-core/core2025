@@ -26,6 +26,8 @@ namespace Api.Payments
 		/// </summary>
 		private CategoryTree? _categoryTree;
 
+		private PermalinkService _permalinks;
+
 		/// <summary>
 		/// Get the cached lookup table (and rebuild if necessary)
 		/// </summary>
@@ -42,6 +44,7 @@ namespace Api.Payments
 		/// </summary>
 		public ProductCategoryService(ProductService productService, PageService pages, PermalinkService permalinks) : base(Events.ProductCategory)
         {
+			_permalinks = permalinks;
 			_productService = productService;
 
 			// Example admin page install:
@@ -98,6 +101,10 @@ namespace Api.Payments
 				// build the initial memory structure 
 				await GetTree(ctx);
 
+				// Permalink sync (dev only: this is only necessary if you made a big edit outside of SS)
+				// await _productService.SyncPermalinks(ctx);
+				// await SyncPermalinks(ctx);
+
 				return new ValueTask<object>(sender);
 			});
 
@@ -112,16 +119,16 @@ namespace Api.Payments
 				return update;
 			});
 
-			Events.ProductCategory.AfterCreate.AddEventListener(async (Context ctx, ProductCategory productCategory) =>
+			Events.ProductCategory.AfterCreate.AddEventListener((Context ctx, ProductCategory productCategory) =>
 			{
 				_categoryTree = null;
-				return productCategory;
+				return new ValueTask<ProductCategory>(productCategory);
 			});
 
-			Events.ProductCategory.AfterUpdate.AddEventListener(async (Context ctx, ProductCategory productCategory) =>
+			Events.ProductCategory.AfterUpdate.AddEventListener((Context ctx, ProductCategory productCategory) =>
 			{
 				_categoryTree = null;
-				return productCategory;
+				return new ValueTask<ProductCategory>(productCategory);
 			});
 
 			Events.ProductCategory.AfterDelete.AddEventListener(async (Context ctx, ProductCategory productCategory) =>
@@ -159,12 +166,11 @@ namespace Api.Payments
 				// If a specific page for this category exists, it will ultimately pick that.
 				var linkTarget = permalinks.CreatePrimaryTargetLocator(this, category);
 
-				// Todo: collision avoidance
 				await permalinks.Create(
 					context, 
 					new Permalink()
 					{
-						Url = "/category/" + category.Slug,
+						Url = GetInitialProductCategoryUrl(category),
 						Target = linkTarget
 					},
 					DataOptions.IgnorePermissions
@@ -174,6 +180,44 @@ namespace Api.Payments
 			});
 
 			Cache();
+		}
+
+		/// <summary>
+		/// A convenience brute-force method for ensuring that all required permalinks exist.
+		/// Best used after a major database edit (such as importing outside of SS).
+		/// </summary>
+		/// <returns></returns>
+		public async ValueTask SyncPermalinks(Context context)
+		{
+			var all = await Where("", DataOptions.IgnorePermissions).ListAll(context);
+			var links = new List<PermalinkUrlTarget>();
+
+			foreach (var category in all)
+			{
+				// Permalink target which will be for whichever page wants to handle a product category as its primary content.
+				// If a specific page for this category exists, it will ultimately pick that.
+				var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, category);
+
+				var permalinkInfo = new PermalinkUrlTarget()
+				{
+					Url = GetInitialProductCategoryUrl(category),
+					Target = linkTarget
+				};
+
+				links.Add(permalinkInfo);
+			}
+
+			await _permalinks.BulkCreate(context, links);
+		}
+
+		/// <summary>
+		/// Use the primaryUrl system instead of calling this directly.
+		/// </summary>
+		/// <param name="category"></param>
+		/// <returns></returns>
+		private string GetInitialProductCategoryUrl(ProductCategory category)
+		{
+			return "/category/" + category.Slug;
 		}
 
 		/// <summary>

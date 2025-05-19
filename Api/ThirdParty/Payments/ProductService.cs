@@ -16,6 +16,7 @@ namespace Api.Payments
 	/// </summary>
 	public partial class ProductService : AutoService<Product>
     {
+		private PermalinkService _permalinks;
 		private ProductConfig _config;
 
 		/// <summary>
@@ -23,6 +24,7 @@ namespace Api.Payments
 		/// </summary>
 		public ProductService(PermalinkService permalinks, PageService pages) : base(Events.Product)
         {
+			_permalinks = permalinks;
 			_config = GetConfig<ProductConfig>();
 
 			InstallAdminPages("Products", "fa:fa-rocket", new string[] { "id", "name", "minQuantity" });
@@ -101,27 +103,63 @@ namespace Api.Payments
 				}
 			);
 
-			Events.ProductCategory.AfterCreate.AddEventListener(async (Context context, ProductCategory category) => {
+			Events.Product.AfterCreate.AddEventListener(async (Context context, Product product) => {
 
-				// Permalink target which will be for whichever page wants to handle a product category as its primary content.
-				// If a specific page for this category exists, it will ultimately pick that.
-				var linkTarget = permalinks.CreatePrimaryTargetLocator(this, category);
+				// Permalink target which will be for whichever page wants to handle a product as its primary content.
+				// If a specific page for this product exists, it will ultimately pick that.
+				var linkTarget = permalinks.CreatePrimaryTargetLocator(this, product);
 
-				// Todo: collision avoidance
 				await permalinks.Create(
 					context,
 					new Permalink()
 					{
-						Url = "/category/" + category.Slug,
+						Url = GetInitialProductUrl(product),
 						Target = linkTarget
 					},
 					DataOptions.IgnorePermissions
 				);
 
-				return category;
+				return product;
 			});
 
 			Cache();
+		}
+
+		/// <summary>
+		/// Use the primaryUrl system instead of calling this directly.
+		/// </summary>
+		/// <param name="product"></param>
+		/// <returns></returns>
+		private string GetInitialProductUrl(Product product)
+		{
+			return "/product/" + product.Slug;
+		}
+
+		/// <summary>
+		/// A convenience brute-force method for ensuring that all required permalinks exist.
+		/// Best used after a major database edit (such as importing outside of SS).
+		/// </summary>
+		/// <returns></returns>
+		public async ValueTask SyncPermalinks(Context context)
+		{
+			var allProducts = await Where("", DataOptions.IgnorePermissions).ListAll(context);
+			var links = new List<PermalinkUrlTarget>();
+
+			foreach (var product in allProducts)
+			{
+				// Permalink target which will be for whichever page wants to handle a product as its primary content.
+				// If a specific page for this product exists, it will ultimately pick that.
+				var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, product);
+
+				var permalinkInfo = new PermalinkUrlTarget() {
+					Url = GetInitialProductUrl(product),
+					Target = linkTarget
+				};
+
+				links.Add(permalinkInfo);
+			}
+
+			await _permalinks.BulkCreate(context, links);
 		}
 
 		/// <summary>
