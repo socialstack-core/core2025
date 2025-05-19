@@ -3,6 +3,7 @@ import Default from 'Admin/Layouts/Default';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'UI/Router';
 import Modal from 'UI/Modal';
+import SubHeader from 'Admin/SubHeader';
 import Icon from 'UI/Icon';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Search from 'UI/Search';
@@ -262,27 +263,9 @@ export default function NavMenuMap(props) {
 	return (
 		<Default>
 			<div className="admin-page">
-				<header className="admin-page__subheader">
-					<div className="admin-page__subheader-info">
-						<h1 className="admin-page__title">
-							{`Edit Navigation Menus`}
-						</h1>
-						<ul className="admin-page__breadcrumbs">
-							<li>
-								<a href={'/en-admin/'}>
-									{`Admin`}
-								</a>
-							</li>
-							<li>
-								{`Navigation menus`}
-							</li>
-						</ul>
-					</div>
-					<Search className="admin-page__search" placeholder={`Search`}
-						onQuery={(where, query) => {
-							setSearchText((!query || query.trim().length == 0) ? false : query.toLowerCase());
-						}} />
-				</header>
+				<SubHeader title={`Edit Navigation Menus`} breadcrumbs={[{title: `Navigation menus`}]} onQuery={(where, query) => {
+					setSearchText((!query || query.trim().length == 0) ? false : query.toLowerCase());
+				}}/>
 				<div className="menumap__wrapper">
 					<div className="menumap__internal">
 						{showWarningModal && <>

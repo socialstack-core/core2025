@@ -2,6 +2,7 @@ import Tile from 'Admin/Tile';
 import Table from 'UI/Table';
 import { Filter } from 'UI/Loop';
 import Time from 'UI/Time';
+import SubHeader from 'Admin/SubHeader';
 import Default from 'Admin/Layouts/Default';
 import automationsApi, { Automation } from 'Api/Automation';
 import { useState } from 'react';
@@ -103,23 +104,11 @@ const Automations: React.FC<React.PropsWithChildren<{}>> = (props) => {
 	return <Default>
 		
 		<div className="admin-page">
-			<header className="admin-page__subheader">
-				<div className="admin-page__subheader-info">
-					<h1 className="admin-page__title">
-						{`Automations`}
-					</h1>
-					<ul className="admin-page__breadcrumbs">
-						<li>
-							<a href={'/en-admin/'}>
-								{`Admin`}
-							</a>
-						</li>
-						<li>
-							{`Automations`}
-						</li>
-					</ul>
-				</div>
-			</header>
+			<SubHeader breadcrumbs={[
+				{
+					title: `Automations`
+				}
+			]} title={`Automations`} />
 			<div className="admin-page__content">
 				<div className="admin-page__internal">
 					<Table source={(filter?: Filter<Automation>, includes?: ApiIncludes[]) => {

@@ -1,5 +1,6 @@
 import { useState, useEffect, RefObject } from 'react';
 import Input from 'UI/Input';
+import SubHeader from 'Admin/SubHeader';
 import { useSession } from 'UI/Session';
 
 // Left-hand tabs
@@ -27,7 +28,8 @@ type PanelledEditorProps = {
   leftPanelTitle?: string;
   rightPanelTitle?: string;
   additionalFieldsTitle?: string;
-  breadcrumbs?: React.ReactNode;
+  breadcrumbs?: Breadcrumb[];
+  primaryUrl?: string;
   showLeftPanel: boolean;
   showRightPanel: boolean;
   showSource: boolean;
@@ -102,11 +104,7 @@ const PanelledEditorInternal: React.FC<PanelledEditorProps> = (props: PanelledEd
   return (
     <div className={editorClass.join(" ")}>
       {props.breadcrumbs && (
-        <header className="admin-page__subheader">
-          <div className="admin-page__subheader-info">
-            <h1 className="admin-page__title">{props.title}</h1>
-            <ul className="admin-page__breadcrumbs">{props.breadcrumbs}</ul>
-          </div>
+		<SubHeader title={props.title} breadcrumbs={props.breadcrumbs} primaryUrl={props.primaryUrl}>
           <div className="admin-page__supplemental">
             <div className="btn-group btn-group-sm admin-page__display-options" role="group" aria-label={`Display options`}>
               {!props.showSource && props.toggleLeftPanel && (
@@ -168,7 +166,7 @@ const PanelledEditorInternal: React.FC<PanelledEditorProps> = (props: PanelledEd
               )}
             </div>
           </div>
-        </header>
+        </SubHeader>
       )}
       <div className="panelled-editor__content-wrapper">
         <div className="panelled-editor__content">

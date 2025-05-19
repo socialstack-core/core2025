@@ -5,6 +5,7 @@ import Column from 'UI/Column';
 import Input from 'UI/Input';
 import Image from 'UI/Image';
 import Search from 'UI/Search';
+import SubHeader from 'Admin/SubHeader';
 import Uploader from 'UI/Uploader';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
@@ -592,31 +593,15 @@ export default class MediaCenter extends React.Component {
 
         return <Default>
             <div className="admin-page">
-                <header className="admin-page__subheader">
-                    <div className="admin-page__subheader-info">
-                        <h1 className="admin-page__title">
-                            {`Uploads`}
-                        </h1>
-                        <ul className="admin-page__breadcrumbs">
-                            <li>
-                                <a href={'/en-admin/'}>
-                                    {`Admin`}
-                                </a>
-                            </li>
-                            <li>
-                                {`Uploads`}
-                            </li>
-                        </ul>
-                    </div>
-                    {searchFields && <>
-                        <Search className="admin-page__search" placeholder={`Search`}
-                            onQuery={(where, query) => {
-                                this.setState({
-                                    searchFilter: query
-                                });
-                            }} />
-                    </>}
-                </header>
+				<SubHeader title={`Uploads`} breadcrumbs={[
+					{
+						title: `Uploads`
+					}
+				]} onQuery={(where, query) => {
+					this.setState({
+						searchFilter: query
+					});
+				}}/>
                 <div className="admin-page__content">
                     <div className="admin-page__internal">
 

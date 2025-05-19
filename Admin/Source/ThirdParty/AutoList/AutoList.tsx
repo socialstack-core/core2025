@@ -1,6 +1,7 @@
 import Canvas from 'UI/Canvas';
 import Search from 'UI/Search';
 import Table from 'UI/Table';
+import SubHeader from 'Admin/SubHeader';
 import { Content } from 'Api/Content';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import { isoConvert } from "UI/Functions/DateTools";
@@ -294,44 +295,15 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 	
 	var selectedCount = getSelectedCount();
 
+	var breadcrumbs = [
+		{title: capitalise(props.plural)}
+	];
+
 	return <>
 		<div className="admin-page">
-			<header className="admin-page__subheader">
-				<div className="admin-page__subheader-info">
-					<h1 className="admin-page__title">
-						{props.title}
-					</h1>
-					<ul className="admin-page__breadcrumbs">
-						{/*this.props.previousPageUrl && this.props.previousPageName &&
-						<p>
-							<a href={this.props.previousPageUrl}>
-								{this.props.previousPageName}
-							</a> &gt; <span>
-								{this.props.title}
-							</span>
-						</p>
-					*/}
-
-						<li>
-							<a href={'/en-admin/'}>
-								{`Admin`}
-							</a>
-						</li>
-						<li>
-							{capitalise(props.plural)}
-						</li>
-					</ul>
-				</div>
-				{searchFields && <>
-					<Search 
-						className="admin-page__search" 
-						placeholder={`Search ${searchFieldsDesc}`}
-						onQuery={(where, query : string) => {
-							setSearchText(query);
-						}}
-					/>
-				</>}
-			</header>
+			<SubHeader title={props.title} breadcrumbs={breadcrumbs} onQuery={(where, query : string) => {
+				setSearchText(query);
+			}} />
 			<div className="admin-page__content">
 				<div className="admin-page__internal">
 					{props.beforeList}
