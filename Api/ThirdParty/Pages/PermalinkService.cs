@@ -81,6 +81,14 @@ namespace Api.Pages
 						target = "page:" + page.Id;
 					}
 
+					// If page.Url exists already as a permalink, delete the permalink. Permalinks are, as the name suggests, immutable.
+					var existing = await Where("Url=?", DataOptions.IgnorePermissions).Bind(page.Url).First(context);
+
+					if (existing != null)
+					{
+						await Delete(context, existing, DataOptions.IgnorePermissions);
+					}
+
 					await Create(context, new Permalink()
 					{
 						Url = page.Url,
