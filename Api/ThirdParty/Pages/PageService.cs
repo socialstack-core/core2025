@@ -86,7 +86,7 @@ namespace Api.Pages
 						Title = "Server log monitoring",
 						BodyJson = @"{
 							""c"": {
-								""t"": ""Admin/Layouts/Default"",
+								""t"": ""Admin/Templates/BaseAdminTemplate"",
 								""c"": {
 									""t"": ""Admin/Dashboards/Stdout""
 								}
@@ -100,7 +100,7 @@ namespace Api.Pages
 						Title = "Stress testing the API",
 						BodyJson = @"{
 							""c"": {
-								""t"": ""Admin/Layouts/Default"",
+								""t"": ""Admin/Templates/BaseAdminTemplate"",
 								""c"": {
 									""t"": ""Admin/Dashboards/StressTest""
 								}
@@ -114,7 +114,7 @@ namespace Api.Pages
 						Title = "Developer Database Access",
 						BodyJson = @"{
 							""c"": {
-								""t"": ""Admin/Layouts/Default"",
+								""t"": ""Admin/Templates/BaseAdminTemplate"",
 								""c"": {
 									""t"": ""Admin/Dashboards/Database""
 								}
@@ -149,7 +149,7 @@ namespace Api.Pages
 						Title = "Permissions",
 						BodyJson = @"{
 							""c"": {
-								""t"": ""Admin/Layouts/Default"",
+								""t"": ""Admin/Templates/BaseAdminTemplate"",
 								""c"": {
 									""t"": ""Admin/PermissionGrid""
 								}

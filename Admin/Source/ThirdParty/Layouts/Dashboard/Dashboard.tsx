@@ -1,6 +1,6 @@
 import Tile from 'Admin/Tile';
 import Canvas from 'UI/Canvas';
-import Default from 'Admin/Layouts/Default';
+import Default from 'Admin/Templates/BaseAdminTemplate';
 import { useSession } from 'UI/Session';
 import roleApi from 'Api/Role';
 

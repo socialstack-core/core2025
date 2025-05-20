@@ -1,6 +1,6 @@
 import { useTokens } from 'UI/Token';
 import AutoForm from 'Admin/AutoForm';
-import Default from 'Admin/Layouts/Default';
+import Default from 'Admin/Templates/BaseAdminTemplate';
 
 interface AutoFormProps {
 	// parent

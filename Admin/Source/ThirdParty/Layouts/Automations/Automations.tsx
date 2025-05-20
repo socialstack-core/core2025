@@ -3,7 +3,7 @@ import Table from 'UI/Table';
 import { Filter } from 'UI/Loop';
 import Time from 'UI/Time';
 import SubHeader from 'Admin/SubHeader';
-import Default from 'Admin/Layouts/Default';
+import Default from 'Admin/Templates/BaseAdminTemplate';
 import automationsApi, { Automation } from 'Api/Automation';
 import { useState } from 'react';
 import { ApiIncludes } from 'Api/ApiEndpoints';
@@ -102,36 +102,33 @@ const Automations: React.FC<React.PropsWithChildren<{}>> = (props) => {
 	}
 
 	return <Default>
-		
-		<div className="admin-page">
-			<SubHeader breadcrumbs={[
-				{
-					title: `Automations`
-				}
-			]} title={`Automations`} />
-			<div className="admin-page__content">
-				<div className="admin-page__internal">
-					<Table source={(filter?: Filter<Automation>, includes?: ApiIncludes[]) => {
-						return automationsApi.get() as Promise<ApiList<Automation>>;
-					}}
-						orNone={() => renderEmpty()}
-						onHeader={renderHeader}
-					>
-						{renderEntry}
-					</Table>
-					{props.children}
-				</div>
-				{/*
-				<footer className="admin-page__footer">
-					{selectedCount > 0 ? this.renderBulkOptions(selectedCount) : null}
-					{this.props.create && <>
-						<a href={addUrl} className="btn btn-primary">
-							{`Create`}
-						</a>
-					</>}
-				</footer>
-				 */}
+		<SubHeader breadcrumbs={[
+			{
+				title: `Automations`
+			}
+		]} title={`Automations`} />
+		<div className="admin-page__content">
+			<div className="admin-page__internal">
+				<Table source={(filter?: Filter<Automation>, includes?: ApiIncludes[]) => {
+					return automationsApi.get() as Promise<ApiList<Automation>>;
+				}}
+					orNone={() => renderEmpty()}
+					onHeader={renderHeader}
+				>
+					{renderEntry}
+				</Table>
+				{props.children}
 			</div>
+			{/*
+			<footer className="admin-page__footer">
+				{selectedCount > 0 ? this.renderBulkOptions(selectedCount) : null}
+				{this.props.create && <>
+					<a href={addUrl} className="btn btn-primary">
+						{`Create`}
+					</a>
+				</>}
+			</footer>
+			 */}
 		</div>
 	</Default>;
 

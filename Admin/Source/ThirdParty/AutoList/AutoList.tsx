@@ -300,40 +300,38 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 	];
 
 	return <>
-		<div className="admin-page">
-			<SubHeader title={props.title} breadcrumbs={breadcrumbs} onQuery={(where, query : string) => {
-				setSearchText(query);
-			}} />
-			<div className="admin-page__content">
-				<div className="admin-page__internal">
-					{props.beforeList}
-					<Table over={api} filter={combinedFilter}
-						orNone={() => renderEmpty()}
-						onResults={results => {
-							// Either changed page or loaded for first time - clear bulk selects if there is any.
-							if (bulkSelections) {
-								setBulkSelections(null);
-							}
+		<SubHeader title={props.title} breadcrumbs={breadcrumbs} onQuery={(where, query : string) => {
+			setSearchText(query);
+		}} />
+		<div className="admin-page__content">
+			<div className="admin-page__internal">
+				{props.beforeList}
+				<Table over={api} filter={combinedFilter}
+					orNone={() => renderEmpty()}
+					onResults={results => {
+						// Either changed page or loaded for first time - clear bulk selects if there is any.
+						if (bulkSelections) {
+							setBulkSelections(null);
+						}
 
-							return results;
-						}} onHeader={renderHeader}>
-						{renderEntry}
-					</Table>
-					{confirmDelete && renderConfirmDelete(selectedCount)}
-				</div>
-				{/*feedback && <>
-					<footer className="admin-page__feedback">
-					</footer>
-				</>*/}
-				<footer className="admin-page__footer">
-					{selectedCount > 0 ? renderBulkOptions(selectedCount) : null}
-					{props.create && <>
-						<a href={addUrl} className="btn btn-primary">
-							{`Create`}
-						</a>
-					</>}
-				</footer>
+						return results;
+					}} onHeader={renderHeader}>
+					{renderEntry}
+				</Table>
+				{confirmDelete && renderConfirmDelete(selectedCount)}
 			</div>
+			{/*feedback && <>
+				<footer className="admin-page__feedback">
+				</footer>
+			</>*/}
+			<footer className="admin-page__footer">
+				{selectedCount > 0 ? renderBulkOptions(selectedCount) : null}
+				{props.create && <>
+					<a href={addUrl} className="btn btn-primary">
+						{`Create`}
+					</a>
+				</>}
+			</footer>
 		</div>
 	</>;
 }

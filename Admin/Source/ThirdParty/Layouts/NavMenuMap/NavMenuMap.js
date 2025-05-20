@@ -1,5 +1,5 @@
 import Collapsible from 'UI/Collapsible';
-import Default from 'Admin/Layouts/Default';
+import Default from 'Admin/Templates/BaseAdminTemplate';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'UI/Router';
 import Modal from 'UI/Modal';
@@ -262,53 +262,51 @@ export default function NavMenuMap(props) {
 
 	return (
 		<Default>
-			<div className="admin-page">
-				<SubHeader title={`Edit Navigation Menus`} breadcrumbs={[{title: `Navigation menus`}]} onQuery={(where, query) => {
-					setSearchText((!query || query.trim().length == 0) ? false : query.toLowerCase());
-				}}/>
-				<div className="menumap__wrapper">
-					<div className="menumap__internal">
-						{showWarningModal && <>
-							<Modal visible="true" onClose={() => setShowWarningModal(false)} title={`Please Note`} className="menumap__warning-modal">
-								<p>
-									<strong>{`The following menu is currently set as a link:`}</strong><br/>
-									{getMenuDescription(showWarningModal)}
-								</p>
-								<p>
-									{`Please remove the target link from the above menu before attempting to add subitems.`}
-								</p>
-								<footer className="menumap__warning-modal-footer">
-									<button type="button" className="btn btn-primary">
-										{`OK`}
-									</button>
-								</footer>
-							</Modal>
-						</>}
-						{showRemoveConfirmModal && <>
-							<ConfirmModal confirmCallback={() => removeMenu(showRemoveConfirmModal)} confirmVariant="danger" cancelCallback={() => setShowRemoveConfirmModal(false)}>
-								<p>
-									<strong>{showRemoveConfirmModal.type == 'NavMenu' ? `This will remove the following menu:` : `This will remove the following menu item:`}</strong> <br />
-									{getMenuDescription(showRemoveConfirmModal)}
-								</p>
-								<p>
-									{`Are you sure you wish to do this?`}
-								</p>
-							</ConfirmModal>
-						</>}
-						{isLoading && renderLoading()}
-						{!isLoading && isEmpty && renderEmpty()}
-						{!isLoading && menuMap && menuMap.map(data => {
-							return renderNode(data);
-						})}
-					</div>
-					{!this.props.noCreate && <>
-						<footer className="admin-page__footer">
-							<a href={addUrl} className="btn btn-primary">
-								{`Create new`}
-							</a>
-						</footer>
+			<SubHeader title={`Edit Navigation Menus`} breadcrumbs={[{title: `Navigation menus`}]} onQuery={(where, query) => {
+				setSearchText((!query || query.trim().length == 0) ? false : query.toLowerCase());
+			}}/>
+			<div className="menumap__wrapper">
+				<div className="menumap__internal">
+					{showWarningModal && <>
+						<Modal visible="true" onClose={() => setShowWarningModal(false)} title={`Please Note`} className="menumap__warning-modal">
+							<p>
+								<strong>{`The following menu is currently set as a link:`}</strong><br/>
+								{getMenuDescription(showWarningModal)}
+							</p>
+							<p>
+								{`Please remove the target link from the above menu before attempting to add subitems.`}
+							</p>
+							<footer className="menumap__warning-modal-footer">
+								<button type="button" className="btn btn-primary">
+									{`OK`}
+								</button>
+							</footer>
+						</Modal>
 					</>}
+					{showRemoveConfirmModal && <>
+						<ConfirmModal confirmCallback={() => removeMenu(showRemoveConfirmModal)} confirmVariant="danger" cancelCallback={() => setShowRemoveConfirmModal(false)}>
+							<p>
+								<strong>{showRemoveConfirmModal.type == 'NavMenu' ? `This will remove the following menu:` : `This will remove the following menu item:`}</strong> <br />
+								{getMenuDescription(showRemoveConfirmModal)}
+							</p>
+							<p>
+								{`Are you sure you wish to do this?`}
+							</p>
+						</ConfirmModal>
+					</>}
+					{isLoading && renderLoading()}
+					{!isLoading && isEmpty && renderEmpty()}
+					{!isLoading && menuMap && menuMap.map(data => {
+						return renderNode(data);
+					})}
 				</div>
+				{!this.props.noCreate && <>
+					<footer className="admin-page__footer">
+						<a href={addUrl} className="btn btn-primary">
+							{`Create new`}
+						</a>
+					</footer>
+				</>}
 			</div>
 		</Default>
 	);

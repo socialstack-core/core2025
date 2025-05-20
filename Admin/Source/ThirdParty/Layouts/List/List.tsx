@@ -1,6 +1,6 @@
 import Tile from 'Admin/Tile';
 import AutoList, { AutoListProps } from 'Admin/AutoList';
-import Default from 'Admin/Layouts/Default';
+import Default from 'Admin/Templates/BaseAdminTemplate';
 
 export interface ListProps extends AutoListProps {
     noCreate?: boolean;
