@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import pageApi, { Page, RouterTreeNodeDetail } from 'Api/Page';
 
 export default function Sitemap(props) {
-	const [ currentNode, setCurrentNode ] = useState<RouterTreeNodeDetail | null>(null);
 	const [ showCloneModal, setShowCloneModal] = useState(false);
 	const [ showConfirmModal, setShowConfirmModal ] = useState(false);
 	
