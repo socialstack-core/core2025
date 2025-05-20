@@ -2,6 +2,7 @@ import Form from 'UI/Form';
 import Input from 'UI/Input';
 import Canvas from 'UI/Canvas';
 import Loading from 'UI/Loading';
+import SubHeader from 'Admin/SubHeader';
 import Modal from 'UI/Modal';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import isNumeric from 'UI/Functions/IsNumeric';
@@ -33,7 +34,9 @@ export default function AutoForm(props) {
 	// Get the API handler for this content type:
 	var api = require('Api/' + (props.endpoint ? props.endpoint : props.contentType)).default;
 
-	return <AutoFormInternal {...props} endpoint={endpoint} api={api} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
+	var id = props.id || props.content?.id;
+
+	return <AutoFormInternal {...props} id={id} endpoint={endpoint} api={api} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
 }
 
 class AutoFormInternal extends React.Component {
@@ -951,91 +954,68 @@ class AutoFormInternal extends React.Component {
 				html.style.setProperty('--admin-feedback-height', hasFeedback ? 'var(--fallback__admin-feedback-height)' : '0px');
 			}
 
-			var breadcrumbs = <>
-				<li>
-					<a href={'/en-admin/'}>
-						{`Admin`}
-					</a>
-				</li>
-				<li>
-					<a href={parentUrl}>
-						{this.capitalise(this.props.plural)}
-					</a>
-				</li>
-				<li>
-					{isEdit ? <>
-						{`Editing ${this.props.singular}`}
+			var breadcrumbs = [
+				{
+					url: parentUrl,
+					title: this.capitalise(this.props.plural)
+				}
+			];
+			
+			if(isEdit){
+				var editTitle = `Editing ${this.props.singular}`;
+				
+				if(pageUrl && hasParameter){
+					editTitle += '/';
+					
+					pageSections.forEach((section, i) => {
+						var suffix = i < pageSections.length - 1 ? '/' : '';
 
-						&nbsp;
+						if (section.length) {
 
-						{pageUrl && hasParameter && <>
-							<code className="admin-page__breadcrumbs-url">
-								/{pageSections.map((section, i) => {
-									var suffix = i < pageSections.length - 1 ? '/' : '';
+							// parameter?
+							if (section.length >= 2 && section[0] == '{' && section[section.length - 1] == '}') {
+								var param = section.substring(1, section.length - 1);
+								var value = this.getParamValue(param);
+								var tokenIndex = (this.state.pageState && this.state.pageState.tokenNames) ?
+									this.state.pageState.tokenNames.findIndex(name => name == param) : -1;
 
-									if (section.length) {
+								if (tokenIndex > -1 && this.state.pageState.tokens.length > tokenIndex) {
+									/*
+									return <>
+										<button type="button" className="btn btn-link" onClick={() => this.startSelectParam(param)}>
+											{value == '' ? param : value}
+										</button>{suffix}
+									</>;
+									*/
+									editTitle += (value == '' ? param : value) + suffix;
+									return;
+								}
 
-										// parameter?
-										if (section.length >= 2 && section[0] == '{' && section[section.length - 1] == '}') {
-											var param = section.substring(1, section.length - 1);
-											var value = this.getParamValue(param);
-											var tokenIndex = (this.state.pageState && this.state.pageState.tokenNames) ?
-												this.state.pageState.tokenNames.findIndex(name => name == param) : -1;
-
-											if (tokenIndex > -1 && this.state.pageState.tokens.length > tokenIndex) {
-												return <>
-													<button type="button" className="btn btn-link" onClick={() => this.startSelectParam(param)}>
-														{value == '' ? param : value}
-													</button>{suffix}
-												</>;
-
-                                            }
-
-										}
-
-										return <>
-											{section}{suffix}
-										</>;
-									}
-								})}
-							</code>
-
-							&nbsp;
-
-							{/* TODO: build complete URL from selected parameters */}
-							{/*
-							<a href={pageUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-secondary panelled-editor__external-link">
-								<i className="fa fa-fw fa-external-link"></i>
-								{`Launch`}
-							</a>
-							 */}
-
-						</>}
-
-						{pageUrl && !hasParameter && <>
-							<a href={pageUrl} target="_blank" rel="noopener noreferrer" className="panelled-editor__external-link">
-								<code>
-									{pageUrl}
-								</code>
-								<i className="fa fa-fw fa-external-link"></i>
-							</a>
-						</>}
-
-						{!pageUrl && <>
-							{'#' + this.state.id}
-						</>}
-
-						&nbsp;
-
-						{(this.state.fieldData && this.state.fieldData.isDraft) && (
-							<span className="badge bg-danger is-draft">
-								{`Draft`}
-							</span>
-						)}
-					</> : `Add new ${this.props.singular}`}
-				</li>
-			</>;
-
+							}
+							
+							editTitle += section + suffix;
+						}
+					})
+					
+				}
+				
+				if(!pageUrl){
+					editTitle += ' #' + this.state.id;
+				}
+				
+				if(this.state.fieldData && this.state.fieldData.isDraft) {
+					editTitle += ` (Draft)`;
+				}
+		
+				breadcrumbs.push({
+					title: editTitle
+				});
+			}else{
+				breadcrumbs.push({
+					title: `Add new ${this.props.singular}`
+				});
+			}
+			
 			var url = this.state.fieldData && this.state.fieldData.url;
 			var primary = null;
 
@@ -1069,6 +1049,7 @@ class AutoFormInternal extends React.Component {
 						primary={primary}
 						feedback={feedback}
 						breadcrumbs={breadcrumbs}
+						primaryUrl={(pageUrl && !hasParameter) ? pageUrl : undefined}
 						additionalFields={() => this.props.renderFormFields ? this.props.renderFormFields(this.state) : this.renderFormFields()}
 					/>
 					{isEdit && <input type="hidden" name="id" value={parsedId} />}
@@ -1100,57 +1081,38 @@ class AutoFormInternal extends React.Component {
 		if (qualifiedUrl.endsWith("//")) {
 			qualifiedUrl = qualifiedUrl.slice(0, -1);
 		}
-
+		
+		var breadcrumbs = [];
+		
+		if(this.props.previousPageUrl && this.props.previousPageName){
+			breadcrumbs.push({
+				url: this.props.previousPageUrl,
+				title: this.props.previousPageName
+			});
+		}
+		
+		if(!this.props.hideEndpointUrl){
+			breadcrumbs.push({
+				url: parentUrl,
+				title: this.capitalise(this.props.plural)
+			});
+		}
+		
+		if(isEdit){
+			var editTitle = `Editing ${this.props.singular} #` + this.state.id;
+			
+			if(this.state.fieldData && this.state.fieldData.isDraft){
+				editTitle += ' (draft)';
+			}
+			
+			breadcrumbs.push({title: editTitle});
+		}else{
+			breadcrumbs.push({title: `Add new`});
+		}
+		
 		return <>
 			<div className="admin-page">
-				<header className="admin-page__subheader">
-					<div className="admin-page__subheader-info">
-						<h1 className="admin-page__title">
-							{title}
-						</h1>
-						<ul className="admin-page__breadcrumbs">
-							<li>
-								<a href={'/en-admin/'}>
-									{`Admin`}
-								</a>
-							</li>
-							{this.props.previousPageUrl && this.props.previousPageName && <>
-								<li>
-									<a href={this.props.previousPageUrl}>
-										{this.props.previousPageName}
-									</a>
-								</li>
-							</>}
-							{!this.props.hideEndpointUrl &&
-								<li>
-									<a href={parentUrl}>{this.capitalise(this.props.plural)}</a>
-								</li>
-							}
-							<li>
-								{isEdit ? <span>
-									{`Editing ${this.props.singular} #` + this.state.id + ' '}
-									{(this.state.fieldData && this.state.fieldData.isDraft) && (
-										<span className="is-draft">
-											{`(Draft)`}
-										</span>
-									)}
-								</span> : `Add new`}
-							</li>
-						</ul>
-					</div>
-
-					{this.state.hasPrimaryUrl &&
-						<div className="admin-page__url">
-							<p>{`Page URL: `}</p>
-							{pageUrl && pageUrl.length && pageUrl.length > 0
-								? <a href={qualifiedUrl} target="_blank">
-									{qualifiedUrl}
-								</a>
-								: <em>{`refresh the page to see the new URL`}</em>
-							}
-						</div>
-					}
-				</header>
+				<SubHeader title={title} breadcrumbs={breadcrumbs} primaryUrl={qualifiedUrl} />
 				<div className="admin-page__content">
 					<div className="admin-page__internal">
 						{

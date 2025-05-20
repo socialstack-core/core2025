@@ -1,4 +1,4 @@
-import Default from "Admin/Layouts/Default";
+import Default from "Admin/Templates/BaseAdminTemplate";
 import TemplateForm from "./Components/Form";
 import { useEffect, useState } from "react";
 import TemplateApi, { Template } from "Api/Template";

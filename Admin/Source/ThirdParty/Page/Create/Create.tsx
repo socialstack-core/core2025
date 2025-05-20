@@ -1,5 +1,5 @@
 import { getTemplates, TemplateModule } from "Admin/Functions/GetPropTypes";
-import Default from "Admin/Layouts/Default"
+import Default from "Admin/Templates/BaseAdminTemplate"
 import PageApi, { Page } from "Api/Page";
 import TemplateApi, { Template } from "Api/Template";
 import { useEffect, useState } from "react";

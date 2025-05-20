@@ -10,6 +10,7 @@ import Dropdown from 'UI/Dropdown';
 import Col from 'UI/Column';
 import Input from 'UI/Input';
 import Search from 'UI/Search';
+import uploadApi from 'Api/Upload';
 
 var inputTypes = global.inputTypes = global.inputTypes || {};
 let lastId = 0;
@@ -19,45 +20,41 @@ const PREVIEW_SIZE = 512;
 
 var searchFields = ['originalName', 'alt', 'author', 'id'];
 
-inputTypes.ontypefile = inputTypes.ontypeimage = function ({id, className, type, inline, ...props}, _this) {
+window.inputTypes['file'] = window.inputTypes['image'] = function (props) {
+	const { field } = props;
     return (
         <FileSelector
-            id={id || _this.fieldId}
-            className={className || "form-control"}
-            {...props}
+            {...field}
         />
     );
 };
 
-inputTypes.ontypeicon = function ({id, className, type, inline, ...props}, _this) {
+window.inputTypes['icon'] = function (props) {
+	const { field } = props;
     return (
         <FileSelector
-            id={id || _this.fieldId}
             iconOnly
-            className={className || "form-control"}
             {...props}
         />
     );
 };
 
-inputTypes.ontypeupload = function ({id, className, type, inline, ...props}, _this) {
+window.inputTypes['upload'] = function (props) {
+	const { field } = props;
     return (
         <FileSelector
-            id={id || _this.fieldId}
             browseOnly
-            className={className || "form-control"}
-            {...props}
+            {...field}
         />
     );
 };
 
-inputTypes.ontypenopaging = function ({id, className, type, inline, ...props}, _this) {
+window.inputTypes['nopaging'] = function (props) {
+	const { field } = props;
     return (
         <FileSelector
-            id={id || _this.fieldId}
             disablePaging
-            className={className || "form-control"}
-            {...props}
+            {...field}
         />
     );
 };
@@ -154,8 +151,6 @@ export default class FileSelector extends React.Component {
 		
         var newRef = pr.toString();
 		
-        console.log('new', newRef);
-
         this.setState({ value: newRef , editModalOpen : false});
     }
 
@@ -292,12 +287,12 @@ export default class FileSelector extends React.Component {
     renderTags(combinedFilter) {
         var tagids = [];
         var tags = [];
-
+		
         return (
             <ul className='file-selector__tags'>
-                <Loop raw over={'upload/list'} filter={combinedFilter} includes={'tags'} onResults={results => {
+                <Loop over={uploadApi} filter={combinedFilter} includes={[uploadApi.includes.tags]} onResults={results => {
                     results.map(media => {
-                        media.tags.map(tag => {
+                        media.tags?.map(tag => {
                             if (!tagids.includes(tag.id)) {
                                 tagids.push(tag.id);
                                 tags.push(tag);
@@ -366,10 +361,12 @@ export default class FileSelector extends React.Component {
             filename = originalName;
         }
 
-        var source = "upload/list";
+        var source;
         if (this.props.showActive) {
-            source = "upload/active";
-        }
+            source = (filter, includes) => uploadApi.active(filter, includes);
+        }else{
+			source = (filter, includes) => uploadApi.list(filter, includes);
+		}
 
         // do we need to search ?
         var combinedFilter = { sort: { field: 'CreatedUtc', direction: 'desc' } };;
@@ -442,7 +439,7 @@ export default class FileSelector extends React.Component {
                 </>}
 
                 <div className="file-selector__grid">
-                    <Loop raw over={source} filter={combinedFilter} paged={this.props.disablePaging ? undefined : true}>
+                    <Loop source={source} filter={combinedFilter} paged={this.props.disablePaging ? undefined : true}>
                         {
                             entry => {
 
@@ -535,18 +532,21 @@ export default class FileSelector extends React.Component {
                     }
 
                     {!this.props.uploadOnly && !this.props.iconOnly &&
-                        <Dropdown label={`Select`} variant="primary" className="file-selector__select">
-                            <li>
-                                <button type="button" className="btn dropdown-item" onClick={() => this.showUploadModal()}>
-                                    {`From uploads`}
-                                </button>
-                            </li>
-                            <li>
-                                <button type="button" className="btn dropdown-item" onClick={() => this.setState({ iconModalOpen: true })}>
-                                    {`From icons`}
-                                </button>
-                            </li>
-                        </Dropdown>
+                        <Dropdown label={`Select`} variant="primary" className="file-selector__select" items={
+							[
+								{
+									onClick: () => this.showUploadModal(),
+									text: `From uploads`
+								},
+								/*
+								Icons are not dedicated refs anymore. The modal has been fixed such 
+								that it at least displays icons, but selecting one will error due to its ref output.
+								{
+									onClick: () => this.setState({ iconModalOpen: true }),
+									text: `From icons`
+								}*/
+							]
+						} />
                     }
 
                 </>}

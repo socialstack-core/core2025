@@ -46,9 +46,21 @@ public class PageTerminalBehaviour : TerminalBehaviour
 	public override bool Equals(TerminalBehaviour behaviour)
 	{
 		var node = behaviour as PageTerminalBehaviour;
+
+		if (node == null)
+		{
+			return false;
+		}
+
 		var otherId = node.Page?.Id;
 		var selfId = Page?.Id;
-		return node != null && otherId == selfId;
+
+		if (!otherId.HasValue || !selfId.HasValue)
+		{
+			return false;
+		}
+
+		return otherId.Value == selfId.Value;
 	}
 
 	/// <summary>

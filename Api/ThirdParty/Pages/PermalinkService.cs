@@ -31,19 +31,14 @@ namespace Api.Pages
 			});
 
 			Events.Permalink.AfterCreate.AddEventListener((Context context, Permalink link) => {
-
-				if (_srcDictionary != null)
-				{
-					AddToDictionary(link, _srcDictionary);
-				}
-
+				_srcDictionary = null;
 				Router.RequestRebuild();
 
 				return new ValueTask<Permalink>(link);
 			});
 
 			Events.Permalink.AfterDelete.AddEventListener((Context context, Permalink link) => {
-
+				_srcDictionary = null;
 				Router.RequestRebuild();
 
 				return new ValueTask<Permalink>(link);
@@ -79,6 +74,14 @@ namespace Api.Pages
 					if (target == null)
 					{
 						target = "page:" + page.Id;
+					}
+
+					// If page.Url exists already as a permalink, delete the permalink. Permalinks are, as the name suggests, immutable.
+					var existing = await Where("Url=?", DataOptions.IgnorePermissions).Bind(page.Url).First(context);
+
+					if (existing != null)
+					{
+						await Delete(context, existing, DataOptions.IgnorePermissions);
 					}
 
 					await Create(context, new Permalink()

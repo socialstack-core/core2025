@@ -5,11 +5,12 @@ import Column from 'UI/Column';
 import Input from 'UI/Input';
 import Image from 'UI/Image';
 import Search from 'UI/Search';
+import SubHeader from 'Admin/SubHeader';
 import Uploader from 'UI/Uploader';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
 import * as fileRef from 'UI/FileRef';
-import Default from 'Admin/Layouts/Default';
+import Default from 'Admin/Templates/BaseAdminTemplate';
 import MultiSelect from 'Admin/MultiSelect';
 import uploadApi from 'Api/Upload';
 
@@ -591,65 +592,47 @@ export default class MediaCenter extends React.Component {
         // combinedFilter.pageSize = 60;
 
         return <Default>
-            <div className="admin-page">
-                <header className="admin-page__subheader">
-                    <div className="admin-page__subheader-info">
-                        <h1 className="admin-page__title">
-                            {`Uploads`}
-                        </h1>
-                        <ul className="admin-page__breadcrumbs">
-                            <li>
-                                <a href={'/en-admin/'}>
-                                    {`Admin`}
-                                </a>
-                            </li>
-                            <li>
-                                {`Uploads`}
-                            </li>
-                        </ul>
-                    </div>
-                    {searchFields && <>
-                        <Search className="admin-page__search" placeholder={`Search`}
-                            onQuery={(where, query) => {
-                                this.setState({
-                                    searchFilter: query
-                                });
-                            }} />
-                    </>}
-                </header>
-                <div className="admin-page__content">
-                    <div className="admin-page__internal">
+			<SubHeader title={`Uploads`} breadcrumbs={[
+				{
+					title: `Uploads`
+				}
+			]} onQuery={(where, query) => {
+				this.setState({
+					searchFilter: query
+				});
+			}}/>
+			<div className="admin-page__content">
+				<div className="admin-page__internal">
 
-                        {tags && <>
-                                {tags}
-                        </>}
+					{tags && <>
+							{tags}
+					</>}
 
-                        <div className="media-center__list">
-                            <Loop over={uploadApi} filter={combinedFilter} includes={uploadApi.includes.tags} paged onResults={results => {
-                                // Either changed page or loaded for first time - clear bulk selects if there is any.
-                                if (this.state.bulkSelections) {
-                                    this.setState({ bulkSelections: null });
-                                }
+					<div className="media-center__list">
+						<Loop over={uploadApi} filter={combinedFilter} includes={uploadApi.includes.tags} paged onResults={results => {
+							// Either changed page or loaded for first time - clear bulk selects if there is any.
+							if (this.state.bulkSelections) {
+								this.setState({ bulkSelections: null });
+							}
 
-                                return results;
-                            }}>
-                                {this.renderEntry}
-                            </Loop>
-                        </div>
-                        {this.state.confirmDelete && this.renderConfirmDelete(selectedCount)}
-                        {this.state.uploadModal && this.renderUploadModal()}
-                    </div>
-                    <footer className="admin-page__footer">
-                        {selectedCount > 0 ? this.renderBulkOptions(selectedCount) : null}
-                        <button type="button" className="btn btn-primary" onClick={() => this.showUploadModal(UPLOAD_SINGLE)}>
-                            {`Upload`}
-                        </button>
-                        <button type="button" className="btn btn-primary" onClick={() => this.showUploadModal(UPLOAD_MULTIPLE)}>
-                            {`Bulk upload`}
-                        </button>
-                    </footer>
-                </div>
-            </div>
+							return results;
+						}}>
+							{this.renderEntry}
+						</Loop>
+					</div>
+					{this.state.confirmDelete && this.renderConfirmDelete(selectedCount)}
+					{this.state.uploadModal && this.renderUploadModal()}
+				</div>
+				<footer className="admin-page__footer">
+					{selectedCount > 0 ? this.renderBulkOptions(selectedCount) : null}
+					<button type="button" className="btn btn-primary" onClick={() => this.showUploadModal(UPLOAD_SINGLE)}>
+						{`Upload`}
+					</button>
+					<button type="button" className="btn btn-primary" onClick={() => this.showUploadModal(UPLOAD_MULTIPLE)}>
+						{`Bulk upload`}
+					</button>
+				</footer>
+			</div>
         </Default>;
     }
 }

@@ -4,6 +4,12 @@ using System.Collections.Generic;
 using Api.Permissions;
 using Api.Contexts;
 using Api.Eventing;
+using System.Text.RegularExpressions;
+using Api.CanvasRenderer;
+using Api.Pages;
+using System;
+using Api.Startup.Routing;
+using static Api.Pages.PageController;
 
 namespace Api.Payments
 {
@@ -13,16 +19,904 @@ namespace Api.Payments
 	/// </summary>
 	public partial class ProductAttributeService : AutoService<ProductAttribute>
     {
+		private ProductAttributeGroupService _groups;
+		private ProductAttributeValueService _attributeValues;
+
+		/// <summary>
+		/// The cached attribute tree. Use GetTree to obtain one instead of this directly.
+		/// </summary>
+		private AttributeGroupTree? _attributeTree;
+
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public ProductAttributeService() : base(Events.ProductAttribute)
+		public ProductAttributeService(ProductAttributeGroupService groups, ProductAttributeValueService attributeValues) : base(Events.ProductAttribute)
         {
+			_groups = groups;
+			_attributeValues = attributeValues;
+
 			// Example admin page install:
 			InstallAdminPages("Product Attributes", "fa:fa-rocket", new string[] { "id", "name" });
 
+			Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode canvas, Type contentType, AdminPageType pageType) =>
+			{
+				if (contentType == typeof(ProductAttribute) && pageType == AdminPageType.List)
+				{
+					canvas.Module = "Admin/Payments/ProductAttributeTree";
+				}
+
+				return new ValueTask<Page>(page);
+			});
+
+			// Install some default content.
+			Events.Service.AfterStart.AddEventListener(async (Context context, object svc) => {
+
+				// If it doesn't exist at all, it's created.
+				var groupLookup = await InstallDefaultGroups(
+					context,
+					new ProductAttributeGroup()
+					{
+						Name = "Physical Attributes",
+						Key = "physical"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Dimensions",
+						Key = "dimensions",
+						ParentGroupKey = "physical"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Weight",
+						Key = "weight",
+						ParentGroupKey = "physical"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Material & Build",
+						Key = "material_build",
+						ParentGroupKey = "physical"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Performance & Technicals",
+						Key = "performance_technicals"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Power & Energy",
+						Key = "power_energy",
+						ParentGroupKey = "performance_technicals"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Computing",
+						Key = "computing",
+						ParentGroupKey = "performance_technicals"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Mechanical",
+						Key = "mechanical",
+						ParentGroupKey = "performance_technicals"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Load Ranges",
+						Key = "load_ranges",
+						ParentGroupKey = "performance_technicals"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Chemical",
+						Key = "chemical",
+						ParentGroupKey = "performance_technicals"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Usage & Compatibility",
+						Key = "usage_compatibility"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Application",
+						Key = "application",
+						ParentGroupKey = "usage_compatibility"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Compatibility",
+						Key = "compatibility",
+						ParentGroupKey = "usage_compatibility"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Aesthetic & Style",
+						Key = "aesthetic_style"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Design",
+						Key = "design",
+						ParentGroupKey = "aesthetic_style"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Branding",
+						Key = "branding",
+						ParentGroupKey = "aesthetic_style"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Packaging & Logistics",
+						Key = "packaging_logistics"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Packaging",
+						Key = "packaging",
+						ParentGroupKey = "packaging_logistics"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Shipping",
+						Key = "shipping",
+						ParentGroupKey = "packaging_logistics"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Regulatory & Certifications",
+						Key = "regulatory_certifications"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Compliance",
+						Key = "compliance",
+						ParentGroupKey = "regulatory_certifications"
+					},
+					new ProductAttributeGroup()
+					{
+						Name = "Warranty",
+						Key = "warranty",
+						ParentGroupKey = "regulatory_certifications"
+					}
+				);
+
+				// Next, install default attributes. 
+				await InstallDefaults(context, groupLookup, 
+					new ProductAttribute {
+						Name = "Width",
+						ProductAttributeType = 1, // long
+						Units = "mm",
+						ProductAttributeGroupKey = "dimensions"
+					},
+					new ProductAttribute
+					{
+						Name = "Height",
+						ProductAttributeType = 2, // double
+						Units = "mm",
+						ProductAttributeGroupKey = "dimensions"
+					},
+					new ProductAttribute
+					{
+						Name = "Length",
+						ProductAttributeType = 2, // double
+						Units = "mm",
+						ProductAttributeGroupKey = "dimensions"
+					},
+					new ProductAttribute
+					{
+						Name = "Depth",
+						ProductAttributeType = 2, // double
+						Units = "mm",
+						ProductAttributeGroupKey = "dimensions"
+					},
+					new ProductAttribute
+					{
+						Name = "Net Weight",
+						ProductAttributeType = 2, // double
+						Units = "kg",
+						ProductAttributeGroupKey = "weight"
+					},
+					new ProductAttribute
+					{
+						Name = "Gross Weight",
+						ProductAttributeType = 2, // double
+						Units = "kg",
+						ProductAttributeGroupKey = "weight"
+					},
+					new ProductAttribute
+					{
+						Name = "Material",
+						ProductAttributeType = 3, // text (cotton, plastic, aluminium, ..)
+						Multiple = true,
+						ProductAttributeGroupKey = "material_build"
+					},
+					new ProductAttribute
+					{
+						Name = "Finish",
+						ProductAttributeType = 3, // text (glossy, matte, ..)
+						ProductAttributeGroupKey = "material_build"
+					},
+					new ProductAttribute
+					{
+						Name = "Colour",
+						ProductAttributeType = 3, // text (white, red, black, ..)
+						ProductAttributeGroupKey = "material_build"
+					},
+					new ProductAttribute
+					{
+						Name = "Texture",
+						ProductAttributeType = 3, // text (rough, smooth, ..)
+						ProductAttributeGroupKey = "material_build"
+					},
+					new ProductAttribute
+					{
+						Name = "Power Consumption",
+						ProductAttributeType = 2, // double
+						Units = "W",
+						ProductAttributeGroupKey = "power_energy"
+					},
+					new ProductAttribute
+					{
+						Name = "Voltage",
+						ProductAttributeType = 2, // double
+						Units = "V",
+						ProductAttributeGroupKey = "power_energy"
+					},
+					new ProductAttribute
+					{
+						Name = "Current",
+						ProductAttributeType = 2, // double
+						Units = "A",
+						ProductAttributeGroupKey = "power_energy"
+					},
+					new ProductAttribute
+					{
+						Name = "Battery Type",
+						ProductAttributeType = 3, // text (Lithium ion, ..)
+						ProductAttributeGroupKey = "power_energy"
+					},
+					new ProductAttribute
+					{
+						Name = "Battery Capacity",
+						ProductAttributeType = 2, // double
+						Units = "Ah",
+						ProductAttributeGroupKey = "power_energy"
+					},
+					new ProductAttribute
+					{
+						Name = "Energy Efficiency Rating",
+						ProductAttributeType = 3, // text (A, B, C, ..)
+						ProductAttributeGroupKey = "power_energy"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Processing Speed",
+						ProductAttributeType = 2, // double
+						Units = "GHz",
+						ProductAttributeGroupKey = "computing"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Storage Capacity",
+						ProductAttributeType = 2, // double
+						Units = "GB",
+						ProductAttributeGroupKey = "computing"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Acidity",
+						ProductAttributeType = 2, // double
+						Units = "pH",
+						ProductAttributeGroupKey = "chemical"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Rotor Speed",
+						ProductAttributeType = 2, // double
+						Units = "RPM",
+						RangeType = 2,
+						ProductAttributeGroupKey = "mechanical"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Cylinder count",
+						ProductAttributeType = 1, // long
+						ProductAttributeGroupKey = "mechanical"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Weight capacity",
+						ProductAttributeType = 2, // double
+						Units = "kg",
+						RangeType = 2,
+						ProductAttributeGroupKey = "load_ranges"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Usable Outdoors",
+						ProductAttributeType = 7, // bool
+						ProductAttributeGroupKey = "application"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Intended Use",
+						ProductAttributeType = 3, // string (bedroom, kitchen, ..)
+						Multiple = true,
+						ProductAttributeGroupKey = "application"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Target User",
+						ProductAttributeType = 3, // string (adults, pets, children, ..)
+						Multiple = true,
+						ProductAttributeGroupKey = "application"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Supported Platforms",
+						ProductAttributeType = 3, // string (PC, Nintendo Switch, Xbox One, ..)
+						Multiple = true,
+						ProductAttributeGroupKey = "compatibility"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Connection Types",
+						ProductAttributeType = 3, // string (USB-C, Bluetooth, ..)
+						Multiple = true,
+						ProductAttributeGroupKey = "compatibility"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Style",
+						ProductAttributeType = 3, // string (Modern, Rustic, ..)
+						ProductAttributeGroupKey = "design"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Pattern",
+						ProductAttributeType = 3, // string (Checkered, Dotted, ..)
+						ProductAttributeGroupKey = "design"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Brand Name",
+						ProductAttributeType = 3, // string (Apple, Nvidia, ..)
+						ProductAttributeGroupKey = "branding"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Logo Presence",
+						ProductAttributeType = 7, // boolean (yes, no)
+						ProductAttributeGroupKey = "branding"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Customizable",
+						ProductAttributeType = 7, // boolean (yes, no)
+						ProductAttributeGroupKey = "branding"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Package Width",
+						ProductAttributeType = 1, // long
+						Units = "mm",
+						ProductAttributeGroupKey = "packaging"
+					},
+					new ProductAttribute
+					{
+						Name = "Package Height",
+						ProductAttributeType = 2, // double
+						Units = "mm",
+						ProductAttributeGroupKey = "packaging"
+					},
+					new ProductAttribute
+					{
+						Name = "Package Length",
+						ProductAttributeType = 2, // double
+						Units = "mm",
+						ProductAttributeGroupKey = "packaging"
+					},
+
+					new ProductAttribute
+					{
+						Name = "Max Stack Height",
+						ProductAttributeType = 2, // double
+						Units = "m",
+						ProductAttributeGroupKey = "shipping"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Max Units Stacked",
+						ProductAttributeType = 1, // long
+						ProductAttributeGroupKey = "shipping"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Stack Load Limit",
+						ProductAttributeType = 2, // double
+						Units = "kg",
+						ProductAttributeGroupKey = "shipping"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Pallet Quantity",
+						ProductAttributeType = 1, // long
+						ProductAttributeGroupKey = "shipping"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Fragility",
+						ProductAttributeType = 7, // bool
+						ProductAttributeGroupKey = "shipping"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Explosive",
+						ProductAttributeType = 7, // bool
+						ProductAttributeGroupKey = "shipping"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Certifications",
+						ProductAttributeType = 3, // text (CE, FCC, ..)
+						ProductAttributeGroupKey = "compliance"
+					},
+					
+					new ProductAttribute
+					{
+						Name = "Country of Origin",
+						ProductAttributeType = 3, // text (United Kingdom, China, ..)
+						ProductAttributeGroupKey = "compliance"
+					},
+					
+					new ProductAttribute
+					{
+						// Just in case some warranties are in days or years - they're just different attributes.
+						Key = "warranty_period_months",
+						Name = "Warranty Period",
+						ProductAttributeType = 1, // long
+						Units = "months",
+						ProductAttributeGroupKey = "warranty"
+					}
+				);
+
+				Events.ProductAttribute.BeforeCreate.AddEventListener((Context context, ProductAttribute attrib) => {
+					if (attrib == null)
+					{
+						return new ValueTask<ProductAttribute>(attrib);
+					}
+
+					if (string.IsNullOrEmpty(attrib.Key))
+					{
+						attrib.Key = ToAttributeKey(attrib.Name);
+					}
+
+					return new ValueTask<ProductAttribute>(attrib);
+				});
+
+				Events.ProductAttribute.AfterCreate.AddEventListener(async (Context context, ProductAttribute attrib) => {
+					if (attrib == null)
+					{
+						return attrib;
+					}
+
+					// If it is a boolean (type 7) attribute, add the yes/ no values.
+					if (attrib.ProductAttributeType == 7)
+					{
+						await _attributeValues.Create(context, new ProductAttributeValue() {
+							Value = "Yes",
+							ProductAttributeId = attrib.Id
+						}, DataOptions.IgnorePermissions);
+						
+						await _attributeValues.Create(context, new ProductAttributeValue() {
+							Value = "No",
+							ProductAttributeId = attrib.Id
+						}, DataOptions.IgnorePermissions);
+					}
+
+					return attrib;
+				});
+
+				return svc;
+			});
+
 			Cache();
 		}
+
+		/// <summary>
+		/// Get the entire attribute group tree (hopefully from cache)
+		/// </summary>
+		/// <param name="ctx"></param>
+		/// <returns></returns>
+		public async Task<AttributeGroupTree> GetTree(Context ctx)
+		{
+			var tree = _attributeTree;
+
+			if (tree != null)
+			{
+				return tree.Value;
+			}
+
+			// Build a new one:
+			var newTree = await BuildAttributeGroupTree(ctx, true);
+
+			// Cache it:
+			_attributeTree = newTree;
+
+			return newTree;
+		}
+
+		/// <summary>
+		/// Build the flat database list into a nested group tree structure.
+		/// </summary>
+		/// <param name="ctx"></param>
+		/// <param name="includeAttributes"></param>
+		/// <returns></returns>
+		private async Task<AttributeGroupTree> BuildAttributeGroupTree(Context ctx, bool includeAttributes = false)
+		{
+			Log.Info("productcategory", "Building attribute group structure");
+
+			// get all groups 
+			var groups = await _groups.Where("", DataOptions.IgnorePermissions).ListAll(ctx);
+
+			// create lookup dictionaries
+			var lookup = new Dictionary<uint, ProductAttributeGroupNode>();
+			var lookupBySlug = new Dictionary<string, ProductAttributeGroupNode>();
+
+			foreach (var group in groups)
+			{
+				var node = new ProductAttributeGroupNode()
+				{
+					Group = group
+				};
+
+				lookup[group.Id] = node;
+				lookupBySlug[group.Key] = node;
+			}
+
+			List<ProductAttributeGroupNode> roots = new();
+
+			foreach (var cat in groups)
+			{
+				var node = lookup[cat.Id];
+
+				if (cat.ParentGroupId != 0 && lookup.TryGetValue(cat.ParentGroupId, out var parent))
+				{
+					node.Parent = parent;
+					parent.Children.Add(node);
+				}
+				else
+				{
+					roots.Add(node);
+				}
+			}
+
+			if (includeAttributes)
+			{
+				var attribs = await Where("", DataOptions.IgnorePermissions).ListAll(ctx);
+
+				// Attach attribs to groups
+				foreach (var attrib in attribs)
+				{
+					if (attrib.ProductAttributeGroupId != 0 && lookup.TryGetValue(attrib.ProductAttributeGroupId, out var attributeGroupNode))
+					{
+						var nodeProduct = new ProductAttributeNode
+						{
+							Attribute = attrib
+						};
+
+						attributeGroupNode.Attributes.Add(nodeProduct);
+					}
+				}
+			}
+
+			return new AttributeGroupTree()
+			{
+				IdLookup = lookup,
+				KeyLookup = lookupBySlug,
+				Roots = roots
+			};
+		}
+
+		/// <summary>
+		/// Gets a tree node for the admin panel at a given category slug path.
+		/// As category slugs are globally unique, only actually the last one is used 
+		/// (unless it is blank, in which case root categories are returned).
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public async ValueTask<TreeNodeDetail?> GetTreeNodeAtPath(Context context, string path)
+		{
+			var tree = await GetTree(context);
+
+			if (string.IsNullOrEmpty(path))
+			{
+				// Root of the tree.
+				var roots = tree.Roots;
+
+				var rootSet = new List<RouterNodeMetadata>();
+
+				if (roots != null)
+				{
+					foreach (var root in roots)
+					{
+						rootSet.Add(ConvertNode(root));
+					}
+				}
+
+				return new TreeNodeDetail()
+				{
+					Self = null,
+					Children = rootSet
+				};
+			}
+
+			if (path.EndsWith('/'))
+			{
+				path = path.Substring(0, path.Length - 1);
+			}
+
+			var lastSlash = path.LastIndexOf('/');
+
+			string slug;
+
+			if (lastSlash == -1)
+			{
+				slug = path;
+			}
+			else
+			{
+				slug = path.Substring(lastSlash + 1);
+			}
+
+			var lookup = tree.KeyLookup;
+
+			if (!lookup.TryGetValue(slug, out ProductAttributeGroupNode node))
+			{
+				// Not found.
+				return null;
+			}
+
+			var kids = node.Children;
+
+			var childSet = new List<RouterNodeMetadata>();
+
+			if (kids != null)
+			{
+				foreach (var child in kids)
+				{
+					childSet.Add(ConvertNode(child));
+				}
+			}
+
+			if (node.Attributes != null)
+			{
+				foreach (var attr in node.Attributes)
+				{
+					childSet.Add(ConvertNode(attr));
+				}
+			}
+
+			return new TreeNodeDetail()
+			{
+				Self = ConvertNode(node),
+				Children = childSet
+			};
+		}
+
+		/// <summary>
+		/// Builds an admin tree view compatible struct of metadata for the given attrib group node.
+		/// </summary>
+		/// <returns></returns>
+		private RouterNodeMetadata ConvertNode(ProductAttributeGroupNode node)
+		{
+			return new RouterNodeMetadata()
+			{
+				Type = "ProductAttributeGroup",
+				EditUrl = "/en-admin/productattributegroup/" + node.Group.Id,
+				ContentId = node.Group.Id,
+				Name = node.Group.Name,
+				ChildKey = node.Group.Key,
+				FullRoute = node.Group.Key,
+				HasChildren = (node.Children != null && node.Children.Count > 0) || (node.Attributes != null && node.Attributes.Count > 0)
+			};
+		}
+		
+		/// <summary>
+		/// Builds an admin tree view compatible struct of metadata for the given attrib node.
+		/// </summary>
+		/// <returns></returns>
+		private RouterNodeMetadata ConvertNode(ProductAttributeNode node)
+		{
+			return new RouterNodeMetadata()
+			{
+				Type = "ProductAttribute",
+				EditUrl = "/en-admin/productattribute/" + node.Attribute.Id,
+				ContentId = node.Attribute.Id,
+				Name = node.Attribute.Name,
+				ChildKey = node.Attribute.Key,
+				HasChildren = false // It may have values but they don't appear as children in the tree.
+			};
+		}
+
+		/// <summary>
+		/// Generates an attribute key from the given name.
+		/// </summary>
+		/// <param name="input"></param>
+		/// <returns></returns>
+		public string ToAttributeKey(string input)
+		{
+			if (string.IsNullOrWhiteSpace(input))
+				return string.Empty;
+
+			// Convert to lowercase
+			string result = input.ToLowerInvariant();
+
+			// Remove all non-alphanumeric characters except spaces
+			result = Regex.Replace(result, @"[^a-z0-9\s]", "");
+
+			// Replace one or more spaces with a single underscore
+			result = Regex.Replace(result, @"\s+", "_");
+
+			return result;
+		}
+
+		/// <summary>
+		/// Install default attributes.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="groups"></param>
+		/// <param name="attribs"></param>
+		/// <returns></returns>
+		private async ValueTask InstallDefaults(
+			Context context,
+			Dictionary<string, ProductAttributeGroup> groups,
+			params ProductAttribute[] attribs)
+		{
+			var all = await Where("", DataOptions.IgnorePermissions).ListAll(context);
+
+			// Build a key dict:
+			var lookup = new Dictionary<string, ProductAttribute>();
+
+			foreach (var entry in all)
+			{
+				if (string.IsNullOrEmpty(entry.Key))
+				{
+					continue;
+				}
+
+				lookup[entry.Key] = entry;
+			}
+
+			foreach (var attrib in attribs)
+			{
+				if (string.IsNullOrEmpty(attrib.Key))
+				{
+					attrib.Key = ToAttributeKey(attrib.Name);
+				}
+
+				if (lookup.ContainsKey(attrib.Key))
+				{
+					// It already exists.
+					continue;
+				}
+
+				// Create it but only if the group can be located.
+				if (
+					string.IsNullOrEmpty(attrib.ProductAttributeGroupKey) || 
+					!groups.TryGetValue(attrib.ProductAttributeGroupKey, out ProductAttributeGroup parent))
+				{
+					throw new System.Exception("Unable to install attribute '" + attrib.Name + "' as it has no identifiable parent group. " +
+						"Check that the ProductAttributeGroupKey is set and exists.");
+				}
+
+				attrib.ProductAttributeGroupId = parent.Id;
+				lookup[attrib.Key] = await Create(context, attrib, DataOptions.IgnorePermissions);
+			}
+
+		}
+
+		/// <summary>
+		/// Install default attribute groups.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="groups"></param>
+		/// <returns></returns>
+		private async ValueTask<Dictionary<string, ProductAttributeGroup>> InstallDefaultGroups(Context context, params ProductAttributeGroup[] groups)
+		{
+			// Get all current cats (fast - from the cache):
+			var all = await _groups.Where("", DataOptions.IgnorePermissions).ListAll(context);
+
+			// Build a key dict:
+			var lookup = new Dictionary<string, ProductAttributeGroup>();
+
+			foreach (var entry in all)
+			{
+				if (string.IsNullOrEmpty(entry.Key))
+				{
+					continue;
+				}
+
+				lookup[entry.Key] = entry;
+			}
+
+			foreach (var group in groups)
+			{
+				if (string.IsNullOrEmpty(group.Key))
+				{
+					group.Key = ToAttributeKey(group.Name);
+				}
+
+				if (lookup.ContainsKey(group.Key))
+				{
+					// It already exists.
+					continue;
+				}
+
+				// Creating it now. Get the parent first if it has one:
+				if (!string.IsNullOrEmpty(group.ParentGroupKey))
+				{
+					if (!lookup.TryGetValue(group.ParentGroupKey, out ProductAttributeGroup parent))
+					{
+						throw new System.Exception("Unable to install attribute groups: Please put parent groups in the array first. " +
+							"'" + group.Key + "' group tried to use parent '" + group.ParentGroupKey +  "' but it does not exist at this point.");
+					}
+
+					group.ParentGroupId = parent.Id;
+				}
+
+				lookup[group.Key] = await _groups.Create(context, group, DataOptions.IgnorePermissions);
+			}
+
+			return lookup;
+		}
 	}
-    
+
+	/// <summary>
+	/// The attribute tree.
+	/// </summary>
+	public struct AttributeGroupTree
+	{
+		/// <summary>
+		/// Roots of the tree.
+		/// </summary>
+		public List<ProductAttributeGroupNode> Roots;
+
+		/// <summary>
+		/// A lookup to a particular node in the tree.
+		/// </summary>
+		public Dictionary<uint, ProductAttributeGroupNode> IdLookup;
+
+		/// <summary>
+		/// A lookup to a particular node in the tree by unique key.
+		/// </summary>
+		public Dictionary<string, ProductAttributeGroupNode> KeyLookup;
+	}
+
 }

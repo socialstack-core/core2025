@@ -1,8 +1,10 @@
 using Api.Contexts;
 using Api.Startup;
+using Api.Startup.Routing;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using static Api.Pages.PageController;
 
 namespace Api.Payments
 {
@@ -37,6 +39,38 @@ namespace Api.Payments
 			}
 		}
 
+		/// <summary>
+		/// Gets information about a category tree node. The path is a 
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="location"></param>
+		/// <returns></returns>
+		/// <exception cref="PublicException"></exception>
+		[HttpPost("tree")]
+		public async ValueTask<TreeNodeDetail?> GetTreeNode(Context context, [FromBody] CategoryTreeLocation location)
+		{
+			return await GetTreeNodePath(context, location.Path);
+		}
+
+		/// <summary>
+		/// Gets information about a category tree node at a path defined by slug/slug/.. . 
+		/// Only actually the last slug matters.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		/// <exception cref="PublicException"></exception>
+		[HttpGet("tree")]
+		public async ValueTask<TreeNodeDetail?> GetTreeNodePath(Context context, [FromQuery] string path)
+		{
+			if (!context.Role.CanViewAdmin)
+			{
+				throw new PublicException("Admins only", "category_tree/admin_only");
+			}
+
+			return await (_service as ProductCategoryService).GetTreeNodeAtPath(context, path);
+		}
+		
 		/// <summary>
 		/// List the products for a category
 		/// </summary>
@@ -86,4 +120,16 @@ namespace Api.Payments
 		}
 
 	}
+
+	/// <summary>
+	/// A location in the category tree.
+	/// </summary>
+	public struct CategoryTreeLocation
+	{
+		/// <summary>
+		/// The path to resolve relative to. Empty string (not /) indicates root set.
+		/// </summary>
+		public string Path;
+	}
+
 }

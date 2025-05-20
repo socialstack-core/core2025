@@ -2154,7 +2154,7 @@ public partial class AutoService
 			}
 
 			// Nav menu also?
-			if (navMenuLabel != null)
+			if (!string.IsNullOrEmpty(navMenuLabel))
 			{
 				var navMenuItemService = Api.Startup.Services.Get("AdminNavMenuItemService");
 

@@ -1,6 +1,6 @@
 import { useTokens } from 'UI/Token';
 import AutoForm from 'Admin/AutoForm';
-import Default from 'Admin/Layouts/Default';
+import Default from 'Admin/Templates/BaseAdminTemplate';
 
 interface AutoFormProps {
 	// parent
@@ -31,54 +31,11 @@ interface AutoFormProps {
 	previousPageName?: string
 }
 
-interface AutoEditProps extends AutoFormProps {
-	/**
-	 * A string which can contain tokens, such as ${primary.id}.
-	 */
-	id: string,
-
-	/**
-	 * Optional react node to display before the form.
-	 */
-	afterForm?: React.ReactNode,
-
-	/**
-	 * Optional react node to display after the form.
-	 */
-	beforeForm?: React.ReactNode,
-
-	/**
-	 * A function which is given the ID of what is being displayed and returns a react node.
-	 * The react content is displayed at the same location as beforeForm.
-	 * @param id
-	 * @returns
-	 */
-	beforeFormFunc?: (id:string) => React.ReactNode,
-};
-
-const AutoEdit: React.FC<React.PropsWithChildren<AutoEditProps>> = ({ children, ...props }) => {
-	var id = useTokens(props.id) as string;
-
+const AutoEdit: React.FC<React.PropsWithChildren<AutoFormProps>> = ({ children, ...props }) => {
 	return <Default>
-		{props.beforeFormFunc && props.beforeFormFunc(id)}
-		{props.beforeForm}
-		<AutoForm {...props} id={id}>
-			{props.afterForm}
-		</AutoForm>
+		<AutoForm {...props} />
 		{children}
 	</Default>;
 };
 
 export default AutoEdit;
-
-/*
-AutoEdit.propTypes = {
-	children: true,
-	id: 'token',
-	beforeForm:'jsx',
-	afterForm: 'jsx',
-	endpoint: 'string',
-	deletePage: 'string',
-	showExportButton: 'bool'
-};
-*/

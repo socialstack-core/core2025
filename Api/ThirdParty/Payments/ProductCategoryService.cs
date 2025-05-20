@@ -10,6 +10,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using System;
+using static Api.Pages.PageController;
+using Api.Startup.Routing;
 
 namespace Api.Payments
 {
@@ -26,6 +28,8 @@ namespace Api.Payments
 		/// </summary>
 		private CategoryTree? _categoryTree;
 
+		private PermalinkService _permalinks;
+
 		/// <summary>
 		/// Get the cached lookup table (and rebuild if necessary)
 		/// </summary>
@@ -34,7 +38,7 @@ namespace Api.Payments
 		protected async Task<Dictionary<uint, ProductCategoryNode>> GetLookup(Context ctx)
 		{
 			var tree = await GetTree(ctx);
-			return tree.Lookup;
+			return tree.IdLookup;
 		}
 
 		/// <summary>
@@ -42,6 +46,7 @@ namespace Api.Payments
 		/// </summary>
 		public ProductCategoryService(ProductService productService, PageService pages, PermalinkService permalinks) : base(Events.ProductCategory)
         {
+			_permalinks = permalinks;
 			_productService = productService;
 
 			// Example admin page install:
@@ -98,6 +103,10 @@ namespace Api.Payments
 				// build the initial memory structure 
 				await GetTree(ctx);
 
+				// Permalink sync (dev only: this is only necessary if you made a big edit outside of SS)
+				// await _productService.SyncPermalinks(ctx);
+				// await SyncPermalinks(ctx);
+
 				return new ValueTask<object>(sender);
 			});
 
@@ -112,16 +121,16 @@ namespace Api.Payments
 				return update;
 			});
 
-			Events.ProductCategory.AfterCreate.AddEventListener(async (Context ctx, ProductCategory productCategory) =>
+			Events.ProductCategory.AfterCreate.AddEventListener((Context ctx, ProductCategory productCategory) =>
 			{
 				_categoryTree = null;
-				return productCategory;
+				return new ValueTask<ProductCategory>(productCategory);
 			});
 
-			Events.ProductCategory.AfterUpdate.AddEventListener(async (Context ctx, ProductCategory productCategory) =>
+			Events.ProductCategory.AfterUpdate.AddEventListener((Context ctx, ProductCategory productCategory) =>
 			{
 				_categoryTree = null;
-				return productCategory;
+				return new ValueTask<ProductCategory>(productCategory);
 			});
 
 			Events.ProductCategory.AfterDelete.AddEventListener(async (Context ctx, ProductCategory productCategory) =>
@@ -159,12 +168,11 @@ namespace Api.Payments
 				// If a specific page for this category exists, it will ultimately pick that.
 				var linkTarget = permalinks.CreatePrimaryTargetLocator(this, category);
 
-				// Todo: collision avoidance
 				await permalinks.Create(
 					context, 
 					new Permalink()
 					{
-						Url = "/category/" + category.Slug,
+						Url = GetInitialProductCategoryUrl(category),
 						Target = linkTarget
 					},
 					DataOptions.IgnorePermissions
@@ -174,6 +182,44 @@ namespace Api.Payments
 			});
 
 			Cache();
+		}
+
+		/// <summary>
+		/// A convenience brute-force method for ensuring that all required permalinks exist.
+		/// Best used after a major database edit (such as importing outside of SS).
+		/// </summary>
+		/// <returns></returns>
+		public async ValueTask SyncPermalinks(Context context)
+		{
+			var all = await Where("", DataOptions.IgnorePermissions).ListAll(context);
+			var links = new List<PermalinkUrlTarget>();
+
+			foreach (var category in all)
+			{
+				// Permalink target which will be for whichever page wants to handle a product category as its primary content.
+				// If a specific page for this category exists, it will ultimately pick that.
+				var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, category);
+
+				var permalinkInfo = new PermalinkUrlTarget()
+				{
+					Url = GetInitialProductCategoryUrl(category),
+					Target = linkTarget
+				};
+
+				links.Add(permalinkInfo);
+			}
+
+			await _permalinks.BulkCreate(context, links);
+		}
+
+		/// <summary>
+		/// Use the primaryUrl system instead of calling this directly.
+		/// </summary>
+		/// <param name="category"></param>
+		/// <returns></returns>
+		private string GetInitialProductCategoryUrl(ProductCategory category)
+		{
+			return "/category/" + category.Slug;
 		}
 
 		/// <summary>
@@ -228,6 +274,128 @@ namespace Api.Payments
 			}
 
 			return null;
+		}
+
+		/// <summary>
+		/// Gets a tree node for the admin panel at a given category slug path.
+		/// As category slugs are globally unique, only actually the last one is used 
+		/// (unless it is blank, in which case root categories are returned).
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public async ValueTask<TreeNodeDetail?> GetTreeNodeAtPath(Context context, string path)
+		{
+			var tree = await GetTree(context);
+
+			if (string.IsNullOrEmpty(path))
+			{
+				// Root of the tree.
+				var roots = tree.Roots;
+
+				var rootSet = new List<RouterNodeMetadata>();
+
+				if (roots != null)
+				{
+					foreach (var root in roots)
+					{
+						rootSet.Add(ConvertNode(root));
+					}
+				}
+
+				return new TreeNodeDetail() {
+					Self = null,
+					Children = rootSet
+				};
+			}
+
+			if (path.EndsWith('/'))
+			{
+				path = path.Substring(0, path.Length - 1);
+			}
+
+			var lastSlash = path.LastIndexOf('/');
+
+			string catSlug;
+
+			if (lastSlash == -1)
+			{
+				catSlug = path;
+			}
+			else
+			{
+				catSlug = path.Substring(lastSlash + 1);
+			}
+
+			var lookup = tree.SlugLookup;
+
+			if (!lookup.TryGetValue(catSlug, out ProductCategoryNode node))
+			{
+				// Not found.
+				return null;
+			}
+
+			var kids = node.Children;
+
+			var childSet = new List<RouterNodeMetadata>();
+
+			if (kids != null)
+			{
+				foreach (var child in kids)
+				{
+					childSet.Add(ConvertNode(child));
+				}
+			}
+
+			var products = node.Products;
+
+			if (products != null)
+			{
+				foreach (var child in products)
+				{
+					childSet.Add(ConvertNode(child));
+				}
+			}
+
+			return new TreeNodeDetail()
+			{
+				Self = ConvertNode(node),
+				Children = childSet
+			};
+		}
+
+		/// <summary>
+		/// Builds an admin tree view compatible struct of metadata for the given category node.
+		/// </summary>
+		/// <returns></returns>
+		private RouterNodeMetadata ConvertNode(ProductCategoryNode node)
+		{
+			return new RouterNodeMetadata() {
+				Type = "ProductCategory",
+				EditUrl = "/en-admin/productcategory/" + node.Category.Id,
+				ContentId = node.Category.Id,
+				Name = node.Category.Name,
+				FullRoute = node.Category.Slug,
+				ChildKey = node.Category.Slug,
+				HasChildren = node.Children != null && node.Children.Count > 0
+			};
+		}
+		
+		/// <summary>
+		/// Builds an admin tree view compatible struct of metadata for the given product node.
+		/// </summary>
+		/// <returns></returns>
+		private RouterNodeMetadata ConvertNode(ProductNode node)
+		{
+			return new RouterNodeMetadata() {
+				Type = "Product",
+				EditUrl = "/en-admin/product/" + node.Product.Id,
+				ContentId = node.Product.Id,
+				Name = node.Product.Name,
+				FullRoute = node.Product.Slug,
+				ChildKey = node.Product.Slug,
+				HasChildren = false
+			};
 		}
 
 		/// <summary>
@@ -287,7 +455,7 @@ namespace Api.Payments
 			}
 
 			// Build a new one:
-			var newTree = await BuildCategoryTree(ctx);
+			var newTree = await BuildCategoryTree(ctx, true);
 
 			// Cache it:
 			_categoryTree = newTree;
@@ -351,14 +519,18 @@ namespace Api.Payments
 			// get all categories 
 			var categories = await Where("", DataOptions.IgnorePermissions).ListAll(ctx);
 
-			// create a quick lookup dictionary
+			// create lookup dictionaries
 			var lookup = new Dictionary<uint, ProductCategoryNode>();
+			var lookupBySlug = new Dictionary<string, ProductCategoryNode>();
 
 			foreach (var category in categories)
 			{
-				lookup[category.Id] = new ProductCategoryNode() {
+				var node = new ProductCategoryNode() {
 					Category = category
 				};
+
+				lookup[category.Id] = node;
+				lookupBySlug[category.Slug] = node;
 			}
 
 			List<ProductCategoryNode> roots = new();
@@ -383,9 +555,6 @@ namespace Api.Payments
 			{
 				SetNodeSlugs(category);
 			}
-
-			// build a lookup table now we have all the nodes expanded
-			var catLookup = BuildCategoryLookup(roots);
 
 			if (includeProducts)
 			{
@@ -416,42 +585,11 @@ namespace Api.Payments
 			}
 
 			return new CategoryTree() {
-				Lookup = catLookup,
+				IdLookup = lookup,
+				SlugLookup = lookupBySlug,
 				Roots = roots
 			};
 		}
-
-
-		/// <summary>
-		/// Extract the product categories into a lookup table
-		/// </summary>
-		/// <param name="roots"></param>
-		/// <returns></returns>
-		private Dictionary<uint, ProductCategoryNode> BuildCategoryLookup(List<ProductCategoryNode> roots)
-		{
-			var lookup = new Dictionary<uint, ProductCategoryNode>();
-
-			void Traverse(ProductCategoryNode node)
-			{
-				if (!lookup.ContainsKey(node.Category.Id))
-				{
-					lookup[node.Category.Id] = node;
-
-					foreach (var child in node.Children)
-					{
-						Traverse(child);
-					}
-				}
-			}
-
-			foreach (var root in roots)
-			{
-				Traverse(root);
-			}
-
-			return lookup;
-		}
-
 
 		/// <summary>
 		/// Extract the full path of a category node
@@ -555,7 +693,12 @@ namespace Api.Payments
 		/// <summary>
 		/// A lookup to a particular node in the tree.
 		/// </summary>
-		public Dictionary<uint, ProductCategoryNode> Lookup;
+		public Dictionary<uint, ProductCategoryNode> IdLookup;
+
+		/// <summary>
+		/// A lookup to a particular node in the tree by slug.
+		/// </summary>
+		public Dictionary<string, ProductCategoryNode> SlugLookup;
 	}
     
 }

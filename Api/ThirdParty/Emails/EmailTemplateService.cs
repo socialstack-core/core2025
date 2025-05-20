@@ -19,6 +19,7 @@ using Api.Users;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Api.Translate;
+using Api.Pages;
 
 namespace Api.Emails
 {
@@ -40,12 +41,15 @@ namespace Api.Emails
 
 		private readonly UserService _users;
 
+		private readonly PageService _pages;
+
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public EmailTemplateService(CanvasRendererService canvasRendererService, UserService users, RoleService roles) : base(Events.EmailTemplate)
+		public EmailTemplateService(CanvasRendererService canvasRendererService, UserService users, RoleService roles, PageService pages) : base(Events.EmailTemplate)
 		{
 			_users = users;
+			_pages = pages;
 			_canvasRendererService = canvasRendererService;
 			_configuration = GetConfig<EmailConfig>();
 			
@@ -166,6 +170,31 @@ namespace Api.Emails
 				
 				toSend.Handled = true;
 				return toSend;
+			});
+
+			_pages.Install(new Page() {
+				Url = "/en-admin/email/test",
+				Key = "admin_email_test",
+				Title = "Send a test email",
+				BodyJson = @"{
+					""c"": {
+						""t"": ""Admin/Templates/BaseAdminTemplate"",
+						""c"": {
+							""t"": ""Admin/Tile"",
+							""d"": {
+								""className"": ""email-test"",
+								""title"": ""Email Test""
+							},
+							""c"": {
+								""t"": ""Admin/Email/EmailTest"",
+						        ""i"": 2
+							},
+							""i"": 3
+						},
+						""i"": 4
+					},
+					""i"": 5
+				}"
 			});
 
 			InstallEmails(

@@ -381,6 +381,7 @@ export default function CanvasEditor (props) {
 					}
 				}}
 				breadcrumbs={props.breadcrumbs}
+				primaryUrl={props.primaryUrl}
 				leftPanel={() => {
 					return renderStructure(canvasState, (node) => {
 						

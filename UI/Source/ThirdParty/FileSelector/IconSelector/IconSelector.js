@@ -7,7 +7,7 @@ import Row from 'UI/Row';
 import Loading from 'UI/Loading';
 import Spacer from 'UI/Spacer';
 import Debounce from 'UI/Functions/Debounce';
-import webRequest from 'UI/Functions/WebRequest';
+import {getJson} from 'UI/Functions/WebRequest';
 import * as fileRef from 'UI/FileRef';
 
 let icons = [];
@@ -32,12 +32,12 @@ export default class IconSelector extends React.Component {
 			var styles = [{name: `All`, key: 'all'},{name:`Regular`, key: 'regular', prefix: 'far'}, {name:`Solid`, key: 'solid', prefix: 'fas'}, {name: `Brands`, key: 'brands', prefix: 'fab'}];
 			var sets = [{name: `All`, key: 'all'}, {name: `Default (FontAwesome)`, key: 'default'}];
 			
-			var proms = [webRequest(fileRef.getUrl(faIconsRef))];
+			var proms = [getJson(fileRef.getUrl(faIconsRef))];
 			
 			if(global.customIcons){
 				global.customIcons.forEach(ci => {
-					proms.push(webRequest(fileRef.getUrl(ci.listRef)).then(response=>{
-						response.json.forEach(icon => {
+					proms.push(getJson(fileRef.getUrl(ci.listRef)).then(response=>{
+						response.forEach(icon => {
 							if(ci.prefix){
 								icon.prefix = ci.prefix;
 							}
@@ -56,7 +56,7 @@ export default class IconSelector extends React.Component {
 			
 			Promise.all(proms).then(responses => {
 				icons = [];
-				responses.forEach(r => icons=icons.concat(r.json));
+				responses.forEach(r => icons=icons.concat(r));
 				iconStyles = styles;
 				iconSets = sets;
 				this.setState({icons});
@@ -132,8 +132,7 @@ export default class IconSelector extends React.Component {
 				{this.renderHeader()}
 				<div className="icon-container">
 					<Loop
-						raw
-						over={icons}
+						source={() => new Promise((s, r) => s({results: icons}))}
 						orNone={() => <Loading />}
 					>
 						{icon => {

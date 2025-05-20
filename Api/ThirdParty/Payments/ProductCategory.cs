@@ -31,7 +31,8 @@ namespace Api.Payments
         /// The slug for product category
         /// </summary>
         [DatabaseField(Length = 1000)]
-        public string Slug;
+		[Data("readonly", true)]
+		public string Slug;
 
         /// <summary>
         /// The description of this product category.
