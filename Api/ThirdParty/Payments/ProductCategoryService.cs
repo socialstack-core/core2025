@@ -347,6 +347,16 @@ namespace Api.Payments
 				}
 			}
 
+			var products = node.Products;
+
+			if (products != null)
+			{
+				foreach (var child in products)
+				{
+					childSet.Add(ConvertNode(child));
+				}
+			}
+
 			return new TreeNodeDetail()
 			{
 				Self = ConvertNode(node),
@@ -368,6 +378,23 @@ namespace Api.Payments
 				FullRoute = node.Category.Slug,
 				ChildKey = node.Category.Slug,
 				HasChildren = node.Children != null && node.Children.Count > 0
+			};
+		}
+		
+		/// <summary>
+		/// Builds an admin tree view compatible struct of metadata for the given product node.
+		/// </summary>
+		/// <returns></returns>
+		private RouterNodeMetadata ConvertNode(ProductNode node)
+		{
+			return new RouterNodeMetadata() {
+				Type = "Product",
+				EditUrl = "/en-admin/product/" + node.Product.Id,
+				ContentId = node.Product.Id,
+				Name = node.Product.Name,
+				FullRoute = node.Product.Slug,
+				ChildKey = node.Product.Slug,
+				HasChildren = false
 			};
 		}
 
