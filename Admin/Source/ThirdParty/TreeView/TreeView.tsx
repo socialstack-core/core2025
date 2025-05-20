@@ -60,7 +60,7 @@ export default function TreeView(props) {
 
 						return <tr>
 							<td>
-								<h4>{fileName}</h4>
+								<h4><Link href={file.editUrl}>{fileName}</Link></h4>
 								<h6>{file.name}</h6>
 							</td>
 						</tr>
