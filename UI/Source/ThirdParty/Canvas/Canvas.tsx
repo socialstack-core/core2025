@@ -44,15 +44,41 @@ interface CanvasProps {
 	onContentNode?: (node : CanvasNode) => void
 }
 
+interface CanvasDataStore {
+	fields: Record<string, any>
+}
+
 /**
  * This component renders canvas JSON. It takes canvas JSON as its child.
  */
 const Canvas: React.FC<CanvasProps> = (props) => {
 
+	// Stores general use data fields.
+	const [canvasDataStore, setCanvasDataStore] = useState<CanvasDataStore>(() => {
+		return { fields: {} }
+	});
 	const [content, setContent] = useState(() => loadJson(props));
 
+	const setDataStoreField = (name: string, value: any) => {
+		const newData = { ...canvasDataStore };
+		newData.fields[name] = value;
+		setCanvasDataStore(newData);
+	};
+
+	const getDataStoreField = (name: string): any => {
+		return canvasDataStore.fields[name];
+	};
+
 	useEffect(() => {
-		setContent(loadJson(props));
+		const rootJson = loadJson(props);
+
+		if (content != rootJson) {
+			setCanvasDataStore({
+				fields: rootJson.dataStore || {}
+			});
+			setContent(rootJson);
+		}
+
 	}, [props.bodyJson, props.children]);
 
 	const renderNodeSet = (set: CanvasNode[]) => {
@@ -101,6 +127,13 @@ const Canvas: React.FC<CanvasProps> = (props) => {
 			// Custom component
 			var props = { ...node.props };
 			const NodeType = node.type as React.ElementType;
+
+			if (node.links) {
+				for (var k in node.links) {
+					var link = node.links[k];
+					props[k] = link.write ? (val: any) => setDataStoreField(link.field, val) : getDataStoreField(link.field);
+				}
+			}
 
 			if (node.roots) {
 				var children = null;

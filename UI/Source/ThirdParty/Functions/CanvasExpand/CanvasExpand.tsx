@@ -64,6 +64,11 @@ export interface CanvasNode {
 	text?: string,
 
 	/**
+	 * Canvas data store links. They are handled when the canvas is rendered. If write is omitted, false is assumed.
+	 */
+	links?: Record<string, CanvasDataStoreLink>,
+
+	/**
 	 * Used as an identifier to spot already expanded canvas nodes.
 	 */
 	expanded?: boolean,
@@ -76,7 +81,24 @@ export interface CanvasNode {
 	/**
 	 * Optionally used to force a canvas node to display without fake newlines.
 	 */
-	isInline?:boolean
+	isInline?: boolean,
+
+	/**
+	 * Generic data store.
+	 */
+	dataStore?: any
+}
+
+export interface CanvasDataStoreLink {
+	/**
+	 * The name of the canvas data store field to read or write to.
+	 */
+	field: string,
+	/**
+	 * True if this link will write to the field. If omitted, false is assumed.
+	 * The prop is a function which the component invokes with 1 argument (the value to write).
+	 */
+	write?: boolean
 }
 
 function readMap(dataMap : any[], ptr : number){
@@ -192,7 +214,11 @@ function convertToNodesFromCanvas(node : any, onContentNode? : (node : CanvasNod
 		// a root node
 		loadCanvasChildren(node, result, onContentNode, dataMap);
 	}
-	
+
+	if (node.l) {
+		result.links = node.l;
+	}
+
 	if(node.g){
 		throw new Error('Unexpanded graph');
 	}
@@ -276,6 +302,11 @@ export function expand(contentNode : any, onContentNode?: (node: CanvasNode) => 
 
 	if (res) {
 		res.expanded = true;
+
+		// It's the root node so it has a data store too.
+		// cds (canvas data store) can be initialised by the server but isn't at the moment.
+		// The initialisation process is an eventual typescript.net replacement for the graph system.
+		res.dataStore = contentNode.cds || {};
 	}
 
 	return res;
