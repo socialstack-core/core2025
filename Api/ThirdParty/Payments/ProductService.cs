@@ -7,6 +7,7 @@ using Api.Eventing;
 using Api.Startup;
 using System;
 using Api.Pages;
+using Api.CanvasRenderer;
 
 namespace Api.Payments
 {
@@ -56,6 +57,16 @@ namespace Api.Payments
 
                 return new ValueTask<JsonField<Product, uint>>(field);
             });
+
+			Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode canvas, Type contentType, AdminPageType pageType) =>
+			{
+				if (contentType == typeof(Product) && pageType == AdminPageType.List)
+				{
+					canvas.Module = "Admin/Payments/ProductCategoryTree";
+				}
+
+				return new ValueTask<Page>(page);
+			});
 
 			pages.Install(
 				// Install a default primary product category page.

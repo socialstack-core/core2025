@@ -10,6 +10,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using System;
+using static Api.Pages.PageController;
+using Api.Startup.Routing;
 
 namespace Api.Payments
 {
@@ -36,7 +38,7 @@ namespace Api.Payments
 		protected async Task<Dictionary<uint, ProductCategoryNode>> GetLookup(Context ctx)
 		{
 			var tree = await GetTree(ctx);
-			return tree.Lookup;
+			return tree.IdLookup;
 		}
 
 		/// <summary>
@@ -275,6 +277,101 @@ namespace Api.Payments
 		}
 
 		/// <summary>
+		/// Gets a tree node for the admin panel at a given category slug path.
+		/// As category slugs are globally unique, only actually the last one is used 
+		/// (unless it is blank, in which case root categories are returned).
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public async ValueTask<TreeNodeDetail?> GetTreeNodeAtPath(Context context, string path)
+		{
+			var tree = await GetTree(context);
+
+			if (string.IsNullOrEmpty(path))
+			{
+				// Root of the tree.
+				var roots = tree.Roots;
+
+				var rootSet = new List<RouterNodeMetadata>();
+
+				if (roots != null)
+				{
+					foreach (var root in roots)
+					{
+						rootSet.Add(ConvertNode(root));
+					}
+				}
+
+				return new TreeNodeDetail() {
+					Self = null,
+					Children = rootSet
+				};
+			}
+
+			if (path.EndsWith('/'))
+			{
+				path = path.Substring(0, path.Length - 1);
+			}
+
+			var lastSlash = path.LastIndexOf('/');
+
+			string catSlug;
+
+			if (lastSlash == -1)
+			{
+				catSlug = path;
+			}
+			else
+			{
+				catSlug = path.Substring(lastSlash + 1);
+			}
+
+			var lookup = tree.SlugLookup;
+
+			if (!lookup.TryGetValue(catSlug, out ProductCategoryNode node))
+			{
+				// Not found.
+				return null;
+			}
+
+			var kids = node.Children;
+
+			var childSet = new List<RouterNodeMetadata>();
+
+			if (kids != null)
+			{
+				foreach (var child in kids)
+				{
+					childSet.Add(ConvertNode(child));
+				}
+			}
+
+			return new TreeNodeDetail()
+			{
+				Self = ConvertNode(node),
+				Children = childSet
+			};
+		}
+
+		/// <summary>
+		/// Builds an admin tree view compatible struct of metadata for the given category node.
+		/// </summary>
+		/// <returns></returns>
+		private RouterNodeMetadata ConvertNode(ProductCategoryNode node)
+		{
+			return new RouterNodeMetadata() {
+				Type = "ProductCategory",
+				EditUrl = "/en-admin/productcategory/" + node.Category.Id,
+				ContentId = node.Category.Id,
+				Name = node.Category.Name,
+				FullRoute = node.Category.Slug,
+				ChildKey = node.Category.Slug,
+				HasChildren = node.Children != null && node.Children.Count > 0
+			};
+		}
+
+		/// <summary>
 		/// Get any parents for a product category node
 		/// </summary>
 		/// <param name="ctx"></param>
@@ -331,7 +428,7 @@ namespace Api.Payments
 			}
 
 			// Build a new one:
-			var newTree = await BuildCategoryTree(ctx);
+			var newTree = await BuildCategoryTree(ctx, true);
 
 			// Cache it:
 			_categoryTree = newTree;
@@ -395,14 +492,18 @@ namespace Api.Payments
 			// get all categories 
 			var categories = await Where("", DataOptions.IgnorePermissions).ListAll(ctx);
 
-			// create a quick lookup dictionary
+			// create lookup dictionaries
 			var lookup = new Dictionary<uint, ProductCategoryNode>();
+			var lookupBySlug = new Dictionary<string, ProductCategoryNode>();
 
 			foreach (var category in categories)
 			{
-				lookup[category.Id] = new ProductCategoryNode() {
+				var node = new ProductCategoryNode() {
 					Category = category
 				};
+
+				lookup[category.Id] = node;
+				lookupBySlug[category.Slug] = node;
 			}
 
 			List<ProductCategoryNode> roots = new();
@@ -427,9 +528,6 @@ namespace Api.Payments
 			{
 				SetNodeSlugs(category);
 			}
-
-			// build a lookup table now we have all the nodes expanded
-			var catLookup = BuildCategoryLookup(roots);
 
 			if (includeProducts)
 			{
@@ -460,42 +558,11 @@ namespace Api.Payments
 			}
 
 			return new CategoryTree() {
-				Lookup = catLookup,
+				IdLookup = lookup,
+				SlugLookup = lookupBySlug,
 				Roots = roots
 			};
 		}
-
-
-		/// <summary>
-		/// Extract the product categories into a lookup table
-		/// </summary>
-		/// <param name="roots"></param>
-		/// <returns></returns>
-		private Dictionary<uint, ProductCategoryNode> BuildCategoryLookup(List<ProductCategoryNode> roots)
-		{
-			var lookup = new Dictionary<uint, ProductCategoryNode>();
-
-			void Traverse(ProductCategoryNode node)
-			{
-				if (!lookup.ContainsKey(node.Category.Id))
-				{
-					lookup[node.Category.Id] = node;
-
-					foreach (var child in node.Children)
-					{
-						Traverse(child);
-					}
-				}
-			}
-
-			foreach (var root in roots)
-			{
-				Traverse(root);
-			}
-
-			return lookup;
-		}
-
 
 		/// <summary>
 		/// Extract the full path of a category node
@@ -599,7 +666,12 @@ namespace Api.Payments
 		/// <summary>
 		/// A lookup to a particular node in the tree.
 		/// </summary>
-		public Dictionary<uint, ProductCategoryNode> Lookup;
+		public Dictionary<uint, ProductCategoryNode> IdLookup;
+
+		/// <summary>
+		/// A lookup to a particular node in the tree by slug.
+		/// </summary>
+		public Dictionary<string, ProductCategoryNode> SlugLookup;
 	}
     
 }
