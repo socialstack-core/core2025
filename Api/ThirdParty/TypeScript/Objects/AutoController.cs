@@ -1,0 +1,196 @@
+﻿using System;
+using System.Text;
+using Api.Startup;
+using Newtonsoft.Json.Linq;
+
+namespace Api.TypeScript.Objects
+{
+    /// <summary>
+    /// Generates a TypeScript controller class that mirrors an auto-generated .NET controller.
+    /// </summary>
+    /// <remarks>
+    /// This class dynamically generates TypeScript code for an <c>AutoController</c> that includes methods
+    /// corresponding to server-side endpoints.
+    /// <para>
+    /// Each endpoint method reflects return types and parameters and handles serialization of session state,
+    /// data payloads, and includes (expansion of nested fields).
+    /// </para>
+    /// The resulting TypeScript controller exposes a familiar structure to frontend developers consuming the API.
+    /// </remarks>
+    public partial class AutoController : AbstractTypeScriptObject
+    {
+        private ESModule _container;
+
+        /// <summary>
+        /// Constructs a new <see cref="AutoController"/> instance, ensuring all required Web API modules
+        /// are registered in the container.
+        /// </summary>
+        /// <param name="container">
+        /// The <see cref="ESModule"/> container responsible for aggregating all generated TypeScript components.
+        /// </param>
+        /// <remarks>
+        /// This constructor scans endpoint methods for required Web API types and registers them with the container.
+        /// </remarks>
+        public AutoController(ESModule container)
+        {
+            // Ensure the generic controller type exists.
+            container.AddType(typeof(AutoController<,>));
+            _container = container;
+
+            // Scan for used WebApis and ensure they're available.
+            foreach (var method in GetEndpointMethods())
+            {
+                var isArrayType = method.IsApiList;
+
+                if (isArrayType)
+                {
+                    if (method.TrueReturnType.Name == "T")
+                    {
+                        _container.RequireWebApi(WebApis.GetList);
+                    }
+                    else
+                    {
+                        _container.RequireWebApi(WebApis.GetJson);
+                    }
+                }
+                else
+                {
+                    _container.RequireWebApi(WebApis.GetOne);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Appends the generated TypeScript class for the controller, including endpoint methods.
+        /// </summary>
+        /// <param name="builder">The <see cref="StringBuilder"/> to append generated TypeScript source code to.</param>
+        /// <param name="svc">A <see cref="TypeScriptService"/> that provides type formatting and naming utilities.</param>
+        /// <remarks>
+        /// Generates a generic <c>AutoController&lt;T, ID&gt;</c> TypeScript class with methods mapped from backend endpoints.
+        /// Each method supports session binding, request parameters, and optional includes for field expansion.
+        /// </remarks>
+        public override void ToSource(StringBuilder builder, TypeScriptService svc)
+        {
+            builder.AppendLine();
+            builder.AppendLine("export class AutoController<T extends Content<uint>, ID> {");
+
+            builder.AppendLine();
+            builder.AppendLine("    protected apiUrl: string;");
+            builder.AppendLine();
+            builder.AppendLine("    public includes: ApiIncludes;");
+
+            builder.AppendLine("    constructor(baseUrl: string = '') {");
+            builder.AppendLine("        this.apiUrl = baseUrl;");
+            builder.AppendLine("        this.includes = new ApiIncludes();");
+            builder.AppendLine("    }");
+
+            // Generate methods for each controller endpoint
+            foreach (var method in GetEndpointMethods())
+            {
+                var isArrayType = method.IsApiList;
+
+                builder.AppendLine();
+                builder.AppendLine("    /**");
+                builder.AppendLine("     * Generated from a .NET type.");
+                builder.AppendLine($"     * @see {{T}}::{{{method.Method.Name}}}");
+                builder.AppendLine($"     * @url '{method.RequestUrl}'");
+                builder.AppendLine("     */");
+                builder.Append($"    {TypeScriptService.LcFirst(method.Method.Name)} = (");
+
+                // Parameter list generation
+                int paramCount = 0;
+                if (method.RequiresSessionSet)
+                {
+                    builder.Append("setSession: (s: SessionResponse) => Session");
+                    paramCount++;
+                }
+
+                foreach (var param in method.WebSafeParams)
+                {
+                    if (paramCount > 0)
+                        builder.Append(", ");
+
+                    string typeName = param.ParameterType == typeof(JObject)
+                        ? "T"
+                        : param.ParameterType.Name;
+
+                    builder.Append($"{param.Name}{(TypeScriptService.IsNullable(param.ParameterType) ? "?" : "")}: {typeName}");
+                    paramCount++;
+                }
+
+                if (method.RequiresIncludes)
+                {
+                    if (paramCount > 0) builder.Append(", ");
+                    builder.Append("includes?: ApiIncludes[]");
+                }
+
+                // Method return signature and implementation
+                string call = "getJson";
+                string returnType = "void";
+
+                if (isArrayType)
+                {
+                    if (method.TrueReturnType.Name == "T")
+                    {
+                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        returnType = "Promise<ApiList<T>>";
+                        _container.RequireWebApi(WebApis.GetList);
+                    }
+                    else
+                    {
+                        call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}[]>";
+                        returnType = $"Promise<{svc.GetGenericSignature(method.TrueReturnType)}[]>";
+                        _container.RequireWebApi(WebApis.GetJson);
+                    }
+                }
+                else
+                {
+                    if (method.TrueReturnType.IsGenericType &&
+                        method.TrueReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    {
+                        call = "getJson<ApiList<T>>";
+                        returnType = "Promise<ApiList<T>>";
+                        _container.RequireWebApi(WebApis.GetJson);
+                    }
+                    else if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    {
+                        call = $"getOne<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        returnType = $"Promise<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        _container.RequireWebApi(WebApis.GetOne);
+                    }
+                    else
+                    {
+                        call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        returnType = $"Promise<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        _container.RequireWebApi(WebApis.GetJson);
+                    }
+                }
+
+                builder.Append($"): {returnType} => {{\n");
+
+                string url = ("/" + method.RequestUrl).Replace("//", "/");
+
+                // Return statement logic
+                if (call.Contains("<void>"))
+                {
+                    call = call.Replace("<void>", "");
+                    builder.AppendLine($"        return new Promise<void>((resolve, reject) => {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")}).then(() => resolve()).catch(reject));");
+                }
+                else
+                {
+                    string includesSegment = method.RequiresIncludes
+                        ? " + (Array.isArray(includes) ? '&includes=' + includes.map(t => t.getText()).join(',') : '')"
+                        : "";
+
+                    builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{includesSegment}{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
+                }
+
+                builder.AppendLine("    };");
+                builder.AppendLine();
+            }
+
+            builder.AppendLine("}");
+            builder.AppendLine();
+        }
+    }
+}
