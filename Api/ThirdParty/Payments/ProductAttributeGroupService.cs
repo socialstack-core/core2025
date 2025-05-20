@@ -18,6 +18,8 @@ namespace Api.Payments
 		/// </summary>
 		public ProductAttributeGroupService() : base(Events.ProductAttributeGroup)
         {
+			// (Don't inject productAttributeService, it already uses this one)
+
 			Cache();
 		}
 

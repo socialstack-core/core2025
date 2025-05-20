@@ -41,10 +41,9 @@ namespace Api.Pages
         /// <returns></returns>
         /// <exception cref="PublicException"></exception>
         [HttpPost("tree")]
-        public RouterTreeNodeDetail? GetRouterTreeNode(Context context, [FromBody] RouterTreeLocation location)
+        public TreeNodeDetail? GetRouterTreeNode(Context context, [FromBody] RouterTreeLocation location)
         {
             return GetRouterTreeNodePath(context, location.Url);
-
 		}
 
 		/// <summary>
@@ -55,7 +54,7 @@ namespace Api.Pages
 		/// <returns></returns>
 		/// <exception cref="PublicException"></exception>
 		[HttpGet("tree")]
-		public RouterTreeNodeDetail? GetRouterTreeNodePath(Context context, [FromQuery] string url)
+		public TreeNodeDetail? GetRouterTreeNodePath(Context context, [FromQuery] string url)
         {
             if (!context.Role.CanViewAdmin)
             {
@@ -93,7 +92,7 @@ namespace Api.Pages
 				}
 			}
 
-            return new RouterTreeNodeDetail
+            return new TreeNodeDetail
             {
                 Children = children,
                 Self = routingNode.GetMetadata()
@@ -224,7 +223,7 @@ namespace Api.Pages
         /// <summary>
         /// Details about a node in the routing tree.
         /// </summary>
-        public struct RouterTreeNodeDetail
+        public struct TreeNodeDetail
 		{
             /// <summary>
             /// The set of children in this node.
