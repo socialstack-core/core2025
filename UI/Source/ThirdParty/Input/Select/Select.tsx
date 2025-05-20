@@ -5,7 +5,7 @@ import { ApiList } from 'UI/Functions/WebRequest';
 import Loading from 'UI/Loading';
 
 
-type SelectInputType = React.SelectHTMLAttributes<HTMLSelectElement> & {
+export type SelectInputType = React.SelectHTMLAttributes<HTMLSelectElement> & {
 	contentType?: string,
 	noSelectionValue?: string,
 	noSelection?: string,

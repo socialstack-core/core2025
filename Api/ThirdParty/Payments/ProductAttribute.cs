@@ -1,4 +1,5 @@
 using System;
+using Api.AutoForms;
 using Api.Database;
 using Api.Startup;
 using Api.Translate;
@@ -25,6 +26,7 @@ namespace Api.Payments
 		/// <summary>
 		/// Attribute key used for identifying it during installation of default values or through name changes.
 		/// </summary>
+		[Data("readonly", true)]
 		public string Key;
 
 		/// <summary>
@@ -37,23 +39,27 @@ namespace Api.Payments
 		/// Don't store prices in attributes. You should instead create multiple product 
 		/// variants and each one has its own potentially localised price.
 		/// </summary>
+		[Module("Admin/Payments/AttributeTypes")]
 		public int ProductAttributeType;
 
 		/// <summary>
 		/// 0 if this attribute can't range, 1 if it always does, 2 if it optionally can.
 		/// Sometimes a product might only need a "max load" rather than a min one for example.
 		/// </summary>
+		[Module("Admin/Payments/AttributeRangeTypes")]
 		public int RangeType;
 
 		/// <summary>
 		/// true if this attribute can have more than one value.
 		/// </summary>
+		[Data("help", "Tick this if the attribute can be given more than one value")]
 		public bool Multiple;
 
 		/// <summary>
-		/// e.g. "mm", "cm", "kg", "months", "years". Metric units, lowercase and short form. 
+		/// e.g. "mm", "cm", "kg", "months", "years". Metric units, primary lowercase (except when SI unit conventions state otherwise) and short form. 
 		/// If imperial units is desired, the UI should convert them.
 		/// </summary>
+		[Module("Admin/Payments/AttributeUnits")]
 		public string Units;
 
 		/// <summary>
