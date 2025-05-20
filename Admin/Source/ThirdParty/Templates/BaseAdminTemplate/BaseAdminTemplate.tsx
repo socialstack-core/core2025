@@ -17,7 +17,7 @@ import userApi, { User } from 'Api/User';
 import adminNavMenuApi from 'Api/AdminNavMenuItem';
 
 /**
- * The default layout used by the admin panel pages.
+ * The default base template used by the admin panel pages.
  * @returns
  */
 const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
@@ -237,7 +237,9 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
                       
                 </div>
             </div>
-            {props.children}
+			<div className="admin-page">
+				{props.children}
+			</div>
             {menuOpen &&
                 <div className="admin-page__menu-open" onClick={() => setMenuOpen(false)}>
                     <div className="admin-drawer">
