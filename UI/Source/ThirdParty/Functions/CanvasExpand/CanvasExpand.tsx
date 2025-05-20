@@ -94,11 +94,17 @@ export interface CanvasDataStoreLink {
 	 * The name of the canvas data store field to read or write to.
 	 */
 	field: string,
+
 	/**
 	 * True if this link will write to the field. If omitted, false is assumed.
 	 * The prop is a function which the component invokes with 1 argument (the value to write).
 	 */
-	write?: boolean
+	write?: boolean,
+
+	/**
+	 * The primary object of the page. Field and write are ignored if this is true.
+	 */
+	primary?: boolean
 }
 
 function readMap(dataMap : any[], ptr : number){

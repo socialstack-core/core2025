@@ -31,19 +31,14 @@ namespace Api.Pages
 			});
 
 			Events.Permalink.AfterCreate.AddEventListener((Context context, Permalink link) => {
-
-				if (_srcDictionary != null)
-				{
-					AddToDictionary(link, _srcDictionary);
-				}
-
+				_srcDictionary = null;
 				Router.RequestRebuild();
 
 				return new ValueTask<Permalink>(link);
 			});
 
 			Events.Permalink.AfterDelete.AddEventListener((Context context, Permalink link) => {
-
+				_srcDictionary = null;
 				Router.RequestRebuild();
 
 				return new ValueTask<Permalink>(link);

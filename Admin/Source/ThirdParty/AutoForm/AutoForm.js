@@ -34,7 +34,9 @@ export default function AutoForm(props) {
 	// Get the API handler for this content type:
 	var api = require('Api/' + (props.endpoint ? props.endpoint : props.contentType)).default;
 
-	return <AutoFormInternal {...props} endpoint={endpoint} api={api} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
+	var id = props.id || props.content?.id;
+
+	return <AutoFormInternal {...props} id={id} endpoint={endpoint} api={api} session={session} setSession={setSession} setPage={setPage} pageState={pageState} />;
 }
 
 class AutoFormInternal extends React.Component {

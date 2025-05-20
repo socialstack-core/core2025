@@ -4,31 +4,10 @@ import { ContentChangeDetail } from 'UI/Functions/ContentChange';
 import { WebSocketMessageDetail } from 'UI/Functions/WebSocket';
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import AdminTrigger from 'UI/AdminTrigger';
-import { createContext, useContext, useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useRouter, routerCtx, RouterContext, PageState } from 'UI/Router/RouterCtx';
 
-
-export interface RouterContext {
-	setPage: (url: string) => void;
-	pageState: PageState;
-	canGoBack: () => boolean;
-}
-
-export interface PageState extends PageStateResult {
-	url: string;
-}
-
-const routerCtx = createContext<RouterContext>({
-	setPage: (url: string) => { },
-	canGoBack: () => false,
-	pageState: {}
-} as RouterContext);
-
-export { routerCtx };
-
-export function useRouter() {
-	// returns {page, setPage}
-	return useContext(routerCtx);
-};
+export { useRouter, routerCtx, RouterContext, PageState };
 
 var pgRouterConfig: any = __cfg.pageRouter;
 var hashMode = pgRouterConfig?.hash;

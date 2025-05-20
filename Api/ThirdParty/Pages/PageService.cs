@@ -331,7 +331,7 @@ namespace Api.Pages
 
 			if (isEdit)
 			{
-				singlePageCanvas.With("id", "${primary.id}");
+				singlePageCanvas.WithPrimaryLink("content");
 			}
 
 			if (childAdminPage != null && childAdminPage.ChildType != null)
@@ -351,7 +351,7 @@ namespace Api.Pages
 			var singlePage = new Page
 			{
 				Url = "/en-admin/" + typeNameLowercase + "/" + (isEdit ? "${" + typeNameLowercase + ".id}" : "add"),
-				Key = isEdit ? "admin_primary:" + typeNameLowercase : "admin_" + typeNameLowercase + "_add",
+				Key = isEdit ? ("admin_primary:" + typeNameLowercase) : "admin_" + typeNameLowercase + "_add",
 				BodyJson = TemporaryBodyJson,
 				Title = isEdit ? "Editing " + tidySingularName.ToLower() + " #${" + typeNameLowercase + ".id}" : "Creating " + tidySingularName.ToLower()
 			};

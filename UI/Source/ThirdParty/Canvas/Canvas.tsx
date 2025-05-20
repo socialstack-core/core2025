@@ -1,5 +1,6 @@
 import { expand, CanvasNode } from 'UI/Functions/CanvasExpand';
 import Alert from 'UI/Alert';
+import { useRouter, PageState } from 'UI/Router/RouterCtx';
 import { useErrorBoundary, useEffect, useState } from 'react'; // useErrorBoundary is a preact function.
 
 var uniqueKey = 1;
@@ -58,6 +59,7 @@ const Canvas: React.FC<CanvasProps> = (props) => {
 		return { fields: {} }
 	});
 	const [content, setContent] = useState(() => loadJson(props));
+	var { pageState } = useRouter();
 
 	const setDataStoreField = (name: string, value: any) => {
 		const newData = { ...canvasDataStore };
@@ -131,7 +133,12 @@ const Canvas: React.FC<CanvasProps> = (props) => {
 			if (node.links) {
 				for (var k in node.links) {
 					var link = node.links[k];
-					props[k] = link.write ? (val: any) => setDataStoreField(link.field, val) : getDataStoreField(link.field);
+
+					if (link.primary) {
+						props[k] = pageState.po;
+					} else {
+						props[k] = link.write ? (val: any) => setDataStoreField(link.field, val) : getDataStoreField(link.field);
+					}
 				}
 			}
 

@@ -45,6 +45,11 @@ namespace Api.CanvasRenderer
 		/// The data (attributes) for the node as raw objects, usually strings.
 		/// </summary>
 		public Dictionary<string, object> Data;
+		
+		/// <summary>
+		/// The data store links, if there are any.
+		/// </summary>
+		public Dictionary<string, CanvasDataStoreLink> Links;
 
 		/// <summary>
 		/// The roots for the node, if any.
@@ -436,6 +441,30 @@ namespace Api.CanvasRenderer
 
 				writer.Write((byte)'}');
 			}
+			
+			if (Links != null && Links.Count > 0)
+			{
+				writer.WriteASCII(",\"l\":{");
+
+				var first = true;
+
+				foreach (var kvp in Links)
+				{
+					if (first)
+					{
+						first = false;
+					}
+					else
+					{
+						writer.Write((byte)',');
+					}
+					writer.WriteEscaped(kvp.Key);
+					writer.Write((byte)':');
+					writer.WriteASCII(kvp.Value.JsonString);
+				}
+
+				writer.Write((byte)'}');
+			}
 
 			if (Data != null && Data.Count > 0)
 			{
@@ -592,9 +621,72 @@ namespace Api.CanvasRenderer
 			Data[attrib] = value;
 			return this;
 		}
+		
+		/// <summary>
+		/// Sets an attribute of the given name to being the primary object in a chainable way.
+		/// </summary>
+		public CanvasNode WithPrimaryLink(string attrib){
+			if(Links == null)
+			{
+				Links = new Dictionary<string, CanvasDataStoreLink>();
+			}
+
+			Links[attrib] = new CanvasDataStoreLink(null, false, true);
+			return this;
+		}
+		
+		/// <summary>
+		/// Sets an attribute of the given name to being the primary object in a chainable way.
+		/// </summary>
+		public CanvasNode WithLink(string attrib, string field, bool isWriteable){
+			if(Links == null)
+			{
+				Links = new Dictionary<string, CanvasDataStoreLink>();
+			}
+
+			Links[attrib] = new CanvasDataStoreLink(field, isWriteable, false);
+			return this;
+		}
 
 	}
-	
+
+	/// <summary>
+	/// A data store link.
+	/// </summary>
+	public struct CanvasDataStoreLink
+	{
+		/// <summary>
+		/// True if it's the write direction. A function is passed to the prop which takes 1 arg, the value to write.
+		/// </summary>
+		public bool Write;
+
+		/// <summary>
+		/// The field.
+		/// </summary>
+		public string Field;
+
+		/// <summary>
+		/// True if write/field are ignored and the primary object is provided to the prop.
+		/// </summary>
+		public bool Primary;
+
+		/// <summary>
+		/// A preconstructed json string.
+		/// </summary>
+		public readonly string JsonString;
+
+		/// <summary>
+		/// Create a new link.
+		/// </summary>
+		/// <param name="field"></param>
+		/// <param name="write"></param>
+		/// <param name="primary"></param>
+		public CanvasDataStoreLink(string field, bool write, bool primary)
+		{
+			JsonString = "{\"write\": " + (write ? "true" :"false") + ",\"primary\": " + (primary ? "true" : "false") + ",\"field\":\"" + field + "\"}";
+		}
+	}
+
 	/// <summary>
 	/// Details for the canvas being loaded, if any.
 	/// </summary>
