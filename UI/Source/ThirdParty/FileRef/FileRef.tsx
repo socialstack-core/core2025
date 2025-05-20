@@ -14,7 +14,7 @@ export function getUrl(ref : FileRefIsh, options? : FileRefOptions) {
         options = {};
     }
 
-    return r ? r.handler(r, options) : undefined;
+    return r && r.handler ? r.handler(r, options) : undefined;
 }
 
 /**
@@ -367,6 +367,24 @@ class FileRefInfo {
     getArg(name:string, defaultVal:string) : string {
         var arg = this.args.get(name);
         return (arg === null) ? defaultVal : arg;
+    }
+
+    /**
+     * Set a textual arg value.
+     * @param arg
+     * @param val
+     */
+    setArg(arg: string, val: string) {
+        this.args.set(arg, val);
+    }
+
+    /**
+     * Set a numeric arg value.
+     * @param arg
+     * @param val
+     */
+    setNumericArg(arg: string, val: number) {
+        this.setArg(arg, val.toString());
     }
 
     /**
