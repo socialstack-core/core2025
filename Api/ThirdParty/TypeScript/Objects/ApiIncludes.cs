@@ -60,6 +60,9 @@ namespace Api.TypeScript.Objects
             builder.AppendLine();
             builder.AppendLine("    constructor(existing: string = '', addition: string = ''){");
             builder.AppendLine("        this.text = existing + (addition.length != 0 ? '.' + addition : '');");
+            builder.AppendLine("        if (this.text[0] && this.text[0] == '.'){");
+            builder.AppendLine("             this.text = this.text.substring(1, this.text.length);");
+            builder.AppendLine("        }");
             builder.AppendLine("    }");
 
             builder.AppendLine();

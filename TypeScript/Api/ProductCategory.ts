@@ -50,6 +50,34 @@ export type ProductCategoryNode = {
     fullPathSlug?: string;
     category?: ProductCategory;
 }
+
+/**
+* This type was generated to reflect {RouterNodeMetadata} (Api.Startup.Routing.RouterNodeMetadata)
+**/
+export type RouterNodeMetadata = {
+    type?: string;
+    hasChildren?: boolean;
+    fullRoute?: string;
+    childKey?: string;
+    name?: string;
+    contentId?: ulong;
+    editUrl?: string;
+}
+
+/**
+* This type was generated to reflect {TreeNodeDetail} (Api.Pages.PageController+TreeNodeDetail)
+**/
+export type TreeNodeDetail = {
+    children: RouterNodeMetadata[];
+    self: RouterNodeMetadata;
+}
+
+/**
+* This type was generated to reflect {CategoryTreeLocation} (Api.Payments.CategoryTreeLocation)
+**/
+export type CategoryTreeLocation = {
+    path?: string;
+}
 // ENTITY CONTROLLER
 
 export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
@@ -66,6 +94,24 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
      */
     structure = (includeProducts?: boolean): Promise<ProductCategoryNode[]> => {
         return getJson<ProductCategoryNode[]>(this.apiUrl + '/structure?includeProducts=' + includeProducts + '');
+    }
+
+    /**
+     * Generated from a .NET type.
+     * @see {Api.Payments.ProductCategoryController}::{GetTreeNode}
+     * @url 'v1/productCategory/tree'
+     */
+    getTreeNode = (location: CategoryTreeLocation): Promise<TreeNodeDetail> => {
+        return getJson<TreeNodeDetail>(this.apiUrl + '/tree', location);
+    }
+
+    /**
+     * Generated from a .NET type.
+     * @see {Api.Payments.ProductCategoryController}::{GetTreeNodePath}
+     * @url 'v1/productCategory/tree?path=' + path + ''
+     */
+    getTreeNodePath = (path: string): Promise<TreeNodeDetail> => {
+        return getJson<TreeNodeDetail>(this.apiUrl + '/tree?path=' + path + '');
     }
 
     /**

@@ -16,6 +16,9 @@ import { User } from 'Api/User';
 * This type was generated to reflect {ProductAttributeGroup} (Api.Payments.ProductAttributeGroup)
 **/
 export type ProductAttributeGroup = VersionedContent<uint> & {
+    parentGroupKey?: string;
+    key?: string;
+    parentGroupId?: uint;
     name?: string;
     // HasVirtualField() fields (1 in total)
     creatorUser?: User;

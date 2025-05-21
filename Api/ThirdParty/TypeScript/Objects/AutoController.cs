@@ -168,7 +168,7 @@ namespace Api.TypeScript.Objects
 
                 builder.Append($"): {returnType} => {{\n");
 
-                string url = ("/" + method.RequestUrl).Replace("//", "/");
+                string url = ("/" + method.RequestUrl).Replace("//", "/") + '?';
 
                 // Return statement logic
                 if (call.Contains("<void>"))
@@ -179,7 +179,7 @@ namespace Api.TypeScript.Objects
                 else
                 {
                     string includesSegment = method.RequiresIncludes
-                        ? " + (Array.isArray(includes) ? '&includes=' + includes.map(t => t.getText()).join(',') : '')"
+                        ? " + (Array.isArray(includes) ? '&includes=' + includes.filter(a => a && a.getText().length != 0).map(t => t?.getText() ?? '').join(',') : '')"
                         : "";
 
                     builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{includesSegment}{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");

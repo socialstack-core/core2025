@@ -1,6 +1,6 @@
 import Input from 'UI/Input';
 import Modal from 'UI/Modal';
-import permissionsApi from 'Api/Permission';
+import permissionsApi from 'Api/PermissionController';
 import { useState, useEffect, useRef } from 'react';
 import { CodeModuleType, getAll, getEntities } from 'Admin/Functions/GetPropTypes';
 import Loading from 'UI/Loading';
