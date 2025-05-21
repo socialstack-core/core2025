@@ -195,7 +195,7 @@ type FileRefHandler = (r: FileRefInfo, opts: FileRefOptions) => string;
 /**
  * A parsed FileRef.
  */
-class FileRefInfo {
+export class FileRefInfo {
 
     /**
      * The original source fileRef.
@@ -464,6 +464,56 @@ class FileRefInfo {
         }
         return result;
     }
+	
+	/**
+	* Gets the width of the original media, if known.
+	*/
+	getWidth() {
+		var w = this.args.get('w');
+		if(!w){
+			return undefined;
+		}
+		
+		var wInt = parseInt(w);
+		
+		if(isNaN(wInt)){
+			return undefined;
+		}
+		
+		return wInt;
+	}
+	
+	/**
+	* Gets the height of the original media, if known.
+	*/
+	getHeight() {
+		var h = this.args.get('h');
+		if(!h){
+			return undefined;
+		}
+		
+		var hInt = parseInt(h);
+		
+		if(isNaN(hInt)){
+			return undefined;
+		}
+		
+		return hInt;
+	}
+	
+	/**
+	* Undefined if it is indeterminate (e.g. it does not have a w/h arg).
+	*/
+	isPortrait() {
+		var w = this.getWidth();
+		var h = this.getHeight();
+		
+		if(w === undefined || h === undefined){
+			return undefined;
+		}
+		
+		return w < h;
+	}
 }
 
 /**
@@ -482,7 +532,7 @@ export function parse (ref: FileRefIsh): FileRefInfo | null {
     return new FileRefInfo(ref as FileRef);
 };
 
-var imgTypes = ['png', 'jpeg', 'jpg', 'gif', 'mp4', 'svg', 'bmp', 'apng', 'avif', 'webp'];
+var imgTypes = ['png', 'jpeg', 'jpg', 'gif', 'mp4', 'svg', 'bmp', 'apng', 'webp', 'avif'];
 var vidTypes = ['mp4', 'webm', 'avif'];
 var allVidTypes = ['avi', 'wmv', 'ts', 'm3u8', 'ogv', 'flv', 'h264', 'h265', 'webm', 'ogg', 'mp4', 'mkv', 'mpeg', '3g2', '3gp', 'mov', 'media', 'avif'];
 
