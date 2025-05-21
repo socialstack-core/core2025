@@ -80,7 +80,7 @@ export default class MediaCenter extends React.Component {
     renderTags(combinedFilter) {
         return (
             <ul className='media-center__tags'>
-                <Loop over={uploadApi} filter={combinedFilter} includes={uploadApi.includes.tags} onResults={results => {
+                <Loop over={uploadApi} filter={combinedFilter} includes={[uploadApi.includes.tags]} onResults={results => {
                     var tagids = [];
                     var tags = [];
 

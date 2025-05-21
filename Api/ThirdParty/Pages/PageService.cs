@@ -266,13 +266,10 @@ namespace Api.Pages
 		/// </summary>
 		/// <param name="type">The content type that is being installed (Page, Blog etc)</param>
 		/// <param name="fields"></param>
-		/// <param name="childAdminPage">
-		/// A shortcut for specifying that your type has some kind of sub-type.
-		/// For example, the NavMenu admin page specifies a child type of NavMenuItem, meaning each NavMenu ends up with a list of NavMenuItems.
-		/// Make sure you specify the fields that'll be visible from the child type in the list on the parent type.
-		/// For example, if you'd like each child entry to show its Id and Title fields, specify new string[]{"id", "title"}.
+		/// <param name="options">
+		/// Additional config options for the page.
 		/// </param>
-		public async ValueTask InstallAdminPages(Type type, string[] fields, ChildAdminPageOptions childAdminPage)
+		public async ValueTask InstallAdminPages(Type type, string[] fields, AdminPageOptions options)
 		{
 			var typeName = type.Name;
 			var typeNameLowercase = type.Name.ToLower();
@@ -304,8 +301,9 @@ namespace Api.Pages
 
 			// Future todo - If the admin page is "pure" (it's not been edited by an actual person) then compare BodyJson as well.
 			// This is why we'll always generate the bodyJson with the event.
-			var editPage = await CreateSinglePage(context, type, childAdminPage, true);
-			var addPage = await CreateSinglePage(context, type, childAdminPage, false);
+			var incl = options == null || options.EditIncludes == null ? "*" : options.EditIncludes;
+			var editPage = await CreateSinglePage(context, type, true, incl);
+			var addPage = await CreateSinglePage(context, type, false, null);
 
 			await InstallInternal(
 				context,
@@ -315,7 +313,7 @@ namespace Api.Pages
 			);
 		}
 
-		private async ValueTask<Page> CreateSinglePage(Context context, Type type, ChildAdminPageOptions childAdminPage, bool isEdit)
+		private async ValueTask<Page> CreateSinglePage(Context context, Type type, bool isEdit, string includes)
 		{
 			var typeName = type.Name;
 			var typeNameLowercase = type.Name.ToLower();
@@ -334,22 +332,9 @@ namespace Api.Pages
 				singlePageCanvas.WithPrimaryLink("content");
 			}
 
-			if (childAdminPage != null && childAdminPage.ChildType != null)
-			{
-				// This is likely obsoleted: favour more customised pages instead.
-				singlePageCanvas.AppendChild(
-					new CanvasNode("Admin/AutoList")
-					.With("contentType", childAdminPage.ChildType)
-					.With("filterField", type.Name + "Id")
-					.With("create", childAdminPage.CreateButton)
-					.With("searchFields", childAdminPage.SearchFields)
-					.With("filterValue", "${primary.id}")
-					.With("fields", childAdminPage.Fields ?? (new string[] { "id" }))
-				);
-			}
-
 			var singlePage = new Page
 			{
+				PrimaryContentIncludes = includes,
 				Url = "/en-admin/" + typeNameLowercase + "/" + (isEdit ? "${" + typeNameLowercase + ".id}" : "add"),
 				Key = isEdit ? ("admin_primary:" + typeNameLowercase) : "admin_" + typeNameLowercase + "_add",
 				BodyJson = TemporaryBodyJson,
@@ -367,8 +352,6 @@ namespace Api.Pages
 				type, 
 				isEdit ? AdminPageType.Edit : AdminPageType.Add
 			);
-
-			// If it's an edit page, we'll now turn it in to a graph and feed the ID from the URL in to it.
 
 			singlePage.BodyJson = singlePageCanvas.ToJson();
 
