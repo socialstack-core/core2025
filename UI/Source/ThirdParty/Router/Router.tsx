@@ -54,8 +54,6 @@ const Router: React.FC<{}> = () => {
 			initState.po = expandIncludes(initState.po);
 		}
 
-		console.log(initState);
-
 		triggerEvent(initState.page);
 
 		return { url: initialUrl, ...initState };
