@@ -6,7 +6,7 @@ const PageEditor: React.FC = (props: any) => {
 
     // this currently doesn't work, so defaulting to the add check
     const id = useTokens(props.id)
-    const isEditPage = ( location.pathname.split('/').pop() !== 'add' )// || id.length != 0;
+    const isEditPage = id.length != 0;
 
     if (isEditPage) {
 
