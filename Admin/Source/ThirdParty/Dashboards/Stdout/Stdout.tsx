@@ -3,7 +3,7 @@ import Tile from 'Admin/Tile';
 import Alert from 'UI/Alert';
 import {isoConvert} from 'UI/Functions/DateTools';
 import { useEffect, useState } from 'react';
-import StdOutApi from 'Api/StdOut';
+import StdOutApi from 'Api/StdOutController';
 
 export type ModWindowScope = typeof window & {
     scrollMaxY: number

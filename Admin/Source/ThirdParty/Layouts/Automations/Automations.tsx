@@ -4,9 +4,9 @@ import { Filter } from 'UI/Loop';
 import Time from 'UI/Time';
 import SubHeader from 'Admin/SubHeader';
 import Default from 'Admin/Templates/BaseAdminTemplate';
-import automationsApi, { Automation } from 'Api/Automation';
+import automationsApi, { Automation } from 'Api/AutomationController';
 import { useState } from 'react';
-import { ApiIncludes } from 'Api/ApiEndpoints';
+import { ApiIncludes } from 'Api/Includes';
 import { ApiList } from 'UI/Functions/WebRequest';
 
 var _latest: Record<string, boolean> | null = null;

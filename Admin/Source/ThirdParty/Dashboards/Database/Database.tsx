@@ -3,7 +3,7 @@ import { useState } from "react"
 import Alert from "UI/Alert";
 import Form from "UI/Form";
 import Input from "UI/Input";
-import stdOutApi from "Api/StdOut";
+import stdOutApi from "Api/StdOutController";
 
 
 declare global {

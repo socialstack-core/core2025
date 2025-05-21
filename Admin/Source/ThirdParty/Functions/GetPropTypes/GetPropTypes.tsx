@@ -542,6 +542,29 @@ export const getTemplates = async (): Promise<TemplateModule[]> => {
 
     })
 } 
+export const getEmailTemplates = async (): Promise<TemplateModule[]> => {
+    return new Promise((res, rej) => {
+        
+        getAll().then((result) => {
+
+            const { codeModules } = result;
+
+            const resolution: TemplateModule[] = [];
+
+            Object.keys(codeModules)
+                    .filter(key => key.startsWith('Email/Templates'))
+                    .forEach(key => {
+                        resolution.push({
+                            name: key,
+                            types: codeModules[key]
+                        })
+                    })
+            res(resolution)
+        })
+        .catch(rej)
+
+    })
+} 
 
 export const getEntities = (): Promise<CodeModuleType[]> => {
     return new Promise((resolve, reject) => {

@@ -1,4 +1,4 @@
-import autoformApi, { ContentType } from 'Api/AutoForm';
+import autoformApi, { ContentType } from 'Api/AutoFormController';
 
 /* cache */
 var cache: ContentType[] | null = null;
@@ -11,7 +11,7 @@ export default () => {
 		return Promise.resolve(cache);
 	}
 	
-	return cache = autoformApi.all()
+	return autoformApi.allContentForms()
 		.then(structure => {
 			return cache = structure.contentTypes;
 		});

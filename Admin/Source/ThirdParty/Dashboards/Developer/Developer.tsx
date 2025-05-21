@@ -5,7 +5,7 @@ import Row from 'UI/Row';
 import Modal from 'UI/Modal';
 import Input from 'UI/Input';
 import { useState, useEffect } from 'react';
-import monitoringApi from 'Api/StdOut';
+import monitoringApi from 'Api/StdOutController';
 
 interface Confirmer {
 	message: string,

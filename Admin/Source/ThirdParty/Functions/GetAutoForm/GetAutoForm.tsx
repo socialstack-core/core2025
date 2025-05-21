@@ -1,4 +1,4 @@
-import autoFormApi, { AutoFormInfo } from 'Api/AutoForm';
+import autoFormApi, { AutoFormInfo } from 'Api/AutoFormController';
 
 interface CachedForm {
 	form: AutoFormInfo,
