@@ -1,9 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Api.Startup;
-using Google.Protobuf.WellKnownTypes;
-using Type = System.Type;
 
 namespace Api.TypeScript
 {
@@ -56,81 +54,112 @@ namespace Api.TypeScript
         /// <returns>A string representation of the generic type.</returns>
         public string GetGenericSignature(Type t)
         {
-            string Resolve(Type type)
+            if (t == null)
             {
-                // Handle arrays with correct rank
-                if (type.IsArray)
-                {
-                    var elementType = type.GetElementType()!;
-                    var baseType = Resolve(elementType);
+                return "null";
+            }
+            var baseNullable = Nullable.GetUnderlyingType(t);
+            
+            if(baseNullable != null){
+                return GetGenericSignature(baseNullable) + "?";
+            }
 
-                    // Append [] for each dimension
-                    var rank = type.GetArrayRank();
-                    for (int i = 0; i < rank; i++)
-                    {
-                        baseType += "[]";
+            if(t.IsArray){
+
+                var result = GetGenericSignature(t.GetElementType());
+
+                if(t.GetArrayRank() > 1){
+                    result += "[";
+                    for(var dimension = 0;dimension < t.GetArrayRank();dimension++){
+                        result += ",";
                     }
-                    return baseType;
+                    return result + "]";
+                }else{
+
+                    var arrayDepth = t.GetArrayRank();
+
+                    for(var depth = 0;depth < arrayDepth;depth++){
+
+                        result+= "[]";
+
+                    }
+
                 }
 
-                // Handle nullable types as (T | null)
-                var underlying = Nullable.GetUnderlyingType(type);
-                if (underlying != null)
-                {
-                    return $"({Resolve(underlying)} | null)";
+                return result;
+
+            }
+            if(t.IsGenericType){
+
+                var baseType = t.GetGenericTypeDefinition();
+
+                var args = t.GetGenericArguments();
+
+                if(baseType == typeof(List<>)){
+
+                    return GetGenericSignature(args[0]) + "[]";
+
+                }
+                if(baseType == typeof(Dictionary<,>)){
+
+                    return "Record<" + GetGenericSignature(args[0]) + "," + GetGenericSignature(args[1]) + ">";
+
+                }
+                if(baseType == typeof(Task<>) || baseType == typeof(ValueTask<>)){
+
+                    return "Promise<" + GetGenericSignature(args[0]) + ">";
+
                 }
 
-                // Custom type overwrites (C# → TS mapping)
-                var overwrite = GetTypeOverwrite(type);
-                if (overwrite is not null)
-                {
-                    return overwrite;
-                }
-
-                // Non-generic
-                if (!type.IsGenericType)
-                {
-                    return type.Name;
-                }
-
-                // Special cases
-                if (type.GetGenericTypeDefinition() == typeof(ContentStream<,>))
-                {
-                    return "ApiList<" + Resolve(type.GetGenericArguments()[0]) + ", " +
-                           Resolve(type.GetGenericArguments()[1]) + ">";
-                }
-
-                if (type.GetGenericTypeDefinition() == typeof(ValueTask<>) ||
-                    type.GetGenericTypeDefinition() == typeof(Task<>))
-                {
-                    return Resolve(type.GetGenericArguments()[0]);
-                }
-
-                if (IsEnumerable(type))
-                {
-                    var itemType = type.GetGenericArguments()[0];
-                    return Resolve(itemType) + "[]";
-                }
-
-                // General generics
-                var baseName = type.Name.Contains('`') ? type.Name[..type.Name.IndexOf('`')] : type.Name;
+                var overwrite = GetTypeOverwrite(t);
                 var sb = new StringBuilder();
-                sb.Append(baseName);
-                sb.Append('<');
 
-                var args = type.GetGenericArguments();
-                for (int i = 0; i < args.Length; i++)
+                if (overwrite != null)
+                {
+                    sb.Append(overwrite + "<");
+                }
+                else
+                {
+                    if (t.Name.Contains('`'))
+                    {
+                        sb.Append(t.Name[0..t.Name.IndexOf('`')] + "<");
+                    }
+                    else
+                    {
+                        sb.Append(t.Name + "<");
+                    }
+                }
+                
+                
+                
+                
+                for (var i = 0; i < args.Length; i++)
                 {
                     if (i > 0)
                         sb.Append(", ");
-                    sb.Append(Resolve(args[i]));
+                    sb.Append(GetGenericSignature(args[i]));
                 }
 
                 sb.Append('>');
+
                 return sb.ToString();
+
             }
 
-            return Resolve(t);
+            var overwriteNonGeneric = GetTypeOverwrite(t);
+
+            if (overwriteNonGeneric != null)
+            {
+                return overwriteNonGeneric;
+            }
+            
+            if (t.Name.Contains('`'))
+            {
+                return t.Name[0..t.Name.IndexOf('`')];
+            }
+
+            return t.Name;
+
         }
 
 
