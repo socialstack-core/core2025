@@ -21,6 +21,11 @@ namespace Api.Payments
 		public uint Status;
 
 		/// <summary>
+		/// The target delivery address.
+		/// </summary>
+		public uint AddressId;
+
+		/// <summary>
 		/// The currently selected delivery option ID, if 
 		/// this cart contains any physical delivery items and one is selected.
 		/// </summary>
