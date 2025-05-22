@@ -282,6 +282,31 @@ namespace Api.CanvasRenderer
 				}
 			}
 
+			// Links
+			var links = node["l"] as JObject;
+
+			if (links != null)
+			{
+				foreach (var kvp in links)
+				{
+					if (result.Links == null)
+					{
+						result.Links = new Dictionary<string, CanvasDataStoreLink>();
+					}
+
+					var jsonNode = kvp.Value;
+					var fieldJson = jsonNode["field"];
+					var writeJson = jsonNode["write"];
+					var primaryJson = jsonNode["primary"];
+
+					result.Links[kvp.Key] = new CanvasDataStoreLink(
+						fieldJson == null ? null : fieldJson.Value<string>(),
+						writeJson == null ? false : writeJson.Value<bool>(),
+						primaryJson == null ? false : primaryJson.Value<bool>()
+					);
+				}
+			}
+
 			// Roots
 			var roots = node["r"] as JObject;
 

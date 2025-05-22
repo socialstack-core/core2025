@@ -76,41 +76,17 @@ namespace Api.Payments
 				new Page()
 				{
 					Key = "primary:product",
+					PrimaryContentIncludes = "productCategories",
 					Title = "${product.name}",
 					BodyJson = @"{
-							""c"": {
-								""g"": {
-									""c"": [
-										{
-											""t"": ""Component"",
-											""d"": {
-												""componentType"": ""UI/Product/View""
-											},
-											""l"": {
-												""product"": {
-													""n"": 1,
-													""f"": ""output""
-												}
-											},
-											""x"": 465,
-											""y"": 36,
-											""r"": true
-										},
-										{
-											""t"": ""Content"",
-											""d"": {
-												""contentType"": ""primary"",
-												""includes"": ""productCategories""
-											},
-											""x"": 83,
-											""y"": 25.5
-										}
-									]
-								},
-								""i"": 2
-							},
-							""i"": 3
-						}"
+						""t"": ""UI/Product/View"",
+						""l"": {
+							""product"": {
+								""primary"": true
+							}
+						},
+						""i"": 1
+					}"
 				}
 			);
 
