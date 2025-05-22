@@ -1,5 +1,9 @@
-﻿using System.Text;
+﻿using System;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Api.Startup;
+using Api.Startup.Routing;
 using Newtonsoft.Json.Linq;
 
 namespace Api.TypeScript.Objects
@@ -83,6 +87,8 @@ namespace Api.TypeScript.Objects
             builder.AppendLine("        this.includes = new ApiIncludes();");
             builder.AppendLine("    }");
 
+            Type[] getTextTypes = [typeof(void), typeof(ValueTask), typeof(object), typeof(FileContent)];
+
             // Generate methods for each controller endpoint
             foreach (var method in GetEndpointMethods())
             {
@@ -146,8 +152,8 @@ namespace Api.TypeScript.Objects
                     }
                     else
                     {
-                        call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}[]>";
-                        returnType = $"Promise<{svc.GetGenericSignature(method.TrueReturnType)}[]>";
+                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        returnType = $"Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>>";
                         _container.RequireWebApi(WebApis.GetJson);
                     }
                 }
@@ -156,7 +162,7 @@ namespace Api.TypeScript.Objects
                     if (method.TrueReturnType.IsGenericType &&
                         method.TrueReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                     {
-                        call = "getJson<ApiList<T>>";
+                        call = "getList<T>";
                         returnType = "Promise<ApiList<T>>";
                         _container.RequireWebApi(WebApis.GetJson);
                     }
@@ -165,6 +171,12 @@ namespace Api.TypeScript.Objects
                         call = $"getOne<{svc.GetGenericSignature(method.TrueReturnType)}>";
                         returnType = $"Promise<{svc.GetGenericSignature(method.TrueReturnType)}>";
                         _container.RequireWebApi(WebApis.GetOne);
+                    }
+                    else if (getTextTypes.Contains(method.TrueReturnType))
+                    {
+                        call = $"getText";
+                        returnType = "Promise<string>";
+                        _container.RequireWebApi(WebApis.GetText);
                     }
                     else
                     {
@@ -188,17 +200,8 @@ namespace Api.TypeScript.Objects
                     url +=
                         "' + (Array.isArray(includes) ? '" + (url.Contains('&') ? '&' : "") + "includes=' + includes.join(',') : '') + '";
                 }
-
-                // Return statement logic
-                if (call.Contains("<void>"))
-                {
-                    call = call.Replace("<void>", "");
-                    builder.AppendLine($"        return new Promise<void>((resolve, reject) => {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")}).then(() => resolve()).catch(reject));");
-                }
-                else
-                {
-                    builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
-                }
+                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
+                
 
                 builder.AppendLine("    };");
                 builder.AppendLine();

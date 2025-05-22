@@ -2,17 +2,13 @@
  * This file was automatically generated. DO NOT EDIT.
  */
 
-import { ApiList, getJson } from 'UI/Functions/WebRequest';
+import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
 
 import { PasswordResetRequestIncludes } from 'Api/Includes';
-
-import { Role } from 'Api/Role';
-
-import { User } from 'Api/User';
 
 // TYPES
 
@@ -25,19 +21,6 @@ export type PasswordResetRequest = Content<uint> & {
     email?: string;
     createdUtc?: Date | string | number;
     userId?: uint;
-}
-
-/**
-* This type was generated to reflect {Context} (Api.Contexts.Context)
-**/
-export type SessionResponse = {
-    roleId?: uint;
-    role?: Role;
-    localeId?: uint;
-    userId?: uint;
-    user?: User;
-    ignorePermissions?: boolean;
-    permitEditedUtcChange?: boolean;
 }
 
 /**

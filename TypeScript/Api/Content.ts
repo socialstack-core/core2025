@@ -2,7 +2,7 @@
  * This file was automatically generated. DO NOT EDIT.
  */
 
-import { ApiList, getList, getOne, getJson } from 'UI/Functions/WebRequest';
+import { ApiList, getList, getOne, getJson, getText } from 'UI/Functions/WebRequest';
 
 // IMPORTS
 
@@ -134,7 +134,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'revision/list'
      */
     revisionList = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getJson<ApiList<T>>(this.apiUrl + '/revision/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters);
+        return getList<T>(this.apiUrl + '/revision/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters);
     };
 
 
@@ -193,8 +193,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{InvalidateCachedItem}
      * @url 'cache/invalidate/' + id + ''
      */
-    invalidateCachedItem = (id: ID, includes?: ApiIncludes[]): Promise<void> => {
-        return new Promise<void>((resolve, reject) => getJson(this.apiUrl + '/cache/invalidate/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '').then(() => resolve()).catch(reject));
+    invalidateCachedItem = (id: ID, includes?: ApiIncludes[]): Promise<string> => {
+        return getText(this.apiUrl + '/cache/invalidate/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
     };
 
 
@@ -203,8 +203,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{InvalidateCache}
      * @url 'cache/invalidate'
      */
-    invalidateCache = (includes?: ApiIncludes[]): Promise<void> => {
-        return new Promise<void>((resolve, reject) => getJson(this.apiUrl + '/cache/invalidate?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '').then(() => resolve()).catch(reject));
+    invalidateCache = (includes?: ApiIncludes[]): Promise<string> => {
+        return getText(this.apiUrl + '/cache/invalidate?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
     };
 
 
@@ -214,7 +214,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'list'
      */
     listAll = (includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getJson<ApiList<T>>(this.apiUrl + '/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getList<T>(this.apiUrl + '/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
     };
 
 
@@ -224,7 +224,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'list'
      */
     list = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getJson<ApiList<T>>(this.apiUrl + '/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters);
+        return getList<T>(this.apiUrl + '/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters);
     };
 
 
@@ -253,8 +253,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{ListPOTUpdate}
      * @url 'list.pot'
      */
-    listPOTUpdate = (includes?: ApiIncludes[]): Promise<Object> => {
-        return getJson<Object>(this.apiUrl + '/list.pot?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+    listPOTUpdate = (includes?: ApiIncludes[]): Promise<string> => {
+        return getText(this.apiUrl + '/list.pot?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
     };
 
 
@@ -263,8 +263,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{ListPOT}
      * @url 'list.pot?ignoreFields=' + ignoreFields + ''
      */
-    listPOT = (filters?: Partial<T>, ignoreFields?: String, includes?: ApiIncludes[]): Promise<void> => {
-        return new Promise<void>((resolve, reject) => getJson(this.apiUrl + '/list.pot?ignoreFields=' + ignoreFields + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters).then(() => resolve()).catch(reject));
+    listPOT = (filters?: Partial<T>, ignoreFields?: String, includes?: ApiIncludes[]): Promise<string> => {
+        return getText(this.apiUrl + '/list.pot?ignoreFields=' + ignoreFields + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters);
     };
 
 }

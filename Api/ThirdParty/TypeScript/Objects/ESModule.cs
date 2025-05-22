@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Api.Contexts;
 using Newtonsoft.Json.Linq;
 
 namespace Api.TypeScript.Objects
@@ -67,6 +68,11 @@ namespace Api.TypeScript.Objects
                 type == typeof(object) || type == typeof(JObject) ||
                 type.Namespace == "System" || type.IsGenericType)
                 return;
+
+            if (type == typeof(Context))
+            {
+                return;
+            }
 
             // Prevent recursive cycles
             if (!_typeRegistry.Add(type)) return;
@@ -184,6 +190,7 @@ namespace Api.TypeScript.Objects
                 if (_usedWebApis.Contains(WebApis.GetList)) apis.Add("getList");
                 if (_usedWebApis.Contains(WebApis.GetOne)) apis.Add("getOne");
                 if (_usedWebApis.Contains(WebApis.GetJson)) apis.Add("getJson");
+                apis.Add("getText");
 
                 builder.AppendLine($"import {{ {string.Join(", ", apis)} }} from 'UI/Functions/WebRequest';\n");
             }

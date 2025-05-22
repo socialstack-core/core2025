@@ -2,7 +2,7 @@
  * This file was automatically generated. DO NOT EDIT.
  */
 
-import { ApiList, getJson } from 'UI/Functions/WebRequest';
+import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
 // IMPORTS
 

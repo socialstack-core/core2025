@@ -2,7 +2,7 @@
  * This file was automatically generated. DO NOT EDIT.
  */
 
-import { ApiList, getJson } from 'UI/Functions/WebRequest';
+import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
 // IMPORTS
 
@@ -40,19 +40,6 @@ export type User = VersionedContent<uint> & {
     // HasVirtualField() fields (2 in total)
     userRole?: Role;
     creatorUser?: User;
-}
-
-/**
-* This type was generated to reflect {Context} (Api.Contexts.Context)
-**/
-export type SessionResponse = {
-    roleId?: uint;
-    role?: Role;
-    localeId?: uint;
-    userId?: uint;
-    user?: User;
-    ignorePermissions?: boolean;
-    permitEditedUtcChange?: boolean;
 }
 
 /**
