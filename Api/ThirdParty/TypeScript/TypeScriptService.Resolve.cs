@@ -56,73 +56,84 @@ namespace Api.TypeScript
         /// <returns>A string representation of the generic type.</returns>
         public string GetGenericSignature(Type t)
         {
-            if (Nullable.GetUnderlyingType(t) != null)
+            string Resolve(Type type)
             {
-                t = Nullable.GetUnderlyingType(t);   
-            }
-            
-            
-            var overwrite = GetTypeOverwrite(t);
-
-            if (overwrite is not null)
-            {
-                return overwrite;
-            }
-
-            
-            // If the type is not generic at all, return its simple name
-            if (!t.IsGenericType)
-            {
-                return t.Name;
-            }
-            if (t.GetGenericTypeDefinition() == typeof(ContentStream<,>))
-            {
-                return "ApiList<" + GetGenericSignature(t.GetGenericArguments()[0]) + ", " +
-                       GetGenericSignature(t.GetGenericArguments()[1]) + ">";
-            }
-            if (t.GetGenericTypeDefinition() == typeof(ValueTask<>) || t.GetGenericTypeDefinition() == typeof(Task<>))
-            {
-                t = t.GetGenericArguments()[0];
-            }
-            // check now unwrapped from the valuetask.
-            if (!t.IsGenericType)
-            {
-                return t.Name;
-            }
-
-            if (IsEnumerable(t))
-            {
-                // List<...> for instance.
-                // this outputs for typescript.
-                // so we need to swap List<..> => ..[]
-                
-                var dataType = t.GetGenericArguments()[0];
-
-                return GetGenericSignature(dataType) + "[]";
-            }
-
-            // Base name before the backtick (e.g., "Dictionary`2" => "Dictionary")
-            var baseName = t.Name.Contains('`') ? t.Name[..t.Name.IndexOf('`')] : t.Name;
-
-            var sb = new StringBuilder();
-            sb.Append(baseName);
-            sb.Append('<');
-
-            // Use GetGenericArguments() to include both open (T) and closed (int, string) generic types
-            var args = t.GetGenericArguments();
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (i > 0)
+                // Handle arrays with correct rank
+                if (type.IsArray)
                 {
-                    sb.Append(", ");
+                    var elementType = type.GetElementType()!;
+                    var baseType = Resolve(elementType);
+
+                    // Append [] for each dimension
+                    var rank = type.GetArrayRank();
+                    for (int i = 0; i < rank; i++)
+                    {
+                        baseType += "[]";
+                    }
+                    return baseType;
                 }
 
-                // Recursive call to support nested generic types
-                sb.Append(GetGenericSignature(args[i]));
+                // Handle nullable types as (T | null)
+                var underlying = Nullable.GetUnderlyingType(type);
+                if (underlying != null)
+                {
+                    return $"({Resolve(underlying)} | null)";
+                }
+
+                // Custom type overwrites (C# → TS mapping)
+                var overwrite = GetTypeOverwrite(type);
+                if (overwrite is not null)
+                {
+                    return overwrite;
+                }
+
+                // Non-generic
+                if (!type.IsGenericType)
+                {
+                    return type.Name;
+                }
+
+                // Special cases
+                if (type.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                {
+                    return "ApiList<" + Resolve(type.GetGenericArguments()[0]) + ", " +
+                           Resolve(type.GetGenericArguments()[1]) + ">";
+                }
+
+                if (type.GetGenericTypeDefinition() == typeof(ValueTask<>) ||
+                    type.GetGenericTypeDefinition() == typeof(Task<>))
+                {
+                    return Resolve(type.GetGenericArguments()[0]);
+                }
+
+                if (IsEnumerable(type))
+                {
+                    var itemType = type.GetGenericArguments()[0];
+                    return Resolve(itemType) + "[]";
+                }
+
+                // General generics
+                var baseName = type.Name.Contains('`') ? type.Name[..type.Name.IndexOf('`')] : type.Name;
+                var sb = new StringBuilder();
+                sb.Append(baseName);
+                sb.Append('<');
+
+                var args = type.GetGenericArguments();
+                for (int i = 0; i < args.Length; i++)
+                {
+                    if (i > 0)
+                        sb.Append(", ");
+                    sb.Append(Resolve(args[i]));
+                }
+
+                sb.Append('>');
+                return sb.ToString();
             }
 
-            sb.Append('>');
-            return sb.ToString();
+            return Resolve(t);
         }
+
+
+
     }
 }
