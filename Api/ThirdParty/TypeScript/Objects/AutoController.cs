@@ -110,8 +110,13 @@ namespace Api.TypeScript.Objects
                         builder.Append(", ");
 
                     string typeName = param.ParameterType == typeof(JObject)
-                        ? "T"
+                        ? "Partial<T>"
                         : param.ParameterType.Name;
+
+                    if (TypeScriptService.IsEntityType(param.ParameterType))
+                    {
+                        typeName = "Partial<" + typeName + ">";
+                    }
 
                     builder.Append($"{param.Name}{(TypeScriptService.IsNullable(param.ParameterType) ? "?" : "")}: {typeName}");
                     paramCount++;
