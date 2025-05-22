@@ -10,9 +10,9 @@ import { Content, UserCreatedContent, VersionedContent, AutoController } from 'A
 
 import { LocaleIncludes } from 'Api/Includes';
 
-import { User } from 'Api/User';
-
 import { Role } from 'Api/Role';
+
+import { User } from 'Api/User';
 
 // TYPES
 

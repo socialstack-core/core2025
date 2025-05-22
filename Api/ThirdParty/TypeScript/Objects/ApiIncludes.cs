@@ -59,20 +59,28 @@ namespace Api.TypeScript.Objects
 
             builder.AppendLine();
             builder.AppendLine("    constructor(existing: string = '', addition: string = ''){");
-            builder.AppendLine("        this.text = existing + (addition.length != 0 ? '.' + addition : '');");
-            builder.AppendLine("        if (this.text[0] && this.text[0] == '.'){");
-            builder.AppendLine("             this.text = this.text.substring(1, this.text.length);");
+            builder.AppendLine("        this.text = (existing.length != 0) ? existing : '';");
+            builder.AppendLine("        if (addition.length != 0) {");
+            builder.AppendLine("             if (this.text != ''){");
+            builder.AppendLine("                this.text += '.'");
+            builder.AppendLine("             }");
+            builder.AppendLine("             this.text += addition;");
             builder.AppendLine("        }");
             builder.AppendLine("    }");
 
+            
             builder.AppendLine();
-            builder.AppendLine("    getText = () => this.text;");
+            builder.AppendLine("    toString(){ return this.text }");
+
+            builder.AppendLine();
+            
+            builder.AppendLine("    get all(){ return new ApiIncludes(this.text, '*'); }");
 
             // Generate virtual field accessors from global virtual fields.
             foreach (var kvp in ContentFields.GlobalVirtualFields)
             {
                 builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
-                builder.AppendLine($"        return new ApiIncludes(this.getText(), '{TypeScriptService.LcFirst(kvp.Key)}');");
+                builder.AppendLine($"        return new ApiIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
                 builder.AppendLine("    }");
             }
 
@@ -89,7 +97,7 @@ namespace Api.TypeScript.Objects
                 foreach (var virtualField in virtuals)
                 {
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(virtualField.FieldName)}() {{");
-                    builder.AppendLine($"        return new {entity.Name}Includes(this.getText(), '{virtualField.FieldName.ToLower()}');");
+                    builder.AppendLine($"        return new {entity.Name}Includes(this.toString(), '{virtualField.FieldName.ToLower()}');");
                     builder.AppendLine("    }");
                 }
 

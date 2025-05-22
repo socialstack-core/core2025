@@ -8,6 +8,8 @@ import { Content, UserCreatedContent, VersionedContent, AutoController } from 'A
 
 import { RoleIncludes } from 'Api/Includes';
 
+import { RoleGrantRule } from 'Api/PermissionController';
+
 import { User } from 'Api/User';
 
 // ENUMS
@@ -22,16 +24,6 @@ export enum RoleGrantRuleType {
 }
 
 // TYPES
-
-/**
-* This type was generated to reflect {RoleGrantRule} (Api.Permissions.RoleGrantRule)
-**/
-export type RoleGrantRule = {
-    ruleType: RoleGrantRuleType;
-    filterQuery?: string;
-    patterns?: string[][];
-    sameAsRole?: Role;
-}
 
 /**
 * This type was generated to reflect {Role} (Api.Permissions.Role)

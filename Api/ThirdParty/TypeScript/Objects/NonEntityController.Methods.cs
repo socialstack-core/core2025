@@ -33,16 +33,9 @@ namespace Api.TypeScript.Objects
             }
 
             _methods = [];
-            string[] crud = ["List", "Load", "Create", "Update", "Delete"];
 
             foreach (var method in _referenceType.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
             {
-                // Skip known CRUD methods to avoid duplicates
-                if (crud.Contains(method.Name))
-                {
-                    continue;
-                }
-
                 var methodAttributes = method.GetCustomAttributes();
 
                 // Look for supported HTTP route attributes

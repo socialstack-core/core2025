@@ -23,6 +23,8 @@ namespace Api.TypeScript.Objects
         private readonly Type _referenceType;
         private readonly ESModule _container;
 
+        private readonly List<Type> _requiredImports = [];
+
         /// <summary>
         /// Constructs an <see cref="EntityController"/> code generator instance.
         /// </summary>
@@ -41,6 +43,7 @@ namespace Api.TypeScript.Objects
 
             foreach (var method in GetEndpointMethods())
             {
+                
                 foreach (var param in method.WebSafeParams)
                 {
                     if (!param.ParameterType.IsPrimitive)
@@ -53,7 +56,15 @@ namespace Api.TypeScript.Objects
 
                 if (!container.HasTypeDefinition(method.TrueReturnType, out _))
                 {
-                    container.AddType(method.TrueReturnType);
+                    if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    {
+                        // import instead
+                        _requiredImports.Add(method.TrueReturnType);
+                    }
+                    else
+                    {
+                        container.AddType(method.TrueReturnType);
+                    };
                 }
 
                 if (isArrayType)
@@ -73,6 +84,11 @@ namespace Api.TypeScript.Objects
                     }
                 }
             }
+        }
+
+        public List<Type> GetRequiredImports()
+        {
+            return _requiredImports;
         }
 
         /// <summary>

@@ -10,9 +10,11 @@ import { Content, UserCreatedContent, VersionedContent, AutoController } from 'A
 
 import { ProductCategoryIncludes } from 'Api/Includes';
 
-import { User } from 'Api/User';
-
 import { Product } from 'Api/Product';
+
+import { RouterNodeMetadata } from 'Api/ProductAttribute';
+
+import { User } from 'Api/User';
 
 // TYPES
 
@@ -49,19 +51,6 @@ export type ProductCategoryNode = {
     products: ProductNode[][];
     fullPathSlug?: string;
     category?: ProductCategory;
-}
-
-/**
-* This type was generated to reflect {RouterNodeMetadata} (Api.Startup.Routing.RouterNodeMetadata)
-**/
-export type RouterNodeMetadata = {
-    type?: string;
-    hasChildren?: boolean;
-    fullRoute?: string;
-    childKey?: string;
-    name?: string;
-    contentId?: ulong;
-    editUrl?: string;
 }
 
 /**

@@ -10,6 +10,8 @@ import { Content, UserCreatedContent, VersionedContent, AutoController } from 'A
 
 import { PageIncludes } from 'Api/Includes';
 
+import { RouterNodeMetadata } from 'Api/ProductAttribute';
+
 import { User } from 'Api/User';
 
 // TYPES
@@ -29,19 +31,6 @@ export type Page = VersionedContent<uint> & {
     primaryContentIncludes?: string;
     // HasVirtualField() fields (1 in total)
     creatorUser?: User;
-}
-
-/**
-* This type was generated to reflect {RouterNodeMetadata} (Api.Startup.Routing.RouterNodeMetadata)
-**/
-export type RouterNodeMetadata = {
-    type?: string;
-    hasChildren?: boolean;
-    fullRoute?: string;
-    childKey?: string;
-    name?: string;
-    contentId?: ulong;
-    editUrl?: string;
 }
 
 /**

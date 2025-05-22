@@ -36,13 +36,14 @@ namespace Api.TypeScript.Objects
         public EntityController(Type controllerType, Type entityType, ESModule container)
         {
             container.AddType(entityType);
+            container.MarkAsEntityModule();
 
             _container = container;
             _referenceTypes = (controllerType, entityType);
 
             foreach (var method in GetEndpointMethods())
             {
-                if (method.TrueReturnType != _referenceTypes.entityType)
+                if (method.TrueReturnType != _referenceTypes.entityType && !TypeScriptService.IsEntityType(method.TrueReturnType))
                 {
                     container.AddType(method.TrueReturnType);
                 }

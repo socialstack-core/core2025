@@ -121,13 +121,19 @@ namespace Api.TypeScript
             
             generics.GetRequiredImports().ForEach(importType =>
             {
-                var module = modules.Find(mod => mod.HasTypeDefinition(importType, out _));
-                
+                var module = GetOriginOfType(importType);
                 content.Import(importType, module);
             });
             
             modules.ForEach(module =>
             {
+                
+                module.GetRequiredImports().ForEach(importType =>
+                {
+                    var origin = GetOriginOfType(importType);
+                    module.Import(importType, origin);
+                });
+                
                 var builder = new StringBuilder();
                 module.ToSource(builder, this);
                 
@@ -136,6 +142,14 @@ namespace Api.TypeScript
             });
 
 
+        }
+
+        private ESModule GetOriginOfType(Type importType)
+        {
+            return IsEntityType(importType) ?
+                // we're lookin' for an entity type.
+                modules.Find(ext => ext.HasTypeDefinition(importType, out _) && ext.IsEntityModule()) : 
+                modules.Find(ext => ext.HasTypeDefinition(importType, out _));
         }
     }
 }

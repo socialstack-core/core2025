@@ -19,6 +19,7 @@ namespace Api.TypeScript.Objects
         private readonly Dictionary<string, string> _customProperties = new();
         private readonly Type _definedType;
         private readonly ESModule _container;
+        
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TypeDefinition"/> class by analyzing the given reference type.
@@ -97,7 +98,7 @@ namespace Api.TypeScript.Objects
             {
                 if (TypeScriptService.IsEntityType(virtualField.Type))
                 {
-                    var existingInModule = modules.FirstOrDefault(m => m.HasTypeDefinition(virtualField.Type, out var typeDef));
+                    var existingInModule = modules.FirstOrDefault(m => m.HasTypeDefinition(virtualField.Type, out var typeDef) && m.IsEntityModule());
                     if (existingInModule != null)
                     {
                         _container.Import(virtualField.Type, existingInModule);
@@ -251,28 +252,6 @@ namespace Api.TypeScript.Objects
             foreach (var virtualField in virtualFields)
             {
                 builder.AppendLine($"    {TypeScriptService.LcFirst(virtualField.FieldName)}{(TypeScriptService.IsNullable(virtualField.Type) ? "?:" : ":")} {svc.GetGenericSignature(virtualField.Type)};");
-            }
-        }
-
-        /// <summary>
-        /// Imports missing types into the container if not already defined.
-        /// </summary>
-        public void ImportMissingTypes(List<ESModule> modules)
-        {
-            foreach (var type in _resolvedTypes)
-            {
-                if (!_container.HasTypeDefinition(type, out _))
-                {
-                    var existingInModule = modules.FirstOrDefault(m => m.HasTypeDefinition(type, out var typeDef));
-                    if (existingInModule != null)
-                    {
-                        _container.Import(type, existingInModule);
-                    }
-                }
-                else
-                {
-                    _container.AddType(type);
-                }
             }
         }
     }

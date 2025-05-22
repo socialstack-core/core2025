@@ -181,7 +181,7 @@ namespace Api.TypeScript.Objects
                         url += '?';
                     }
                     url +=
-                        "' + (Array.isArray(includes) ? '" + (url.Contains('&') ? '&' : "") + "includes=' + includes.filter(a => a && a.getText().length != 0).map(t => t?.getText() ?? '').join(',') : '') + '";
+                        "' + (Array.isArray(includes) ? '" + (url.Contains('&') ? '&' : "") + "includes=' + includes.join(',') : '') + '";
                 }
 
                 // Return statement logic
@@ -192,8 +192,6 @@ namespace Api.TypeScript.Objects
                 }
                 else
                 {
-                    
-
                     builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
                 }
 

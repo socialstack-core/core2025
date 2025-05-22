@@ -4,6 +4,10 @@
 
 import { ApiList, getJson } from 'UI/Functions/WebRequest';
 
+// IMPORTS
+
+import { ContentType } from 'Api/AvailableEndpointController';
+
 // TYPES
 
 /**
@@ -25,14 +29,6 @@ export type AutoFormInfo = {
     supportsRevisions?: boolean;
     endpoint?: string;
     fields?: AutoFormField[];
-}
-
-/**
-* This type was generated to reflect {ContentType} (Api.AutoForms.ContentType)
-**/
-export type ContentType = {
-    id?: int;
-    name?: string;
 }
 
 /**
