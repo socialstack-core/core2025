@@ -65,7 +65,7 @@ export type TypeInfo = {
 export class CustomContentTypeApi extends AutoController<CustomContentType,uint>{
 
     constructor(){
-        super('/v1/customContentType');
+        super('/v1/customcontenttype');
         this.includes = new CustomContentTypeIncludes();
     }
 

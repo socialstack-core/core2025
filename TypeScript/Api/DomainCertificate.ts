@@ -32,7 +32,7 @@ export type DomainCertificate = VersionedContent<uint> & {
 export class DomainCertificateApi extends AutoController<DomainCertificate,uint>{
 
     constructor(){
-        super('/v1/domainCertificate');
+        super('/v1/domaincertificate');
         this.includes = new DomainCertificateIncludes();
     }
 

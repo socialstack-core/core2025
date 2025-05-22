@@ -30,7 +30,7 @@ export type ContentFieldAccessRule = VersionedContent<uint> & {
 export class ContentFieldAccessRuleApi extends AutoController<ContentFieldAccessRule,uint>{
 
     constructor(){
-        super('/v1/contentFieldAccessRule');
+        super('/v1/contentfieldaccessrule');
         this.includes = new ContentFieldAccessRuleIncludes();
     }
 

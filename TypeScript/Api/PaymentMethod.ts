@@ -32,7 +32,7 @@ export type PaymentMethod = VersionedContent<uint> & {
 export class PaymentMethodApi extends AutoController<PaymentMethod,uint>{
 
     constructor(){
-        super('/v1/paymentMethod');
+        super('/v1/paymentmethod');
         this.includes = new PaymentMethodIncludes();
     }
 

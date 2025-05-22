@@ -65,7 +65,7 @@ export type AttributeTreeLocation = {
 export class ProductAttributeApi extends AutoController<ProductAttribute,uint>{
 
     constructor(){
-        super('/v1/productAttribute');
+        super('/v1/productattribute');
         this.includes = new ProductAttributeIncludes();
     }
 

@@ -28,7 +28,7 @@ export type PublishGroup = UserCreatedContent<uint> & {
 export class PublishGroupApi extends AutoController<PublishGroup,uint>{
 
     constructor(){
-        super('/v1/publishGroup');
+        super('/v1/publishgroup');
         this.includes = new PublishGroupIncludes();
     }
 

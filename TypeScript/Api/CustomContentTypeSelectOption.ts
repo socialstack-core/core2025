@@ -30,7 +30,7 @@ export type CustomContentTypeSelectOption = VersionedContent<uint> & {
 export class CustomContentTypeSelectOptionApi extends AutoController<CustomContentTypeSelectOption,uint>{
 
     constructor(){
-        super('/v1/customContentTypeSelectOption');
+        super('/v1/customcontenttypeselectoption');
         this.includes = new CustomContentTypeSelectOptionIncludes();
     }
 

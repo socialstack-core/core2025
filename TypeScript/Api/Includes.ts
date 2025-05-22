@@ -39,6 +39,9 @@ export class ApiIncludes {
     get tags() {
         return new ApiIncludes(this.getText(), 'tags');
     }
+    get attributes() {
+        return new ApiIncludes(this.getText(), 'attributes');
+    }
     get productcategories() {
         return new ApiIncludes(this.getText(), 'productcategories');
     }
@@ -116,6 +119,18 @@ export class CouponIncludes extends ApiIncludes {
     }
     get creatorUser() {
         return new CouponIncludes(this.getText(), 'creatoruser');
+    }
+}
+
+export class AddressIncludes extends ApiIncludes {
+    get creatorUser() {
+        return new AddressIncludes(this.getText(), 'creatoruser');
+    }
+}
+
+export class DeliveryOptionIncludes extends ApiIncludes {
+    get creatorUser() {
+        return new DeliveryOptionIncludes(this.getText(), 'creatoruser');
     }
 }
 

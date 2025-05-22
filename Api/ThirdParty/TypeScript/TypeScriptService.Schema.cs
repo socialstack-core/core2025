@@ -121,7 +121,6 @@ namespace Api.TypeScript
             
             generics.GetRequiredImports().ForEach(importType =>
             {
-                Console.WriteLine($"Generic content requires type: {importType.FullName}");
                 var module = modules.Find(mod => mod.HasTypeDefinition(importType, out _));
                 
                 content.Import(importType, module);

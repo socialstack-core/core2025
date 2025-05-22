@@ -41,7 +41,7 @@ export type ProductQuantity = VersionedContent<uint> & {
 export class ProductQuantityApi extends AutoController<ProductQuantity,uint>{
 
     constructor(){
-        super('/v1/productUsage');
+        super('/v1/productusage');
         this.includes = new ProductQuantityIncludes();
     }
 

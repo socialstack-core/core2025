@@ -24,7 +24,7 @@ export type ProductTemplate = VersionedContent<uint> & {
 export class ProductTemplateApi extends AutoController<ProductTemplate,uint>{
 
     constructor(){
-        super('/v1/productTemplate');
+        super('/v1/producttemplate');
         this.includes = new ProductTemplateIncludes();
     }
 

@@ -83,7 +83,7 @@ export type CategoryTreeLocation = {
 export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
 
     constructor(){
-        super('/v1/productCategory');
+        super('/v1/productcategory');
         this.includes = new ProductCategoryIncludes();
     }
 

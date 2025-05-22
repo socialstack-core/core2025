@@ -59,7 +59,7 @@ export type ResetToken = {
 export class PasswordResetRequestApi extends AutoController<PasswordResetRequest,uint>{
 
     constructor(){
-        super('/v1/passwordResetRequest');
+        super('/v1/passwordresetrequest');
         this.includes = new PasswordResetRequestIncludes();
     }
 

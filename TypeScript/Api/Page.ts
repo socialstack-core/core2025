@@ -26,6 +26,7 @@ export type Page = VersionedContent<uint> & {
     canIndex?: boolean;
     noFollow?: boolean;
     preferIfLoggedIn?: boolean;
+    primaryContentIncludes?: string;
     // HasVirtualField() fields (1 in total)
     creatorUser?: User;
 }

@@ -28,7 +28,7 @@ export type ProductAttributeGroup = VersionedContent<uint> & {
 export class ProductAttributeGroupApi extends AutoController<ProductAttributeGroup,uint>{
 
     constructor(){
-        super('/v1/productAttributeGroup');
+        super('/v1/productattributegroup');
         this.includes = new ProductAttributeGroupIncludes();
     }
 

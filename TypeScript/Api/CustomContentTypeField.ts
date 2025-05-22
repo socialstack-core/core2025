@@ -43,7 +43,7 @@ export type CustomContentTypeField = VersionedContent<uint> & {
 export class CustomContentTypeFieldApi extends AutoController<CustomContentTypeField,uint>{
 
     constructor(){
-        super('/v1/customContentTypeField');
+        super('/v1/customcontenttypefield');
         this.includes = new CustomContentTypeFieldIncludes();
     }
 

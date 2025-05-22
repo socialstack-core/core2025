@@ -17,6 +17,7 @@ import { User } from 'Api/User';
 **/
 export type ShoppingCart = VersionedContent<uint> & {
     status?: uint;
+    deliveryOptionId?: uint;
     // HasVirtualField() fields (1 in total)
     creatorUser?: User;
 }
@@ -25,7 +26,7 @@ export type ShoppingCart = VersionedContent<uint> & {
 export class ShoppingCartApi extends AutoController<ShoppingCart,uint>{
 
     constructor(){
-        super('/v1/shoppingCart');
+        super('/v1/shoppingcart');
         this.includes = new ShoppingCartIncludes();
     }
 

@@ -12,6 +12,8 @@ import { Role } from 'Api/Role';
 
 import { Tag } from 'Api/Tag';
 
+import { ProductAttributeValue } from 'Api/ProductAttributeValue';
+
 import { ProductCategory } from 'Api/ProductCategory';
 
 import { ProductQuantity } from 'Api/ProductQuantity';
@@ -33,7 +35,7 @@ import { Upload } from 'Api/Upload';
 export type Content<ID> = {
     type?: string;
     id: ID;
-    // adding (20) global virtual fields.
+    // adding (21) global virtual fields.
     primaryUrl?: string;
     emailAddress?: string;
     signedRef128?: string;
@@ -42,6 +44,7 @@ export type Content<ID> = {
     rolePermits?: Role[];
     composition?: Role[];
     tags?: Tag[];
+    attributes?: ProductAttributeValue[];
     productCategories?: ProductCategory[];
     productQuantities?: ProductQuantity[];
     tiers?: Product[];

@@ -29,7 +29,7 @@ export type ProductAttributeValue = VersionedContent<uint> & {
 export class ProductAttributeValueApi extends AutoController<ProductAttributeValue,uint>{
 
     constructor(){
-        super('/v1/productAttributeValue');
+        super('/v1/productattributevalue');
         this.includes = new ProductAttributeValueIncludes();
     }
 
