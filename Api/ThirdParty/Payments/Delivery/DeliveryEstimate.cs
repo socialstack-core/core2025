@@ -20,6 +20,11 @@ namespace Api.Payments
 		public ShoppingCart Cart;
 
 		/// <summary>
+		/// The target address.
+		/// </summary>
+		public Address Target;
+
+		/// <summary>
 		/// The set of options for the user.
 		/// </summary>
 		public List<DeliveryEstimate> Options;

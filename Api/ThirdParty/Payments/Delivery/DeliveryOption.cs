@@ -17,6 +17,11 @@ public partial class DeliveryOption : VersionedContent<uint>
 	public string InformationJson;
 
 	/// <summary>
+	/// Target address ID.
+	/// </summary>
+	public uint AddressId;
+
+	/// <summary>
 	/// The cart that this option is associated with.
 	/// </summary>
 	public uint ShoppingCartId;
