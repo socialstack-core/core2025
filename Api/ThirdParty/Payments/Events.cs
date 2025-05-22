@@ -16,6 +16,11 @@ namespace Api.Eventing
         public static EventGroup<SubscriptionUsage> SubscriptionUsage;
 		
 		/// <summary>
+		/// Set of events for an address.
+		/// </summary>
+		public static EventGroup<Address> Address;
+		
+		/// <summary>
 		/// Set of events for a coupon.
 		/// </summary>
 		public static EventGroup<Coupon> Coupon;
@@ -66,6 +71,11 @@ namespace Api.Eventing
 		public static ProductQuantityEventGroup ProductQuantity;
 		
 		/// <summary>
+		/// Set of events for a productQuantity.
+		/// </summary>
+		public static DeliveryOptionEventGroup DeliveryOption;
+		
+		/// <summary>
 		/// Set of events for a paymentMethod.
 		/// </summary>
 		public static EventGroup<PaymentMethod> PaymentMethod;
@@ -81,6 +91,19 @@ namespace Api.Eventing
 		public static EventGroup<Product> Product;
 	}
 
+	/// <summary>
+	/// Specialised event group for the DeliveryOption event type.
+	/// </summary>
+	public partial class DeliveryOptionEventGroup : EventGroup<DeliveryOption>
+	{
+
+		/// <summary>
+		/// Called when collecting delivery estimates.
+		/// </summary>
+		public EventHandler<DeliveryEstimates> Estimate;
+
+	}
+	
 	/// <summary>
 	/// Specialised event group for the Purchase type in order to add additional events.
 	/// As usual, instanced automatically by the event handler engine.

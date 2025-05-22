@@ -5,6 +5,7 @@ using Api.Permissions;
 using Api.Contexts;
 using Api.Eventing;
 using Api.Startup;
+using System;
 
 namespace Api.Payments
 {
@@ -85,6 +86,11 @@ namespace Api.Payments
 				}
 			}
 
+			if (cart.Status != 0)
+			{
+				throw new PublicException("Cannot modify a cart after it has been checked out.", "cart/closed");
+			}
+
 			// Check if this product is already in this cart:
 			var pQuantity = await _productQuantities
 				.Where("ProductId=? and ShoppingCartId=?", DataOptions.IgnorePermissions)
@@ -109,6 +115,14 @@ namespace Api.Payments
 					toUpdate.Quantity += quantity;
 				});
 			}
+
+			// Update the carts editedUtc such that other checkout features are aware that the cart has changed.
+			await Update(context, cart, (Context ctx, ShoppingCart toUpdate, ShoppingCart orig) => {
+
+				toUpdate.EditedUtc = DateTime.UtcNow;
+				toUpdate.DeliveryOptionId = 0;
+
+			}, DataOptions.IgnorePermissions);
 
 			return pQuantity;
 		}

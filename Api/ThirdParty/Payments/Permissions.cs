@@ -73,6 +73,16 @@ namespace Api.Payments
 
 				Roles.Admin.If("IsSelf()").ThenGrant("paymentmethod_load", "paymentmethod_list");
 				Roles.Developer.If("IsSelf()").ThenGrant("paymentmethod_load", "paymentmethod_list");
+				
+				// Remove public viewing (as it's enabled by default):
+				Roles.Guest.Revoke("address_load", "address_list");
+				Roles.Public.Revoke("address_load", "address_list");
+				Roles.Member.Revoke("address_load", "address_list");
+				Roles.Member.If("IsSelf()").ThenGrant("address_load", "address_list");
+
+				Roles.Guest.Revoke("deliveryoption_load", "deliveryoption_list");
+				Roles.Public.Revoke("deliveryoption_load", "deliveryoption_list");
+				Roles.Member.Revoke("deliveryoption_load", "deliveryoption_list");
 
 				return new ValueTask<object>(source);
 			}, 20);
