@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Api.Startup;
 
 namespace Api.TypeScript
 {
@@ -99,6 +100,11 @@ namespace Api.TypeScript
 
                 }
 
+                if (baseType == typeof(ContentStream<,>))
+                {
+                    return "ApiList<" + GetGenericSignature(args[0]) + ">";
+                }
+
                 var overwrite = GetTypeOverwrite(t);
                 var sb = new StringBuilder();
 
@@ -139,11 +145,6 @@ namespace Api.TypeScript
             if (overwriteNonGeneric != null)
             {
                 return overwriteNonGeneric;
-            }
-            
-            if (t.Name.Contains('`'))
-            {
-                return t.Name[0..t.Name.IndexOf('`')];
             }
 
             return t.Name;
