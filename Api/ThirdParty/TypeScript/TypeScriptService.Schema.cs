@@ -58,7 +58,7 @@ namespace Api.TypeScript
             content.RequireWebApi(WebApis.GetList);
             content.RequireWebApi(WebApis.GetJson);
             content.RequireWebApi(WebApis.GetOne);
-            
+
             generics.AddContentType(typeof(Content<>));
             generics.AddContentType(typeof(UserCreatedContent<>));
             generics.AddContentType(typeof(VersionedContent<>));
@@ -117,6 +117,14 @@ namespace Api.TypeScript
                         }
                     }
                 }
+            });
+            
+            generics.GetRequiredImports().ForEach(importType =>
+            {
+                Console.WriteLine($"Generic content requires type: {importType.FullName}");
+                var module = modules.Find(mod => mod.HasTypeDefinition(importType, out _));
+                
+                content.Import(importType, module);
             });
             
             modules.ForEach(module =>

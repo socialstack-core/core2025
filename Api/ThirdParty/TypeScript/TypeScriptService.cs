@@ -122,8 +122,6 @@ namespace Api.TypeScript
             SetTypeOverwrite(typeof(float), "float");
             SetTypeOverwrite(typeof(double), "double");
             SetTypeOverwrite(typeof(decimal), "decimal");
-            SetTypeOverwrite(typeof(byte[]), "byte[]");
-            SetTypeOverwrite(typeof(byte[][]), "byte[][]");
 
             // String and boolean types
             SetTypeOverwrite(typeof(string), "string");

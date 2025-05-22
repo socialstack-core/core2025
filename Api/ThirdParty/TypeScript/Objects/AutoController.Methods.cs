@@ -83,7 +83,7 @@ namespace Api.TypeScript.Objects
                     TrueReturnType = returnType,
                     Method = method,
                     RequiresSessionSet = returnType == typeof(Context),
-                    RequiresIncludes = methodParams.Any(p => p.ParameterType.Name == "T") || returnType.Name == "T",
+                    RequiresIncludes = true,
                     IsApiList = TypeScriptService.IsNestedCollection(method.ReturnType),
                     SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null)
                 };
@@ -95,9 +95,16 @@ namespace Api.TypeScript.Objects
                     _ => ""
                 } ?? "";
 
+                controllerMethod.RequestUrl = controllerMethod.RequestUrl.ToLower();
+
                 // Parse parameters
                 foreach (var param in methodParams)
                 {
+                    if (param.Name == "includes")
+                    {
+                        // includes handled automatically.
+                        continue;
+                    }
                     if (controllerMethod.RequestUrl.Contains($"{{{param.Name}}}") &&
                         param.GetCustomAttribute<FromRouteAttribute>() is not null)
                     {

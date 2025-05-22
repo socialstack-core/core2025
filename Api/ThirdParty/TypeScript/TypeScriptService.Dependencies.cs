@@ -155,7 +155,7 @@ namespace Api.TypeScript
                 return false;
             }
 
-            if (type.Name == "AutoController")
+            if (type == typeof(AutoController))
             {
                 return false;
             }

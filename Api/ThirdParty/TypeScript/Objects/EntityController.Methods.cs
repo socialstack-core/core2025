@@ -82,6 +82,7 @@ namespace Api.TypeScript.Objects
                     HttpMethodAttribute httpAttr => httpAttr.Template,
                     _ => controllerMethod.RequestUrl ?? ""
                 };
+                controllerMethod.RequestUrl = controllerMethod.RequestUrl.ToLower();
 
                 // Parse method parameters
                 foreach (var param in methodParams)

@@ -100,7 +100,7 @@ namespace Api.TypeScript.Objects
             // Generate a method for each endpoint
             foreach (var method in GetEndpointMethods())
             {
-                var fullUrl = (baseUrlRoute != null ? baseUrlRoute.Template : "") + "/" + method.RequestUrl;
+                var fullUrl = (baseUrlRoute != null ? baseUrlRoute.Template : "").ToLower() + "/" + method.RequestUrl;
                 fullUrl = fullUrl.Replace("//", "/");
 
                 var isArrayType = method.IsApiList;

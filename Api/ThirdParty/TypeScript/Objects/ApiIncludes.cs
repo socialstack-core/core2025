@@ -89,7 +89,7 @@ namespace Api.TypeScript.Objects
                 foreach (var virtualField in virtuals)
                 {
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(virtualField.FieldName)}() {{");
-                    builder.AppendLine($"        return new {entity.Name}Includes(this.getText(), '{TypeScriptService.LcFirst(virtualField.FieldName)}');");
+                    builder.AppendLine($"        return new {entity.Name}Includes(this.getText(), '{virtualField.FieldName.ToLower()}');");
                     builder.AppendLine("    }");
                 }
 

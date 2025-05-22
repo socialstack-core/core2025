@@ -32,7 +32,31 @@ namespace Api.TypeScript
         /// <returns>The overwrite string if one exists; otherwise, null.</returns>
         public string GetTypeOverwrite(Type type)
         {
-            return type is null ? null : _overwriteTypes.GetValueOrDefault(type);
+            if (type is null)
+            {
+                return null;
+            }
+
+            if (!type.IsArray)
+            {
+                return _overwriteTypes.GetValueOrDefault(type);
+            }
+
+            var elementType = type.GetElementType();
+
+            var typeStr = _overwriteTypes.GetValueOrDefault(elementType);
+            if (typeStr is null)
+            {
+                return null;
+            }
+
+            // Append array brackets based on the array rank of the actual array type
+            for (var i = 0; i < type.GetArrayRank(); i++)
+            {
+                typeStr += "[]";
+            }
+
+            return typeStr;
         }
 
         public void AddIgnoreType(Type type)

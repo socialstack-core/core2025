@@ -83,6 +83,11 @@ namespace Api.TypeScript.Objects
                     _ => controllerMethod.RequestUrl ?? ""
                 };
 
+                if (controllerMethod.RequestUrl is not null)
+                {
+                    controllerMethod.RequestUrl = controllerMethod.RequestUrl.ToLower();
+                }
+
                 // Parse method parameters
                 foreach (var param in methodParams)
                 {

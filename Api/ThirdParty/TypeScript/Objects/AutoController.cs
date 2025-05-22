@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using Api.Startup;
 using Newtonsoft.Json.Linq;
 
@@ -44,7 +43,7 @@ namespace Api.TypeScript.Objects
 
                 if (isArrayType)
                 {
-                    if (method.TrueReturnType.Name == "T")
+                    if (method.TrueReturnType.IsGenericParameter)
                     {
                         _container.RequireWebApi(WebApis.GetList);
                     }
@@ -80,7 +79,7 @@ namespace Api.TypeScript.Objects
             builder.AppendLine("    public includes: ApiIncludes;");
 
             builder.AppendLine("    constructor(baseUrl: string = '') {");
-            builder.AppendLine("        this.apiUrl = baseUrl;");
+            builder.AppendLine("        this.apiUrl = baseUrl?.toLowerCase();");
             builder.AppendLine("        this.includes = new ApiIncludes();");
             builder.AppendLine("    }");
 
@@ -125,16 +124,20 @@ namespace Api.TypeScript.Objects
                 }
 
                 // Method return signature and implementation
-                string call = "getJson";
+                string call = "getText";
                 string returnType = "void";
 
                 if (isArrayType)
                 {
-                    if (method.TrueReturnType.Name == "T")
+                    if (method.TrueReturnType.IsGenericType)
                     {
-                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        returnType = "Promise<ApiList<T>>";
-                        _container.RequireWebApi(WebApis.GetList);
+                        if (method.TrueReturnType is { IsGenericParameter: true })
+                        {
+                            // It's a generic type like ApiList<T> where T is just a type parameter
+                            call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                            returnType = $"Promise<ApiList<{method.TrueReturnType.Name}>>";
+                            _container.RequireWebApi(WebApis.GetList);
+                        }
                     }
                     else
                     {
@@ -167,8 +170,19 @@ namespace Api.TypeScript.Objects
                 }
 
                 builder.Append($"): {returnType} => {{\n");
+                
+                // v1/productCategory => v1/productcategory
+                string url = ("/" + method.RequestUrl).Replace("//", "/");
 
-                string url = ("/" + method.RequestUrl).Replace("//", "/") + '?';
+                if (method.RequiresIncludes)
+                {
+                    if (!url.Contains('?'))
+                    {
+                        url += '?';
+                    }
+                    url +=
+                        "' + (Array.isArray(includes) ? '" + (url.Contains('&') ? '&' : "") + "includes=' + includes.filter(a => a && a.getText().length != 0).map(t => t?.getText() ?? '').join(',') : '') + '";
+                }
 
                 // Return statement logic
                 if (call.Contains("<void>"))
@@ -178,11 +192,9 @@ namespace Api.TypeScript.Objects
                 }
                 else
                 {
-                    string includesSegment = method.RequiresIncludes
-                        ? " + (Array.isArray(includes) ? '&includes=' + includes.filter(a => a && a.getText().length != 0).map(t => t?.getText() ?? '').join(',') : '')"
-                        : "";
+                    
 
-                    builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{includesSegment}{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
+                    builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
                 }
 
                 builder.AppendLine("    };");

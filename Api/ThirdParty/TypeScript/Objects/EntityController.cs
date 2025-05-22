@@ -100,6 +100,8 @@ namespace Api.TypeScript.Objects
             var baseUrlRoute = _referenceTypes.controllerType.GetCustomAttribute<RouteAttribute>();
             var baseUrl = baseUrlRoute is not null ? baseUrlRoute.Template : "";
 
+            baseUrl = baseUrl.ToLower();
+
             builder.AppendLine();
             builder.AppendLine("    constructor(){");
             builder.AppendLine($"        super('/{baseUrl}');");

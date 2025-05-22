@@ -14,6 +14,8 @@ namespace Api.TypeScript.Objects
     {
         private readonly List<Type> _contentTypes = [];
 
+        private readonly List<Type> _requiredImports = [];
+
         /// <summary>
         /// Adds a .NET type to the list of types to be emitted as TypeScript types.
         /// </summary>
@@ -21,6 +23,44 @@ namespace Api.TypeScript.Objects
         public void AddContentType(Type type)
         {
             _contentTypes.Add(type);
+
+            if (type == typeof(Content<>))
+            {
+                // load all required imports.
+                
+                foreach (var globalField in ContentFields.GlobalVirtualFields.Values)
+                {
+                    var virtualInfo = globalField.VirtualInfo;
+
+                    Type virtualType = null;
+
+                    if(virtualInfo.DynamicTypeField != null){
+                        virtualType = typeof(object);
+                    } else if(virtualInfo.ValueGeneratorType != null) {
+                        // this one kinda requires context of the specific type that it is occuring on, in short
+                        virtualType = typeof(string); // ..is an ugly assumption that happens to be about right atm
+                    } else {
+                        virtualType = virtualInfo.Type;
+                    }
+
+                    if(virtualInfo.IsList){
+                        virtualType = virtualType.MakeArrayType();
+                    }
+
+                    if (virtualType.IsArray)
+                    {
+                        _requiredImports.Add(virtualType.GetElementType());
+                        continue;
+                    }
+                    
+                    _requiredImports.Add(virtualType);
+                }
+            }
+        }
+
+        public List<Type> GetRequiredImports()
+        {
+            return _requiredImports;
         }
 
         /// <summary>
@@ -66,25 +106,27 @@ namespace Api.TypeScript.Objects
                     {
                         foreach (var globalField in ContentFields.GlobalVirtualFields.Values)
                         {
-                            var fieldName = TypeScriptService.LcFirst(globalField.VirtualInfo?.FieldName ?? "unknown");
+                            var virtualInfo = globalField.VirtualInfo;
 
-                            if (globalField.IsVirtual && globalField.VirtualInfo?.IdSource != null)
-                            {
-                                var source = globalField.VirtualInfo.IdSource;
-                                EmitField(builder, svc, fieldName, source.FieldType);
+                            Type virtualType = null;
+
+                            if(virtualInfo.DynamicTypeField != null){
+                                virtualType = typeof(object);
+                            } else if(virtualInfo.ValueGeneratorType != null) {
+                                // this one kinda requires context of the specific type that it is occuring on, in short
+                                virtualType = typeof(string); // ..is an ugly assumption that happens to be about right atm
+                            } else {
+                                virtualType = virtualInfo.Type;
                             }
-                            else if (globalField.FieldInfo != null)
-                            {
-                                EmitField(builder, svc, fieldName, globalField.FieldInfo.FieldType);
+
+                            if(virtualInfo.IsList){
+                                virtualType = virtualType.MakeArrayType();
                             }
-                            else if (globalField.PropertyInfo != null)
-                            {
-                                EmitField(builder, svc, fieldName, globalField.PropertyInfo.PropertyType);
-                            }
-                            else
-                            {
-                                builder.AppendLine($"    {fieldName}?: unknown;");
-                            }
+                            var fieldName = TypeScriptService.LcFirst(globalField.VirtualInfo?.FieldName);
+                            
+
+                            EmitField(builder, svc, fieldName, virtualType);
+                            _requiredImports.Add(virtualType);
                         }
                     }
                     catch (Exception ex)
@@ -106,11 +148,10 @@ namespace Api.TypeScript.Objects
             var unwrappedType = TypeScriptService.UnwrapTypeNesting(type);
             if (unwrappedType == typeof(void)) return;
 
-            var isCollection = TypeScriptService.IsNestedCollection(type);
             var isNullable = TypeScriptService.IsNullable(unwrappedType);
             var tsName = svc.GetTypeOverwrite(unwrappedType) ?? unwrappedType.Name;
 
-            builder.AppendLine($"    {TypeScriptService.LcFirst(name)}{(isNullable ? "?" : "")}: {tsName}{(isCollection ? "[]" : "")};");
+            builder.AppendLine($"    {TypeScriptService.LcFirst(name)}{(isNullable ? "?" : "")}: {tsName};");
         }
     }
 }
