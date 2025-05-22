@@ -10,6 +10,7 @@ namespace Api.Payments
 	/// <summary>
 	/// A ShoppingCart contains a list of productQuantities.
 	/// A user has a "current" shopping cart associated to them, and when they checkout, the shopping cart is converted to a payment.
+	/// Each time objects in the cart are changed, the editedUtc of the cart itself *must* change too.
 	/// </summary>
 	public partial class ShoppingCart : VersionedContent<uint>
 	{
@@ -18,6 +19,12 @@ namespace Api.Payments
 		/// It could, however, be cloned. This is if someone wants to buy the same thing again for example.
 		/// </summary>
 		public uint Status;
+
+		/// <summary>
+		/// The currently selected delivery option ID, if 
+		/// this cart contains any physical delivery items and one is selected.
+		/// </summary>
+		public uint DeliveryOptionId;
 	}
 
 }

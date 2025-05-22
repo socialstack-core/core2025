@@ -3,10 +3,8 @@ import CreatePage from "Admin/Page/Create";
 import { useTokens } from "UI/Token";
 
 const PageEditor: React.FC = (props: any) => {
-
-    // this currently doesn't work, so defaulting to the add check
-    const id = useTokens(props.id)
-    const isEditPage = id.length != 0;
+	const { content } = props;
+    const isEditPage = !!content;
 
     if (isEditPage) {
 
@@ -14,12 +12,12 @@ const PageEditor: React.FC = (props: any) => {
             <AutoEdit
                 contentType= "Page"
                 singular= "Page"
-                id= {id.toString()}
+                content= {content}
                 plural= "pages"
             />
         )
     }
-
+	
     return (
         <div className='page-editor'>
             <CreatePage />

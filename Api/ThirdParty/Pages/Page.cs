@@ -61,6 +61,11 @@ namespace Api.Pages
 		public bool PreferIfLoggedIn;
 
 		/// <summary>
+		/// The includes string to use for primary content. * will include everything at 1 level deep.
+		/// </summary>
+		public string PrimaryContentIncludes;
+
+		/// <summary>
 		/// A temporarily held URL value which is used during page creation to create a new permalink.
 		/// </summary>
 		public string Url { get; set; }

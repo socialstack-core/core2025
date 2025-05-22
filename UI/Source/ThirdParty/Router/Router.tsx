@@ -2,6 +2,7 @@ import pageApi, { PageStateResult } from 'Api/Page';
 import Canvas from 'UI/Canvas';
 import { ContentChangeDetail } from 'UI/Functions/ContentChange';
 import { WebSocketMessageDetail } from 'UI/Functions/WebSocket';
+import { expandIncludes } from 'UI/Functions/WebRequest';
 import getBuildDate from 'UI/Functions/GetBuildDate';
 import AdminTrigger from 'UI/AdminTrigger';
 import { useRef, useState, useEffect } from 'react';
@@ -48,6 +49,10 @@ const Router: React.FC<{}> = () => {
 
 		var pgStateHold = document.getElementById('pgState');
 		const initState = pgStateHold ? JSON.parse(pgStateHold.innerHTML) : {};
+
+		if (initState.po) {
+			initState.po = expandIncludes(initState.po);
+		}
 
 		triggerEvent(initState.page);
 
@@ -125,9 +130,9 @@ const Router: React.FC<{}> = () => {
 				window.__cfg = config;
 			}
 
-			var {
-
-			} = res;
+			if (res.po) {
+				res.po = expandIncludes(res.po);
+			}
 
 			var pgState = {url, ...res};
 			setPage(pgState);

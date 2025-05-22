@@ -352,7 +352,7 @@ namespace Api.Pages
 			if (primaryObject != null)
 			{
 				writer.WriteASCII(",\"po\":");
-				await primaryService.ObjectToTypeAndIdJson(context, primaryObject, writer);
+				await primaryService.ObjectToJson(context, primaryObject, writer, null, page.PrimaryContentIncludes);
 			}
 
 			if (page != null && !string.IsNullOrEmpty(page.Title))

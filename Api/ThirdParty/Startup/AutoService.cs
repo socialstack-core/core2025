@@ -2112,7 +2112,7 @@ public partial class AutoService
 	/// For example, if you'd like each child entry to show its Id and Title fields, specify new string[]{"id", "title"}.
 	/// </param>
 	/// <param name="visibilityJson"></param>
-	protected void InstallAdminPages(string navMenuLabel, string navMenuIconRef, string[] fields, ChildAdminPageOptions childAdminPage = null, string visibilityJson = null)
+	protected void InstallAdminPages(string navMenuLabel, string navMenuIconRef, string[] fields, AdminPageOptions childAdminPage = null, string visibilityJson = null)
 	{
 		if (Services.Started)
 		{
@@ -2129,7 +2129,7 @@ public partial class AutoService
 		}
 	}
 	
-	private void InstallAdminPagesInternal(string navMenuLabel, string navMenuIconRef, string[] fields, ChildAdminPageOptions childAdminPage, string visibilityJson = null)
+	private void InstallAdminPagesInternal(string navMenuLabel, string navMenuIconRef, string[] fields, AdminPageOptions childAdminPage, string visibilityJson = null)
 	{
 		var pageService = Api.Startup.Services.Get("PageService");
 

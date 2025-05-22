@@ -12,6 +12,8 @@ namespace Api.Payments
 	/// A ProductAttributeValue
 	/// </summary>
 	[HasVirtualField("attribute", typeof(ProductAttribute), "ProductAttributeId")]
+	[ListAs("attributes", Explicit = true)]
+	[ImplicitFor("attributes", typeof(Product))]
 	public partial class ProductAttributeValue : VersionedContent<uint>
 	{
 		/// <summary>
