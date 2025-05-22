@@ -67,26 +67,14 @@ namespace Api.TypeScript
             if(t.IsArray){
 
                 var result = GetGenericSignature(t.GetElementType());
-
-                if(t.GetArrayRank() > 1){
-                    result += "[";
-                    for(var dimension = 0;dimension < t.GetArrayRank();dimension++){
-                        result += ",";
-                    }
-                    return result + "]";
-                }else{
-
-                    var arrayDepth = t.GetArrayRank();
-
-                    for(var depth = 0;depth < arrayDepth;depth++){
-
-                        result+= "[]";
-
-                    }
-
+                var arrayDepth = t.GetArrayRank();
+                
+                result += "[";
+                for(var dimension = 0;dimension < arrayDepth - 1; dimension++){
+                    result += ",";
                 }
+                return result + "]";
 
-                return result;
 
             }
             if(t.IsGenericType){
