@@ -16,6 +16,8 @@ import { User } from 'Api/User';
 * This type was generated to reflect {Address} (Api.Payments.Address)
 **/
 export type Address = VersionedContent<uint> & {
+    isDefaultDeliveryAddress?: boolean;
+    isDefaultBillingAddress?: boolean;
     uprn?: ulong;
     latitude?: double;
     longitude?: double;
