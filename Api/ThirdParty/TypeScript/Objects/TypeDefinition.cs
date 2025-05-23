@@ -222,7 +222,7 @@ namespace Api.TypeScript.Objects
             var isFieldCollection = TypeScriptService.IsNestedCollection(field.FieldType);
             var overwrite = svc.GetGenericSignature(fieldType);
 
-            builder.AppendLine($"    {TypeScriptService.LcFirst(field.Name)}{(TypeScriptService.IsNullable(fieldType) ? "?" : "")}: {overwrite ?? fieldType.Name}{(isFieldCollection ? "[]" : "")};");
+            builder.AppendLine($"    {TypeScriptService.LcFirst(field.Name)}{(TypeScriptService.IsNullable(fieldType) ? "?" : "")}: {overwrite ?? fieldType.Name}{(isFieldCollection ? "[]" : "")};".Replace("?;", ";"));
         }
 
         private void ProcessProperty(StringBuilder builder, TypeScriptService svc, PropertyInfo property, List<HasVirtualFieldAttribute> virtualFields)
@@ -238,7 +238,7 @@ namespace Api.TypeScript.Objects
             var isCollection = TypeScriptService.IsNestedCollection(property.PropertyType);
             var overwrite = svc.GetGenericSignature(property.PropertyType);
 
-            builder.AppendLine($"    {TypeScriptService.LcFirst(property.Name)}{(TypeScriptService.IsNullable(type) ? "?" : "")}: {overwrite ?? type.Name}{(isCollection ? "[]" : "")};");
+            builder.AppendLine($"    {TypeScriptService.LcFirst(property.Name)}{(TypeScriptService.IsNullable(type) ? "?" : "")}: {overwrite ?? type.Name}{(isCollection ? "[]" : "")};".Replace("?;", ";"));
         }
 
         private void ProcessVirtualFields(StringBuilder builder, TypeScriptService svc)
