@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+    using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Api.Startup;
 using Api.Startup.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
 namespace Api.TypeScript.Objects
@@ -200,7 +202,14 @@ namespace Api.TypeScript.Objects
                     url +=
                         "' + (Array.isArray(includes) ? '" + (url.Contains('&') ? '&' : "") + "includes=' + includes.join(',') : '') + '";
                 }
-                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
+
+                var reqMethodModify = "";
+
+                if (method.Method.GetCustomAttribute<HttpDeleteAttribute>() is not null)
+                {
+                    reqMethodModify = ", {}, { method: 'DELETE' } ";
+                }
+                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")}{reqMethodModify});");
                 
 
                 builder.AppendLine("    };");
