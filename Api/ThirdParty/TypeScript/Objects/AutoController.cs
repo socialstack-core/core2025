@@ -49,7 +49,7 @@ namespace Api.TypeScript.Objects
 
                 if (isArrayType)
                 {
-                    if (method.TrueReturnType.IsGenericParameter)
+                    if (method.ReturnType.IsGenericParameter)
                     {
                         _container.RequireWebApi(WebApis.GetList);
                     }
@@ -142,39 +142,39 @@ namespace Api.TypeScript.Objects
 
                 if (isArrayType)
                 {
-                    if (method.TrueReturnType.IsGenericType)
+                    if (method.ReturnType.IsGenericType)
                     {
-                        if (method.TrueReturnType is { IsGenericParameter: true })
+                        if (method.ReturnType is { IsGenericParameter: true })
                         {
                             // It's a generic type like ApiList<T> where T is just a type parameter
-                            call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                            returnType = $"Promise<ApiList<{method.TrueReturnType.Name}>>";
+                            call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
+                            returnType = $"Promise<ApiList<{method.ReturnType.Name}>>";
                             _container.RequireWebApi(WebApis.GetList);
                         }
                     }
                     else
                     {
-                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        returnType = $"Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>>";
+                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
+                        returnType = $"Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>>";
                         _container.RequireWebApi(WebApis.GetJson);
                     }
                 }
                 else
                 {
-                    if (method.TrueReturnType.IsGenericType &&
-                        method.TrueReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    if (method.ReturnType.IsGenericType &&
+                        method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                     {
                         call = "getList<T>";
                         returnType = "Promise<ApiList<T>>";
                         _container.RequireWebApi(WebApis.GetJson);
                     }
-                    else if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    else if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
-                        call = $"getOne<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        returnType = $"Promise<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        call = $"getOne<{svc.GetGenericSignature(method.ReturnType)}>";
+                        returnType = $"Promise<{svc.GetGenericSignature(method.ReturnType)}>";
                         _container.RequireWebApi(WebApis.GetOne);
                     }
-                    else if (getTextTypes.Contains(method.TrueReturnType))
+                    else if (getTextTypes.Contains(method.ReturnType))
                     {
                         call = $"getText";
                         returnType = "Promise<string>";
@@ -182,8 +182,8 @@ namespace Api.TypeScript.Objects
                     }
                     else
                     {
-                        call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        returnType = $"Promise<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        call = $"getJson<{svc.GetGenericSignature(method.ReturnType)}>";
+                        returnType = $"Promise<{svc.GetGenericSignature(method.ReturnType)}>";
                         _container.RequireWebApi(WebApis.GetJson);
                     }
                 }

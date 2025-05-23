@@ -54,16 +54,16 @@ namespace Api.TypeScript.Objects
 
                 var isArrayType = method.IsApiList;
 
-                if (!container.HasTypeDefinition(method.TrueReturnType, out _))
+                if (!container.HasTypeDefinition(method.ReturnType, out _))
                 {
-                    if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
                         // import instead
-                        _requiredImports.Add(method.TrueReturnType);
+                        _requiredImports.Add(method.ReturnType);
                     }
                     else
                     {
-                        container.AddType(method.TrueReturnType);
+                        container.AddType(method.ReturnType);
                     };
                 }
 
@@ -73,13 +73,13 @@ namespace Api.TypeScript.Objects
                 }
                 else
                 {
-                    if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
                         _container.RequireWebApi(WebApis.GetOne);
                     }
                     else
                     {
-                        container.AddType(method.TrueReturnType);
+                        container.AddType(method.ReturnType);
                         _container.RequireWebApi(WebApis.GetJson);
                     }
                 }
@@ -116,15 +116,16 @@ namespace Api.TypeScript.Objects
             // Generate a method for each endpoint
             foreach (var method in GetEndpointMethods())
             {
-                var fullUrl = (baseUrlRoute != null ? baseUrlRoute.Template : "").ToLower() + "/" + method.RequestUrl;
-                fullUrl = fullUrl.Replace("//", "/");
+                
+
+                string url = URLBuilder.BuildUrl(method);
 
                 var isArrayType = method.IsApiList;
 
                 builder.AppendLine("    /**");
                 builder.AppendLine("     * Generated from a .NET type.");
                 builder.AppendLine($"     * @see {{{_referenceType}}}::{{{method.Method.Name}}}");
-                builder.AppendLine($"     * @url '{fullUrl}'");
+                builder.AppendLine($"     * @url '{url}'");
                 builder.AppendLine("     */");
                 builder.Append($"    {TypeScriptService.LcFirst(method.Method.Name)} = (");
 
@@ -152,34 +153,32 @@ namespace Api.TypeScript.Objects
 
                 if (isArrayType)
                 {
-                    if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
-                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>> => {{");
+                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
                     }
                     else
                     {
-                        call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}[]>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.TrueReturnType)}[]> => {{");
+                        call = $"getJson<{svc.GetGenericSignature(method.ReturnType)}[]>";
+                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}[]> => {{");
                     }
                 }
                 else
                 {
-                    if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
-                        call = $"getOne<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.TrueReturnType)}> => {{");
+                        call = $"getOne<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
                     }
                     else
                     {
-                        call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.TrueReturnType)}> => {{");
+                        call = $"getJson<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
                     }
                 }
 
                 builder.AppendLine();
-
-                string url = URLBuilder.BuildUrl(method);
                 
                 builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")})");
                 

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Api.Contexts;
 using Api.Startup;
 using Google.Protobuf.WellKnownTypes;
@@ -58,6 +59,14 @@ namespace Api.TypeScript.Objects
 
                 var methodParams = method.GetParameters();
                 var webSafeParams = new List<ParameterInfo>();
+                
+                var nonValueTaskReturnType = method.ReturnType;
+
+                if (nonValueTaskReturnType.IsGenericType &&
+                    nonValueTaskReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+                {
+                    nonValueTaskReturnType = nonValueTaskReturnType.GetGenericArguments()[0];
+                }
 
                 var controllerMethod = new ControllerMethod
                 {
@@ -66,7 +75,8 @@ namespace Api.TypeScript.Objects
                     RequiresSessionSet = returnType == typeof(Context),
                     RequiresIncludes = methodParams.Any(p => TypeScriptService.IsEntityType(p.ParameterType) || TypeScriptService.IsEntityType(returnType)) ,
                     IsApiList = TypeScriptService.IsNestedCollection(method.ReturnType),
-                    SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null)
+                    SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null),
+                    ReturnType = nonValueTaskReturnType
                 };
 
                 controllerMethod.RequestUrl = httpAttribute switch
@@ -99,13 +109,10 @@ namespace Api.TypeScript.Objects
                     {
                         webSafeParams.Add(param);
 
-                        if (!controllerMethod.RequestUrl.Contains('?'))
+                        if (method.GetParameters().Any(c => TypeScriptService.IsEntityType(controllerMethod.TrueReturnType)))
                         {
-                            controllerMethod.RequestUrl += '?';
+                            controllerMethod.RequiresIncludes = true;
                         }
-                        controllerMethod.RequiresIncludes = true;
-
-                        controllerMethod.RequestUrl += $"&{param.Name}=' + {param.Name} + '";
                         continue;
                     }
 
@@ -118,8 +125,6 @@ namespace Api.TypeScript.Objects
                     }
                 }
 
-                // Clean up the query string if needed
-                controllerMethod.RequestUrl = controllerMethod.RequestUrl is not null ? controllerMethod.RequestUrl!.Replace("?&", "?") : "";
                 controllerMethod.WebSafeParams = webSafeParams;
 
                 _methods.Add(controllerMethod);

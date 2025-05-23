@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Api.Contexts;
 using Api.Startup;
 using Microsoft.AspNetCore.Mvc;
@@ -77,6 +78,14 @@ namespace Api.TypeScript.Objects
 
                 var methodParams = method.GetParameters();
                 var webSafeParams = new List<ParameterInfo>();
+                
+                var nonValueTaskReturnType = method.ReturnType;
+
+                if (nonValueTaskReturnType.IsGenericType &&
+                    nonValueTaskReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+                {
+                    nonValueTaskReturnType = nonValueTaskReturnType.GetGenericArguments()[0];
+                }
 
                 var controllerMethod = new ControllerMethod
                 {
@@ -85,7 +94,8 @@ namespace Api.TypeScript.Objects
                     RequiresSessionSet = returnType == typeof(Context),
                     RequiresIncludes = true,
                     IsApiList = TypeScriptService.IsNestedCollection(method.ReturnType),
-                    SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null)
+                    SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null),
+                    ReturnType = nonValueTaskReturnType
                 };
 
                 controllerMethod.RequestUrl = httpAttribute switch
@@ -115,6 +125,10 @@ namespace Api.TypeScript.Objects
                     if (param.GetCustomAttribute<FromQueryAttribute>() is not null)
                     {
                         webSafeParams.Add(param);
+                        if (method.GetParameters().Any(c => TypeScriptService.IsEntityType(controllerMethod.TrueReturnType)))
+                        {
+                            controllerMethod.RequiresIncludes = true;
+                        }
                         continue;
                     }
 

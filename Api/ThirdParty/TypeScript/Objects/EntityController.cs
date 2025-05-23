@@ -44,9 +44,9 @@ namespace Api.TypeScript.Objects
 
             foreach (var method in GetEndpointMethods())
             {
-                if (method.TrueReturnType != _referenceTypes.entityType && !TypeScriptService.IsEntityType(method.TrueReturnType))
+                if (method.ReturnType != _referenceTypes.entityType && !TypeScriptService.IsEntityType(method.ReturnType))
                 {
-                    container.AddType(method.TrueReturnType);
+                    container.AddType(method.ReturnType);
                 }
 
                 foreach (var param in method.WebSafeParams)
@@ -61,7 +61,7 @@ namespace Api.TypeScript.Objects
 
                 if (isArrayType)
                 {
-                    if (method.TrueReturnType == _referenceTypes.entityType)
+                    if (method.ReturnType == _referenceTypes.entityType)
                     {
                         _container.RequireWebApi(WebApis.GetList);
                     }
@@ -72,7 +72,7 @@ namespace Api.TypeScript.Objects
                 }
                 else
                 {
-                    if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
                         _container.RequireWebApi(WebApis.GetOne);
                     }
@@ -159,40 +159,40 @@ namespace Api.TypeScript.Objects
 
                 if (isArrayType)
                 {
-                    if (method.TrueReturnType == _referenceTypes.entityType)
+                    if (method.ReturnType == _referenceTypes.entityType)
                     {
-                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>> => {{");
+                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
                     }
-                    else if (method.TrueReturnType.IsGenericTypeDefinition &&
-                             method.TrueReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    else if (method.ReturnType.IsGenericTypeDefinition &&
+                             method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                     {
-                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>> => {{");
+                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
                     }
                     else
                     {
-                        call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}[]>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.TrueReturnType)}[]> => {{");
+                        call = $"getJson<{svc.GetGenericSignature(method.ReturnType)}[]>";
+                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}[]> => {{");
                     }
                 }
                 else
                 {
-                    if (TypeScriptService.IsEntityType(method.TrueReturnType))
+                    if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
-                        call = $"getOne<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.TrueReturnType)}> => {{");
+                        call = $"getOne<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
                     }
-                    else if (method.TrueReturnType.IsGenericTypeDefinition &&
-                              method.TrueReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    else if (method.ReturnType.IsGenericTypeDefinition &&
+                              method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                     {
-                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>> => {{");
+                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
                     }
                     else
                     {
-                        call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.TrueReturnType)}> => {{");
+                        call = $"getJson<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
                     }
                 }
 

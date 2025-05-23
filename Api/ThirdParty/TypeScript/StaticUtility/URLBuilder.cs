@@ -52,7 +52,7 @@ namespace Api.TypeScript
                     "' + (Array.isArray(includes) ? '" + (needsQueryMarker ? "?" : "&") + "includes=' + includes.join(',') : '') + '";
             }
 
-            url = url.Replace("+''", "");
+            url = url.Replace("+''", "").Replace("//", "/");
 
             return url;
         }

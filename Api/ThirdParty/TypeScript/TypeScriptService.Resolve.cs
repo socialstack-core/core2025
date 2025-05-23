@@ -84,14 +84,15 @@ namespace Api.TypeScript
 
 				if (t.IsGenericTypeDefinition)
 				{
-                    var paramSet = t.GetGenericArguments();
                     var name = TidyGenericName(t.Name) + "<";
 
 					for (var i = 0; i < args.Length; i++)
 					{
-						if (i > 0)
-							name += ", ";
-						name += args[i].Name;
+                        if (i > 0)
+                        {
+                            name += ", ";
+                        }
+						name += GetGenericSignature(args[i]);
 					}
 
 					return name + ">";
@@ -141,7 +142,9 @@ namespace Api.TypeScript
                 for (var i = 0; i < args.Length; i++)
                 {
                     if (i > 0)
+                    {
                         sb.Append(", ");
+                    }
                     sb.Append(GetGenericSignature(args[i]));
                 }
 
@@ -153,13 +156,7 @@ namespace Api.TypeScript
 
             var overwriteNonGeneric = GetTypeOverwrite(t);
 
-            if (overwriteNonGeneric != null)
-            {
-                return overwriteNonGeneric;
-            }
-
-            return t.Name;
-
+            return overwriteNonGeneric ?? t.Name;
         }
 
         /// <summary>

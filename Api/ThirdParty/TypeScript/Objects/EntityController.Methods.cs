@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Api.Contexts;
 using Api.Startup;
 using Google.Protobuf.WellKnownTypes;
@@ -65,6 +66,14 @@ namespace Api.TypeScript.Objects
                     ? returnsAttr.ReturnType 
                     : TypeScriptService.UnwrapTypeNesting(method.ReturnType);
 
+                var nonValueTaskReturnType = method.ReturnType;
+
+                if (nonValueTaskReturnType.IsGenericType &&
+                    nonValueTaskReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+                {
+                    nonValueTaskReturnType = nonValueTaskReturnType.GetGenericArguments()[0];
+                }
+
                 var methodParams = method.GetParameters();
                 var webSafeParams = new List<ParameterInfo>();
 
@@ -75,7 +84,8 @@ namespace Api.TypeScript.Objects
                     RequiresSessionSet = returnType == typeof(Context),
                     RequiresIncludes = methodParams.Any(p => p.ParameterType == _referenceTypes.Item2) || returnType == _referenceTypes.Item2,
                     IsApiList = TypeScriptService.IsNestedCollection(method.ReturnType),
-                    SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null)
+                    SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null),
+                    ReturnType = nonValueTaskReturnType
                 };
 
                 controllerMethod.RequestUrl = httpAttribute switch
@@ -100,7 +110,10 @@ namespace Api.TypeScript.Objects
                     if (param.GetCustomAttribute<FromQueryAttribute>() is not null)
                     {
                         webSafeParams.Add(param);
-                        controllerMethod.RequiresIncludes = true;
+                        if (method.GetParameters().Any(c => TypeScriptService.IsEntityType(controllerMethod.TrueReturnType)))
+                        {
+                            controllerMethod.RequiresIncludes = true;
+                        }
                         continue;
                     }
 
@@ -179,5 +192,10 @@ namespace Api.TypeScript.Objects
         /// A list of safe-to-expose parameters that can be passed from the frontend.
         /// </summary>
         public List<ParameterInfo> WebSafeParams;
+        
+        /// <summary>
+        /// The return type, without the ValueTask
+        /// </summary>
+        public Type ReturnType;
     }
 }
