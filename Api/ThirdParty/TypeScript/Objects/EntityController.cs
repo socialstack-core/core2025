@@ -199,8 +199,6 @@ namespace Api.TypeScript.Objects
                 builder.AppendLine();
 
                 var url = URLBuilder.BuildUrl(method);
-
-                Log.Error("URL GEN", "URL GEN: " + url);
                 
                 builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
 
