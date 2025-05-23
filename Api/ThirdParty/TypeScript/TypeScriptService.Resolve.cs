@@ -62,7 +62,7 @@ namespace Api.TypeScript
             var baseNullable = Nullable.GetUnderlyingType(t);
             
             if(baseNullable != null){
-                return GetGenericSignature(baseNullable) + "?";
+                return GetGenericSignature(baseNullable) + " | undefined";
             }
 
             if(t.IsArray){
@@ -78,26 +78,24 @@ namespace Api.TypeScript
 
 
             }
-            if(t.IsGenericType){
 
+            if(t.IsGenericType)
+            {
                 var baseType = t.GetGenericTypeDefinition();
-
                 var args = t.GetGenericArguments();
 
-                if(baseType == typeof(List<>)){
-
+                if(baseType == typeof(List<>))
+                {
                     return GetGenericSignature(args[0]) + "[]";
-
                 }
-                if(baseType == typeof(Dictionary<,>)){
-
+                if(baseType == typeof(Dictionary<,>))
+                {
                     return "Record<" + GetGenericSignature(args[0]) + "," + GetGenericSignature(args[1]) + ">";
 
                 }
-                if(baseType == typeof(Task<>) || baseType == typeof(ValueTask<>)){
-
+                if(baseType == typeof(Task<>) || baseType == typeof(ValueTask<>))
+                {
                     return "Promise<" + GetGenericSignature(args[0]) + ">";
-
                 }
 
                 if (baseType == typeof(ContentStream<,>))
