@@ -473,7 +473,7 @@ namespace Api.Pages
 			writer.WriteASCII("</head><body>");
 			writer.WriteASCII("<div class=\"container\">");
 				writer.WriteASCII("<div class=\"alert alert-danger\" role=\"alert\">");
-				writer.WriteASCII("\"<b>\" + errors.Count + \" error(s)</b> during UI build.");
+			    writer.WriteASCII("<b>" + errors.Count + " error(s)</b> during UI build.");
 				writer.WriteASCII("</div>");
 
 			foreach (var error in errors)
