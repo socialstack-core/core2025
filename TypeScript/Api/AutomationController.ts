@@ -12,7 +12,7 @@ import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 * This type was generated to reflect {Automation} (Api.Automations.Automation)
 **/
 export type Automation = {
-    lastTrigger?: Date | string | number;
+    lastTrigger?: Date | string | number?;
     name?: string;
     description?: string;
     cronDescription?: string;
