@@ -26,8 +26,9 @@ namespace Api.NavMenus
 		public override async ValueTask<ContentStream<AdminNavMenuItem, uint>?> List(Context context, [FromBody] ListFilter filters)
 		{
 			var service = _service as AdminNavMenuItemService;
-			
-			var allItems = await service.Where().ListAll(context);
+
+			var filt = service.LoadFilter(filters) as Filter<AdminNavMenuItem, uint>;
+			var allItems = await filt.ListAll(context);
 			var userCanAccess = new List<AdminNavMenuItem>();
 
 			var role = context.Role;
