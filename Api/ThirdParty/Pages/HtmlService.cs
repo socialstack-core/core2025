@@ -483,7 +483,8 @@ namespace Api.Pages
 				writer.WriteASCII("</h4><p>");
 				writer.WriteASCII(error.File);
 				writer.WriteASCII("</p><pre>");
-				writer.WriteASCII(HttpUtility.HtmlEncode(error.Description));
+				var msg = Encoding.UTF8.GetBytes(HttpUtility.HtmlEncode(error.Description));
+				writer.Write(msg, 0, msg.Length);
 				writer.WriteASCII("</pre></div>");
 			}
 
