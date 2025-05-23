@@ -82,21 +82,20 @@ namespace Api.TypeScript
 			{
 				var args = t.GetGenericArguments();
 
-				if (t.IsGenericTypeDefinition)
-				{
+                if (t.IsGenericTypeDefinition)
+                {
+                    var paramSet = t.GetGenericArguments();
                     var name = TidyGenericName(t.Name) + "<";
 
-					for (var i = 0; i < args.Length; i++)
-					{
+                    for (var i = 0; i < args.Length; i++)
+                    {
                         if (i > 0)
-                        {
                             name += ", ";
-                        }
-						name += GetGenericSignature(args[i]);
-					}
+                        name += args[i].Name;
+                    }
 
-					return name + ">";
-				}
+                    return name + ">";
+                }
 
 				var baseType = t.GetGenericTypeDefinition();
 
