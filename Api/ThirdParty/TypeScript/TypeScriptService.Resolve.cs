@@ -101,7 +101,7 @@ namespace Api.TypeScript
 
                 if(baseType == typeof(List<>))
                 {
-                    return GetGenericSignature(args[0]) + "[]";
+                    return GetGenericSignature(args[0]);
                 }
                 if(baseType == typeof(Dictionary<,>))
                 {
