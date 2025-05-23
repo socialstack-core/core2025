@@ -61,12 +61,13 @@ namespace Api.TypeScript
             }
             var baseNullable = Nullable.GetUnderlyingType(t);
             
-            if(baseNullable != null){
+            if(baseNullable != null)
+            {
                 return GetGenericSignature(baseNullable) + " | undefined";
             }
 
-            if(t.IsArray){
-
+            if(t.IsArray)
+            {
                 var result = GetGenericSignature(t.GetElementType());
                 var arrayDepth = t.GetArrayRank();
                 
@@ -75,14 +76,28 @@ namespace Api.TypeScript
                     result += ",";
                 }
                 return result + "]";
-
-
             }
 
             if(t.IsGenericType)
-            {
-                var baseType = t.GetGenericTypeDefinition();
-                var args = t.GetGenericArguments();
+			{
+				var args = t.GetGenericArguments();
+
+				if (t.IsGenericTypeDefinition)
+				{
+                    var paramSet = t.GetGenericArguments();
+                    var name = TidyGenericName(t.Name) + "<";
+
+					for (var i = 0; i < args.Length; i++)
+					{
+						if (i > 0)
+							name += ", ";
+						name += args[i].Name;
+					}
+
+					return name + ">";
+				}
+
+				var baseType = t.GetGenericTypeDefinition();
 
                 if(baseType == typeof(List<>))
                 {
@@ -91,13 +106,11 @@ namespace Api.TypeScript
                 if(baseType == typeof(Dictionary<,>))
                 {
                     return "Record<" + GetGenericSignature(args[0]) + "," + GetGenericSignature(args[1]) + ">";
-
                 }
                 if(baseType == typeof(Task<>) || baseType == typeof(ValueTask<>))
                 {
                     return "Promise<" + GetGenericSignature(args[0]) + ">";
                 }
-
                 if (baseType == typeof(ContentStream<,>))
                 {
                     return "ApiList<" + GetGenericSignature(args[0]) + ">";
@@ -149,6 +162,22 @@ namespace Api.TypeScript
 
         }
 
+        /// <summary>
+        /// Strips the backtick segment of generic type names.
+        /// </summary>
+        /// <param name="typeName"></param>
+        /// <returns></returns>
+        private string TidyGenericName(string typeName)
+        {
+            var backtick = typeName.IndexOf('`');
+
+			if (backtick != -1)
+			{
+				return typeName[0..backtick];
+			}
+
+            return typeName;
+		}
 
 
     }
