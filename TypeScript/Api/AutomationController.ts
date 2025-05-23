@@ -12,7 +12,7 @@ import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 * This type was generated to reflect {Automation} (Api.Automations.Automation)
 **/
 export type Automation = {
-    lastTrigger?: Date | string | number?;
+    lastTrigger?: Date | string | number | undefined;
     name?: string;
     description?: string;
     cronDescription?: string;
@@ -37,7 +37,7 @@ export class AutomationController {
      * @url 'v1/automation/list'
      */
     get = (): Promise<AutomationStructure> => {
-        return getJson<AutomationStructure>(this.apiUrl + '/list');
+        return getJson<AutomationStructure>(this.apiUrl + '/list')
     }
 
     /**
@@ -46,7 +46,7 @@ export class AutomationController {
      * @url 'v1/automation/' + name + '/run'
      */
     execute = (name: string): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/' + name + '/run');
+        return getJson<void>(this.apiUrl + '/' + name + '/run')
     }
 
 }

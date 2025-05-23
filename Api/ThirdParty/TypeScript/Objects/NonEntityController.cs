@@ -179,8 +179,15 @@ namespace Api.TypeScript.Objects
 
                 builder.AppendLine();
 
-                string url = ("/" + method.RequestUrl).Replace("//", "/");
-                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
+                string url = URLBuilder.BuildUrl(method);
+                
+                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")})");
+                
+                if (method.RequiresSessionSet)
+                {
+                    builder.AppendLine("            .then(session => { setSession(session) })");
+                }
+
 
                 builder.AppendLine("    }");
                 builder.AppendLine();

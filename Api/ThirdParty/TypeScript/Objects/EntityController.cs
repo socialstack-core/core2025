@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Text;
+using Api.Startup;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
@@ -144,12 +145,27 @@ namespace Api.TypeScript.Objects
                     paramCount++;
                 }
 
+                if (method.RequiresIncludes)
+                {
+                    if (paramCount != 0)
+                    {
+                        builder.Append(", ");
+                    }
+                    builder.Append("includes?: ApiIncludes[]");
+                }
+
                 // Closing params and declaring return type
                 string call = "getJson";
 
                 if (isArrayType)
                 {
                     if (method.TrueReturnType == _referenceTypes.entityType)
+                    {
+                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>> => {{");
+                    }
+                    else if (method.TrueReturnType.IsGenericTypeDefinition &&
+                             method.TrueReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                     {
                         call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
                         builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>> => {{");
@@ -167,6 +183,12 @@ namespace Api.TypeScript.Objects
                         call = $"getOne<{svc.GetGenericSignature(method.TrueReturnType)}>";
                         builder.Append($"): Promise<{svc.GetGenericSignature(method.TrueReturnType)}> => {{");
                     }
+                    else if (method.TrueReturnType.IsGenericTypeDefinition &&
+                              method.TrueReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    {
+                        call = $"getList<{svc.GetGenericSignature(method.TrueReturnType)}>";
+                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.TrueReturnType)}>> => {{");
+                    }
                     else
                     {
                         call = $"getJson<{svc.GetGenericSignature(method.TrueReturnType)}>";
@@ -176,7 +198,10 @@ namespace Api.TypeScript.Objects
 
                 builder.AppendLine();
 
-                string url = ("/" + method.RequestUrl).Replace("//", "/");
+                var url = URLBuilder.BuildUrl(method);
+
+                Log.Error("URL GEN", "URL GEN: " + url);
+                
                 builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
 
                 builder.AppendLine("    }");

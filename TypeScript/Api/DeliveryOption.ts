@@ -4,6 +4,7 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
+import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -38,8 +39,8 @@ export class DeliveryOptionApi extends AutoController<DeliveryOption,uint>{
      * @see {Api.Payments.DeliveryOptionController}::{Estimate}
      * @url 'v1/deliveryoption/estimate/cart/{shoppingcartid}'
      */
-    estimate = (): Promise<ApiList<DeliveryOption>> => {
-        return getJson<ApiList<DeliveryOption>>(this.apiUrl + '/estimate/cart/{shoppingcartid}');
+    estimate = (shoppingCartId: uint, includes?: ApiIncludes[]): Promise<ApiList<DeliveryOption>> => {
+        return getJson<ApiList<DeliveryOption>>(this.apiUrl + '/estimate/cart/' + shoppingCartId +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '');
     }
 
 }

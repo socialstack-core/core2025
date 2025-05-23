@@ -34,7 +34,7 @@ export class StripeController {
      * @url 'v1/stripe-gateway/setup'
      */
     setupIntent = (): Promise<StripeIntentResponse> => {
-        return getJson<StripeIntentResponse>(this.apiUrl + '/setup');
+        return getJson<StripeIntentResponse>(this.apiUrl + '/setup')
     }
 
     /**
@@ -43,7 +43,7 @@ export class StripeController {
      * @url 'v1/stripe-gateway/webhook'
      */
     webhook = (): Promise<PublicMessage> => {
-        return getJson<PublicMessage>(this.apiUrl + '/webhook');
+        return getJson<PublicMessage>(this.apiUrl + '/webhook')
     }
 
 }

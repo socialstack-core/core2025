@@ -95,7 +95,6 @@ namespace Api.TypeScript.Objects
                     _ => ""
                 } ?? "";
 
-                controllerMethod.RequestUrl = controllerMethod.RequestUrl.ToLower();
 
                 // Parse parameters
                 foreach (var param in methodParams)
@@ -103,26 +102,19 @@ namespace Api.TypeScript.Objects
                     if (param.Name == "includes")
                     {
                         // includes handled automatically.
+                        controllerMethod.RequiresIncludes = true;
                         continue;
                     }
                     if (controllerMethod.RequestUrl.Contains($"{{{param.Name}}}") &&
                         param.GetCustomAttribute<FromRouteAttribute>() is not null)
                     {
                         webSafeParams.Add(param);
-                        controllerMethod.RequestUrl = controllerMethod.RequestUrl
-                            .Replace($"{{{param.Name}}}", $"' + {param.Name} + '");
                         continue;
                     }
 
                     if (param.GetCustomAttribute<FromQueryAttribute>() is not null)
                     {
                         webSafeParams.Add(param);
-                        if (!controllerMethod.RequestUrl.Contains('?'))
-                        {
-                            controllerMethod.RequestUrl += '?';
-                        }
-
-                        controllerMethod.RequestUrl += $"&{param.Name}=' + {param.Name} + '";
                         continue;
                     }
 
@@ -134,7 +126,6 @@ namespace Api.TypeScript.Objects
                     }
                 }
 
-                controllerMethod.RequestUrl = controllerMethod.RequestUrl.Replace("?&", "?");
                 controllerMethod.WebSafeParams = webSafeParams;
 
                 _methods.Add(controllerMethod);

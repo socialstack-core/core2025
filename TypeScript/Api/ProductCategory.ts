@@ -4,6 +4,7 @@
 
 import { ApiList, getList, getJson, getText } from 'UI/Functions/WebRequest';
 
+import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -79,10 +80,10 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.ProductCategoryController}::{Structure}
-     * @url 'v1/productCategory/structure?includeProducts=' + includeProducts + ''
+     * @url 'v1/productCategory/structure'
      */
-    structure = (includeProducts?: boolean): Promise<ProductCategoryNode[]> => {
-        return getJson<ProductCategoryNode[]>(this.apiUrl + '/structure?includeProducts=' + includeProducts + '');
+    structure = (includeProducts?: boolean, includes?: ApiIncludes[]): Promise<ProductCategoryNode[]> => {
+        return getJson<ProductCategoryNode[]>(this.apiUrl + '/structure?includeProducts=' + includeProducts + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
     }
 
     /**
@@ -97,46 +98,46 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.ProductCategoryController}::{GetTreeNodePath}
-     * @url 'v1/productCategory/tree?path=' + path + ''
+     * @url 'v1/productCategory/tree'
      */
-    getTreeNodePath = (path: string): Promise<TreeNodeDetail> => {
-        return getJson<TreeNodeDetail>(this.apiUrl + '/tree?path=' + path + '');
+    getTreeNodePath = (path: string, includes?: ApiIncludes[]): Promise<TreeNodeDetail> => {
+        return getJson<TreeNodeDetail>(this.apiUrl + '/tree?path=' + path + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.ProductCategoryController}::{GetProducts}
-     * @url 'v1/productCategory/' + id + '/products'
+     * @url 'v1/productCategory/{id}/products'
      */
     getProducts = (id: uint): Promise<Product[]> => {
-        return getJson<Product[]>(this.apiUrl + '/' + id + '/products');
+        return getJson<Product[]>(this.apiUrl + '/' + id +'/products');
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.ProductCategoryController}::{GetProductCategories}
-     * @url 'v1/productCategory/product/' + id + ''
+     * @url 'v1/productCategory/product/{id}'
      */
-    getProductCategories = (id: uint): Promise<ApiList<ProductCategory>> => {
-        return getList<ProductCategory>(this.apiUrl + '/product/' + id + '');
+    getProductCategories = (id: uint, includes?: ApiIncludes[]): Promise<ApiList<ProductCategory>> => {
+        return getList<ProductCategory>(this.apiUrl + '/product/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '');
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.ProductCategoryController}::{GetChildren}
-     * @url 'v1/productCategory/' + id + '/children'
+     * @url 'v1/productCategory/{id}/children'
      */
     getChildren = (id: uint): Promise<ProductCategoryNode[]> => {
-        return getJson<ProductCategoryNode[]>(this.apiUrl + '/' + id + '/children');
+        return getJson<ProductCategoryNode[]>(this.apiUrl + '/' + id +'/children');
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.ProductCategoryController}::{GetParents}
-     * @url 'v1/productCategory/' + id + '/parents'
+     * @url 'v1/productCategory/{id}/parents'
      */
     getParents = (id: uint): Promise<ProductCategoryNode[]> => {
-        return getJson<ProductCategoryNode[]>(this.apiUrl + '/' + id + '/parents');
+        return getJson<ProductCategoryNode[]>(this.apiUrl + '/' + id +'/parents');
     }
 
 }

@@ -4,6 +4,7 @@
 
 import { ApiList, getOne, getText } from 'UI/Functions/WebRequest';
 
+import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -55,8 +56,8 @@ export class ShoppingCartApi extends AutoController<ShoppingCart,uint>{
      * @see {Api.Payments.ShoppingCartController}::{ChangeItems}
      * @url 'v1/shoppingCart/change_items'
      */
-    changeItems = (itemChanges: CartItemChanges): Promise<ShoppingCart> => {
-        return getOne<ShoppingCart>(this.apiUrl + '/change_items', itemChanges);
+    changeItems = (itemChanges: CartItemChanges, includes?: ApiIncludes[]): Promise<ShoppingCart> => {
+        return getOne<ShoppingCart>(this.apiUrl + '/change_items' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', itemChanges);
     }
 
 }

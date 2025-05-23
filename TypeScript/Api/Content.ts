@@ -111,20 +111,20 @@ export class AutoController<T extends Content<uint>, ID> {
     /**
      * Generated from a .NET type.
      * @see {T}::{LoadRevision}
-     * @url 'revision/' + id + ''
+     * @url 'revision/{id}'
      */
     loadRevision = (id: ID, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/revision/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getOne<T>(this.apiUrl + '/revision/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
     /**
      * Generated from a .NET type.
      * @see {T}::{DeleteRevision}
-     * @url 'revision/' + id + ''
+     * @url 'revision/{id}'
      */
     deleteRevision = (id: ID, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/revision/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getOne<T>(this.apiUrl + '/revision/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', {}, { method: 'DELETE' } )
     };
 
 
@@ -134,27 +134,27 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'revision/list'
      */
     revisionList = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getList<T>(this.apiUrl + '/revision/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters);
+        return getList<T>(this.apiUrl + '/revision/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
     };
 
 
     /**
      * Generated from a .NET type.
      * @see {T}::{UpdateRevision}
-     * @url 'revision/' + id + ''
+     * @url 'revision/{id}'
      */
     updateRevision = (id: ID, body?: Partial<T>, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/revision/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', body);
+        return getOne<T>(this.apiUrl + '/revision/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
     };
 
 
     /**
      * Generated from a .NET type.
      * @see {T}::{PublishRevision}
-     * @url 'publish/' + id + ''
+     * @url 'publish/{id}'
      */
     publishRevision = (id: ID, body?: Partial<T>, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/publish/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', body);
+        return getOne<T>(this.apiUrl + '/publish/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
     };
 
 
@@ -164,37 +164,37 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'draft'
      */
     createDraft = (body?: Partial<T>, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/draft?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', body);
+        return getOne<T>(this.apiUrl + '/draft' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
     };
 
 
     /**
      * Generated from a .NET type.
      * @see {T}::{Load}
-     * @url '' + id + ''
+     * @url '{id}'
      */
     load = (id: ID, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getOne<T>(this.apiUrl + '/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
     /**
      * Generated from a .NET type.
      * @see {T}::{Delete}
-     * @url '' + id + ''
+     * @url '{id}'
      */
     delete = (id: ID, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getOne<T>(this.apiUrl + '/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', {}, { method: 'DELETE' } )
     };
 
 
     /**
      * Generated from a .NET type.
      * @see {T}::{InvalidateCachedItem}
-     * @url 'cache/invalidate/' + id + ''
+     * @url 'cache/invalidate/{id}'
      */
     invalidateCachedItem = (id: ID, includes?: ApiIncludes[]): Promise<string> => {
-        return getText(this.apiUrl + '/cache/invalidate/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getText(this.apiUrl + '/cache/invalidate/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
@@ -204,7 +204,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'cache/invalidate'
      */
     invalidateCache = (includes?: ApiIncludes[]): Promise<string> => {
-        return getText(this.apiUrl + '/cache/invalidate?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getText(this.apiUrl + '/cache/invalidate' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
@@ -214,7 +214,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'list'
      */
     listAll = (includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getList<T>(this.apiUrl + '/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getList<T>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
@@ -224,7 +224,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'list'
      */
     list = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getList<T>(this.apiUrl + '/list?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters);
+        return getList<T>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
     };
 
 
@@ -234,17 +234,17 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url ''
      */
     create = (body?: Partial<T>, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', body);
+        return getOne<T>(this.apiUrl + '/' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
     };
 
 
     /**
      * Generated from a .NET type.
      * @see {T}::{Update}
-     * @url '' + id + ''
+     * @url '{id}'
      */
     update = (id: ID, body?: Partial<T>, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/' + id + '?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', body);
+        return getOne<T>(this.apiUrl + '/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
     };
 
 
@@ -254,17 +254,17 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'list.pot'
      */
     listPOTUpdate = (includes?: ApiIncludes[]): Promise<string> => {
-        return getText(this.apiUrl + '/list.pot?' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+        return getText(this.apiUrl + '/list.pot' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
     /**
      * Generated from a .NET type.
      * @see {T}::{ListPOT}
-     * @url 'list.pot?ignoreFields=' + ignoreFields + ''
+     * @url 'list.pot'
      */
     listPOT = (filters?: Partial<T>, ignoreFields?: String, includes?: ApiIncludes[]): Promise<string> => {
-        return getText(this.apiUrl + '/list.pot?ignoreFields=' + ignoreFields + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters);
+        return getText(this.apiUrl + '/list.pot?ignoreFields=' + ignoreFields + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters)
     };
 
 }

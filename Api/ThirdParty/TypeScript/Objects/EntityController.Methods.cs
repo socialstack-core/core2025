@@ -32,6 +32,8 @@ namespace Api.TypeScript.Objects
                 return _methods;
             }
 
+            var ts = Services.Get<TypeScriptService>();
+
             _methods = [];
             string[] crud = ["List", "Load", "Create", "Update", "Delete"];
 
@@ -82,7 +84,6 @@ namespace Api.TypeScript.Objects
                     HttpMethodAttribute httpAttr => httpAttr.Template,
                     _ => controllerMethod.RequestUrl ?? ""
                 };
-                controllerMethod.RequestUrl = controllerMethod.RequestUrl.ToLower();
 
                 // Parse method parameters
                 foreach (var param in methodParams)
@@ -92,7 +93,6 @@ namespace Api.TypeScript.Objects
                         param.GetCustomAttribute<FromRouteAttribute>() is not null)
                     {
                         webSafeParams.Add(param);
-                        controllerMethod.RequestUrl = controllerMethod.RequestUrl.Replace($"{{{param.Name}}}", $"' + {param.Name} + '");
                         continue;
                     }
 
@@ -100,13 +100,7 @@ namespace Api.TypeScript.Objects
                     if (param.GetCustomAttribute<FromQueryAttribute>() is not null)
                     {
                         webSafeParams.Add(param);
-
-                        if (!controllerMethod.RequestUrl.Contains('?'))
-                        {
-                            controllerMethod.RequestUrl += '?';
-                        }
-
-                        controllerMethod.RequestUrl += $"&{param.Name}=' + {param.Name} + '";
+                        controllerMethod.RequiresIncludes = true;
                         continue;
                     }
 
@@ -116,11 +110,17 @@ namespace Api.TypeScript.Objects
                         webSafeParams.Add(param);
                         controllerMethod.SendsData = true;
                         controllerMethod.BodyParam = param;
+                        continue;
                     }
+
+                    if (param.ParameterType != typeof(Context) && ts.GetTypeOverwrite(param.ParameterType) is not null)
+                    {
+                        webSafeParams.Add(param);
+                        controllerMethod.RequiresIncludes = true;
+                    }
+                    
                 }
 
-                // Clean up the query string if needed
-                controllerMethod.RequestUrl = controllerMethod.RequestUrl!.Replace("?&", "?");
                 controllerMethod.WebSafeParams = webSafeParams;
 
                 _methods.Add(controllerMethod);

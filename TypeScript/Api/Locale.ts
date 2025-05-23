@@ -4,6 +4,7 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
+import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -45,10 +46,10 @@ export class LocaleApi extends AutoController<Locale,uint>{
     /**
      * Generated from a .NET type.
      * @see {Api.Translate.LocaleController}::{Set}
-     * @url 'v1/locale/set/' + id + ''
+     * @url 'v1/locale/set/{id}'
      */
     set = (setSession: (s: SessionResponse) => Session, id: uint): Promise<SessionResponse> => {
-        return getJson<SessionResponse>(this.apiUrl + '/set/' + id + '');
+        return getJson<SessionResponse>(this.apiUrl + '/set/' + id +'');
     }
 
 }

@@ -81,7 +81,7 @@ export class StdOutController {
      * @url 'v1/monitoring/v8/clear'
      */
     v8Clear = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/v8/clear');
+        return getJson<void>(this.apiUrl + '/v8/clear')
     }
 
     /**
@@ -90,7 +90,7 @@ export class StdOutController {
      * @url 'v1/monitoring/certs/update'
      */
     updateCerts = (): Promise<PublicMessage> => {
-        return getJson<PublicMessage>(this.apiUrl + '/certs/update');
+        return getJson<PublicMessage>(this.apiUrl + '/certs/update')
     }
 
     /**
@@ -99,7 +99,7 @@ export class StdOutController {
      * @url 'v1/monitoring/webserver/apply'
      */
     updateWebserverConfig = (): Promise<PublicMessage> => {
-        return getJson<PublicMessage>(this.apiUrl + '/webserver/apply');
+        return getJson<PublicMessage>(this.apiUrl + '/webserver/apply')
     }
 
     /**
@@ -108,7 +108,7 @@ export class StdOutController {
      * @url 'v1/monitoring/whoami'
      */
     whoAmI = (): Promise<ServerIdentification> => {
-        return getJson<ServerIdentification>(this.apiUrl + '/whoami');
+        return getJson<ServerIdentification>(this.apiUrl + '/whoami')
     }
 
     /**
@@ -117,7 +117,7 @@ export class StdOutController {
      * @url 'v1/monitoring/query'
      */
     runQuery = (queryBody: MonitoringQueryModel): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/query', queryBody);
+        return getJson<void>(this.apiUrl + '/query', queryBody)
     }
 
     /**
@@ -126,7 +126,7 @@ export class StdOutController {
      * @url 'v1/monitoring/log'
      */
     getLog = (filtering: LogFilteringModel): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/log', filtering);
+        return getJson<void>(this.apiUrl + '/log', filtering)
     }
 
     /**
@@ -135,7 +135,7 @@ export class StdOutController {
      * @url 'v1/monitoring/helloworld'
      */
     plainTextBenchmark = (): Promise<IActionResult> => {
-        return getJson<IActionResult>(this.apiUrl + '/helloworld');
+        return getJson<IActionResult>(this.apiUrl + '/helloworld')
     }
 
     /**
@@ -144,7 +144,7 @@ export class StdOutController {
      * @url 'v1/monitoring/bufferpool/status'
      */
     bufferPoolStatus = (): Promise<BufferPoolStatus> => {
-        return getJson<BufferPoolStatus>(this.apiUrl + '/bufferpool/status');
+        return getJson<BufferPoolStatus>(this.apiUrl + '/bufferpool/status')
     }
 
     /**
@@ -153,7 +153,7 @@ export class StdOutController {
      * @url 'v1/monitoring/bufferpool/clear'
      */
     bufferPoolClear = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/bufferpool/clear');
+        return getJson<void>(this.apiUrl + '/bufferpool/clear')
     }
 
     /**
@@ -162,7 +162,7 @@ export class StdOutController {
      * @url 'v1/monitoring/gc'
      */
     gC = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/gc');
+        return getJson<void>(this.apiUrl + '/gc')
     }
 
     /**
@@ -171,7 +171,7 @@ export class StdOutController {
      * @url 'v1/monitoring/exec'
      */
     execute = (body: MonitoringExecModel): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/exec', body);
+        return getJson<void>(this.apiUrl + '/exec', body)
     }
 
     /**
@@ -180,7 +180,7 @@ export class StdOutController {
      * @url 'v1/monitoring/halt'
      */
     halt = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/halt');
+        return getJson<void>(this.apiUrl + '/halt')
     }
 
     /**
@@ -189,7 +189,7 @@ export class StdOutController {
      * @url 'v1/monitoring/clients'
      */
     getWsClientCount = (): Promise<WebsocketClientInfo> => {
-        return getJson<WebsocketClientInfo>(this.apiUrl + '/clients');
+        return getJson<WebsocketClientInfo>(this.apiUrl + '/clients')
     }
 
 }

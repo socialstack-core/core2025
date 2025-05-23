@@ -46,7 +46,7 @@ export class AvailableEndpointController {
      * @url 'v1/uptime'
      */
     uptime = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/uptime');
+        return getJson<void>(this.apiUrl + '/uptime')
     }
 
     /**
@@ -55,7 +55,7 @@ export class AvailableEndpointController {
      * @url 'v1/'
      */
     get = (): Promise<ApiStructure> => {
-        return getJson<ApiStructure>(this.apiUrl + '/');
+        return getJson<ApiStructure>(this.apiUrl + '/')
     }
 
 }

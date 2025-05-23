@@ -30,7 +30,7 @@ export class HtmlController {
      * @url '/pack/rte.html'
      */
     getRteConfigPage = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/pack/rte.html');
+        return getJson<void>(this.apiUrl + '//pack/rte.html')
     }
 
     /**
@@ -39,7 +39,7 @@ export class HtmlController {
      * @url '/robots.txt'
      */
     robots = (): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '/robots.txt');
+        return getJson<FileContent>(this.apiUrl + '/robots.txt')
     }
 
 }

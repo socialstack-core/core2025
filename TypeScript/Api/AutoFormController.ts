@@ -50,7 +50,7 @@ export class AutoFormController {
      * @url 'v1/autoform/' + type + '/' + name + ''
      */
     get = (type: string, name: string): Promise<AutoFormInfo> => {
-        return getJson<AutoFormInfo>(this.apiUrl + '/' + type + '/' + name + '');
+        return getJson<AutoFormInfo>(this.apiUrl + '/' + type + '/' + name + '')
     }
 
     /**
@@ -59,7 +59,7 @@ export class AutoFormController {
      * @url 'v1/autoform/all'
      */
     allContentForms = (): Promise<AutoFormStructure> => {
-        return getJson<AutoFormStructure>(this.apiUrl + '/all');
+        return getJson<AutoFormStructure>(this.apiUrl + '/all')
     }
 
 }

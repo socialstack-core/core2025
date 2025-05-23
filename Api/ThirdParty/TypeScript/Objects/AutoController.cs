@@ -191,17 +191,7 @@ namespace Api.TypeScript.Objects
                 builder.Append($"): {returnType} => {{\n");
                 
                 // v1/productCategory => v1/productcategory
-                string url = ("/" + method.RequestUrl).Replace("//", "/");
-
-                if (method.RequiresIncludes)
-                {
-                    if (!url.Contains('?'))
-                    {
-                        url += '?';
-                    }
-                    url +=
-                        "' + (Array.isArray(includes) ? '" + (url.Contains('&') ? '&' : "") + "includes=' + includes.join(',') : '') + '";
-                }
+                string url = URLBuilder.BuildUrl(method);
 
                 var reqMethodModify = "";
 
@@ -209,9 +199,13 @@ namespace Api.TypeScript.Objects
                 {
                     reqMethodModify = ", {}, { method: 'DELETE' } ";
                 }
-                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")}{reqMethodModify});");
-                
 
+                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")}{reqMethodModify})");
+                
+                if (method.RequiresSessionSet)
+                {
+                    builder.AppendLine("            .then(session => { setSession(session); return session; })");
+                }
                 builder.AppendLine("    };");
                 builder.AppendLine();
             }

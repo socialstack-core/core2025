@@ -30,7 +30,7 @@ export class DomainCertificateChallengeController {
      * @url '.well-known/acme-challenge/' + token + ''
      */
     catchAll = (token: string): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '/' + token + '');
+        return getJson<FileContent>(this.apiUrl + '/' + token + '')
     }
 
 }

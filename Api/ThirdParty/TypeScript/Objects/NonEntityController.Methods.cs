@@ -76,14 +76,15 @@ namespace Api.TypeScript.Objects
                     _ => controllerMethod.RequestUrl ?? ""
                 };
 
-                if (controllerMethod.RequestUrl is not null)
-                {
-                    controllerMethod.RequestUrl = controllerMethod.RequestUrl.ToLower();
-                }
-
                 // Parse method parameters
                 foreach (var param in methodParams)
                 {
+                    if (param.Name == "includes")
+                    {
+                        // includes handled automatically.
+                        controllerMethod.RequiresIncludes = true;
+                        continue;
+                    }
                     // Route-bound parameter
                     if (controllerMethod.RequestUrl is not null && controllerMethod.RequestUrl!.Contains($"{{{param.Name}}}") &&
                         param.GetCustomAttribute<FromRouteAttribute>() is not null)
@@ -102,6 +103,7 @@ namespace Api.TypeScript.Objects
                         {
                             controllerMethod.RequestUrl += '?';
                         }
+                        controllerMethod.RequiresIncludes = true;
 
                         controllerMethod.RequestUrl += $"&{param.Name}=' + {param.Name} + '";
                         continue;

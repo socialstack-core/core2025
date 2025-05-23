@@ -4,6 +4,7 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
+import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -81,10 +82,10 @@ export class ProductAttributeApi extends AutoController<ProductAttribute,uint>{
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.ProductAttributeController}::{GetTreeNodePath}
-     * @url 'v1/productAttribute/tree?path=' + path + ''
+     * @url 'v1/productAttribute/tree'
      */
-    getTreeNodePath = (path: string): Promise<TreeNodeDetail> => {
-        return getJson<TreeNodeDetail>(this.apiUrl + '/tree?path=' + path + '');
+    getTreeNodePath = (path: string, includes?: ApiIncludes[]): Promise<TreeNodeDetail> => {
+        return getJson<TreeNodeDetail>(this.apiUrl + '/tree?path=' + path + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
     }
 
 }

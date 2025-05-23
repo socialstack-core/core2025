@@ -69,7 +69,7 @@ export class PermissionController {
      * @url 'v1/permission/list'
      */
     list = (): Promise<PermissionInformation> => {
-        return getJson<PermissionInformation>(this.apiUrl + '/list');
+        return getJson<PermissionInformation>(this.apiUrl + '/list')
     }
 
 }
