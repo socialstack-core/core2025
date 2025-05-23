@@ -49,7 +49,7 @@ namespace Api.TypeScript
             if (method.RequiresIncludes)
             {
                 url +=
-                    "' + (Array.isArray(includes) ? '" + (url.Contains('&') ? '&' : "") + (needsQueryMarker ? "?" : "") + "includes=' + includes.join(',') : '') + '";
+                    "' + (Array.isArray(includes) ? '" + (needsQueryMarker ? "?" : "&") + "includes=' + includes.join(',') : '') + '";
             }
 
             url = url.Replace("+''", "");
