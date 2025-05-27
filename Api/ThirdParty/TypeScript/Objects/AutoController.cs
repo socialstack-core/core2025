@@ -156,7 +156,7 @@ namespace Api.TypeScript.Objects
                     {
                         call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
                         returnType = $"Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>>";
-                        _container.RequireWebApi(WebApis.GetJson);
+                        _container.RequireWebApi(WebApis.GetList);
                     }
                 }
                 else
@@ -167,12 +167,11 @@ namespace Api.TypeScript.Objects
                         _container.RequireWebApi(WebApis.GetJson);
                         builder.Append($"): Promise<Session> => {{");
                     }
-                    else if (method.ReturnType.IsGenericType &&
-                        method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    else if (IsSingularContentStream(method.ReturnType))
                     {
                         call = "getList<T>";
                         returnType = "Promise<ApiList<T>>";
-                        _container.RequireWebApi(WebApis.GetJson);
+                        _container.RequireWebApi(WebApis.GetList);
                     }
                     else if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
@@ -218,6 +217,41 @@ namespace Api.TypeScript.Objects
 
             builder.AppendLine("}");
             builder.AppendLine();
+        }
+
+        /// <summary>
+        /// True if the given type is a content stream. 
+        /// It can be nullable but not an array or list of them.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        private bool IsSingularContentStream(Type type)
+        {
+            var underlying = Nullable.GetUnderlyingType(type);
+
+            if (underlying != null)
+            {
+                return IsSingularContentStream(underlying);
+            }
+
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            var def = type.GetGenericTypeDefinition();
+
+            if (def == typeof(ContentStream<,>))
+            {
+                return true;
+            }
+
+            if (def == typeof(ValueTask<>) || def == typeof(Task<>))
+            {
+                return IsSingularContentStream(type.GetGenericArguments()[0]);
+            }
+
+            return false;
         }
     }
 }
