@@ -251,7 +251,7 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
                                     item.target == '/en-admin/' ?
                                         (url == item.target ? 'active' : '') :
                                         (item.target && url.startsWith(item.target) ? 'active' : '')}>
-                                        {item.iconRef && <IconRef fileRef={item.iconRef} />}
+											{item.iconRef && <IconRef fixedWidth fileRef={item.iconRef} />}
                                     {item.title}
                                     </a>
                                 </li>

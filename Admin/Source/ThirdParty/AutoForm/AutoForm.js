@@ -714,7 +714,7 @@ class AutoFormInternal extends React.Component {
 		}
 
 		if (!this.state.formCanvas || (isEdit && !this.state.fieldData) || this.state.deleting) {
-			return "Loading..";
+			return <Loading />;
 		}
 
 		// Publish actions.
