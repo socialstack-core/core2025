@@ -1,7 +1,7 @@
 import { expand, CanvasNode } from 'UI/Functions/CanvasExpand';
 import Alert from 'UI/Alert';
 import { useRouter, PageState } from 'UI/Router/RouterCtx';
-import { useErrorBoundary, useEffect, useState } from 'react'; // useErrorBoundary is a preact function.
+import { useErrorBoundary, useEffect, useState, useMemo } from 'react'; // useErrorBoundary is a preact function.
 
 var uniqueKey = 1;
 
@@ -46,6 +46,7 @@ interface CanvasProps {
 }
 
 interface CanvasDataStore {
+	content: any,
 	fields: Record<string, any>
 }
 
@@ -55,33 +56,22 @@ interface CanvasDataStore {
 const Canvas: React.FC<CanvasProps> = (props) => {
 
 	// Stores general use data fields.
-	const [canvasDataStore, setCanvasDataStore] = useState<CanvasDataStore>(() => {
-		return { fields: {} }
-	});
-	const [content, setContent] = useState(() => loadJson(props));
+	const [canvasDataStoreOverride, setCanvasDataStoreOverride] = useState<CanvasDataStore | null>(null);
+	const content = useMemo(() => loadJson(props), [props.bodyJson, props.children]);
+
+	const canvasDataStore = canvasDataStoreOverride && canvasDataStoreOverride.content == content ? canvasDataStoreOverride : { fields: content?.dataStore || {} };
+
 	var { pageState } = useRouter();
 
 	const setDataStoreField = (name: string, value: any) => {
-		const newData = { ...canvasDataStore };
+		const newData = { ...canvasDataStore, content };
 		newData.fields[name] = value;
-		setCanvasDataStore(newData);
+		setCanvasDataStoreOverride(newData);
 	};
 
 	const getDataStoreField = (name: string): any => {
 		return canvasDataStore.fields[name];
 	};
-
-	useEffect(() => {
-		const rootJson = loadJson(props);
-
-		if (content != rootJson) {
-			setCanvasDataStore({
-				fields: rootJson.dataStore || {}
-			});
-			setContent(rootJson);
-		}
-
-	}, [props.bodyJson, props.children]);
 
 	const renderNodeSet = (set: CanvasNode[]) => {
 		return set.map((n, i) => {
