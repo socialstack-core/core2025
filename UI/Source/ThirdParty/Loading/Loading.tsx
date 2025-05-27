@@ -1,5 +1,3 @@
-import Icon from 'UI/Icon';
-
 /**
  * Props for the Loading component.
  */
@@ -14,12 +12,16 @@ interface LoadingProps extends React.HTMLAttributes<HTMLSpanElement> {
  * Standalone component which displays a loader (typically a spinner).
 */
 const Loading: React.FC<LoadingProps> = (props) => {
-	let message = props.message || `Loading ... `;
+	let message = props.message || `Loading ...`;
 	
 	return (
-		<div className="alert alert-info loading">
-			{message}
-			<Icon type="fa-spinner" solid spin />
+		<div className="loading">
+			<svg className="loading__spinner" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+				<circle fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
+			</svg>
+			<span className="loading__text">
+				{message}
+			</span>
 		</div>
 	);
 }
