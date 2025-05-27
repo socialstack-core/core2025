@@ -1,16 +1,15 @@
 import Loading from 'UI/Loading';
 import CardForm from 'UI/Payments/CardForm';
-import webRequest from 'UI/Functions/WebRequest';
 import {isoConvert} from 'UI/Functions/DateTools';
+import { useState, useEffect } from 'react';
+import paymentMethodApi, { PaymentMethod } from 'Api/PaymentMethod';
 
 /*
 * Use this as your main interface for collecting card details via <Input type='payment' name='card' />
 * It will vary depending on the gateway(s) available.
 */
-var inputTypes = global.inputTypes = global.inputTypes || {};
-
-inputTypes.ontypepayment = (props, _this) => {
-	return <PaymentGateway {...props} />;
+window.inputTypes.payment = (props, _this) => {
+	return <PaymentGateway {...props.field} />;
 };
 
 function hasCardExpired(expiryUtc) {
@@ -27,27 +26,29 @@ function hasCardExpired(expiryUtc) {
 export default function PaymentGateway(props) {
 	
 	// If user has saved payment methods, display a dropdown of those or a form to add another one.
-	var [methods, setMethods] = React.useState();
-	var [selectedMethod, setSelectedMethod] = React.useState();
+	var [methods, setMethods] = useState<PaymentMethod[] | undefined>();
+	var [selectedMethod, setSelectedMethod] = useState<PaymentMethod | undefined>();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if(!props.updateMode) {
 			// Get user's existing cards (Returns "non-sensitive" info only).
-			webRequest('paymentmethod/list').then(response => {
+			paymentMethodApi.list().then(response => {
+				var methods = response?.results;
 
-				var methods = response.json.results;
-				methods.sort((a, b) => {
-					if (a.lastUsedUtc < b.lastUsedUtc) {
-						return 1;
-					}
-					if (a.lastUsedUtc > b.lastUsedUtc) {
-						return -1;
-					}
-					return 0;
-				});
+				if (methods) {
+					methods.sort((a, b) => {
+						if (a.lastUsedUtc < b.lastUsedUtc) {
+							return 1;
+						}
+						if (a.lastUsedUtc > b.lastUsedUtc) {
+							return -1;
+						}
+						return 0;
+					});
 
-				setMethods(methods);
-				setSelectedMethod(methods.length ? methods[0] : null);
+					setMethods(methods);
+					setSelectedMethod(methods.length ? methods[0] : null);
+				}
 			});
 		}
 	}, []);
@@ -63,7 +64,7 @@ export default function PaymentGateway(props) {
 				<select className="form-select"
 					onChange={(e) => {
 						if(e.target.value != 'none'){
-							setSelectedMethod(methods.find(method => method.id == e.target.value));
+							setSelectedMethod(methods?.find(method => method.id == parseInt(e.target.value)));
 						}
 					}} value={'none'}>
 					<option value='none'>
@@ -71,7 +72,7 @@ export default function PaymentGateway(props) {
 					</option>
 					{methods.map(option => {
 						var expiry = '';
-						var expiryDate = isoConvert(option.expiryUtc);
+						var expiryDate = isoConvert(option.expiryUtc as Date);
 						var hasExpired = hasCardExpired(option.expiryUtc);
 
 						if (expiryDate instanceof Date) {
@@ -80,11 +81,11 @@ export default function PaymentGateway(props) {
 
 						var formattedExpiry = hasExpired ? `expired ${expiry}` : `expires ${expiry}`;
 
-						var isCardDigits = option.name.length == 4 && !isNaN(option.name);
+						var isCardDigits = option.name?.length == 4 && !isNaN(parseInt(option.name));
 						var name = isCardDigits ? `Card ending ${option.name} (${formattedExpiry})` : option.name;
 
 						return <option value={option.id}
-							disabled={hasExpired ? 'disabled' : undefined}
+							disabled={hasExpired ? true : undefined}
 						>
 							{name}
 						</option>;
@@ -103,9 +104,9 @@ export default function PaymentGateway(props) {
 		<CardForm fieldName={props.name} readonly last4={selectedMethod.name} issuer={selectedMethod.issuer} expiry={selectedMethod.expiryUtc} paymentMethodId={selectedMethod.id} />
 		<center style={{padding: '1rem'}}>
 			<button onClick={() => {
-				setSelectedMethod(null);
+				setSelectedMethod(undefined);
 			}} className="btn btn-secondary">
-				Use a different card
+				{`Use a different card`}
 			</button>
 		</center>
 	</>;
