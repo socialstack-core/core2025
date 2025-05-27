@@ -47,7 +47,7 @@ export class AutoFormController {
     /**
      * Generated from a .NET type.
      * @see {Api.AutoForms.AutoFormController}::{Get}
-     * @url 'v1/autoform/' + type + '/' + name + ''
+     * @url '/' + type + '/' + name + ''
      */
     get = (type: string, name: string): Promise<AutoFormInfo> => {
         return getJson<AutoFormInfo>(this.apiUrl + '/' + type + '/' + name + '')
@@ -56,7 +56,7 @@ export class AutoFormController {
     /**
      * Generated from a .NET type.
      * @see {Api.AutoForms.AutoFormController}::{AllContentForms}
-     * @url 'v1/autoform/all'
+     * @url '/all'
      */
     allContentForms = (): Promise<AutoFormStructure> => {
         return getJson<AutoFormStructure>(this.apiUrl + '/all')

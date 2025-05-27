@@ -4,7 +4,6 @@
 
 import { ApiList, getOne, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -47,10 +46,10 @@ export class CouponApi extends AutoController<Coupon,uint>{
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.CouponController}::{CheckCoupon}
-     * @url 'v1/coupon/check/{couponcode}'
+     * @url 'v1/coupon/check/{couponCode}'
      */
     checkCoupon = (couponCode: string, includes?: ApiIncludes[]): Promise<Coupon> => {
-        return getOne<Coupon>(this.apiUrl + '/check/' + couponCode +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '');
+        return getOne<Coupon>(this.apiUrl + '/check/' + couponCode  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     }
 
 }

@@ -2,7 +2,7 @@
  * This file was automatically generated. DO NOT EDIT.
  */
 
-import { ApiList, getList, getOne, getJson, getText } from 'UI/Functions/WebRequest';
+import { ApiList, getOne, getJson, getText } from 'UI/Functions/WebRequest';
 
 // IMPORTS
 
@@ -70,17 +70,17 @@ export class UploadApi extends AutoController<Upload,uint>{
      * @see {Api.Uploader.UploadController}::{Upload}
      * @url 'v1/upload/create'
      */
-    upload = (): Promise<Upload> => {
-        return getOne<Upload>(this.apiUrl + '/create');
+    upload = (includes?: ApiIncludes[]): Promise<Upload> => {
+        return getOne<Upload>(this.apiUrl + '/create' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Uploader.UploadController}::{TranscodedTar}
-     * @url 'v1/upload/transcoded/' + id + '?token=' + token + ''
+     * @url 'v1/upload/transcoded/{id}'
      */
     transcodedTar = (id: uint, token: string): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/transcoded/' + id + '?token=' + token + '');
+        return getJson<void>(this.apiUrl + '/transcoded/' + id +'?token=' + token + '')
     }
 
     /**
@@ -88,8 +88,8 @@ export class UploadApi extends AutoController<Upload,uint>{
      * @see {Api.Uploader.UploadController}::{Active}
      * @url 'v1/upload/active'
      */
-    active = (): Promise<ApiList<Upload>> => {
-        return getList<Upload>(this.apiUrl + '/active');
+    active = (includes?: ApiIncludes[]): Promise<Upload[]> => {
+        return getJson<Upload[]>(this.apiUrl + '/active' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     }
 
     /**
@@ -98,25 +98,25 @@ export class UploadApi extends AutoController<Upload,uint>{
      * @url 'v1/upload/active'
      */
     activePost = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/active');
+        return getJson<void>(this.apiUrl + '/active')
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Uploader.UploadController}::{FileConsistency}
-     * @url 'v1/upload/file-consistency?regenBefore=' + regenBefore + '&idRange=' + idRange + ''
+     * @url 'v1/upload/file-consistency'
      */
     fileConsistency = (regenBefore?: string, idRange?: string): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/file-consistency?regenBefore=' + regenBefore + '&idRange=' + idRange + '');
+        return getJson<void>(this.apiUrl + '/file-consistency?regenBefore=' + regenBefore + '&idRange=' + idRange + '')
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Uploader.UploadController}::{Replace}
-     * @url 'v1/upload/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + ''
+     * @url 'v1/upload/replace'
      */
     replace = (sourceRef: string, targetRef: string): Promise<MediaRef[]> => {
-        return getJson<MediaRef[]>(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '');
+        return getJson<MediaRef[]>(this.apiUrl + '/replace?sourceRef=' + sourceRef + '&targetRef=' + targetRef + '')
     }
 
     /**
@@ -125,25 +125,25 @@ export class UploadApi extends AutoController<Upload,uint>{
      * @url 'v1/upload/update-alts'
      */
     updateAlts = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '/update-alts');
+        return getJson<void>(this.apiUrl + '/update-alts')
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Uploader.UploadController}::{UpdateRefs}
-     * @url 'v1/upload/update-refs?update=' + update + ''
+     * @url 'v1/upload/update-refs'
      */
     updateRefs = (update: boolean): Promise<MediaRef[]> => {
-        return getJson<MediaRef[]>(this.apiUrl + '/update-refs?update=' + update + '');
+        return getJson<MediaRef[]>(this.apiUrl + '/update-refs?update=' + update + '')
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Uploader.UploadController}::{Preview}
-     * @url 'v1/upload/replace/preview?uploadRef=' + uploadRef + ''
+     * @url 'v1/upload/replace/preview'
      */
     preview = (uploadRef: string): Promise<MediaRef[]> => {
-        return getJson<MediaRef[]>(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '');
+        return getJson<MediaRef[]>(this.apiUrl + '/replace/preview?uploadRef=' + uploadRef + '')
     }
 
 }

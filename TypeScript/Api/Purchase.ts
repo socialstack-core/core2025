@@ -4,7 +4,6 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -58,7 +57,7 @@ export class PurchaseApi extends AutoController<Purchase,uint>{
      * @url 'v1/purchase/submit'
      */
     submit = (purchaseOrder: Purchase): Promise<PurchaseStatus> => {
-        return getJson<PurchaseStatus>(this.apiUrl + '/submit', purchaseOrder);
+        return getJson<PurchaseStatus>(this.apiUrl + '/submit', purchaseOrder)
     }
 
 }

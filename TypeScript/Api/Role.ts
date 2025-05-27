@@ -2,7 +2,6 @@
  * This file was automatically generated. DO NOT EDIT.
  */
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -30,7 +29,7 @@ export enum RoleGrantRuleType {
 * This type was generated to reflect {Role} (Api.Permissions.Role)
 **/
 export type Role = VersionedContent<uint> & {
-    grantRules?: RoleGrantRule[][];
+    grantRules?: RoleGrantRule[];
     name?: string;
     key?: string;
     canViewAdmin?: boolean;

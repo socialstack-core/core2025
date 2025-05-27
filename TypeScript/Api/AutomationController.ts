@@ -23,7 +23,7 @@ export type Automation = {
 * This type was generated to reflect {AutomationStructure} (Api.Automations.AutomationStructure)
 **/
 export type AutomationStructure = {
-    results?: Automation[][];
+    results?: Automation[];
 }
 // NON-ENTITY CONTROLLERS
 
@@ -34,7 +34,7 @@ export class AutomationController {
     /**
      * Generated from a .NET type.
      * @see {Api.Automations.AutomationController}::{Get}
-     * @url 'v1/automation/list'
+     * @url '/list'
      */
     get = (): Promise<AutomationStructure> => {
         return getJson<AutomationStructure>(this.apiUrl + '/list')
@@ -43,7 +43,7 @@ export class AutomationController {
     /**
      * Generated from a .NET type.
      * @see {Api.Automations.AutomationController}::{Execute}
-     * @url 'v1/automation/' + name + '/run'
+     * @url '/' + name + '/run'
      */
     execute = (name: string): Promise<void> => {
         return getJson<void>(this.apiUrl + '/' + name + '/run')

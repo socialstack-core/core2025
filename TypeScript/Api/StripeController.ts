@@ -31,7 +31,7 @@ export class StripeController {
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.StripeController}::{SetupIntent}
-     * @url 'v1/stripe-gateway/setup'
+     * @url '/setup'
      */
     setupIntent = (): Promise<StripeIntentResponse> => {
         return getJson<StripeIntentResponse>(this.apiUrl + '/setup')
@@ -40,10 +40,10 @@ export class StripeController {
     /**
      * Generated from a .NET type.
      * @see {Api.Payments.StripeController}::{Webhook}
-     * @url 'v1/stripe-gateway/webhook'
+     * @url '/webhook'
      */
-    webhook = (): Promise<PublicMessage> => {
-        return getJson<PublicMessage>(this.apiUrl + '/webhook')
+    webhook = (): Promise<PublicMessage | undefined> => {
+        return getJson<PublicMessage | undefined>(this.apiUrl + '/webhook')
     }
 
 }

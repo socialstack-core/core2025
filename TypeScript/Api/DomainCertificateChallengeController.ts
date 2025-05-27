@@ -27,10 +27,10 @@ export class DomainCertificateChallengeController {
     /**
      * Generated from a .NET type.
      * @see {Api.CloudHosts.DomainCertificateChallengeController}::{CatchAll}
-     * @url '.well-known/acme-challenge/' + token + ''
+     * @url '/' + token + ''
      */
-    catchAll = (token: string): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '/' + token + '')
+    catchAll = (token: string): Promise<FileContent | undefined> => {
+        return getJson<FileContent | undefined>(this.apiUrl + '/' + token + '')
     }
 
 }

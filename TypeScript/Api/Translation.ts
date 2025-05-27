@@ -4,7 +4,6 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -40,7 +39,7 @@ export class TranslationApi extends AutoController<Translation,uint>{
      * @url 'v1/translation/prepopulate'
      */
     prePopulate = (): Promise<Object> => {
-        return getJson<Object>(this.apiUrl + '/prepopulate');
+        return getJson<Object>(this.apiUrl + '/prepopulate')
     }
 
     /**
@@ -49,7 +48,7 @@ export class TranslationApi extends AutoController<Translation,uint>{
      * @url 'v1/translation/potfiles'
      */
     loadPotFiles = (): Promise<Object> => {
-        return getJson<Object>(this.apiUrl + '/potfiles');
+        return getJson<Object>(this.apiUrl + '/potfiles')
     }
 
 }

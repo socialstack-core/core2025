@@ -4,7 +4,6 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -59,7 +58,7 @@ export class EmailTemplateApi extends AutoController<EmailTemplate,uint>{
      * @url 'v1/emailtemplate/test'
      */
     testEmail = (mailTest: EmailTestRequest): Promise<EmailTestResponse> => {
-        return getJson<EmailTestResponse>(this.apiUrl + '/test', mailTest);
+        return getJson<EmailTestResponse>(this.apiUrl + '/test', mailTest)
     }
 
 }

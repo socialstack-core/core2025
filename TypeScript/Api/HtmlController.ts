@@ -30,7 +30,7 @@ export class HtmlController {
      * @url '/pack/rte.html'
      */
     getRteConfigPage = (): Promise<void> => {
-        return getJson<void>(this.apiUrl + '//pack/rte.html')
+        return getJson<void>(this.apiUrl + '/pack/rte.html')
     }
 
     /**

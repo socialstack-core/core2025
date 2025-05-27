@@ -78,7 +78,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{V8Clear}
-     * @url 'v1/monitoring/v8/clear'
+     * @url '/v8/clear'
      */
     v8Clear = (): Promise<void> => {
         return getJson<void>(this.apiUrl + '/v8/clear')
@@ -87,7 +87,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{UpdateCerts}
-     * @url 'v1/monitoring/certs/update'
+     * @url '/certs/update'
      */
     updateCerts = (): Promise<PublicMessage> => {
         return getJson<PublicMessage>(this.apiUrl + '/certs/update')
@@ -96,7 +96,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{UpdateWebserverConfig}
-     * @url 'v1/monitoring/webserver/apply'
+     * @url '/webserver/apply'
      */
     updateWebserverConfig = (): Promise<PublicMessage> => {
         return getJson<PublicMessage>(this.apiUrl + '/webserver/apply')
@@ -105,16 +105,16 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{WhoAmI}
-     * @url 'v1/monitoring/whoami'
+     * @url '/whoami'
      */
-    whoAmI = (): Promise<ServerIdentification> => {
-        return getJson<ServerIdentification>(this.apiUrl + '/whoami')
+    whoAmI = (): Promise<ServerIdentification | undefined> => {
+        return getJson<ServerIdentification | undefined>(this.apiUrl + '/whoami')
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{RunQuery}
-     * @url 'v1/monitoring/query'
+     * @url '/query'
      */
     runQuery = (queryBody: MonitoringQueryModel): Promise<void> => {
         return getJson<void>(this.apiUrl + '/query', queryBody)
@@ -123,7 +123,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{GetLog}
-     * @url 'v1/monitoring/log'
+     * @url '/log'
      */
     getLog = (filtering: LogFilteringModel): Promise<void> => {
         return getJson<void>(this.apiUrl + '/log', filtering)
@@ -132,7 +132,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{PlainTextBenchmark}
-     * @url 'v1/monitoring/helloworld'
+     * @url '/helloworld'
      */
     plainTextBenchmark = (): Promise<IActionResult> => {
         return getJson<IActionResult>(this.apiUrl + '/helloworld')
@@ -141,7 +141,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{BufferPoolStatus}
-     * @url 'v1/monitoring/bufferpool/status'
+     * @url '/bufferpool/status'
      */
     bufferPoolStatus = (): Promise<BufferPoolStatus> => {
         return getJson<BufferPoolStatus>(this.apiUrl + '/bufferpool/status')
@@ -150,7 +150,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{BufferPoolClear}
-     * @url 'v1/monitoring/bufferpool/clear'
+     * @url '/bufferpool/clear'
      */
     bufferPoolClear = (): Promise<void> => {
         return getJson<void>(this.apiUrl + '/bufferpool/clear')
@@ -159,7 +159,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{GC}
-     * @url 'v1/monitoring/gc'
+     * @url '/gc'
      */
     gC = (): Promise<void> => {
         return getJson<void>(this.apiUrl + '/gc')
@@ -168,7 +168,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{Execute}
-     * @url 'v1/monitoring/exec'
+     * @url '/exec'
      */
     execute = (body: MonitoringExecModel): Promise<void> => {
         return getJson<void>(this.apiUrl + '/exec', body)
@@ -177,7 +177,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{Halt}
-     * @url 'v1/monitoring/halt'
+     * @url '/halt'
      */
     halt = (): Promise<void> => {
         return getJson<void>(this.apiUrl + '/halt')
@@ -186,7 +186,7 @@ export class StdOutController {
     /**
      * Generated from a .NET type.
      * @see {Api.Startup.StdOutController}::{GetWsClientCount}
-     * @url 'v1/monitoring/clients'
+     * @url '/clients'
      */
     getWsClientCount = (): Promise<WebsocketClientInfo> => {
         return getJson<WebsocketClientInfo>(this.apiUrl + '/clients')

@@ -31,8 +31,8 @@ export type ContentType = {
 * This type was generated to reflect {ApiStructure} (Api.AvailableEndpoints.ApiStructure)
 **/
 export type ApiStructure = {
-    endpoints?: Endpoint[][];
-    contentTypes?: ContentType[][];
+    endpoints?: Endpoint[];
+    contentTypes?: ContentType[];
 }
 // NON-ENTITY CONTROLLERS
 
@@ -43,7 +43,7 @@ export class AvailableEndpointController {
     /**
      * Generated from a .NET type.
      * @see {Api.AvailableEndpoints.AvailableEndpointController}::{Uptime}
-     * @url 'v1/uptime'
+     * @url '/uptime'
      */
     uptime = (): Promise<void> => {
         return getJson<void>(this.apiUrl + '/uptime')
@@ -52,7 +52,7 @@ export class AvailableEndpointController {
     /**
      * Generated from a .NET type.
      * @see {Api.AvailableEndpoints.AvailableEndpointController}::{Get}
-     * @url 'v1/'
+     * @url '/'
      */
     get = (): Promise<ApiStructure> => {
         return getJson<ApiStructure>(this.apiUrl + '/')

@@ -4,7 +4,6 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -75,8 +74,8 @@ export class ProductAttributeApi extends AutoController<ProductAttribute,uint>{
      * @see {Api.Payments.ProductAttributeController}::{GetTreeNode}
      * @url 'v1/productAttribute/tree'
      */
-    getTreeNode = (location: AttributeTreeLocation): Promise<TreeNodeDetail> => {
-        return getJson<TreeNodeDetail>(this.apiUrl + '/tree', location);
+    getTreeNode = (location: AttributeTreeLocation): Promise<TreeNodeDetail | undefined> => {
+        return getJson<TreeNodeDetail | undefined>(this.apiUrl + '/tree', location)
     }
 
     /**
@@ -84,8 +83,8 @@ export class ProductAttributeApi extends AutoController<ProductAttribute,uint>{
      * @see {Api.Payments.ProductAttributeController}::{GetTreeNodePath}
      * @url 'v1/productAttribute/tree'
      */
-    getTreeNodePath = (path: string, includes?: ApiIncludes[]): Promise<TreeNodeDetail> => {
-        return getJson<TreeNodeDetail>(this.apiUrl + '/tree?path=' + path + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+    getTreeNodePath = (path: string): Promise<TreeNodeDetail | undefined> => {
+        return getJson<TreeNodeDetail | undefined>(this.apiUrl + '/tree?path=' + path + '')
     }
 
 }

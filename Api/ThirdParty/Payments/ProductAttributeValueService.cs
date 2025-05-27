@@ -1,9 +1,9 @@
-using Api.Database;
+using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Api.Permissions;
+using Api.CanvasRenderer;
 using Api.Contexts;
 using Api.Eventing;
+using Api.Pages;
 
 namespace Api.Payments
 {
@@ -18,6 +18,18 @@ namespace Api.Payments
 		/// </summary>
 		public ProductAttributeValueService() : base(Events.ProductAttributeValue)
         {
+	        Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode canvas, Type contentType, AdminPageType pageType) =>
+	        {
+		        if (contentType == typeof(ProductAttributeValue) && pageType == AdminPageType.List)
+		        {
+			        canvas.Module = "Admin/Payments/ProductAttribute/ValueEditor";
+		        }
+
+		        return new ValueTask<Pages.Page>(page);
+	        });
+
+	        InstallAdminPages("Product Attribute Values", "fa:rocket", ["id", "value"]);
+	        
 			Cache();
 		}
 	}

@@ -4,7 +4,6 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -51,7 +50,7 @@ export class SubscriptionApi extends AutoController<Subscription,uint>{
      * @url 'v1/subscription/{id}/update-card'
      */
     updateCard = (id: uint, cardUpdate: Subscription): Promise<CardUpdateStatus> => {
-        return getJson<CardUpdateStatus>(this.apiUrl + '/' + id +'/update-card', cardUpdate);
+        return getJson<CardUpdateStatus>(this.apiUrl + '/' + id +'/update-card', cardUpdate)
     }
 
 }

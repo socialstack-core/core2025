@@ -66,7 +66,7 @@ export class PermissionController {
     /**
      * Generated from a .NET type.
      * @see {Api.Permissions.PermissionController}::{List}
-     * @url 'v1/permission/list'
+     * @url '/list'
      */
     list = (): Promise<PermissionInformation> => {
         return getJson<PermissionInformation>(this.apiUrl + '/list')

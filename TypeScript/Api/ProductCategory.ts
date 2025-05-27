@@ -2,9 +2,8 @@
  * This file was automatically generated. DO NOT EDIT.
  */
 
-import { ApiList, getList, getJson, getText } from 'UI/Functions/WebRequest';
+import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -47,9 +46,9 @@ export type ProductNode = {
 * This type was generated to reflect {ProductCategoryNode} (Api.Payments.ProductCategoryNode)
 **/
 export type ProductCategoryNode = {
-    children?: ProductCategoryNode[][];
+    children?: ProductCategoryNode[];
     parent?: ProductCategoryNode;
-    products: ProductNode[][];
+    products: ProductNode[];
     fullPathSlug?: string;
     category?: ProductCategory;
 }
@@ -82,8 +81,8 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
      * @see {Api.Payments.ProductCategoryController}::{Structure}
      * @url 'v1/productCategory/structure'
      */
-    structure = (includeProducts?: boolean, includes?: ApiIncludes[]): Promise<ProductCategoryNode[]> => {
-        return getJson<ProductCategoryNode[]>(this.apiUrl + '/structure?includeProducts=' + includeProducts + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+    structure = (includeProducts?: boolean): Promise<ProductCategoryNode[]> => {
+        return getJson<ProductCategoryNode[]>(this.apiUrl + '/structure?includeProducts=' + includeProducts + '')
     }
 
     /**
@@ -91,8 +90,8 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
      * @see {Api.Payments.ProductCategoryController}::{GetTreeNode}
      * @url 'v1/productCategory/tree'
      */
-    getTreeNode = (location: CategoryTreeLocation): Promise<TreeNodeDetail> => {
-        return getJson<TreeNodeDetail>(this.apiUrl + '/tree', location);
+    getTreeNode = (location: CategoryTreeLocation): Promise<TreeNodeDetail | undefined> => {
+        return getJson<TreeNodeDetail | undefined>(this.apiUrl + '/tree', location)
     }
 
     /**
@@ -100,8 +99,8 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
      * @see {Api.Payments.ProductCategoryController}::{GetTreeNodePath}
      * @url 'v1/productCategory/tree'
      */
-    getTreeNodePath = (path: string, includes?: ApiIncludes[]): Promise<TreeNodeDetail> => {
-        return getJson<TreeNodeDetail>(this.apiUrl + '/tree?path=' + path + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '');
+    getTreeNodePath = (path: string): Promise<TreeNodeDetail | undefined> => {
+        return getJson<TreeNodeDetail | undefined>(this.apiUrl + '/tree?path=' + path + '')
     }
 
     /**
@@ -110,7 +109,7 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
      * @url 'v1/productCategory/{id}/products'
      */
     getProducts = (id: uint): Promise<Product[]> => {
-        return getJson<Product[]>(this.apiUrl + '/' + id +'/products');
+        return getJson<Product[]>(this.apiUrl + '/' + id +'/products')
     }
 
     /**
@@ -118,8 +117,8 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
      * @see {Api.Payments.ProductCategoryController}::{GetProductCategories}
      * @url 'v1/productCategory/product/{id}'
      */
-    getProductCategories = (id: uint, includes?: ApiIncludes[]): Promise<ApiList<ProductCategory>> => {
-        return getList<ProductCategory>(this.apiUrl + '/product/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '');
+    getProductCategories = (id: uint, includes?: ApiIncludes[]): Promise<ProductCategory[]> => {
+        return getJson<ProductCategory[]>(this.apiUrl + '/product/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     }
 
     /**
@@ -128,7 +127,7 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
      * @url 'v1/productCategory/{id}/children'
      */
     getChildren = (id: uint): Promise<ProductCategoryNode[]> => {
-        return getJson<ProductCategoryNode[]>(this.apiUrl + '/' + id +'/children');
+        return getJson<ProductCategoryNode[]>(this.apiUrl + '/' + id +'/children')
     }
 
     /**
@@ -137,7 +136,7 @@ export class ProductCategoryApi extends AutoController<ProductCategory,uint>{
      * @url 'v1/productCategory/{id}/parents'
      */
     getParents = (id: uint): Promise<ProductCategoryNode[]> => {
-        return getJson<ProductCategoryNode[]>(this.apiUrl + '/' + id +'/parents');
+        return getJson<ProductCategoryNode[]>(this.apiUrl + '/' + id +'/parents')
     }
 
 }

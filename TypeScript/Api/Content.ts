@@ -114,7 +114,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'revision/{id}'
      */
     loadRevision = (id: ID, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/revision/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
+        return getOne<T>(this.apiUrl + '/revision/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
@@ -124,7 +124,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'revision/{id}'
      */
     deleteRevision = (id: ID, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/revision/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', {}, { method: 'DELETE' } )
+        return getOne<T>(this.apiUrl + '/revision/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', {}, { method: 'DELETE' } )
     };
 
 
@@ -133,8 +133,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{RevisionList}
      * @url 'revision/list'
      */
-    revisionList = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getList<T>(this.apiUrl + '/revision/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
+    revisionList = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T> | undefined> => {
+        return getJson<ApiList<T> | undefined>(this.apiUrl + '/revision/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
     };
 
 
@@ -144,7 +144,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'revision/{id}'
      */
     updateRevision = (id: ID, body?: Partial<T>, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/revision/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
+        return getOne<T>(this.apiUrl + '/revision/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
     };
 
 
@@ -154,7 +154,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'publish/{id}'
      */
     publishRevision = (id: ID, body?: Partial<T>, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/publish/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
+        return getOne<T>(this.apiUrl + '/publish/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
     };
 
 
@@ -174,7 +174,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url '{id}'
      */
     load = (id: ID, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
+        return getOne<T>(this.apiUrl + '/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
@@ -184,7 +184,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url '{id}'
      */
     delete = (id: ID, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', {}, { method: 'DELETE' } )
+        return getOne<T>(this.apiUrl + '/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', {}, { method: 'DELETE' } )
     };
 
 
@@ -194,7 +194,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'cache/invalidate/{id}'
      */
     invalidateCachedItem = (id: ID, includes?: ApiIncludes[]): Promise<string> => {
-        return getText(this.apiUrl + '/cache/invalidate/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
+        return getText(this.apiUrl + '/cache/invalidate/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
@@ -213,8 +213,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{ListAll}
      * @url 'list'
      */
-    listAll = (includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getList<T>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
+    listAll = (includes?: ApiIncludes[]): Promise<ApiList<T> | undefined> => {
+        return getJson<ApiList<T> | undefined>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
@@ -223,8 +223,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{List}
      * @url 'list'
      */
-    list = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>> => {
-        return getList<T>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
+    list = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T> | undefined> => {
+        return getJson<ApiList<T> | undefined>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
     };
 
 
@@ -244,7 +244,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url '{id}'
      */
     update = (id: ID, body?: Partial<T>, includes?: ApiIncludes[]): Promise<T> => {
-        return getOne<T>(this.apiUrl + '/' + id +'' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
+        return getOne<T>(this.apiUrl + '/' + id  + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', body)
     };
 
 
@@ -264,7 +264,7 @@ export class AutoController<T extends Content<uint>, ID> {
      * @url 'list.pot'
      */
     listPOT = (filters?: Partial<T>, ignoreFields?: String, includes?: ApiIncludes[]): Promise<string> => {
-        return getText(this.apiUrl + '/list.pot?ignoreFields=' + ignoreFields + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '', filters)
+        return getText(this.apiUrl + '/list.pot?ignoreFields=' + ignoreFields + '' + (Array.isArray(includes) ? '&includes=' + includes.join(',') : '') + '', filters)
     };
 
 }

@@ -4,7 +4,6 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -44,7 +43,7 @@ export type CustomContentTypeField = VersionedContent<uint> & {
 * This type was generated to reflect {CustomContentType} (Api.CustomContentTypes.CustomContentType)
 **/
 export type CustomContentType = VersionedContent<uint> & {
-    fields?: CustomContentTypeField[][];
+    fields?: CustomContentTypeField[];
     name?: string;
     nickName?: string;
     summary?: string;
@@ -76,7 +75,7 @@ export class CustomContentTypeApi extends AutoController<CustomContentType,uint>
      * @url 'v1/customContentType/alltypes'
      */
     getAllTypes = (): Promise<string[]> => {
-        return getJson<string[]>(this.apiUrl + '/alltypes');
+        return getJson<string[]>(this.apiUrl + '/alltypes')
     }
 
     /**
@@ -85,7 +84,7 @@ export class CustomContentTypeApi extends AutoController<CustomContentType,uint>
      * @url 'v1/customContentType/allcustomtypesplus'
      */
     getAllTypesPlus = (): Promise<TypeInfo[]> => {
-        return getJson<TypeInfo[]>(this.apiUrl + '/allcustomtypesplus');
+        return getJson<TypeInfo[]>(this.apiUrl + '/allcustomtypesplus')
     }
 
 }

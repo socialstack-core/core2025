@@ -46,7 +46,7 @@ export class FrontendCodeController {
      * @url '/v1/monitoring/ui-reload'
      */
     reload = (): Promise<UIReloadResult> => {
-        return getJson<UIReloadResult>(this.apiUrl + '//v1/monitoring/ui-reload')
+        return getJson<UIReloadResult>(this.apiUrl + '/v1/monitoring/ui-reload')
     }
 
     /**
@@ -55,7 +55,7 @@ export class FrontendCodeController {
      * @url '/pack/static-assets/list.json'
      */
     getStaticFileList = (): Promise<StaticFileInfo[]> => {
-        return getJson<StaticFileInfo[]>(this.apiUrl + '//pack/static-assets/list.json')
+        return getJson<StaticFileInfo[]>(this.apiUrl + '/pack/static-assets/list.json')
     }
 
     /**
@@ -63,8 +63,8 @@ export class FrontendCodeController {
      * @see {Api.CanvasRenderer.FrontendCodeController}::{GetTypeMeta}
      * @url '/pack/type-meta.json'
      */
-    getTypeMeta = (): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '//pack/type-meta.json')
+    getTypeMeta = (): Promise<FileContent | undefined> => {
+        return getJson<FileContent | undefined>(this.apiUrl + '/pack/type-meta.json')
     }
 
     /**
@@ -72,8 +72,8 @@ export class FrontendCodeController {
      * @see {Api.CanvasRenderer.FrontendCodeController}::{GetEmailMainJs}
      * @url '/pack/email-static/main.js?localeId=' + localeId + ''
      */
-    getEmailMainJs = (localeId?: uint): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '//pack/email-static/main.js?localeid=' + localeid + '?localeId=' + localeId + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '')
+    getEmailMainJs = (localeId?: uint): Promise<FileContent | undefined> => {
+        return getJson<FileContent | undefined>(this.apiUrl + '/pack/email-static/main.js?localeId=' + localeId + '')
     }
 
     /**
@@ -82,7 +82,7 @@ export class FrontendCodeController {
      * @url '/pack/scss/' + bundle + ''
      */
     getGlobalScss = (bundle: string): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '//pack/scss/' + bundle + '')
+        return getJson<FileContent>(this.apiUrl + '/pack/scss/' + bundle + '')
     }
 
     /**
@@ -90,8 +90,8 @@ export class FrontendCodeController {
      * @see {Api.CanvasRenderer.FrontendCodeController}::{GetMainJs}
      * @url '/pack/main.js?localeId=' + localeId + ''
      */
-    getMainJs = (localeId?: uint): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '//pack/main.js?localeid=' + localeid + '?localeId=' + localeId + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '')
+    getMainJs = (localeId?: uint): Promise<FileContent | undefined> => {
+        return getJson<FileContent | undefined>(this.apiUrl + '/pack/main.js?localeId=' + localeId + '')
     }
 
     /**
@@ -99,8 +99,8 @@ export class FrontendCodeController {
      * @see {Api.CanvasRenderer.FrontendCodeController}::{GetAdminMainJs}
      * @url '/en-admin/pack/main.js?localeId=' + localeId + ''
      */
-    getAdminMainJs = (localeId?: uint): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '//en-admin/pack/main.js?localeid=' + localeid + '?localeId=' + localeId + '' + (Array.isArray(includes) ? 'includes=' + includes.join(',') : '') + '')
+    getAdminMainJs = (localeId?: uint): Promise<FileContent | undefined> => {
+        return getJson<FileContent | undefined>(this.apiUrl + '/en-admin/pack/main.js?localeId=' + localeId + '')
     }
 
     /**
@@ -108,8 +108,8 @@ export class FrontendCodeController {
      * @see {Api.CanvasRenderer.FrontendCodeController}::{GetMainCss}
      * @url '/pack/main.css'
      */
-    getMainCss = (): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '//pack/main.css')
+    getMainCss = (): Promise<FileContent | undefined> => {
+        return getJson<FileContent | undefined>(this.apiUrl + '/pack/main.css')
     }
 
     /**
@@ -117,8 +117,8 @@ export class FrontendCodeController {
      * @see {Api.CanvasRenderer.FrontendCodeController}::{GetAdminMainCss}
      * @url '/en-admin/pack/main.css'
      */
-    getAdminMainCss = (): Promise<FileContent> => {
-        return getJson<FileContent>(this.apiUrl + '//en-admin/pack/main.css')
+    getAdminMainCss = (): Promise<FileContent | undefined> => {
+        return getJson<FileContent | undefined>(this.apiUrl + '/en-admin/pack/main.css')
     }
 
 }

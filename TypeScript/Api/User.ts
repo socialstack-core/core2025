@@ -77,17 +77,19 @@ export class UserApi extends AutoController<User,uint>{
      * @see {Api.Users.UserController}::{ResendVerificationEmail}
      * @url 'v1/user/sendverifyemail'
      */
-    resendVerificationEmail = (setSession: (s: SessionResponse) => Session, body: UserPasswordForgot): Promise<SessionResponse> => {
-        return getJson<SessionResponse>(this.apiUrl + '/sendverifyemail', body);
+    resendVerificationEmail = (setSession: (s: SessionResponse) => Session, body: UserPasswordForgot): Promise<Session> => {
+        return getJson<SessionResponse>(this.apiUrl + '/sendverifyemail', body)
+            .then(setSession)
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Users.UserController}::{VerifyUser}
-     * @url 'v1/user/verify/' + userid + '/' + token + ''
+     * @url 'v1/user/verify/{userid}/{token}'
      */
-    verifyUser = (setSession: (s: SessionResponse) => Session, userid: uint, token: string, newPassword: OptionalPassword): Promise<SessionResponse> => {
-        return getJson<SessionResponse>(this.apiUrl + '/verify/' + userid + '/' + token + '', newPassword);
+    verifyUser = (setSession: (s: SessionResponse) => Session, userid: uint, token: string, newPassword: OptionalPassword): Promise<Session> => {
+        return getJson<SessionResponse>(this.apiUrl + '/verify/' + userid +'/' + token +'', newPassword)
+            .then(setSession)
     }
 
     /**
@@ -95,8 +97,9 @@ export class UserApi extends AutoController<User,uint>{
      * @see {Api.Users.UserController}::{Self}
      * @url 'v1/user/self'
      */
-    self = (setSession: (s: SessionResponse) => Session): Promise<SessionResponse> => {
-        return getJson<SessionResponse>(this.apiUrl + '/self');
+    self = (setSession: (s: SessionResponse) => Session): Promise<Session> => {
+        return getJson<SessionResponse>(this.apiUrl + '/self')
+            .then(setSession)
     }
 
     /**
@@ -104,8 +107,9 @@ export class UserApi extends AutoController<User,uint>{
      * @see {Api.Users.UserController}::{Logout}
      * @url 'v1/user/logout'
      */
-    logout = (setSession: (s: SessionResponse) => Session): Promise<SessionResponse> => {
-        return getJson<SessionResponse>(this.apiUrl + '/logout');
+    logout = (setSession: (s: SessionResponse) => Session): Promise<Session> => {
+        return getJson<SessionResponse>(this.apiUrl + '/logout')
+            .then(setSession)
     }
 
     /**
@@ -113,17 +117,18 @@ export class UserApi extends AutoController<User,uint>{
      * @see {Api.Users.UserController}::{Login}
      * @url 'v1/user/login'
      */
-    login = (body: UserLogin): Promise<Object> => {
-        return getJson<Object>(this.apiUrl + '/login', body);
+    login = (body: UserLogin): Promise<void> => {
+        return getJson<void>(this.apiUrl + '/login', body)
     }
 
     /**
      * Generated from a .NET type.
      * @see {Api.Users.UserController}::{Impersonate}
-     * @url 'v1/user/' + id + '/impersonate'
+     * @url 'v1/user/{id}/impersonate'
      */
-    impersonate = (setSession: (s: SessionResponse) => Session, id: uint): Promise<SessionResponse> => {
-        return getJson<SessionResponse>(this.apiUrl + '/' + id + '/impersonate');
+    impersonate = (setSession: (s: SessionResponse) => Session, id: uint): Promise<Session> => {
+        return getJson<SessionResponse>(this.apiUrl + '/' + id +'/impersonate')
+            .then(setSession)
     }
 
     /**
@@ -131,8 +136,9 @@ export class UserApi extends AutoController<User,uint>{
      * @see {Api.Users.UserController}::{Unpersonate}
      * @url 'v1/user/unpersonate'
      */
-    unpersonate = (setSession: (s: SessionResponse) => Session): Promise<SessionResponse> => {
-        return getJson<SessionResponse>(this.apiUrl + '/unpersonate');
+    unpersonate = (setSession: (s: SessionResponse) => Session): Promise<Session> => {
+        return getJson<SessionResponse>(this.apiUrl + '/unpersonate')
+            .then(setSession)
     }
 
 }

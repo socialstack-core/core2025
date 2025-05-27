@@ -4,7 +4,6 @@
 
 import { ApiList, getJson, getText } from 'UI/Functions/WebRequest';
 
-import { ApiIncludes } from './Includes';
 // IMPORTS
 
 import { Content, UserCreatedContent, VersionedContent, AutoController } from 'Api/Content';
@@ -53,7 +52,7 @@ export class PasswordResetRequestApi extends AutoController<PasswordResetRequest
      * @url 'v1/passwordResetRequest/token/{token}'
      */
     checkTokenExists = (token: string): Promise<Object> => {
-        return getJson<Object>(this.apiUrl + '/token/' + token +'');
+        return getJson<Object>(this.apiUrl + '/token/' + token +'')
     }
 
     /**
@@ -61,8 +60,9 @@ export class PasswordResetRequestApi extends AutoController<PasswordResetRequest
      * @see {Api.PasswordResetRequests.PasswordResetRequestController}::{LoginWithToken}
      * @url 'v1/passwordResetRequest/login/{token}'
      */
-    loginWithToken = (setSession: (s: SessionResponse) => Session, token: string, newPassword: NewPassword): Promise<SessionResponse> => {
-        return getJson<SessionResponse>(this.apiUrl + '/login/' + token +'', newPassword);
+    loginWithToken = (setSession: (s: SessionResponse) => Session, token: string, newPassword: NewPassword): Promise<Session> => {
+        return getJson<SessionResponse>(this.apiUrl + '/login/' + token +'', newPassword)
+            .then(setSession)
     }
 
     /**
@@ -70,8 +70,8 @@ export class PasswordResetRequestApi extends AutoController<PasswordResetRequest
      * @see {Api.PasswordResetRequests.PasswordResetRequestController}::{Generate}
      * @url 'v1/passwordResetRequest/{id}/generate'
      */
-    generate = (id: uint): Promise<ResetToken> => {
-        return getJson<ResetToken>(this.apiUrl + '/' + id +'/generate');
+    generate = (id: uint): Promise<ResetToken | undefined> => {
+        return getJson<ResetToken | undefined>(this.apiUrl + '/' + id +'/generate')
     }
 
 }
