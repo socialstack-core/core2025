@@ -50,8 +50,7 @@ export const Provider: React.FC<React.PropsWithChildren<SessionProviderProps>> =
 		return ses;
 	}
 	
-	let sessionReload = () => userApi.self()
-		.then((response: SessionResponse) => dispatchWithEvent(response))
+	let sessionReload = () => userApi.self(dispatchWithEvent)
 		.catch(() => dispatchWithEvent({}));
 	
 	const [session, setSession] = useState(() : Session => {
