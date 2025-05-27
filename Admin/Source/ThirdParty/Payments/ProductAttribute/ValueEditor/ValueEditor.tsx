@@ -1,277 +1,207 @@
 ﻿import Default from "Admin/Templates/BaseAdminTemplate";
-import {ChangeEvent, useState} from "react";
+import { useEffect, useState } from "react";
 import Loop from "UI/Loop";
-import ProductAttributeApi, {ProductAttribute} from "Api/ProductAttribute";
-import {ListFilter} from "Api/Content";
-import Modal from "UI/Modal";
-import ProductAttributeValueApi, { ProductAttributeValue } from "Api/ProductAttributeValue";
+import ProductAttributeApi, { ProductAttribute } from "Api/ProductAttribute";
+import ProductAttributeValueApi from "Api/ProductAttributeValue";
 import Input from "UI/Input";
 import Button from "UI/Button";
 import Image from "UI/Image";
 import Video from "UI/Video";
-
-const AttributeValueEditor: React.FC = () => {
-    
-    const [query, setQuery] = useState<string>();
-    const [currentAttribute, setCurrentAttribute] = useState<ProductAttribute>();
-    
-    const filter: ListFilter = {
-        sort:{
-            direction: "desc",
-            field: "id"
-        },
-        query: "productAttributeType != ?",
-        args: [7],
-        pageSize: 20 as int
-    };
-    
-    if (query && query.length != 0)
-    {
-        filter.query += " and name contains ?";
-        filter.args!.push(query);
-    }
-    
-    
-    return (
-        <Default>
-            <div className="admin-page">
-                <header className="admin-page__subheader">
-                    <div className="admin-page__subheader-info">
-                        <h1 className="admin-page__title">
-                            {`Manage product attribute values`}
-                        </h1>
-                        <ul className="admin-page__breadcrumbs">
-                            <li>
-                                <a href="/en-admin">{`Admin home`}</a>
-                            </li>
-                            <li>{`Product Attribute values`}</li>
-                        </ul>
-                    </div>
-                    <div className="search admin-page__search" data-theme="search-theme">
-                        <input 
-                            autoComplete="false"
-                            className="form-control"
-                            placeholder="Search.."
-                            type="text"
-                            onInput={(ev: ChangeEvent<HTMLInputElement>) => {
-                                setQuery(ev.target.value);
-                            }}
-                        />
-                    </div>
-                </header>
-                <div className="admin-page__content">
-                    <div className="admin-page__internal">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>{`Attribute`}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <Loop 
-                                    over={ProductAttributeApi} 
-                                    filter={filter} 
-                                    paged={{
-                                        pageSize: 20,
-                                        showInput: true
-                                    }}
-                                >
-                                    {(attribute: ProductAttribute) => {
-                                        return (
-                                            <tr 
-                                                onClick={() => {
-                                                    setCurrentAttribute(attribute);
-                                                }} 
-                                                className={'attribute-value-editor-row'}
-                                            >
-                                                <td>
-                                                    {attribute.name}
-                                                    <span className={'hover-msg'}>({`Click to edit`})</span>
-                                                </td>
-                                            </tr>
-                                        )
-                                    }}
-                                </Loop>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {currentAttribute && (
-                    <AttributeValueEditorModal attribute={currentAttribute} onClose={() => setCurrentAttribute(undefined)} />
-                )}
-            </div>
-        </Default>
-    )
-}
-
-
-export type AttributeValueEditorModalProps = {
-    attribute: ProductAttribute;
-    onClose: () => void;
-}
+import Container from "UI/Container";
 
 type FileChangeEvent = {
     target: {
-        value: string
-    }
-}
+        value: string;
+    };
+};
 
-const AttributeValueEditorModal: React.FC<AttributeValueEditorModalProps> = (props: AttributeValueEditorModalProps): React.ReactElement => {
-
-    const { attribute } = props;
-    
+const AttributeValueEditor: React.FC = () => {
+    const [attribute, setAttribute] = useState<ProductAttribute>();
     const [updateNo, setUpdateNo] = useState<number>(0);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!attribute) {
+            const segments = location.pathname.split("/").filter(Boolean);
+            const id = (() => {
+                const i = segments.indexOf("productattribute");
+                return i !== -1 && /^\d+$/.test(segments[i + 1]) ? parseInt(segments[i + 1]) : null;
+            })();
+
+            if (id) {
+                ProductAttributeApi.load(id as uint).then(setAttribute);
+            }
+        }
+    }, [attribute]);
+
+    const isValidInput = (value: string): boolean => {
+        if (value.trim().length === 0) {
+            setError("Cannot add empty value");
+            return false;
+        }
+        setError(null);
+        return true;
+    };
 
     const keyDown: React.KeyboardEventHandler<HTMLInputElement> = (ev) => {
         if (ev.key === "Enter") {
             ev.preventDefault();
             ev.stopPropagation();
-            // create
-            const target: HTMLInputElement = ev.target as HTMLInputElement;
+
+            const target = ev.target as HTMLInputElement;
+            const inputValue = target.value.trim();
+
+            if (!isValidInput(inputValue)) return;
 
             ProductAttributeValueApi.create({
-                value: target.value,
-                productAttributeId: attribute.id
-            })
-                .then(() => {
-                    setUpdateNo(updateNo + 1)
-                })
+                value: inputValue,
+                productAttributeId: attribute!.id,
+            }).then(() => {
+                setUpdateNo(updateNo + 1);
+            });
         }
-    }
+    };
 
-    /**
-     * 1=long, <Input type='number' and whatever html numeric input needs to be whole nums only
-     * 2=double, <Input type='number' and whatever html numeric input needs to be..not whole nums only
-     * 3=string, <Input type='text'
-     * 4=image ref, <Input type='image'
-     * 5=video ref, <Input type='video'
-     * 6=file ref,  <Input type='file'
-     * 7=boolean {none, Yes/ No values are created and readonly
-     */
-    const getInputType = (attrType: int) => {
-        
-        const getFileInput = (accept: string) => {
-            return (
-                <Input
-                    type={'file'}
-                    accept={accept}
-                    key={updateNo}
-                    onChange={(fileRef: FileChangeEvent) => {
-                        
-                        ProductAttributeValueApi.create({
-                            value: fileRef.target.value,
-                            productAttributeId: attribute.id
-                        })
-                            .then(() => {
-                                setUpdateNo(updateNo + 1)
-                            })
-                    }}
-                />
-            )
-        }
+    const getFileInput = (accept: string) => (
+        <Input
+            type="file"
+            accept={accept}
+            key={updateNo}
+            onChange={(fileRef: FileChangeEvent) => {
+                ProductAttributeValueApi.create({
+                    value: fileRef.target.value,
+                    productAttributeId: attribute!.id,
+                }).then(() => {
+                    setUpdateNo(updateNo + 1);
+                });
+            }}
+        />
+    );
 
-        switch(attrType) {
+    const getInputType = (attrType: number) => {
+        switch (attrType) {
             case 1:
-                return (
-                    <Input type={'number'} value={''} onKeyDown={keyDown}/>
-                );
+                return <Input type="number" onKeyDown={keyDown} value="" />;
             case 2:
-                return (
-                    <Input step={0.1} type={'number'} value={''} onKeyDown={keyDown}/>
-                );
+                return <Input type="number" step={0.1} onKeyDown={keyDown} value="" />;
             case 3:
-                return (
-                    <Input type={'text'} onKeyDown={keyDown} value={''}/>
-                )
+                return <Input type="text" onKeyDown={keyDown} value="" />;
             case 4:
-                return getFileInput('image/*')
+                return getFileInput("image/*");
             case 5:
-                return getFileInput('video/*')
+                return getFileInput("video/*");
             case 6:
-                return getFileInput('*/*')
+                return getFileInput("*/*");
             case 7:
-                return null;
+                return null; // Boolean types are read-only
             default:
-                return <Input type={'text'} onKeyDown={keyDown} value={''}/>
+                return <Input type="text" onKeyDown={keyDown} value="" />;
         }
+    };
+
+    if (!attribute) {
+        return <Default><p>Loading attribute...</p></Default>;
     }
-    
-    const isFile = [4,5,6].includes(attribute.productAttributeType as int);
+
+    const isFile = [4, 5, 6].includes(attribute.productAttributeType!);
 
     return (
-        <Modal
-            visible={true}
-            title={`Manage values for ${attribute.name}`}
-            noFooter={true}
-            onClose={props.onClose}
-        >
-            <table className="table">
-                <thead>
+        <Default>
+            <header className="admin-page__subheader">
+                <div className="admin-page__subheader-info">
+                    <h1 className="admin-page__title">{`Manage values for '${attribute.name}'`}</h1>
+                    <ul className="admin-page__breadcrumbs">
+                        <li><a href="/en-admin">{`Admin home`}</a></li>
+                        <li><a href="/en-admin/productattribute">{`Product Attributes`}</a></li>
+                        <li><a href={"/en-admin/productattribute/" + attribute.id}>{attribute.name}</a></li>                        
+                        <li>{`Values`}</li>
+                    </ul>
+                </div>
+            </header>
+            <Container>
+                <table className="table">
+                    <thead>
                     <tr>
                         <th colSpan={2}>Value</th>
                     </tr>
-                </thead>
-                <tbody>
+                    </thead>
+                    <tbody>
                     {isFile ? (
                         <tr>
-                            <td colSpan={2}>
-                                {getInputType(attribute.productAttributeType!)}
-                            </td>
+                            <td colSpan={2}>{getInputType(attribute.productAttributeType!)}</td>
                         </tr>
-                    ) : <tr>
+                    ) : (
+                        <tr>
                             <td>{`Add value:`}</td>
-                            <td>
-                                {getInputType(attribute.productAttributeType!)}
-                            </td>
-                    </tr>}
+                            <td>{getInputType(attribute.productAttributeType!)}</td>
+                        </tr>
+                    )}
+                    {error && (
+                        <tr>
+                            <td colSpan={2} style={{color: "red"}}>{error}</td>
+                        </tr>
+                    )}
                     <Loop
                         key={updateNo}
                         over={ProductAttributeValueApi}
                         filter={{
                             query: "productAttributeId = ?",
-                            args: [attribute.id]
+                            args: [attribute.id],
                         }}
-                        orNone={() => <tr><td colSpan={2}>{`No values for this attribute`}</td></tr>}
+                        orNone={() => (
+                            <tr>
+                                <td colSpan={2}>{`No values for this attribute`}</td>
+                            </tr>
+                        )}
                     >
-                        {(value) => {
-                            return (
-                                <tr className={'attribute-value-value'}>
-                                    {isFile ? (
-                                        <td>
-                                            {/* 4 = image */}
-                                            {attribute.productAttributeType == 4 && <Image fileRef={value.value!}/>}
-
-
-                                            {/* 5 = video */}
-                                            {attribute.productAttributeType == 5 && <Video fileRef={value.value!}/>}
-                                            
-                                            {/* 6 = file */}
-                                            {attribute.productAttributeType == 6 && <><i className={'fas fa-file'}/> {value.value!}</>}
-                                        </td>
-                                    ) : <td>{value.value}</td>}
+                        {(value) => (
+                            <tr className="attribute-value-value">
+                                {isFile ? (
                                     <td>
+                                        {attribute.productAttributeType === 4 && (
+                                            <Image fileRef={value.value!}/>
+                                        )}
+                                        {attribute.productAttributeType === 5 && (
+                                            <Video fileRef={value.value!}/>
+                                        )}
+                                        {attribute.productAttributeType === 6 && (
+                                            <>
+                                                <i className="fas fa-file"/> {value.value!}
+                                            </>
+                                        )}
+
                                         <Button
                                             onClick={() => {
-                                                ProductAttributeValueApi.delete(value.id).then(() => {
+                                                ProductAttributeValueApi.delete(value.id).then(() =>
                                                     setUpdateNo(updateNo + 1)
-                                                })
+                                                );
                                             }}
                                         >
-                                            <i className={'fas fa-trash'}/> {`Remove`}
+                                            <i className="fas fa-trash"/> {`Remove`}
                                         </Button>
                                     </td>
-                                </tr>
-                            )
-                        }}
+                                ) : (
+                                    <td>{value.value}</td>
+                                )}
+                                <td>
+                                    <Button
+                                        onClick={() => {
+                                            ProductAttributeValueApi.delete(value.id).then(() =>
+                                                setUpdateNo(updateNo + 1)
+                                            );
+                                        }}
+                                    >
+                                        <i className="fas fa-trash"/> {`Remove`}
+                                    </Button>
+                                </td>
+                            </tr>
+                        )}
                     </Loop>
-                </tbody>
-            </table>
-        </Modal>
-    )
-}
-
-export {
-    AttributeValueEditorModal
-}
+                    </tbody>
+                </table>
+            </Container>
+        </Default>
+    );
+};
 
 export default AttributeValueEditor;
