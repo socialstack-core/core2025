@@ -2,11 +2,11 @@ import ProductTable from 'UI/Payments/ProductTable';
 import Input from 'UI/Input';
 import Form from 'UI/Form';
 import Alert from 'UI/Alert';
-import webRequest from 'UI/Functions/WebRequest';
+import couponApi from 'Api/Coupon';
 import { useState, useEffect } from 'react';
-import { useRouter, useSession } from 'UI/Session';
+import { useSession } from 'UI/Session';
+import { useRouter } from 'UI/Router';
 import { useCart } from 'UI/Payments/CartSession';
-import store from 'UI/Functions/Store';
 
 
 export default function Checkout(props) {
@@ -22,10 +22,6 @@ export default function Checkout(props) {
 	var [couponValidationMessage, setCouponValidationMessage] = useState('');
 	var [couponApplyDisabled, setCouponApplyDisabled] = useState(true);
 
-	useEffect(() => {
-		loadCouponCode(store.get('coupon_code'));
-	}, []);
-	
 	function loadCouponCode(code) {
 		if(!code){
 			return Promise.resolve(null);
@@ -35,12 +31,11 @@ export default function Checkout(props) {
 		setCodeLoading(true);
 		setCouponApplyDisabled(false);
 
-		return webRequest('coupon/check/' + code)
-			.then(response => {
+		return couponApi.checkCoupon(code)
+			.then(coupon => {
 				setCodeLoading(false);
 				setCouponValid(true);
 				setCouponValidationMessage(`This coupon has been applied to your total.`);
-				var coupon = response.json;
 				setCoupon(coupon);
 			})
 			.catch(e => {
@@ -53,7 +48,6 @@ export default function Checkout(props) {
 	}
 
 	function updateCouponCode(code) {
-		store.set('coupon_code', code);
 		loadCouponCode(code);
     }
 	
@@ -103,7 +97,7 @@ export default function Checkout(props) {
 			}}
 		>
 			<div className="mb-3">
-				<ProductTable shoppingCart={shoppingCart} addToCart={addToCart} coupon={coupon}/>
+				<ProductTable shoppingCart={shoppingCart} addToCart={addToCart} coupon={coupon} readonly />
 				
 				<input type='hidden' name='items' ref={ir=>{
 					if(ir){
