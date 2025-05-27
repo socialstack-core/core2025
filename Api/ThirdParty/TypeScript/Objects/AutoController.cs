@@ -199,7 +199,7 @@ namespace Api.TypeScript.Objects
                 {
                     reqMethodModify = ", {}, { method: 'DELETE' } ";
                 }
-
+                
                 builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")}{reqMethodModify})");
                 
                 if (method.RequiresSessionSet)

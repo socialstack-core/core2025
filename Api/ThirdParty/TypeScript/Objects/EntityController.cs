@@ -200,7 +200,12 @@ namespace Api.TypeScript.Objects
 
                 var url = URLBuilder.BuildUrl(method);
                 
-                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")});");
+                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")})");
+                
+                if (method.RequiresSessionSet)
+                {
+                    builder.AppendLine("            .then(session => { setSession(session); return session; })");
+                }
 
                 builder.AppendLine("    }");
                 builder.AppendLine();

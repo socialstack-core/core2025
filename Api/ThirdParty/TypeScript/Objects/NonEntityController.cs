@@ -184,7 +184,7 @@ namespace Api.TypeScript.Objects
                 
                 if (method.RequiresSessionSet)
                 {
-                    builder.AppendLine("            .then(session => { setSession(session) })");
+                    builder.AppendLine("            .then(session => { setSession(session); return session; })");
                 }
 
 
