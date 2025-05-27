@@ -1,5 +1,6 @@
 import { Product } from 'Api/Product';
 import Canvas from 'UI/Canvas';
+import ProductQuantity from 'UI/Payments/ProductQuantity';
 
 /**
  * Props for the View component.
@@ -28,6 +29,7 @@ const View: React.FC<ViewProps> = (props) => {
 			<Canvas>
 				{product.descriptionJson}
 			</Canvas>
+			<ProductQuantity product={product} quantity={1} addText={`Add to basket`} allowMultiple={true} goStraightToCart={true} />
 		</div>
 	);
 }
