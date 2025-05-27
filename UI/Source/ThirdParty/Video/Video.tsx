@@ -6,6 +6,7 @@ interface VideoProps {
 	 * An example optional fileRef prop.
 	 */
 	// logoRef?: FileRef
+	fileRef: FileRef
 }
 
 /**

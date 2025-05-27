@@ -7,6 +7,8 @@ import Modal from "UI/Modal";
 import ProductAttributeValueApi, { ProductAttributeValue } from "Api/ProductAttributeValue";
 import Input from "UI/Input";
 import Button from "UI/Button";
+import Image from "UI/Image";
+import Video from "UI/Video";
 
 const AttributeValueEditor: React.FC = () => {
     
@@ -107,6 +109,13 @@ export type AttributeValueEditorModalProps = {
     attribute: ProductAttribute;
     onClose: () => void;
 }
+
+type FileChangeEvent = {
+    target: {
+        value: string
+    }
+}
+
 const AttributeValueEditorModal: React.FC<AttributeValueEditorModalProps> = (props: AttributeValueEditorModalProps): React.ReactElement => {
 
     const { attribute } = props;
@@ -140,15 +149,17 @@ const AttributeValueEditorModal: React.FC<AttributeValueEditorModalProps> = (pro
      * 7=boolean {none, Yes/ No values are created and readonly
      */
     const getInputType = (attrType: int) => {
-
+        
         const getFileInput = (accept: string) => {
             return (
                 <Input
                     type={'file'}
                     accept={accept}
-                    onChange={(fileRef: string) => {
+                    key={updateNo}
+                    onChange={(fileRef: FileChangeEvent) => {
+                        
                         ProductAttributeValueApi.create({
-                            value: fileRef,
+                            value: fileRef.target.value,
                             productAttributeId: attribute.id
                         })
                             .then(() => {
@@ -184,6 +195,8 @@ const AttributeValueEditorModal: React.FC<AttributeValueEditorModalProps> = (pro
                 return <Input type={'text'} onKeyDown={keyDown} value={''}/>
         }
     }
+    
+    const isFile = [4,5,6].includes(attribute.productAttributeType as int);
 
     return (
         <Modal
@@ -199,12 +212,18 @@ const AttributeValueEditorModal: React.FC<AttributeValueEditorModalProps> = (pro
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>{`Add value:`}</td>
-                        <td>
-                            {getInputType(attribute.productAttributeType!)}
-                        </td>
-                    </tr>
+                    {isFile ? (
+                        <tr>
+                            <td colSpan={2}>
+                                {getInputType(attribute.productAttributeType!)}
+                            </td>
+                        </tr>
+                    ) : <tr>
+                            <td>{`Add value:`}</td>
+                            <td>
+                                {getInputType(attribute.productAttributeType!)}
+                            </td>
+                    </tr>}
                     <Loop
                         key={updateNo}
                         over={ProductAttributeValueApi}
@@ -217,7 +236,19 @@ const AttributeValueEditorModal: React.FC<AttributeValueEditorModalProps> = (pro
                         {(value) => {
                             return (
                                 <tr className={'attribute-value-value'}>
-                                    <td>{value.value}</td>
+                                    {isFile ? (
+                                        <td>
+                                            {/* 4 = image */}
+                                            {attribute.productAttributeType == 4 && <Image fileRef={value.value!}/>}
+
+
+                                            {/* 5 = video */}
+                                            {attribute.productAttributeType == 5 && <Video fileRef={value.value!}/>}
+                                            
+                                            {/* 6 = file */}
+                                            {attribute.productAttributeType == 6 && <><i className={'fas fa-file'}/> {value.value!}</>}
+                                        </td>
+                                    ) : <td>{value.value}</td>}
                                     <td>
                                         <Button
                                             onClick={() => {

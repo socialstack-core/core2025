@@ -17,3 +17,6 @@
 .attribute-value-value > td:nth-last-child(1) {
     text-align: right;
 }
+.attribute-value-value img, .attribute-value-value .video {
+    max-width: 50%;
+}
