@@ -1,6 +1,7 @@
 import { formatCurrency } from "UI/Functions/CurrencyTools";
 import Loop from 'UI/Loop';
 import Alert from 'UI/Alert';
+import Icon from 'UI/Icon';
 import productApi from 'Api/Product';
 import { calculatePrice, recurrenceText } from 'UI/Functions/Payments';
 import { useSession } from 'UI/Session';
@@ -60,17 +61,17 @@ export default function ProductTable(props){
 					if(i){
 						// i is 0 for one off payments.
 						// This is any recurring things with a discount, where the discount is applied on the first payment only.
-						totals.push(<div>{formatCurrency(totalCost, session.locale, options)} today, then {
-							formatCurrency(total, session.locale, options)
+						totals.push(<div>{formatCurrency(totalCost, options)} today, then {
+							formatCurrency(total, options)
 						} {recurTitle}</div>);
 					}else{
 						totals.push(<div><small><s>{
-							formatCurrency(total, session.locale, options)
-						}</s></small> {formatCurrency(totalCost, session.locale, options)}</div>);
+							formatCurrency(total, options)
+						}</s></small> {formatCurrency(totalCost, options)}</div>);
 					}
 				}else{
 					totals.push(<div>{
-						formatCurrency(totalCost, session.locale, options)
+						formatCurrency(totalCost, options)
 					} {recurTitle}</div>);
 				}
 			}
@@ -79,6 +80,59 @@ export default function ProductTable(props){
 		return totals;
 	}
 	
+	var items = shoppingCart?.productQuantities || [];
+	
+	if(!items.length){
+		return <Alert type="info">
+			{readonly ? <>
+				{`This purchase is empty`}
+			</> : <>
+				{`Your shopping cart is empty.`}
+			</>}
+			
+		</Alert>;
+	}
+	
+	// 'price', 'tiers', 'tiers.price'
+	
+	var cartTotalByFrequency = [0,0,0,0,0];
+	
+	var itemSet = [];
+	var currencyCode = null;
+	var hasAtLeastOneSubscription = false;
+	
+	items.forEach(cartInfo => {
+		var product = cartInfo.product;
+		if(!product){
+			return;
+		}
+		
+		if(product.billingFrequency){
+			hasAtLeastOneSubscription = true;
+		}
+		
+		var qty = cartInfo.quantity;
+		
+		if(qty < product.minQuantity){
+			qty = product.minQuantity;
+		}
+
+		var cost = calculatePrice(product, qty);
+
+		if(cost){
+			cartTotalByFrequency[product.billingFrequency] += cost.amount;
+			
+			itemSet.push({
+				...cartInfo,
+				cost
+			});
+			
+			if(!currencyCode){
+				currencyCode = cost.currencyCode;
+			}
+		}
+	});
+
 	return <table className="table shopping-cart__table">
 		<thead>
 			<tr>
@@ -96,136 +150,88 @@ export default function ProductTable(props){
 				</th>}
 			</tr>
 		</thead>
-		<Loop over={productApi} includes={['price', 'tiers', 'tiers.price']} groupAll raw
-			filter={{
-				where: {
-					id: shoppingCart.items.map(cartInfo => (cartInfo.productId || cartInfo.product))
+		<tbody>
+			{itemSet.map(cartInfo => {
+				var product = cartInfo.product;
+				var qty = cartInfo.quantity;
+				var cost = cartInfo.cost;
+				
+				if(qty < product.minQuantity){
+					qty = product.minQuantity;
 				}
-			}}
-			orNone={() => <tbody>
-				<td colspan="4">
-				<Alert type="info">
-						{readonly ? <>
-							{`This purchase is empty`}
-						</> : <>
-							{`Your shopping cart is empty.`}
-						</>}
-						
-					</Alert>
+				
+				var formattedCost = formatCurrency(cost.amount, {currencyCode});
+				
+				if(product.billingFrequency){
+					formattedCost += ' ' + recurrenceText(product.billingFrequency);
+				}
+				
+				// subscription
+				if (product.billingFrequency) {
+
+					return <tr>
+						<td>
+							{product.name} <span className="footnote-asterisk" title={`Subscription`}></span>
+						</td>
+						<td className="qty-column">
+							{qty}
+						</td>
+						<td className="currency-column">
+							{formattedCost}
+						</td>
+						{!readonly && <td className="actions-column">
+							<button type="button" className="btn btn-small btn-outline-danger" title={`Remove`}
+								onClick={() => {
+									addToCart(product.id, 0)
+								}}>
+								<Icon type='fa-trash' />
+							</button>
+						</td>}
+					</tr>;
+				}
+
+				// standard quantity of product
+				return <tr>
+					<td>
+						{product.name}
+					</td>
+					<td className="qty-column">
+						{/* could have a + and - button which does e.g. addToCart(product.id, cartInfo.quantity + 1)*/}
+						{cartInfo.quantity}
+					</td>
+					<td className="currency-column">
+						{formatCurrency(product.price.amount, { currencyCode })}
+					</td>
+					{!readonly && <td className="actions-column">
+						<button type="button" className="btn btn-small btn-outline-danger" title={`Remove`}
+								onClick={() => {
+									addToCart(product.id, 0)
+							}}>
+								<Icon type='fa-trash' />
+						</button>
+					</td>}
+				</tr>;
+			})}
+			<tr>
+				<td>
+					<strong>{`Total`}</strong>
 				</td>
-			</tbody>
-			}>
-			{
-				allProducts => {
-					var cartTotalByFrequency = [0,0,0,0,0];
-					var hasAtLeastOneSubscription = false;
-					var currencyCode = null;
-					
-					return <tbody>
-						{
-							shoppingCart.items.map(cartInfo => {
-								var product = allProducts.find(prod => prod.id == (cartInfo.productId || cartInfo.product));
-
-								if (!product) {
-									// product withdrawn in some way
-									return null;
-								}
-								
-								var qty = cartInfo.quantity;
-								
-								if(qty < product.minQuantity){
-									qty = product.minQuantity;
-								}
-
-								var cost = calculatePrice(product, qty);
-								
-								cartTotalByFrequency[product.billingFrequency] += cost.amount;
-								if(!currencyCode){
-									currencyCode = cost.currencyCode;
-								}
-
-								var formattedCost = formatCurrency(cost.amount, session.locale);
-								
-								if(product.billingFrequency){
-									formattedCost += ' ' + recurrenceText(product.billingFrequency);
-								}
-								
-								// subscription
-								if (product.billingFrequency) {
-									hasAtLeastOneSubscription = true;
-
-									return <tr>
-										<td>
-											{product.name} <span className="footnote-asterisk" title={`Subscription`}></span>
-										</td>
-										<td className="qty-column">
-											{new Intl.NumberFormat(session.locale.code).format(qty)}
-										</td>
-										<td className="currency-column">
-											{formattedCost}
-										</td>
-										{!readonly && <td className="actions-column">
-											<button type="button" className="btn btn-small btn-outline-danger" title={`Remove`}
-												onClick={() => {
-													addToCart({
-														product: product.id,
-														quantity: -cartInfo.quantity
-													})
-												}}>
-												<i className="fal fa-fw fa-trash"></i>
-											</button>
-										</td>}
-									</tr>;
-								}
-
-								// standard quantity of product
-								return <tr>
-									<td>
-										{product.name}
-									</td>
-									<td className="qty-column">
-										{cartInfo.quantity}
-									</td>
-									<td className="currency-column">
-										{formatCurrency(product.price.amount, session.locale)}
-									</td>
-									{!readonly && <td className="actions-column">
-										<button type="button" className="btn btn-small btn-outline-danger" title={`Remove`}
-												onClick={() => {
-													addToCart({
-														product: product.id,
-														quantity: -cartInfo.quantity
-													})
-												}}>
-												<i className="fal fa-fw fa-trash"></i>
-										</button>
-									</td>}
-								</tr>;
-							})
-						}
-						<tr>
-							<td>
-								<strong>{`TOTAL`}</strong>
-							</td>
-							<td className="qty-column">
-							</td>
-							<td className="currency-column" style={{fontWeight: 'bold'}}>
-								{currencyCode ? renderTotals(cartTotalByFrequency, {currencyCode, coupon: props.coupon}) : '-'}
-							</td>
-							<td>
-								&nbsp;
-							</td>
-						</tr>
-						<tr>
-							<td colspan='3'>
-								{hasAtLeastOneSubscription && <small>
-									<span className="footnote-asterisk"></span> {`Your payment information will be securely stored in order to process future subscription payments. The total stated will also be charged today.`}
-								</small>}
-							</td>
-						</tr>
-					</tbody>;
-				}
-			}
-		</Loop>
+				<td className="qty-column">
+				</td>
+				<td className="currency-column" style={{fontWeight: 'bold'}}>
+					{currencyCode ? renderTotals(cartTotalByFrequency, {currencyCode, coupon: props.coupon}) : '-'}
+				</td>
+				<td>
+					&nbsp;
+				</td>
+			</tr>
+			<tr>
+				<td colspan='3'>
+					{hasAtLeastOneSubscription && <small>
+						<span className="footnote-asterisk"></span> {`Your payment information will be securely stored in order to process future subscription payments. The total stated will also be charged today.`}
+					</small>}
+				</td>
+			</tr>
+		</tbody>
 	</table>;
 }

@@ -1,4 +1,5 @@
 import Modal from 'UI/Modal';
+import Loading from 'UI/Loading';
 import { useSession } from 'UI/Session';
 import { useRouter } from 'UI/Router';
 import { useCart } from 'UI/Payments/CartSession';
@@ -10,7 +11,7 @@ export default function Cart(props) {
 	const { session } = useSession();
 	const { setPage } = useRouter();
 	const { pop } = useToast();
-	var { addToCart, emptyCart, shoppingCart, cartIsEmpty } = useCart();
+	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading } = useCart();
 
 	var [showEmptyCartPrompt, setShowEmptyCartPrompt] = useState(null);
 	
@@ -19,7 +20,7 @@ export default function Cart(props) {
 			{`Shopping Cart`}
 		</h2>
 
-		<ProductTable shoppingCart={shoppingCart} addToCart={addToCart}/>
+		{loading ? <Loading /> : <ProductTable shoppingCart={shoppingCart} addToCart={addToCart}/>}
 
 		{!cartIsEmpty() && <>
 			<div className="shopping-cart__footer">
@@ -28,7 +29,7 @@ export default function Cart(props) {
 					{`Empty Cart`}
 				</button>
 
-				<button type="button" className="btn btn-primary" onClick={() => setPage('/checkout')}>
+				<button type="button" className="btn btn-primary" onClick={() => setPage('/cart/checkout')}>
 					<i className="fal fa-fw fa-credit-card" />
 					{`Checkout`}
 				</button>
