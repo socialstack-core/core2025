@@ -178,7 +178,13 @@ namespace Api.TypeScript.Objects
                 }
                 else
                 {
-                    if (TypeScriptService.IsEntityType(method.ReturnType))
+                    if (method.RequiresSessionSet)
+                    {
+                        call = "getJson<SessionResponse>";
+                        _container.RequireWebApi(WebApis.GetJson);
+                        builder.Append($"): Promise<Session> => {{");
+                    }
+                    else if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
                         call = $"getOne<{svc.GetGenericSignature(method.ReturnType)}>";
                         builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
@@ -204,7 +210,7 @@ namespace Api.TypeScript.Objects
                 
                 if (method.RequiresSessionSet)
                 {
-                    builder.AppendLine("            .then(session => { setSession(session); return session; })");
+                    builder.AppendLine("            .then(setSession)");
                 }
 
                 builder.AppendLine("    }");

@@ -161,7 +161,13 @@ namespace Api.TypeScript.Objects
                 }
                 else
                 {
-                    if (method.ReturnType.IsGenericType &&
+                    if (method.RequiresSessionSet)
+                    {
+                        call = "getJson<SessionResponse>";
+                        _container.RequireWebApi(WebApis.GetJson);
+                        builder.Append($"): Promise<Session> => {{");
+                    }
+                    else if (method.ReturnType.IsGenericType &&
                         method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                     {
                         call = "getList<T>";
@@ -204,7 +210,7 @@ namespace Api.TypeScript.Objects
                 
                 if (method.RequiresSessionSet)
                 {
-                    builder.AppendLine("            .then(session => { setSession(session); return session; })");
+                    builder.AppendLine("            .then(setSession)");
                 }
                 builder.AppendLine("    };");
                 builder.AppendLine();
