@@ -28,6 +28,12 @@ namespace Api.Pages
 		public string Key;
 
 		/// <summary>
+		/// The type of content that this page will attempt to load using information from the URL. 
+		/// If the Key contains "primary:x" then this will be inferred from the key.
+		/// </summary>
+		public string PrimaryContentType;
+
+		/// <summary>
 		/// The pages content (as canvas JSON).
 		/// </summary>
 		[Localized]

@@ -252,6 +252,11 @@ namespace Api.Pages
 										urlLookup.Add(linkUrl, specificId);
 									}
 								}
+								else if (!string.IsNullOrEmpty(page.PrimaryContentType))
+								{
+									// Obtain the relevant service:
+									primaryContentService = Services.Get(page.PrimaryContentType + "Service");
+								}
 
 								getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, primaryContentService, specificContentId));
 
