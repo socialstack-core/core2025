@@ -48,7 +48,7 @@ export class LocaleApi extends AutoController<Locale,uint>{
      * @url 'v1/locale/set/{id}'
      */
     set = (setSession: (s: SessionResponse) => Session, id: uint): Promise<Session> => {
-        return getJson<Session>(this.apiUrl + '/set/' + id +'')
+        return getJson<SessionResponse>(this.apiUrl + '/set/' + id +'')
             .then(setSession)
     }
 

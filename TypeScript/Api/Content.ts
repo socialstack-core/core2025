@@ -133,8 +133,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{RevisionList}
      * @url 'revision/list'
      */
-    revisionList = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T> | undefined> => {
-        return getJson<ApiList<T> | undefined>(this.apiUrl + '/revision/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
+    revisionList = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>> => {
+        return getList<T>(this.apiUrl + '/revision/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
     };
 
 
@@ -213,8 +213,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{ListAll}
      * @url 'list'
      */
-    listAll = (includes?: ApiIncludes[]): Promise<ApiList<T> | undefined> => {
-        return getJson<ApiList<T> | undefined>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
+    listAll = (includes?: ApiIncludes[]): Promise<ApiList<T>> => {
+        return getList<T>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '')
     };
 
 
@@ -223,8 +223,8 @@ export class AutoController<T extends Content<uint>, ID> {
      * @see {T}::{List}
      * @url 'list'
      */
-    list = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T> | undefined> => {
-        return getJson<ApiList<T> | undefined>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
+    list = (filters?: ListFilter, includes?: ApiIncludes[]): Promise<ApiList<T>> => {
+        return getList<T>(this.apiUrl + '/list' + (Array.isArray(includes) ? '?includes=' + includes.join(',') : '') + '', filters)
     };
 
 
