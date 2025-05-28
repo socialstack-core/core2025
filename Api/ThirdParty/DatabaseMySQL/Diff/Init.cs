@@ -555,10 +555,10 @@ namespace Api.Database
 			}
 
 			// Get MySQL version:
-			var versionQuery = Query.List(typeof(DatabaseVersion), nameof(DatabaseVersion));
+			var versionQuery = Query.List(typeof(MySQLVersion), nameof(MySQLVersion));
 			versionQuery.SetRawQuery("SELECT VERSION() as Version");
 
-			DatabaseVersion dbVersion = null;
+			MySQLVersion dbVersion = null;
 			var tryAgain = true;
 
 			// This is the first db query that happens - if the database is not yet available we'll keep retrying until it is.
@@ -569,7 +569,7 @@ namespace Api.Database
 				try
 				{
 
-					dbVersion = await _database.Select<DatabaseVersion, uint>(null, versionQuery, typeof(DatabaseVersion), 0);
+					dbVersion = await _database.Select<MySQLVersion, uint>(null, versionQuery, typeof(MySQLVersion), 0);
 
 				}
 				catch (MySqlException e)

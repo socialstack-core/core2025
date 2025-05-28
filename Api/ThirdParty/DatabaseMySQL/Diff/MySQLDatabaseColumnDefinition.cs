@@ -35,27 +35,27 @@ namespace Api.Database
 		public bool IsUnsigned;
 		
 		
-		private static Dictionary<Type, DatabaseType> TypeMap;
+		private static Dictionary<Type, MySQLType> TypeMap;
 		
 		static MySQLDatabaseColumnDefinition()
 		{
-			TypeMap = new Dictionary<Type, DatabaseType>();
+			TypeMap = new Dictionary<Type, MySQLType>();
 			
-			TypeMap[typeof(string)] = new DatabaseType("text", "varchar", "longtext");
-			TypeMap[typeof(byte[])] = new DatabaseType("blob", "varbinary", "longblob");
-			TypeMap[typeof(bool)] = new DatabaseType("bit");
-			TypeMap[typeof(sbyte)] = new DatabaseType("tinyint");
-			TypeMap[typeof(byte)] = new DatabaseType("tinyint", true);
-			TypeMap[typeof(int)] = new DatabaseType("int");
-			TypeMap[typeof(uint)] = new DatabaseType("int", true);
-			TypeMap[typeof(short)] = new DatabaseType("smallint");
-			TypeMap[typeof(ushort)] = new DatabaseType("smallint", true);
-			TypeMap[typeof(long)] = new DatabaseType("bigint");
-			TypeMap[typeof(ulong)] = new DatabaseType("bigint", true);
-			TypeMap[typeof(float)] = new DatabaseType("float");
-			TypeMap[typeof(DateTime)] = new DatabaseType("datetime");
-			TypeMap[typeof(double)] = new DatabaseType("double");
-			TypeMap[typeof(decimal)] = new DatabaseType("decimal", "decimal");
+			TypeMap[typeof(string)] = new MySQLType("text", "varchar", "longtext");
+			TypeMap[typeof(byte[])] = new MySQLType("blob", "varbinary", "longblob");
+			TypeMap[typeof(bool)] = new MySQLType("bit");
+			TypeMap[typeof(sbyte)] = new MySQLType("tinyint");
+			TypeMap[typeof(byte)] = new MySQLType("tinyint", true);
+			TypeMap[typeof(int)] = new MySQLType("int");
+			TypeMap[typeof(uint)] = new MySQLType("int", true);
+			TypeMap[typeof(short)] = new MySQLType("smallint");
+			TypeMap[typeof(ushort)] = new MySQLType("smallint", true);
+			TypeMap[typeof(long)] = new MySQLType("bigint");
+			TypeMap[typeof(ulong)] = new MySQLType("bigint", true);
+			TypeMap[typeof(float)] = new MySQLType("float");
+			TypeMap[typeof(DateTime)] = new MySQLType("datetime");
+			TypeMap[typeof(double)] = new MySQLType("double");
+			TypeMap[typeof(decimal)] = new MySQLType("decimal", "decimal");
 		}
 
 		/// <summary>
@@ -143,7 +143,7 @@ namespace Api.Database
 				
 			}
 
-			if (TypeMap.TryGetValue(fieldType, out DatabaseType dbType))
+			if (TypeMap.TryGetValue(fieldType, out MySQLType dbType))
 			{
 				if (MaxCharacters.HasValue)
 				{

@@ -6,7 +6,7 @@ namespace Api.Database
     /// <summary>
     /// Used to get the version of MySQL.
     /// </summary>
-    public class DatabaseVersion
+    public class MySQLVersion
     {
 		/// <summary>
 		/// The version string.

@@ -6,7 +6,7 @@ namespace Api.Database
 	/// <summary>
 	/// Declares a field type within a database. varchar, int, bigint etc.
 	/// </summary>
-	public class DatabaseType
+	public class MySQLType
 	{
 		/// <summary>
 		/// Optional - used to declare an alternate database type to use if a length is present.
@@ -43,7 +43,7 @@ namespace Api.Database
 		/// <param name="typeName"></param>
 		/// <param name="typeNameWithLength"></param>
 		/// <param name="typeWithLargeLength"></param>
-		public DatabaseType(string typeName, string typeNameWithLength = null, string typeWithLargeLength = null)
+		public MySQLType(string typeName, string typeNameWithLength = null, string typeWithLargeLength = null)
 		{
 			TypeNameWithLargeLength = typeWithLargeLength;
 			TypeNameWithLength = typeNameWithLength;
@@ -53,7 +53,7 @@ namespace Api.Database
 		/// <summary>
 		/// Creates a new database type definition.
 		/// </summary>
-		public DatabaseType(string typeName, bool isUnsigned)
+		public MySQLType(string typeName, bool isUnsigned)
 		{
 			TypeName = typeName;
 			IsUnsigned = isUnsigned;
