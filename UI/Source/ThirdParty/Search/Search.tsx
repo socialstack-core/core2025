@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import Debounce from 'UI/Functions/Debounce';
 import { ApiIncludes } from 'Api/Includes';
-import { ListFilter } from 'Api/ApiEndpoints'
-import { Content } from 'Api/Content';
+import { ListFilter, Content } from 'Api/Content'
 import { ApiList } from 'UI/Functions/WebRequest';
 
 export type SearchProps<T extends Content<uint>> = {

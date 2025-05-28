@@ -1,7 +1,7 @@
 import { ApiList } from 'UI/Functions/WebRequest';
 import Failure from 'UI/Failed';
 import Paginator from 'UI/Paginator';
-import { AutoController, ListFilter } from 'Api/ApiEndpoints';
+import { AutoController, ListFilter } from 'Api/Content';
 import { ApiIncludes } from 'Api/Includes'
 import { Content } from 'Api/Content';
 import { ContentChangeDetail } from 'UI/Functions/ContentChange';
