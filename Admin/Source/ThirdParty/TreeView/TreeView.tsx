@@ -44,11 +44,8 @@ const TreeView: React.FC<TreeViewProps> = ({ allowSelection, allowSorting, click
 	const { setPage, pageState } = useRouter();
 
 	useEffect(() => {
-		// todo: query strings should originate from pageState. 
-		// This is to enable SSR support on them in general.
-
-		var urlParams = new URLSearchParams(location.search);
-		var path = urlParams.get("path") || "";
+		const { query } = pageState;
+		var path = query?.get("path") || "";
 
 		onLoadData(path)
 			.then(result => {
