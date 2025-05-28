@@ -112,7 +112,7 @@ const MediaCenter = (props) => {
             setBulkSelections(null);
         });
 
-    }, []);
+    }, [filterTagId, searchFilter, sorter]);
 
     const showRef = (ref: string, size: number = 256) => {
         var parsedRef = fileRef.parse(ref);
