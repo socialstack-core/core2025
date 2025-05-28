@@ -73,13 +73,14 @@ namespace Api.AvailableEndpoints
 			get {
 				if (_doc == null)
 				{
-					_doc = new XmlDoc();
+					var d = new XmlDoc();
 
 					if (System.IO.File.Exists("SocialStack.Api.xml"))
 					{
-						_doc.LoadFrom("SocialStack.Api.xml");
+						d.LoadFrom("SocialStack.Api.xml");
 					}
-					
+
+					_doc = d;
 				}
 
 				return _doc;
