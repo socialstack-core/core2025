@@ -666,7 +666,7 @@ namespace Api.Payments
 				{
 					foreach (var root in roots)
 					{
-						rootSet.Add(ConvertNode(root));
+						rootSet.Add(ConvertNode(root, root.Group.Key));
 					}
 				}
 
@@ -711,7 +711,7 @@ namespace Api.Payments
 			{
 				foreach (var child in kids)
 				{
-					childSet.Add(ConvertNode(child));
+					childSet.Add(ConvertNode(child, path + "/" + child.Group.Key));
 				}
 			}
 
@@ -725,7 +725,7 @@ namespace Api.Payments
 
 			return new TreeNodeDetail()
 			{
-				Self = ConvertNode(node),
+				Self = ConvertNode(node, path),
 				Children = childSet
 			};
 		}
@@ -734,7 +734,7 @@ namespace Api.Payments
 		/// Builds an admin tree view compatible struct of metadata for the given attrib group node.
 		/// </summary>
 		/// <returns></returns>
-		private RouterNodeMetadata ConvertNode(ProductAttributeGroupNode node)
+		private RouterNodeMetadata ConvertNode(ProductAttributeGroupNode node, string path)
 		{
 			return new RouterNodeMetadata()
 			{
@@ -743,7 +743,7 @@ namespace Api.Payments
 				ContentId = node.Group.Id,
 				Name = node.Group.Name,
 				ChildKey = node.Group.Key,
-				FullRoute = node.Group.Key,
+				FullRoute = path,
 				HasChildren = (node.Children != null && node.Children.Count > 0) || (node.Attributes != null && node.Attributes.Count > 0)
 			};
 		}
