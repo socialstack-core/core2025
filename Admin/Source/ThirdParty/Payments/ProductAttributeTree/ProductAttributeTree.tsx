@@ -1,22 +1,9 @@
-import TreeView from 'Admin/TreeView';
+import TreeView, { buildBreadcrumbs } from 'Admin/TreeView';
 import SubHeader from 'Admin/SubHeader';
 import { useRouter } from 'UI/Router';
 import Default from 'Admin/Templates/BaseAdminTemplate';
 import { useState, useEffect } from 'react';
 import productAttributeApi, { ProductAttribute } from 'Api/ProductAttribute';
-
-function buildPath(pathParts: string[], max: number) {
-	var result = '';
-
-	for (var i = 0; i < max; i++) {
-		if (i != 0) {
-			result += "/";
-		}
-		result += pathParts[i];
-	}
-
-	return result;
-}
 
 export default function ProductAttributeTree(props) {
 	var addUrl = '/en-admin/productattribute/add';
@@ -25,24 +12,12 @@ export default function ProductAttributeTree(props) {
 	const { query } = pageState;
 	var path = query?.get("path") || "";
 
-	var breadcrumbs = [
-		{
-			url: '/en-admin/productattribute',
-			title: `Product Attributes`
-		}
-	];
-
-	if (path) {
-		var pathParts = path.split('/');
-		for (var i = 0; i < pathParts.length; i++) {
-
-			breadcrumbs.push({
-				url: '/en-admin/productattribute?path=' + buildPath(pathParts, i + 1),
-				title: pathParts[i]
-			});
-
-		}
-	}
+	var breadcrumbs = buildBreadcrumbs(
+		'/en-admin/productattribute',
+		`Product Attributes`,
+		path,
+		'/en-admin/productattribute'
+	);
 	
 	return (
 		<Default>

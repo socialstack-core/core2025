@@ -54,7 +54,7 @@ const TreeView: React.FC<TreeViewProps> = ({ allowSelection, allowSorting, click
 
 	}, [pageState]);
 
-	function renderHeader(label, columnName) {
+	function renderHeader(label: string, columnName: string) {
 
 		if (!allowSorting) {
 			return label;
@@ -74,7 +74,7 @@ const TreeView: React.FC<TreeViewProps> = ({ allowSelection, allowSorting, click
 		}
 
 		return <>
-			<button type="button" className={headerClass.join(' ')} tabindex="-1" onClick={() => {
+			<button type="button" className={headerClass.join(' ')} tabIndex={-1} onClick={() => {
 				setSortColumn(columnName);
 
 				if (sortActive) {
@@ -246,5 +246,47 @@ const TreeView: React.FC<TreeViewProps> = ({ allowSelection, allowSorting, click
 
 	return currentNode ? renderCurrentNode() : <Loading />;
 };
+
+export function buildBreadcrumbs(startUrl: string, startTitle: string, path: string, baseUrl: string) {
+	var breadcrumbs = [
+		{
+			url: startUrl,
+			title: startTitle
+		}
+	];
+
+	if (path) {
+		var pathParts = path.split('/');
+		for (var i = 0; i < pathParts.length; i++) {
+			var part = pathParts[i];
+
+			if (part == '') {
+				continue;
+			}
+
+			breadcrumbs.push({
+				url: baseUrl + "?path=" + buildPath(pathParts, i + 1),
+				title: part
+			});
+
+		}
+	}
+
+	return breadcrumbs;
+}
+
+export function buildPath(pathParts: string[], max: number) {
+	var result = '';
+
+	for (var i = 0; i < max; i++) {
+		if (i != 0) {
+			result += "/";
+		}
+		result += pathParts[i];
+	}
+
+	return result;
+}
+
 
 export default TreeView;

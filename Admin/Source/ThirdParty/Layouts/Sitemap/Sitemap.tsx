@@ -1,5 +1,6 @@
-import TreeView from 'Admin/TreeView';
+import TreeView, { buildBreadcrumbs } from 'Admin/TreeView';
 import SubHeader from 'Admin/SubHeader';
+import { useRouter } from 'UI/Router';
 import Default from 'Admin/Templates/BaseAdminTemplate';
 import { useState, useEffect } from 'react';
 import pageApi, { Page, RouterTreeNodeDetail } from 'Api/Page';
@@ -7,7 +8,17 @@ import pageApi, { Page, RouterTreeNodeDetail } from 'Api/Page';
 export default function Sitemap(props) {
 	const [ showCloneModal, setShowCloneModal] = useState(false);
 	const [ showConfirmModal, setShowConfirmModal ] = useState(false);
-	
+	const { pageState } = useRouter();
+	const { query } = pageState;
+	var path = query?.get("path") || "";
+
+	var breadcrumbs = buildBreadcrumbs(
+		'/en-admin/page',
+		`Pages`,
+		path,
+		'/en-admin/page'
+	);
+
 	function removePage(page : Page) {
 		pageApi.delete(page.id).then(response => {
 			window.location.reload();
@@ -18,11 +29,7 @@ export default function Sitemap(props) {
 
 	return (
 		<Default>
-			<SubHeader title={`Edit Site Pages`} breadcrumbs={[
-				{
-					title: `Pages`
-				}
-			]} />
+			<SubHeader title={`Edit Site Pages`} breadcrumbs={breadcrumbs} />
 			<div className="sitemap__wrapper">
 				<div className="sitemap__internal">
 					{/*showCloneModal && <>
