@@ -1,11 +1,15 @@
-﻿using Api.Startup;
+﻿using Api.AvailableEndpoints;
+using Api.Database;
+using Api.Startup;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.OpenApi.Models;
+using Stripe;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.XPath;
 
 namespace Api.Swagger
 {
@@ -23,11 +27,14 @@ namespace Api.Swagger
         /// </summary>
         private bool _isConfigured;
 
-        /// <summary>
-        /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
-        /// </summary>
-        public SwaggerService()
+        private AvailableEndpointService _endpoints;
+
+		/// <summary>
+		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
+		/// </summary>
+		public SwaggerService(AvailableEndpointService endpoints)
         {
+            _endpoints = endpoints;
             _cfg = GetConfig<SwaggerConfig>();
             UpdateIsConfigured();
 
@@ -38,15 +45,164 @@ namespace Api.Swagger
             };
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="swaggerDoc"></param>
-        /// <param name="context"></param>
-        public void FilterDocuments(OpenApiDocument swaggerDoc, DocumentFilterContext context)
+        private Type ExpandReturnType(Type returnType)
         {
-            // Get all controllers flagged with the internal attribute
-            var excludedControllers = context.ApiDescriptions
+            if (returnType == null || returnType == typeof(ValueTask) || returnType == typeof(void))
+            {
+                return null;
+            }
+
+            var baseNullable = Nullable.GetUnderlyingType(returnType);
+
+            if (baseNullable != null)
+            {
+                return ExpandReturnType(baseNullable);
+            }
+
+            if (returnType.IsGenericType)
+            {
+                var def = returnType.GetGenericTypeDefinition();
+
+                if (def == typeof(ValueTask<>) || def == typeof(Task<>))
+                {
+                    var childType = returnType.GetGenericArguments()[0];
+					return ExpandReturnType(childType);
+                }
+                else if (def == typeof(ContentStream<,>))
+                {
+                    var mainType = returnType.GetGenericArguments()[0];
+                    return typeof(ApiList<>).MakeGenericType(mainType);
+                }
+            }
+
+            if (IsContentType(returnType))
+            {
+                return typeof(ApiContent<>).MakeGenericType(returnType);
+            }
+
+            return returnType;
+        }
+
+        /// <summary>
+        /// Same as the router: true if the given type is a content type.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+		private bool IsContentType(Type type)
+		{
+			if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Content<>))
+			{
+				return true;
+			}
+
+			var baseType = type.BaseType;
+
+			if (baseType == null)
+			{
+				return false;
+			}
+
+			return IsContentType(baseType);
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="swaggerDoc"></param>
+		/// <param name="context"></param>
+		public void FilterDocuments(OpenApiDocument swaggerDoc, DocumentFilterContext context)
+        {
+            var allEndpoints = _endpoints.List();
+
+            var sets = new Dictionary<string, SwaggerEndpointSet>();
+
+			foreach (var epInfo in allEndpoints)
+            {
+                if (epInfo.Method == null)
+                {
+                    continue;
+                }
+
+                OperationType type;
+
+                if (epInfo.HttpMethod == "GET")
+                {
+                    type = OperationType.Get;
+                }
+                else if (epInfo.HttpMethod == "POST")
+                {
+                    type = OperationType.Post;
+                }
+                else if (epInfo.HttpMethod == "DELETE")
+                {
+                    type = OperationType.Delete;
+                }
+                else if (epInfo.HttpMethod == "OPTIONS")
+                {
+                    type = OperationType.Options;
+                }
+                else if (epInfo.HttpMethod == "PUT")
+                {
+                    type = OperationType.Put;
+                }
+                else if (epInfo.HttpMethod == "HEAD")
+                {
+                    type = OperationType.Head;
+                }
+                else if (epInfo.HttpMethod == "PATCH")
+                {
+                    type = OperationType.Patch;
+                }
+                else if (epInfo.HttpMethod == "TRACE")
+                {
+                    type = OperationType.Trace;
+                }
+                else
+                {
+                    throw new Exception("Unrecognised http method: " + epInfo.HttpMethod);
+                }
+
+                var retType = ExpandReturnType(epInfo.Method.ReturnType);
+				var schema = retType == null ? null : context.SchemaGenerator.GenerateSchema(retType, context.SchemaRepository);
+                
+				var op = new OpenApiOperation
+                {
+                    Summary = epInfo.Summary,
+                    Responses = new OpenApiResponses
+                    {
+                        ["200"] = new OpenApiResponse
+                        {
+                            Description = "Successful response",
+                            Content = new Dictionary<string, OpenApiMediaType>
+                            {
+                                ["application/json"] = new OpenApiMediaType
+                                {
+                                    Schema = schema
+                                }
+                            }
+                        }
+                    }
+                };
+
+                if (!sets.TryGetValue(epInfo.Url, out SwaggerEndpointSet set))
+                {
+                    set = new SwaggerEndpointSet();
+                    sets[epInfo.Url] = set;
+				}
+
+                set.Operations[type] = op;
+            }
+
+            foreach(var kvp in sets)
+            {
+				swaggerDoc.Paths.Add(kvp.Key, new OpenApiPathItem
+				{
+					Operations = kvp.Value.Operations
+				});
+			}
+
+			// Get all controllers flagged with the internal attribute
+			var excludedControllers = context.ApiDescriptions
                 .Where(desc =>
                     desc.ActionDescriptor is ControllerActionDescriptor controllerDescriptor &&
                     controllerDescriptor.ControllerTypeInfo.GetCustomAttributes(typeof(InternalApiAttribute), true).Any())
@@ -241,5 +397,9 @@ namespace Api.Swagger
         }
 
     }
+
+    internal class SwaggerEndpointSet {
+        public Dictionary<OperationType, OpenApiOperation> Operations = new Dictionary<OperationType, OpenApiOperation>();
+	}
 }
 

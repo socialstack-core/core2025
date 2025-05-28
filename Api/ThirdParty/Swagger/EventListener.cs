@@ -23,7 +23,7 @@ namespace Api.Swagger
         public EventListener()
         {
             var title = SwaggerService.GetAssemblyAttribute<AssemblyTitleAttribute>().Title;
-            var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+            var version = "v1"; // Assembly.GetExecutingAssembly().GetName().Version?.ToString();
 
             WebServerStartupInfo.OnConfigureServices +=
                 (IServiceCollection builder) =>
@@ -34,7 +34,7 @@ namespace Api.Swagger
                     builder.AddSwaggerGen(options =>
                     {
                         options.SwaggerDoc(version, new OpenApiInfo { Title = title, Version = version });
-                        options.DocumentFilter<RemoveEndpointsDocumentFilter>();
+                        options.DocumentFilter<SwaggerDocumentFilter>();
                     });
                 };
 
@@ -63,7 +63,7 @@ namespace Api.Swagger
         /// <summary>
         /// 
         /// </summary>
-        public class RemoveEndpointsDocumentFilter : IDocumentFilter
+        public class SwaggerDocumentFilter : IDocumentFilter
         {
             /// <summary>
             /// 

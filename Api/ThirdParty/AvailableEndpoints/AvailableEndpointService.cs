@@ -320,6 +320,7 @@ namespace Api.AvailableEndpoints
 			var endpoint = new Endpoint()
 			{
 				Url = url,
+				Method = methodInfo,
 				HttpMethod = httpMethod
 			};
 

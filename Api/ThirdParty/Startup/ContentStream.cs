@@ -25,6 +25,30 @@ where ID : struct, IEquatable<ID>, IComparable<ID>, IConvertible
 }
 
 /// <summary>
+/// A list of objects in the API. This is only used for representation of the 
+/// result set format: it is not actually instanced.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class ApiList<T> {
+	/// <summary>
+	/// The result set.
+	/// </summary>
+	public List<T> Results { get; set; }
+}
+
+/// <summary>
+/// A singular object from the API. This is only used for representation of the 
+/// result format: it is not actually instanced.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class ApiContent<T> {
+	/// <summary>
+	/// The singular result.
+	/// </summary>
+	public T Result { get; set; }
+}
+
+/// <summary>
 /// Streams content from a service in a non-allocating way.
 /// </summary>
 /// <typeparam name="T"></typeparam>
