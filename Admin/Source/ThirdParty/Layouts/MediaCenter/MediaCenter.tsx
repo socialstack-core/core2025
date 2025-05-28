@@ -45,6 +45,7 @@ const MediaCenter = (props) => {
     const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
     const [uploadModal, setUploadModal] = useState<UploadModal | null>(null);
     const [deleting, setDeleting] = useState<boolean>(false);
+    const [deleteCount, setDeleteCount] = useState<number>(0);
     const [deleteFailed, setDeleteFailed] = useState<boolean>(false);
     const [searchFilter, setSearchFilter] = useState<string | null>(null);
     const [filterTagId, setFilterTagId] = useState<uint | null>(null);
@@ -112,7 +113,7 @@ const MediaCenter = (props) => {
             setBulkSelections(null);
         });
 
-    }, [filterTagId, searchFilter, sorter]);
+    }, [filterTagId, searchFilter, sorter, deleteCount]);
 
     const showRef = (ref: string, size: number = 256) => {
         var parsedRef = fileRef.parse(ref);
@@ -364,6 +365,7 @@ const MediaCenter = (props) => {
 
         Promise.all(deletes).then(response => {
             setBulkSelections(null);
+            setDeleteCount(deleteCount + 1);
         }).catch(e => {
             console.error(e);
             setDeleting(false);
