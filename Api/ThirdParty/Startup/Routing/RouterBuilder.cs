@@ -654,7 +654,8 @@ public class BuilderNode
 		{
 			if (cur.IsToken)
 			{
-				var tokenName = Text.StartsWith('{') ? Text.Substring(1, Text.Length - 2) : Text.Substring(2, Text.Length - 3);
+				var text = cur.Text;
+				var tokenName = text.StartsWith('{') ? text.Substring(1, text.Length - 2) : text.Substring(2, text.Length - 3);
 
 				if (result == null)
 				{
