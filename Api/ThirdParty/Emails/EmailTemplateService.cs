@@ -172,29 +172,21 @@ namespace Api.Emails
 				return toSend;
 			});
 
-			_pages.Install(new Page() {
+			_pages.Install(new PageBuilder() {
 				Url = "/en-admin/email/test",
 				Key = "admin_email_test",
 				Title = "Send a test email",
-				BodyJson = @"{
-					""c"": {
-						""t"": ""Admin/Templates/BaseAdminTemplate"",
-						""c"": {
-							""t"": ""Admin/Tile"",
-							""d"": {
-								""className"": ""email-test"",
-								""title"": ""Email Test""
-							},
-							""c"": {
-								""t"": ""Admin/Email/EmailTest"",
-						        ""i"": 2
-							},
-							""i"": 3
-						},
-						""i"": 4
-					},
-					""i"": 5
-				}"
+				BuildBody = (PageBuilder builder) =>
+				{
+					return builder.AddTemplate(
+						new CanvasNode("Admin/Tile")
+							.With("className", "email-test")
+							.With("title", "Email Test")
+							.AppendChild(
+								new CanvasNode("Admin/Email/EmailTest")
+							)
+					);
+				}
 			});
 
 			InstallEmails(

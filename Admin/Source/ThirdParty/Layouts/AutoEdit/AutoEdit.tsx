@@ -1,6 +1,5 @@
 import { useTokens } from 'UI/Token';
 import AutoForm from 'Admin/AutoForm';
-import Default from 'Admin/Templates/BaseAdminTemplate';
 
 interface AutoFormProps {
 	// parent
@@ -32,10 +31,7 @@ interface AutoFormProps {
 }
 
 const AutoEdit: React.FC<React.PropsWithChildren<AutoFormProps>> = ({ children, ...props }) => {
-	return <Default>
-		<AutoForm {...props} />
-		{children}
-	</Default>;
+	return <AutoForm {...props} />;
 };
 
 export default AutoEdit;

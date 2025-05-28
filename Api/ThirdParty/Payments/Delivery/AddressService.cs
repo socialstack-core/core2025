@@ -74,15 +74,17 @@ public partial class AddressService : AutoService<Address>
 		});
 
 		pages.Install(
-			new Page()
+			new PageBuilder()
 			{
 				Url="/cart/address_book",
 				Key = "cart_address_book",
 				Title = "My addresses",
-				BodyJson = @"{
-					""t"": ""UI/Payments/AddressBook"",
-					""i"": 3
-				}"
+				BuildBody = (PageBuilder builder) =>
+				{
+					return builder.AddTemplate(
+						new CanvasRenderer.CanvasNode("UI/Payments/AddressBook")
+					);
+				}
 			}
 		);
 

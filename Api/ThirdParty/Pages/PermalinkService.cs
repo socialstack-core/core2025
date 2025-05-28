@@ -128,7 +128,7 @@ namespace Api.Pages
 			Events.Router.CollectRoutes.AddEventListener(async (Context context, RouterBuilder builder) => {
 
 				// Get the 404 page:
-				var notFoundPage = await pages.Where("Key=?").Bind("404").First(context);
+				var notFoundPage = await pages.Where("Key=?", DataOptions.IgnorePermissions).Bind("404").First(context);
 
 				if (notFoundPage != null)
 				{

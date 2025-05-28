@@ -58,14 +58,16 @@ namespace Api.Payments
                 return new ValueTask<JsonField<Product, uint>>(field);
             });
 
-			Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode canvas, Type contentType, AdminPageType pageType) =>
+			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 			{
-				if (contentType == typeof(Product) && pageType == AdminPageType.List)
+				if (builder.ContentType == typeof(Product) && builder.PageType == CommonPageType.AdminList)
 				{
-					canvas.Module = "Admin/Payments/ProductCategoryTree";
+					builder.GetContentRoot()
+						.Empty()
+						.AppendChild(new CanvasNode("Admin/Payments/ProductCategoryTree"));
 				}
 
-				return new ValueTask<Page>(page);
+				return new ValueTask<PageBuilder>(builder);
 			});
 
 			pages.Install(
@@ -73,20 +75,17 @@ namespace Api.Payments
 				// Note that this does not define a URL, because we want nice readable slug based URLs.
 				// Because slugs can change, the URL is therefore not necessarily constant and thus
 				// must be handled at the permalink level, which the event handler further down does.
-				new Page()
+				new PageBuilder()
 				{
 					Key = "primary:product",
 					PrimaryContentIncludes = "productCategories",
 					Title = "${product.name}",
-					BodyJson = @"{
-						""t"": ""UI/Product/View"",
-						""l"": {
-							""product"": {
-								""primary"": true
-							}
-						},
-						""i"": 1
-					}"
+					BuildBody = (PageBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("UI/Product/View").WithPrimaryLink("product")
+						);
+					}
 				}
 			);
 

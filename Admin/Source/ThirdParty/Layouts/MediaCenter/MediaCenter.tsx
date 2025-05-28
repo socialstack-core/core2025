@@ -11,7 +11,6 @@ import Uploader from 'UI/Uploader';
 import ConfirmModal from 'UI/Modal/ConfirmModal';
 import Modal from 'UI/Modal';
 import * as fileRef from 'UI/FileRef';
-import Default from 'Admin/Templates/BaseAdminTemplate';
 import MultiSelect from 'Admin/MultiSelect';
 import uploadApi, { Upload } from 'Api/Upload';
 import { useState, useEffect } from 'react';
@@ -597,7 +596,7 @@ const MediaCenter = (props) => {
     
     var selectedCount = getSelectedCount();
     
-    return <Default>
+    return <>
 		<SubHeader title={`Uploads`} breadcrumbs={[
 			{
 				title: `Uploads`
@@ -624,7 +623,7 @@ const MediaCenter = (props) => {
 				</button>
 			</footer>
 		</div>
-    </Default>;
+    </>;
 }
 
 export default MediaCenter;

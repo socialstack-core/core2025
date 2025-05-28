@@ -27,17 +27,17 @@ namespace Api.NavMenus
 				"Nav Menus", "fa:fa-map-signs", new string[] { "id", "name", "key" }
 			);
 
-			Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode node, Type type, AdminPageType pageType) => {
+			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) => {
 
-				if (page == null)
+				if (builder == null)
 				{
-					return new ValueTask<Page>(page);
+					return new ValueTask<PageBuilder>(builder);
 				}
 
-				if (pageType == AdminPageType.Edit)
+				if (builder.ContentType == typeof(NavMenu) && builder.PageType == CommonPageType.AdminEdit)
 				{
 					// This is likely obsoleted: favour more customised pages instead.
-					node.AppendChild(
+					builder.GetContentRoot().AppendChild(
 						new CanvasNode("Admin/AutoList")
 						.With("contentType", "NavMenuItem")
 						.With("filterField", "NavMenuId")
@@ -48,7 +48,7 @@ namespace Api.NavMenus
 					);
 				}
 
-				return new ValueTask<Page>(page);
+				return new ValueTask<PageBuilder>(builder);
 			});
 		}
 	}

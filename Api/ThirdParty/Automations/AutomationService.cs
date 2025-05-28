@@ -19,20 +19,18 @@ namespace Api.Automations
 		public AutomationService(PageService pages, AdminNavMenuItemService adminNav)
 		{
 
-			// Install custom admin page which lists automations. This install mechanism allows it to be modified if needed.
-			Task.Run(async () => {
-
-				var automationsPageCanvas = new CanvasNode("Admin/Layouts/Automations");
-
-				await pages.InstallAdminPage(
-					"automations",
-					"Automations",
-					automationsPageCanvas
-				);
-
-				// Add nav menu item too.
-				await adminNav.InstallAdminEntry("/en-admin/automations", "fa:fa-clock", "Automations");
-
+			// Install custom admin page which lists automations.
+			// This install mechanism allows it to be modified if needed.
+			pages.Install(new PageBuilder()
+			{
+				Title = "Automations",
+				AdminRelativeUrl = "automations",
+				AdminNavMenuIcon = "fa:fa-clock",
+				BuildBody = (PageBuilder builder) => {
+					return builder.AddTemplate(
+						new CanvasNode("Admin/Layouts/Automations")
+					);
+				}
 			});
 		}
 

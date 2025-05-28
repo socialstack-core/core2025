@@ -21,7 +21,7 @@ namespace Api.Translate
         /// <summary>
         /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
         /// </summary>
-        public TranslationService() : base(Events.Translation)
+        public TranslationService(PageService pages) : base(Events.Translation)
         {
             // Always cache by default:
             Cache();
@@ -32,26 +32,20 @@ namespace Api.Translate
             // Example admin page install:
             InstallAdminPages(null, null, new string[] { "id", "module", "original", "translation" });
 
-            Events.Service.AfterStart.AddEventListener(async (Context context, object sender) => {
-
-                // This route is suggested rather than dependency injection
-                // Because some projects (particularly fully headless and micro instances) don't have a page service installed.
-                var pageService = Services.Get<PageService>();
-
-                await pageService.InstallAdminPage(
-					"translation/upload",
-					"Translation Upload",
-					new CanvasNode("Admin/Layouts/Default").AppendChild(
+            // Additional admin page for uploading translations:
+            pages.Install(new PageBuilder()
+            {
+                AdminRelativeUrl = "translation/upload",
+                Title = "Translation Upload",
+                BuildBody = (PageBuilder builder) => {
+                    return builder.AddTemplate(
 						new CanvasNode("Admin/Tile")
-                            .AppendChild(
-                                new CanvasNode("Admin/TranslationUpload")
-                            )
-					)
-                );
-
-                return sender;
-            });
-
+						.AppendChild(
+							new CanvasNode("Admin/TranslationUpload")
+						)
+					);
+                }
+			});
         }
 
         /// <summary>

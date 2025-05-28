@@ -1,7 +1,6 @@
 import TreeView, { buildBreadcrumbs } from 'Admin/TreeView';
 import SubHeader from 'Admin/SubHeader';
 import { useRouter } from 'UI/Router';
-import Default from 'Admin/Templates/BaseAdminTemplate';
 import { useState, useEffect } from 'react';
 import pageApi, { Page, RouterTreeNodeDetail } from 'Api/Page';
 
@@ -28,7 +27,7 @@ export default function Sitemap(props) {
 	var addUrl = window.location.pathname.replace(/\/+$/g, '') + '/add';
 
 	return (
-		<Default>
+		<>
 			<SubHeader title={`Edit Site Pages`} breadcrumbs={breadcrumbs} />
 			<div className="sitemap__wrapper">
 				<div className="sitemap__internal">
@@ -95,6 +94,6 @@ export default function Sitemap(props) {
 					</footer>
 				</>}
 			</div>
-		</Default>
+		</>
 	);
 }

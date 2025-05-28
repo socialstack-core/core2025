@@ -1,5 +1,4 @@
-﻿import Default from "Admin/Templates/BaseAdminTemplate";
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import Loop from "UI/Loop";
 import ProductAttributeApi, { ProductAttribute } from "Api/ProductAttribute";
 import ProductAttributeValueApi from "Api/ProductAttributeValue";
@@ -135,16 +134,14 @@ const AttributeValueEditor: React.FC = () => {
 
     if (!attribute) {
         return (
-            <Default>
-                <p>Loading attribute...</p>
-            </Default>
+            <p>Loading attribute...</p>
         );
     }
 
     const isFile = [4, 5, 6].includes(attribute.productAttributeType!);
 
     return (
-        <Default>
+        <>
             <SubHeader
                 title={`Manage values for '${attribute.name}'`}
                 breadcrumbs={[
@@ -247,7 +244,7 @@ const AttributeValueEditor: React.FC = () => {
                     </tbody>
                 </table>
             </Container>
-        </Default>
+        </>
     );
 };
 

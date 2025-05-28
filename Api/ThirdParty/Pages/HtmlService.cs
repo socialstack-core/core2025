@@ -298,7 +298,7 @@ namespace Api.Pages
 			writer.WriteASCII(GetAvailableDomains());
 			writer.WriteASCII("\"page\":{\"bodyJson\":");
 
-			if (isAdmin || terminal.Generator == null)
+			if (terminal.Generator == null)
 			{
 				writer.WriteS(page.BodyJson);
 			}

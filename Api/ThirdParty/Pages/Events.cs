@@ -38,9 +38,9 @@ namespace Api.Eventing
 		public EventHandler<PageWithTokens> BeforeNavigate;
 
 		/// <summary>
-		/// On admin page install.
+		/// On page install.
 		/// </summary>
-		public EventHandler<Page, CanvasRenderer.CanvasNode, System.Type, AdminPageType> BeforeAdminPageInstall;
+		public EventHandler<PageBuilder> BeforePageInstall;
 		
 	}
 }

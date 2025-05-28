@@ -153,7 +153,7 @@ namespace Api.Startup
 				Log.Info("router", "Web router started");
 
 				return svc;
-			});
+			}, 50);
 
 			// Instance all services:
 			Services.InstanceAll(serviceProvider);

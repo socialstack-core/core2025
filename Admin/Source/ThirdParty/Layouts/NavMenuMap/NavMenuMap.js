@@ -1,5 +1,4 @@
 import Collapsible from 'UI/Collapsible';
-import Default from 'Admin/Templates/BaseAdminTemplate';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'UI/Router';
 import Modal from 'UI/Modal';
@@ -261,7 +260,7 @@ export default function NavMenuMap(props) {
 	var addUrl = window.location.href.replace(/\/+$/g, '') + '/add';
 
 	return (
-		<Default>
+		<>
 			<SubHeader title={`Edit Navigation Menus`} breadcrumbs={[{title: `Navigation menus`}]} onQuery={(where, query) => {
 				setSearchText((!query || query.trim().length == 0) ? false : query.toLowerCase());
 			}}/>
@@ -308,6 +307,6 @@ export default function NavMenuMap(props) {
 					</footer>
 				</>}
 			</div>
-		</Default>
+		</>
 	);
 }

@@ -12,6 +12,7 @@ using System.Text;
 using System;
 using static Api.Pages.PageController;
 using Api.Startup.Routing;
+using Api.CanvasRenderer;
 
 namespace Api.Payments
 {
@@ -57,19 +58,18 @@ namespace Api.Payments
 				// Note that this does not define a URL, because we want nice readable slug based URLs.
 				// Because slugs can change, the URL is therefore not necessarily constant and thus
 				// must be handled at the permalink level, which the event handler further down does.
-				new Page()
+				new PageBuilder()
 				{
 					Key = "primary:productcategory",
 					Title = "${productcategory.name}",
-					BodyJson = @"{
-						""t"": ""UI/ProductCategory/View"",
-						""l"": {
-							""productCategory"": {
-								""primary"": true
-							}
-						},
-						""i"": 1
-					}"
+					BuildBody = (PageBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							// A prop called 'productCategory' will be the category referenced by the URL.
+							// If it does not exist, the page 404s, so you can expect it to be not-null always.
+							new CanvasNode("UI/ProductCategory/View").WithPrimaryLink("productCategory")
+						);
+					}
 				}
 			);
 

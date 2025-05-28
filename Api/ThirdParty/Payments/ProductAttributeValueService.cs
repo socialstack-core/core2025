@@ -21,19 +21,22 @@ namespace Api.Payments
 		{
 
 			pages.Install(
-				new Page()
+				new PageBuilder()
 				{
 					Url = "/en-admin/productattribute/${productattribute.id}/values",
 					Key = "admin_editor:productattributevalue",
 					Title = "Edit product attribute values",
 					PrimaryContentType = "ProductAttribute",
 					PrimaryContentIncludes = "",
-					BodyJson = @"{
-						""c"": {
-							""t"": ""Admin/Payments/ProductAttribute/ValueEditor"",
-							""l"": {""attribute"": {""primary"": true}}
-						}
-					}"
+					BuildBody = (PageBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("Admin/Payments/ProductAttribute/ValueEditor")
+								// The ProductAttribute referenced by the id in the URL will be passed as a prop called 'attribute'.
+								// If it doesn't exist, the page itself 404s.
+								.WithPrimaryLink("attribute")
+						);
+					}
 				}
 			);
 

@@ -1,7 +1,6 @@
 import TreeView, { buildBreadcrumbs } from 'Admin/TreeView';
 import SubHeader from 'Admin/SubHeader';
 import { useRouter } from 'UI/Router';
-import Default from 'Admin/Templates/BaseAdminTemplate';
 import { useState, useEffect } from 'react';
 import productAttributeApi, { ProductAttribute } from 'Api/ProductAttribute';
 
@@ -20,7 +19,7 @@ export default function ProductAttributeTree(props) {
 	);
 	
 	return (
-		<Default>
+		<>
 			<SubHeader title={`Edit Product Attributes`} breadcrumbs={breadcrumbs} />
 			<div className="sitemap__wrapper">
 				<div className="sitemap__internal">
@@ -45,6 +44,6 @@ export default function ProductAttributeTree(props) {
 					</footer>
 				</>}
 			</div>
-		</Default>
+		</>
 	);
 }

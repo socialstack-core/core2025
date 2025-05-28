@@ -1,4 +1,3 @@
-import Default from "Admin/Templates/BaseAdminTemplate";
 import TemplateForm from "./Components/Form";
 import { useEffect, useState } from "react";
 import TemplateApi, { Template } from "Api/Template";
@@ -73,11 +72,7 @@ const SinglePage: React.FC<{}> = (props): React.ReactElement => {
  * <AdminPage />
  */
 const AdminPage = () => {
-    return (
-        <Default>
-            <SinglePage />
-        </Default>
-    );
+    return <SinglePage />
 }
 
 export default AdminPage;

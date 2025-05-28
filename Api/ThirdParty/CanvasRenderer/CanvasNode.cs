@@ -86,6 +86,22 @@ namespace Api.CanvasRenderer
 		public string StringContent;
 
 		/// <summary>
+		/// Clears everything from this node.
+		/// </summary>
+		public CanvasNode Empty()
+		{
+			Content = null;
+			Pointers = null;
+			Module = null;
+			StringContent = null;
+			Roots = null;
+			Links = null;
+			Data = null;
+			Graph = null;
+			return this;
+		}
+
+		/// <summary>
 		/// Get or create a datamap entry for a field in a graph node.
 		/// </summary>
 		/// <param name="node"></param>
@@ -173,7 +189,7 @@ namespace Api.CanvasRenderer
 						result.Data = new Dictionary<string, object>();
 					}
 
-					string val;
+					object val;
 
 					if (kvp.Value.Type == JTokenType.Null)
 					{
@@ -186,6 +202,19 @@ namespace Api.CanvasRenderer
 					else if (kvp.Value.Type == JTokenType.String)
 					{
 						val = kvp.Value.Value<string>();
+					}
+					else if (kvp.Value.Type == JTokenType.Array)
+					{
+						var arr = kvp.Value as JArray;
+
+						var strs = new List<string>();
+
+						foreach (var k in arr)
+						{
+							strs.Add(k == null ? "" : k.Value<string>());
+						}
+
+						val = strs.ToArray();
 					}
 					else
 					{

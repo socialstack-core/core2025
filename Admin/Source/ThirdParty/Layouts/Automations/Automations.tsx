@@ -3,7 +3,6 @@ import Table from 'UI/Table';
 import { Filter } from 'UI/Loop';
 import Time from 'UI/Time';
 import SubHeader from 'Admin/SubHeader';
-import Default from 'Admin/Templates/BaseAdminTemplate';
 import automationsApi, { Automation } from 'Api/AutomationController';
 import { useState } from 'react';
 import { ApiIncludes } from 'Api/Includes';
@@ -101,7 +100,7 @@ const Automations: React.FC<React.PropsWithChildren<{}>> = (props) => {
 		</table>;
 	}
 
-	return <Default>
+	return <>
 		<SubHeader breadcrumbs={[
 			{
 				title: `Automations`
@@ -130,8 +129,7 @@ const Automations: React.FC<React.PropsWithChildren<{}>> = (props) => {
 			</footer>
 			 */}
 		</div>
-	</Default>;
-
+	</>;
 }
 
 export default Automations;

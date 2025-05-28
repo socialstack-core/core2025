@@ -98,7 +98,7 @@ const Developer: React.FC<{}> = () => {
 						</a>
 					</li>
 					<li>
-						<a href='/en-admin/stress-test'>
+						<a href='/en-admin/stress'>
 							Stress tester
 						</a>
 					</li>

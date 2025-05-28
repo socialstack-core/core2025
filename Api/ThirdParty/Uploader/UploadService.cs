@@ -17,6 +17,8 @@ using System.Text.RegularExpressions;
 using Api.Automations;
 using Api.Translate;
 using ImageMagick.Formats;
+using Api.CanvasRenderer;
+using Api.Pages;
 
 namespace Api.Uploader
 {
@@ -375,7 +377,21 @@ namespace Api.Uploader
 				return new ValueTask<Stream>(result);
             }, 15);
 
-            InstallAdminPages("Media", "fa:fa-film", new string[] { "id", "name" });
+			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
+			{
+				if (builder.PageType == CommonPageType.AdminList && builder.ContentType == typeof(Upload))
+				{
+                    // Installing admin page for the list of uploads.
+                    builder.GetContentRoot()
+                        .Empty()
+                        .AppendChild(new CanvasNode("Admin/Layouts/MediaCenter"));
+				}
+
+				return new ValueTask<PageBuilder>(builder);
+			}, 5);
+
+
+			InstallAdminPages("Media", "fa:fa-film", new string[] { "id", "name" });
         }
 
         /// <summary>

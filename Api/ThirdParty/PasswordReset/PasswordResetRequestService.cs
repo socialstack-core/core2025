@@ -35,9 +35,9 @@ namespace Api.PasswordResetRequests
 		public PasswordResetRequestService(EmailTemplateService emails, UserService users) : base(Events.PasswordResetRequest)
         {
 			
-			Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Pages.Page page, CanvasRenderer.CanvasNode canvas, Type contentType, AdminPageType pageType) =>
+			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 			{
-				if (contentType == typeof(User) && pageType == AdminPageType.Edit)
+				if (builder.ContentType == typeof(User) && builder.PageType == CommonPageType.AdminEdit)
 				{
 					// Installing user admin page for a particular user.
 					// Add the reset box into the edit user admin page (as a child of the autoform):
@@ -47,12 +47,12 @@ namespace Api.PasswordResetRequests
 						type = "urlToken"
 					}));
 					
-					canvas.AppendChild(
+					builder.GetContentRoot().AppendChild(
 						tile
 					);
 				}
 
-				return new ValueTask<Pages.Page>(page);
+				return new ValueTask<PageBuilder>(builder);
 			});
 
 			Events.PasswordResetRequest.BeforeCreate.AddEventListener(async (Context context, PasswordResetRequest reset) => {

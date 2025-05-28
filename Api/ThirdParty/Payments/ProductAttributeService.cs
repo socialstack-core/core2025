@@ -38,14 +38,16 @@ namespace Api.Payments
 			// Example admin page install:
 			InstallAdminPages("Product Attributes", "fa:fa-rocket", new string[] { "id", "name" });
 
-			Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode canvas, Type contentType, AdminPageType pageType) =>
+			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 			{
-				if (contentType == typeof(ProductAttribute) && pageType == AdminPageType.List)
+				if (builder.ContentType == typeof(ProductAttribute) && builder.PageType == CommonPageType.AdminList)
 				{
-					canvas.Module = "Admin/Payments/ProductAttributeTree";
+					builder.GetContentRoot()
+						.Empty()
+						.AppendChild(new CanvasNode("Admin/Payments/ProductAttributeTree"));
 				}
 
-				return new ValueTask<Page>(page);
+				return new ValueTask<PageBuilder>(builder);
 			});
 
 			// Install some default content.

@@ -2146,7 +2146,7 @@ public partial class AutoService
 			if (installPages != null)
 			{
 				// InstallAdminPages(string typeName, string[] fields)
-				await (ValueTask)installPages.Invoke(pageService, [
+				installPages.Invoke(pageService, [
 					ServicedType,
 					fields,
 					childAdminPage

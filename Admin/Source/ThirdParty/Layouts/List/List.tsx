@@ -1,6 +1,4 @@
-import Tile from 'Admin/Tile';
 import AutoList, { AutoListProps } from 'Admin/AutoList';
-import Default from 'Admin/Templates/BaseAdminTemplate';
 
 export interface ListProps extends AutoListProps {
     noCreate?: boolean;
@@ -13,7 +11,7 @@ const List: React.FC<React.PropsWithChildren<ListProps>> = (props): React.ReactN
     let textPlural = plural;
 
     if (!props.fields || !Array.isArray(props.fields)) {
-        return null;
+        return 'No fields to list';
     }
 
     const acceptedFields: string[] = ['title', 'name', 'email', 'username', 'description'];
@@ -27,18 +25,15 @@ const List: React.FC<React.PropsWithChildren<ListProps>> = (props): React.ReactN
     }
 
     return (
-        <Default>
-            <AutoList 
-                contentType={contentType} 
-                singular={singular}
-                plural={plural}
-                {...listProps}
-                title={`Edit or create ${textPlural}`}
-                create={!props.noCreate}
-                searchFields={props.searchFields || defSearchFields} 
-            />
-            {children}
-        </Default>	
+        <AutoList 
+            contentType={contentType} 
+            singular={singular}
+            plural={plural}
+            {...listProps}
+            title={`Edit or create ${textPlural}`}
+            create={!props.noCreate}
+            searchFields={props.searchFields || defSearchFields} 
+        />
     )
 
 }

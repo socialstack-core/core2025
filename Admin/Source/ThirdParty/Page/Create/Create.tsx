@@ -1,5 +1,4 @@
 import { getTemplates, TemplateModule } from "Admin/Functions/GetPropTypes";
-import Default from "Admin/Templates/BaseAdminTemplate"
 import PageApi, { Page } from "Api/Page";
 import TemplateApi, { Template } from "Api/Template";
 import { useEffect, useState } from "react";
@@ -53,7 +52,7 @@ const CreatePage: React.FC = (): React.ReactElement => {
     }, [chosenLayout])
 
     return (
-        <Default>
+        <>
             <Container>
                 <Row className='page-create'>
                     <Column size={"6"}>
@@ -136,7 +135,7 @@ const CreatePage: React.FC = (): React.ReactElement => {
                     </Column>
                 </Row>
             </Container>
-        </Default>
+        </>
     )
 }
 
