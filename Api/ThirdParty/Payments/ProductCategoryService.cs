@@ -274,7 +274,7 @@ namespace Api.Payments
 				{
 					foreach (var root in roots)
 					{
-						rootSet.Add(ConvertNode(root));
+						rootSet.Add(ConvertNode(root, root.Category.Slug));
 					}
 				}
 
@@ -318,7 +318,7 @@ namespace Api.Payments
 			{
 				foreach (var child in kids)
 				{
-					childSet.Add(ConvertNode(child));
+					childSet.Add(ConvertNode(child, path + "/" + child.Category.Slug));
 				}
 			}
 
@@ -334,7 +334,7 @@ namespace Api.Payments
 
 			return new TreeNodeDetail()
 			{
-				Self = ConvertNode(node),
+				Self = ConvertNode(node, path),
 				Children = childSet
 			};
 		}
@@ -343,14 +343,14 @@ namespace Api.Payments
 		/// Builds an admin tree view compatible struct of metadata for the given category node.
 		/// </summary>
 		/// <returns></returns>
-		private RouterNodeMetadata ConvertNode(ProductCategoryNode node)
+		private RouterNodeMetadata ConvertNode(ProductCategoryNode node, string fullRoute)
 		{
 			return new RouterNodeMetadata() {
 				Type = "ProductCategory",
 				EditUrl = "/en-admin/productcategory/" + node.Category.Id,
 				ContentId = node.Category.Id,
 				Name = node.Category.Name,
-				FullRoute = node.Category.Slug,
+				FullRoute = fullRoute,
 				ChildKey = node.Category.Slug,
 				HasChildren = node.Children != null && node.Children.Count > 0
 			};
