@@ -199,5 +199,5 @@ const ErrorCatcher: React.FC<React.PropsWithChildren<ErrorCatcherProps>> = (({ n
 		</Alert>;
 	}
 
-	return <div>{children}</div>;
+	return children;
 });
