@@ -17,26 +17,27 @@ namespace Api.Payments
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public ProductAttributeValueService() : base(Events.ProductAttributeValue)
+		public ProductAttributeValueService(PageService pages) : base(Events.ProductAttributeValue)
 		{
-			
-			Events.Page.BeforeAdminPageInstall.AddEventListener((Context context, Page page, CanvasNode canvasNode, Type type, AdminPageType pageType) => {
-				
-				if (type == typeof(ProductAttributeValue) && pageType == AdminPageType.List)
+
+			pages.Install(
+				new Page()
 				{
-					// // clear out any children.
-					// canvasNode.Content = [];
-					// canvasNode.Module = "Admin/Template/SinglePage";
-					canvasNode.Module = "Admin/Payments/ProductAttribute/ValueEditor";
-					page.Url = "/en-admin/productattribute/${productattribute.id}/values";
+					Url = "/en-admin/productattribute/${productattribute.id}/values",
+					Key = "admin_editor:productattributevalue",
+					Title = "Edit product attribute values",
+					PrimaryContentType = "ProductAttribute",
+					PrimaryContentIncludes = "",
+					BodyJson = @"{
+						""c"": {
+							""t"": ""Admin/Payments/ProductAttribute/ValueEditor"",
+							""l"": {""attribute"": {""primary"": true}}
+						}
+					}"
 				}
+			);
 
-				return new ValueTask<Page>(page);
-			}, 2);
-			
 			Cache();
-
-			InstallAdminPages(["id", "value"]);
 		}
 
 	}

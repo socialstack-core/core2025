@@ -8,6 +8,7 @@ import Button from "UI/Button";
 import Image from "UI/Image";
 import Video from "UI/Video";
 import Container from "UI/Container";
+import SubHeader from 'Admin/SubHeader';
 
 type FileChangeEvent = {
     target: {
@@ -15,24 +16,14 @@ type FileChangeEvent = {
     };
 };
 
-const AttributeValueEditor: React.FC = () => {
-    const [attribute, setAttribute] = useState<ProductAttribute>();
+type AttributeValueEditorProps = {
+    attribute: ProductAttribute
+};
+
+const AttributeValueEditor: React.FC<AttributeValueEditorProps> = (props) => {
+    const { attribute } = props;
     const [updateNo, setUpdateNo] = useState<number>(0);
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!attribute) {
-            const segments = location.pathname.split("/").filter(Boolean);
-            const id = (() => {
-                const i = segments.indexOf("productattribute");
-                return i !== -1 && /^\d+$/.test(segments[i + 1]) ? parseInt(segments[i + 1]) : null;
-            })();
-
-            if (id) {
-                ProductAttributeApi.load(id as uint).then(setAttribute);
-            }
-        }
-    }, [attribute]);
 
     const isValidInput = (value: string): boolean => {
         if (value.trim().length === 0) {
@@ -99,25 +90,23 @@ const AttributeValueEditor: React.FC = () => {
         }
     };
 
-    if (!attribute) {
-        return <Default><p>Loading attribute...</p></Default>;
-    }
-
     const isFile = [4, 5, 6].includes(attribute.productAttributeType!);
 
     return (
         <Default>
-            <header className="admin-page__subheader">
-                <div className="admin-page__subheader-info">
-                    <h1 className="admin-page__title">{`Manage values for '${attribute.name}'`}</h1>
-                    <ul className="admin-page__breadcrumbs">
-                        <li><a href="/en-admin">{`Admin home`}</a></li>
-                        <li><a href="/en-admin/productattribute">{`Product Attributes`}</a></li>
-                        <li><a href={"/en-admin/productattribute/" + attribute.id}>{attribute.name}</a></li>                        
-                        <li>{`Values`}</li>
-                    </ul>
-                </div>
-            </header>
+            <SubHeader title={`Manage values for '${attribute.name}'`} breadcrumbs={[
+                {
+                    url: "/en-admin/productattribute/",
+                    title: `Product Attributes`
+                },
+                {
+                    url: "/en-admin/productattribute/" + attribute.id,
+                    title: attribute.name!
+                },
+                {
+                    title: `Values`
+                }
+            ]} />
             <Container>
                 <table className="table">
                     <thead>
