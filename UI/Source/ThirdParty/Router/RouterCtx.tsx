@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react';
 
 export interface PageState extends PageStateResult {
 	url: string;
+	query: URLSearchParams;
 }
 
 export interface RouterContext {

@@ -56,7 +56,7 @@ const Router: React.FC<{}> = () => {
 
 		triggerEvent(initState.page);
 
-		return { url: initialUrl, ...initState };
+		return { url: initialUrl, ...initState, query: new URLSearchParams(location.search) };
 	});
 
 	var [scrollTarget, setScrollTarget] = useState<ScrollTarget | null>(null);
@@ -134,7 +134,7 @@ const Router: React.FC<{}> = () => {
 				res.po = expandIncludes(res.po);
 			}
 
-			var pgState = {url, ...res};
+			var pgState = { url, ...res, query: new URLSearchParams(location.search) };
 			setPage(pgState);
 			triggerEvent(res);
 		});
