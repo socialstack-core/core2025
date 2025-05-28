@@ -11,7 +11,12 @@ interface HtmlProps extends React.HTMLAttributes<HTMLSpanElement> {
 /**
  * This component displays html. Only ever use this with trusted text.
 */
-const Html: React.FC<HtmlProps> = ({content, ...props}) => {
+const Html: React.FC<HtmlProps> = ({ content, ...props }) => {
+
+	if (!content || !content.length) {
+		content = props.children;
+	}
+
     return <span dangerouslySetInnerHTML={{ __html: content }} {...props} />;
 }
 
