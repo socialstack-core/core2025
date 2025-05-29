@@ -79,8 +79,8 @@ namespace Api.Payments
 				await GetTree(ctx);
 
 				// Permalink sync (dev only: this is only necessary if you made a big edit outside of SS)
-				// await _productService.SyncPermalinks(ctx);
-				// await SyncPermalinks(ctx);
+				 //await _productService.SyncPermalinks(ctx);
+				 //await SyncPermalinks(ctx);
 
 				return new ValueTask<object>(sender);
 			});
@@ -559,7 +559,9 @@ namespace Api.Payments
 				}
 			}
 
-			return new CategoryTree() {
+            Log.Info("productcategory", "Finished building product category structure");
+
+            return new CategoryTree() {
 				IdLookup = lookup,
 				SlugLookup = lookupBySlug,
 				Roots = roots
