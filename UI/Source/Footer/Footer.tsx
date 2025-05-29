@@ -35,7 +35,12 @@ interface FooterProps {
 	/** 
 	 * copyright name (prefixed with (C) symbol and year(s))
 	 */
-	copyright?: string
+	copyright?: string,
+
+	/**
+	 * set to true to force demo information
+	 */
+	demo?: boolean
 }
 
 /**
@@ -58,19 +63,33 @@ interface FooterLinkProps {
  * The Footer React component.
  * @param props React props.
  */
-const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, copyrightFrom, copyrightTo, copyright, ...props }) => {
+const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, copyrightFrom, copyrightTo, copyright, demo, ...props }) => {
 
-	if (!contactNumber) {
-		contactNumber = "0808 189 2044";
+	demo = true;
+
+	if (demo) {
+
+		if (!contactNumber?.length) {
+			contactNumber = "0808 189 2044";
+		}
+
+		if (!address?.length) {
+			address = "48 Priory Road<br />Kenilworth<br />Warwickshire<br />CV8 1LQ";
+		}
+
+		if (!copyright?.length) {
+			copyright = "4 Roads (UK) Limited";
+		}
+
 	}
 
 	const contactHref = getContactLink(contactNumber, contactLink);
-	const [column2Links, setColumn2Links] = useState<FooterLinkProps[]>([]);
-	const [column3Links, setColumn3Links] = useState<FooterLinkProps[]>([]);
+	const [primaryLinks, setPrimaryLinks] = useState<FooterLinkProps[]>([]);
+	const [secondaryLinks, setSecondaryLinks] = useState<FooterLinkProps[]>([]);
 
 	useEffect(() => {
 		// TODO: retrieve footer links from DB
-		setColumn2Links([
+		setPrimaryLinks([
 			{
 				label: `About`,
 				url: `/about`
@@ -93,7 +112,7 @@ const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, co
 			},
 		]);
 
-		setColumn3Links([
+		setSecondaryLinks([
 			{
 				label: `Privacy Policy`,
 				url: `/privacy-policy`
@@ -158,33 +177,32 @@ const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, co
 	return <div className="site-footer">
 		<div class="site-footer__internal">
 
-			<div class="site-footer__contact">
-				{contactHref && <>
-					<a href={contactHref} class="site-footer__contact-link">
-						{contactHref.startsWith("tel:") && <>
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 44" fill="none">
-								<path d="M41.24 27.9l-5.92-2.94a5.45 5.45 0 00-7.26 2.27c-1.87-.73-5-2.92-6.82-4.68-1.76-1.83-3.92-4.89-4.68-6.76a5.46 5.46 0 002.39-7.31l-2.9-5.81C14.38-.2 9.8-.3 7.84.28c-2.8.83-5.23 2.8-6.66 5.41-1.9 3.5-1.14 7.74-.13 11.95a37.69 37.69 0 009.98 15.27 37.94 37.94 0 0015.49 10.1c2.22.53 4.51.99 6.71.99 1.8 0 3.52-.31 5.1-1.17a11.26 11.26 0 005.4-6.66c.58-1.98.48-6.56-2.49-8.26zm-1.04 7.25a7.5 7.5 0 01-3.65 4.45c-2.37 1.28-5.85.62-9.04-.13-5.08-1.7-9.74-4.76-13.92-9.16-4.32-4.1-7.39-8.76-9.05-13.68-.8-3.35-1.47-6.83-.19-9.2A7.62 7.62 0 018.81 3.8c.31-.1.73-.13 1.19-.13 1.14 0 2.51.27 2.77.73l2.84 5.7c.22.46.26.95.1 1.43-.17.48-.52.84-.98 1.05L13.7 13c-.7.29-1.14.95-1.14 1.7.02 3.5 4.73 9.1 6.03 10.43 1.3 1.26 6.88 5.96 10.4 6 .7 0 1.34-.4 1.65-1.03 0 0 .24-.5.57-1.12a1.82 1.82 0 012.42-.79l5.83 2.9c.75.44 1 2.95.7 4.01l.05.04z" fill="currentColor" />
-							</svg>
-						</>}
-						{contactNumber?.length > 0 ? contactNumber : contactLink}
-					</a>
-				</>}
+			{contactHref && <>
+				<a href={contactHref} class="site-footer__contact-link">
+					{contactHref.startsWith("tel:") && <>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 44" fill="none">
+							<path d="M41.24 27.9l-5.92-2.94a5.45 5.45 0 00-7.26 2.27c-1.87-.73-5-2.92-6.82-4.68-1.76-1.83-3.92-4.89-4.68-6.76a5.46 5.46 0 002.39-7.31l-2.9-5.81C14.38-.2 9.8-.3 7.84.28c-2.8.83-5.23 2.8-6.66 5.41-1.9 3.5-1.14 7.74-.13 11.95a37.69 37.69 0 009.98 15.27 37.94 37.94 0 0015.49 10.1c2.22.53 4.51.99 6.71.99 1.8 0 3.52-.31 5.1-1.17a11.26 11.26 0 005.4-6.66c.58-1.98.48-6.56-2.49-8.26zm-1.04 7.25a7.5 7.5 0 01-3.65 4.45c-2.37 1.28-5.85.62-9.04-.13-5.08-1.7-9.74-4.76-13.92-9.16-4.32-4.1-7.39-8.76-9.05-13.68-.8-3.35-1.47-6.83-.19-9.2A7.62 7.62 0 018.81 3.8c.31-.1.73-.13 1.19-.13 1.14 0 2.51.27 2.77.73l2.84 5.7c.22.46.26.95.1 1.43-.17.48-.52.84-.98 1.05L13.7 13c-.7.29-1.14.95-1.14 1.7.02 3.5 4.73 9.1 6.03 10.43 1.3 1.26 6.88 5.96 10.4 6 .7 0 1.34-.4 1.65-1.03 0 0 .24-.5.57-1.12a1.82 1.82 0 012.42-.79l5.83 2.9c.75.44 1 2.95.7 4.01l.05.04z" fill="currentColor" />
+						</svg>
+					</>}
+					{contactNumber?.length > 0 ? contactNumber : contactLink}
+				</a>
+			</>}
 
-				{address?.length > 0 && <>
-					<Html tag="address">
-						{address}
-					</Html>
-				</>}
+			{address?.length > 0 && <>
+				<Html tag="address" className="site-footer__address">
+					{address}
+				</Html>
+			</>}
 
-				{copyright?.length > 0 && <>
+			{copyright?.length > 0 && <>
+				<p className="site-footer__copyright">
 					&copy; {copyrightYear} {copyright}
-				</>}
+				</p>
+			</>}
 
-			</div>
-
-			{column2Links?.length > 0 && <>
-				<menu class="site-footer__column2">
-					{column2Links.map(link => {
+			{primaryLinks?.length > 0 && <>
+				<menu class="site-footer__primary-links">
+					{primaryLinks.map(link => {
 						return <li>
 							<a href={link.url}>
 								{link.label}
@@ -194,9 +212,9 @@ const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, co
 				</menu>
 			</>}
 
-			{column3Links?.length > 0 && <>
-				<menu class="site-footer__column3">
-					{column3Links.map(link => {
+			{secondaryLinks?.length > 0 && <>
+				<menu class="site-footer__secondary-links">
+					{secondaryLinks.map(link => {
 						return <li>
 							<a href={link.url}>
 								{link.label}
