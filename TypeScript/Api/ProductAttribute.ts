@@ -28,6 +28,7 @@ export type ProductAttribute = VersionedContent<uint> & {
     rangeType?: int;
     multiple?: boolean;
     units?: string;
+    featureRef?: string;
     // HasVirtualField() fields (2 in total)
     attributeGroup?: ProductAttributeGroup;
     creatorUser?: User;

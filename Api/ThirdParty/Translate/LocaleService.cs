@@ -17,6 +17,7 @@ namespace Api.Translate
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
 	[LoadPriority(5)]
+	[AdminNav("fa:fa-globe-europe")]
 	public partial class LocaleService : AutoService<Locale>
     {
 		/// <summary>
@@ -24,7 +25,7 @@ namespace Api.Translate
 		/// </summary>
 		public LocaleService() : base(Events.Locale)
 		{		
-			InstallAdminPages("Locales", "fa:fa-globe-europe", new string[] { "id", "name" });
+			InstallAdminPages(["id", "name"]);
 
 			Cache(new CacheConfig<Locale>() {
 				OnCacheLoaded = OnCacheLoaded

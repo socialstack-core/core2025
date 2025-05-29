@@ -17,6 +17,7 @@ export type Endpoint = {
     urlFields?: string[];
     bodyFields?: string[];
     httpMethod?: string;
+    method?: MethodInfo;
 }
 
 /**

@@ -19,7 +19,7 @@ namespace Api.Payments
 		/// </summary>
 		public CouponService() : base(Events.Coupon)
         {
-			InstallAdminPages("Coupons", "fa:fa-rocket", new string[] { "id", "token" });
+			InstallAdminPages(["id", "token"]);
 			
 			Events.Coupon.BeforeCreate.AddEventListener((Context context, Coupon coupon) => {
 				

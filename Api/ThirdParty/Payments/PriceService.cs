@@ -18,7 +18,7 @@ namespace Api.Payments
 		/// </summary>
 		public PriceService() : base(Events.Price)
         {
-			InstallAdminPages("Prices", "fa:fa-rocket", new string[] { "id", "name", "amount", "currencyCode" });
+			InstallAdminPages(["id", "name", "amount", "currencyCode"]);
 
 			Cache();
 		}

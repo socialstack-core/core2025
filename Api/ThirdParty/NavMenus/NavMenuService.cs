@@ -16,6 +16,7 @@ namespace Api.NavMenus
 	/// Handles navigation menus.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
+	[AdminNav("fa:fa-map-signs")]
 	public partial class NavMenuService : AutoService<NavMenu>
 	{
 		/// <summary>
@@ -23,9 +24,7 @@ namespace Api.NavMenus
 		/// </summary>
 		public NavMenuService() : base(Events.NavMenu)
         {
-			InstallAdminPages(
-				"Nav Menus", "fa:fa-map-signs", new string[] { "id", "name", "key" }
-			);
+			InstallAdminPages(["id", "name", "key"]);
 
 			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) => {
 

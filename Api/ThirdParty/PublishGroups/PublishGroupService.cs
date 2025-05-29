@@ -14,6 +14,7 @@ namespace Api.PublishGroups
 	/// Handles publishGroups.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
+	[AdminNav("fa:fa-book-open")]
 	public partial class PublishGroupService : AutoService<PublishGroup>
     {
 		private PublishGroupContentService _groupContents;
@@ -24,7 +25,7 @@ namespace Api.PublishGroups
 		public PublishGroupService(PublishGroupContentService groupContents) : base(Events.PublishGroup)
         {
 			_groupContents = groupContents;
-			InstallAdminPages("Publish Groups", "fa:fa-book-open", new string[] { "id", "name" });
+			InstallAdminPages([ "id", "name"]);
 
 			Events.Automation("publisher", "0 * 0 ? * * *").AddEventListener(async (Context context, AutomationRunInfo run) => {
 

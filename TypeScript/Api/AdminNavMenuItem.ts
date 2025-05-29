@@ -14,10 +14,11 @@ import { AdminNavMenuItemIncludes } from 'Api/Includes';
 * This type was generated to reflect {AdminNavMenuItem} (Api.NavMenus.AdminNavMenuItem)
 **/
 export type AdminNavMenuItem = Content<uint> & {
+    pageContentType?: Type;
     title?: string;
-    target?: string;
+    pageKey?: string;
+    url?: string;
     iconRef?: string;
-    visibilityRuleJson?: string;
 }
 // ENTITY CONTROLLER
 

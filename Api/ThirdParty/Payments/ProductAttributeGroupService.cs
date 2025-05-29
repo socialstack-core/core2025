@@ -21,7 +21,7 @@ namespace Api.Payments
 			// (Don't inject productAttributeService, it already uses this one)
 
 			// Groups need an edit and basic list page, but not a nav menu entry as their 'home' is via the products link.
-			InstallAdminPages(null, null, new string[] { "id", "name" });
+			InstallAdminPages([ "id", "name" ]);
 
 			Cache();
 		}

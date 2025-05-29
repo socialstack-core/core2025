@@ -2095,7 +2095,7 @@ public partial class AutoService
     /// <param name="fields"></param>
     protected void InstallAdminPages(string[] fields)
 	{
-		InstallAdminPages(null, null, fields, null);
+		InstallAdminPages(fields, null);
 	}
 
 	/// <summary>
@@ -2112,24 +2112,24 @@ public partial class AutoService
 	/// For example, if you'd like each child entry to show its Id and Title fields, specify new string[]{"id", "title"}.
 	/// </param>
 	/// <param name="visibilityJson"></param>
-	protected void InstallAdminPages(string navMenuLabel, string navMenuIconRef, string[] fields, AdminPageOptions childAdminPage = null, string visibilityJson = null)
+	protected void InstallAdminPages(string[] fields, AdminPageOptions childAdminPage = null, string visibilityJson = null)
 	{
 		if (Services.Started)
 		{
-			InstallAdminPagesInternal(navMenuLabel, navMenuIconRef, fields, childAdminPage, visibilityJson);
+			InstallAdminPagesInternal(fields, childAdminPage);
 		}
 		else
 		{
 			// Must happen after services start otherwise the page service isn't necessarily available yet.
 			Events.Service.AfterStart.AddEventListener((Context ctx, object src) =>
 			{
-				InstallAdminPagesInternal(navMenuLabel, navMenuIconRef, fields, childAdminPage, visibilityJson);
+				InstallAdminPagesInternal(fields, childAdminPage);
 				return new ValueTask<object>(src);
 			});
 		}
 	}
 	
-	private void InstallAdminPagesInternal(string navMenuLabel, string navMenuIconRef, string[] fields, AdminPageOptions childAdminPage, string visibilityJson = null)
+	private void InstallAdminPagesInternal(string[] fields, AdminPageOptions childAdminPage)
 	{
 		var pageService = Api.Startup.Services.Get("PageService");
 
@@ -2151,28 +2151,6 @@ public partial class AutoService
 					fields,
 					childAdminPage
 				]);
-			}
-
-			// Nav menu also?
-			if (!string.IsNullOrEmpty(navMenuLabel))
-			{
-				var navMenuItemService = Api.Startup.Services.Get("AdminNavMenuItemService");
-
-				if (navMenuItemService != null)
-				{
-					var installNavMenuEntry = navMenuItemService.GetType().GetMethod("InstallAdminEntry");
-
-					if (installNavMenuEntry != null)
-					{
-						// InstallAdminEntry(string targetUrl, string iconRef, string label)
-						await (ValueTask)installNavMenuEntry.Invoke(navMenuItemService, [
-							"/en-admin/" + ServicedType.Name.ToLower(),
-							navMenuIconRef,
-							navMenuLabel,
-							visibilityJson
-						]);
-					}
-				}
 			}
 		});
 

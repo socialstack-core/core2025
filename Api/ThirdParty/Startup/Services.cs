@@ -415,12 +415,12 @@ namespace Api.Startup
         /// <returns></returns>
         public static AutoService Get(string name)
         {
-            if (name == null || name.Length == 0)
+            if (string.IsNullOrEmpty(name))
             {
                 return null;
             }
 
-            AllByName.TryGetValue(name.ToLower(), out AutoService result);
+            AllByName.TryGetValue(name.ToLower(), out var result);
             return result;
         }
 

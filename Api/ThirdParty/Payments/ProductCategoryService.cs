@@ -51,7 +51,7 @@ namespace Api.Payments
 			_productService = productService;
 
 			// Example admin page install:
-			InstallAdminPages("Product Categories", "fa:fa-rocket", new string[] { "id", "name" });
+			InstallAdminPages([ "id", "name" ]);
 
 			pages.Install(
 				// Install a default primary product category page.

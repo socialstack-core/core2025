@@ -28,7 +28,7 @@ namespace Api.Payments
 			_permalinks = permalinks;
 			_config = GetConfig<ProductConfig>();
 
-			InstallAdminPages("Products", "fa:fa-rocket", new string[] { "id", "name", "minQuantity" });
+			InstallAdminPages(["id", "name", "minQuantity"]);
 
             HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" };
             HashSet<string> nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };

@@ -15,6 +15,7 @@ namespace Api.Permissions
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
 	[LoadPriority(4)]
+	[AdminNav("fa:fa-user-lock")]
 	public class RoleService : AutoService<Role>
     {
 		/// <summary>
@@ -23,7 +24,7 @@ namespace Api.Permissions
 		public RoleService() : base(Events.Role)
 		{
 			// Install the admin pages.
-			InstallAdminPages("Roles", "fa:fa-user-lock", new string[] { "id", "key", "name" });
+			InstallAdminPages(["id", "key", "name"]);
 
 			// Core roles that must be installed always:
 			Install(

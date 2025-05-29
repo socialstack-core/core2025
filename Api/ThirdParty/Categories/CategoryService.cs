@@ -15,6 +15,7 @@ namespace Api.Categories
 	/// Handles categories - usually seen in e.g. knowledge bases or help guides.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
+	[AdminNav("fa:fa-folder")]
 	public partial class CategoryService : AutoService<Category>
     {
 		/// <summary>
@@ -22,7 +23,7 @@ namespace Api.Categories
 		/// </summary>
 		public CategoryService() : base(Events.Category)
 		{
-			InstallAdminPages("Categories", "fa:fa-folder", new string[] { "id", "name" });
+			InstallAdminPages([ "id", "name" ]);
 
 			Cache();
 		}

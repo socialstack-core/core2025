@@ -20,6 +20,7 @@ import { User } from 'Api/User';
 export type ProductAttributeValue = VersionedContent<uint> & {
     productAttributeId?: uint;
     value?: string;
+    featureRef?: string;
     // HasVirtualField() fields (2 in total)
     attribute?: ProductAttribute;
     creatorUser?: User;

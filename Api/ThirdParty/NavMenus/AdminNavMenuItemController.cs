@@ -26,51 +26,7 @@ namespace Api.NavMenus
 		public override async ValueTask<ContentStream<AdminNavMenuItem, uint>?> List(Context context, [FromBody] ListFilter filters)
 		{
 			var service = _service as AdminNavMenuItemService;
-
-			var filt = service.LoadFilter(filters) as Filter<AdminNavMenuItem, uint>;
-			var allItems = await filt.ListAll(context);
-			var userCanAccess = new List<AdminNavMenuItem>();
-
-			var role = context.Role;
-
-			foreach(var item in allItems)
-			{
-				if (item.VisibilityRuleJson is null) {
-					// No specific rule, so allow access
-					userCanAccess.Add(item);
-					continue;
-				}
-
-				// parse the JSON using Newtonsoft, iterate rules
-				var permissionRule = JsonConvert.DeserializeObject<AdminNavPermissions>(item.VisibilityRuleJson);
-				var capabilities = Capabilities.GetAllCurrent();
-				var isGranted = true;
-
-				foreach(var permission in permissionRule.RequiredPermissions) 
-				{
-					isGranted = await role.IsGranted(
-
-						// TODO: Fix this abomination 
-
-						capabilities.First(
-							capability => capability.Name == permission
-						),
-						context,
-						null, 
-						false
-					);
-
-					if (!isGranted) {
-						break;
-					}
-				}
-
-				if (isGranted) {
-					userCanAccess.Add(item);
-				}
-			}
-
-			return new ContentStream<AdminNavMenuItem, uint>(userCanAccess, service);
+			return new ContentStream<AdminNavMenuItem, uint>(await service!.ListUserAccessibleNavMenuItems(context), service);
 		}
     }
 }

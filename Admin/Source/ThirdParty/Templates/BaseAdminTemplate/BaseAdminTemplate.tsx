@@ -247,10 +247,10 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
                         <Loop over={adminNavMenuApi} filter={{ sort: { field: 'Title' } }}>
                             {item =>
                                 <li className="loop-item">
-                                    <a href={item.target} className={
-                                    item.target == '/en-admin/' ?
-                                        (url == item.target ? 'active' : '') :
-                                        (item.target && url.startsWith(item.target) ? 'active' : '')}>
+                                    <a href={item.url} className={
+                                    item.url == '/en-admin/' ?
+                                        (url == item.url ? 'active' : '') :
+                                        (item.url && url.startsWith(item.url) ? 'active' : '')}>
 											{item.iconRef && <IconRef fixedWidth fileRef={item.iconRef} />}
                                     {item.title}
                                     </a>

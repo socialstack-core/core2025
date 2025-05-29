@@ -27,6 +27,7 @@ namespace Api.Emails
 	/// Handles emailTemplates.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
+	[AdminNav("fa:fa-paper-plane")]
 	public partial class EmailTemplateService : AutoService<EmailTemplate>
 	{
 		/// <summary>
@@ -53,7 +54,7 @@ namespace Api.Emails
 			_canvasRendererService = canvasRendererService;
 			_configuration = GetConfig<EmailConfig>();
 			
-			InstallAdminPages("Emails", "fa:fa-paper-plane", new string[] { "id", "name", "key" });
+			InstallAdminPages(["id", "name", "key"]);
 
 			Events.User.BeforeSettable.AddEventListener((Context context, JsonField<User, uint> field) =>
 			{

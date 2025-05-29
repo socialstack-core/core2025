@@ -19,6 +19,7 @@ namespace Api.Templates
 	/// Handles templates.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
+	[AdminNav("fa:fa-file-medical")]
 	public partial class TemplateService : AutoService<Template>
     {
 		/// <summary>
@@ -29,7 +30,7 @@ namespace Api.Templates
 
 			InitEvents();
 
-			InstallAdminPages("Templates", "fa:fa-file-medical", new string[] { "id", "title", "key" });
+			InstallAdminPages(["id", "title", "key"]);
 			Cache();
 
 			// Install the two default templates (referenced by AddTemplate inside PageBuilder):

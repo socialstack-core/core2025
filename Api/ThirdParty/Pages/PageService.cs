@@ -19,6 +19,7 @@ namespace Api.Pages
 	/// </summary>
 	[LoadPriority(9)]
 	[HostType("web")]
+	[AdminNav("fa:fa-paragraph")]
 	public partial class PageService : AutoService<Page>
 	{
 		/// <summary>
@@ -157,7 +158,7 @@ namespace Api.Pages
 			}
 
 			// Install the admin pages.
-			InstallAdminPages("Pages", "fa:fa-paragraph", ["id", "url", "title"], null, "{\"requiredPermissions\": [\"page_list\", \"page_update\"]}");
+			InstallAdminPages(["id", "url", "title"]);
 
 			Events.Page.BeforePageInstall.AddEventListener((context, builder) => {
 

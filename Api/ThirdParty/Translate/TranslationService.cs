@@ -30,7 +30,7 @@ namespace Api.Translate
             // which is important as they are internally cached in a variety of ways.
 
             // Example admin page install:
-            InstallAdminPages(null, null, new string[] { "id", "module", "original", "translation" });
+            InstallAdminPages(["id", "module", "original", "translation"]);
 
             // Additional admin page for uploading translations:
             pages.Install(new PageBuilder()

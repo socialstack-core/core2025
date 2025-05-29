@@ -36,7 +36,7 @@ namespace Api.Payments
 			_attributeValues = attributeValues;
 
 			// Example admin page install:
-			InstallAdminPages("Product Attributes", "fa:fa-rocket", new string[] { "id", "name" });
+			InstallAdminPages(["id", "name"]);
 
 			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 			{
