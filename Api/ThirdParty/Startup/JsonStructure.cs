@@ -101,10 +101,6 @@ namespace Api.Startup
 		public TypeReaderWriter<T> TypeIO;
 
 		/// <summary>
-		/// Fields that can be read by users of the current role.
-		/// </summary>
-		public List<JsonField<T, ID>> ReadableFields = new List<JsonField<T, ID>>();
-		/// <summary>
 		/// All raw fields in this structure.
 		/// </summary>
 		public Dictionary<string, JsonField<T, ID>> Fields;
@@ -470,12 +466,7 @@ namespace Api.Startup
 			}
 
 			field.Readable = readable;
-			var gettableField = await beforeGettable.Dispatch(context, field);
-
-			if (gettableField != null && gettableField.Readable)
-			{
-				ReadableFields.Add(gettableField);
-			}
+			await beforeGettable.Dispatch(context, field);
 
 			field = await beforeSettable.Dispatch(context, field);
 
