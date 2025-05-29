@@ -25,6 +25,13 @@ namespace Api.Payments
 		/// The raw, unitless value.
 		/// </summary>
 		public string Value;
+
+		/// <summary>
+		/// The feature image ref to allow for colour swatches etc 
+		/// </summary>
+		[DatabaseField(Length = 300)]
+		public string FeatureRef;
+
 	}
 
 }

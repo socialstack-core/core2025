@@ -63,6 +63,12 @@ namespace Api.Payments
 		public string Units;
 
 		/// <summary>
+		/// The feature image ref to allow for colour swatches etc 
+		/// </summary>
+		[DatabaseField(Length = 300)]
+		public string FeatureRef;		
+
+		/// <summary>
 		/// Not present most of the time. Temporary group key used to identify the parent when the parents ID is unknown, such as during installation.
 		/// </summary>
 		[JsonIgnore]
