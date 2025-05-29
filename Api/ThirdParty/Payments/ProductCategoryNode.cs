@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace Api.Payments;
@@ -17,11 +18,12 @@ public class ProductCategoryNode
 	/// Local field used for building category structure in memory
 	/// </summary>
 	public List<ProductCategoryNode> Children { get; set; } = new();
-	
-	/// <summary>
-	/// Local fields used for building category structure in memory
-	/// </summary>
-	public ProductCategoryNode Parent { get; set; }
+
+    /// <summary>
+    /// Local fields used for building category structure in memory
+    /// </summary>
+    [JsonIgnore]
+    public ProductCategoryNode Parent { get; set; }
 
 	/// <summary>
 	/// Local field for any associated products for the category

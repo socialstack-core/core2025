@@ -43,10 +43,16 @@ namespace Api.Payments
         [Data("main", "false")]
         public string Description;
 
-		/// <summary>
-		/// The category image ref
-		/// </summary>
-		[DatabaseField(Length = 300)]
+        /// <summary>
+        /// The target audience for the product category (web/internal/dev)
+        /// </summary>
+        [DatabaseField(Length = 200)]
+        public string Target;
+
+        /// <summary>
+        /// The category image ref
+        /// </summary>
+        [DatabaseField(Length = 300)]
         public string FeatureRef;
 
         /// <summary>

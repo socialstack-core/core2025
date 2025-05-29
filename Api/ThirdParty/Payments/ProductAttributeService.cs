@@ -637,7 +637,9 @@ namespace Api.Payments
 				}
 			}
 
-			return new AttributeGroupTree()
+            Log.Info("productcategory", "Finished building attribute group structure");
+
+            return new AttributeGroupTree()
 			{
 				IdLookup = lookup,
 				KeyLookup = lookupBySlug,
