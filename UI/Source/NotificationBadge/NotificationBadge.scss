@@ -1,0 +1,26 @@
+.notification-badge {
+	background: var(--danger);
+    color: var(--danger-fg);
+    width: px_to_rem(24);
+    height: px_to_rem(24);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	font-size: px_to_rem(15);
+	
+	> svg {
+		width: px_to_rem(12);
+        height: px_to_rem(20);
+	}
+
+	&--small {
+		font-size: px_to_rem(11);
+
+        &:not(:has(svg))::after {
+          content: '+';
+        }
+
+	}
+
+}
