@@ -466,7 +466,11 @@ namespace Api.Startup
 			}
 
 			field.Readable = readable;
-			await beforeGettable.Dispatch(context, field);
+			var gettableField = await beforeGettable.Dispatch(context, field);
+			
+			if(gettableField == null){
+				field.Readable = false;
+			}
 
 			field = await beforeSettable.Dispatch(context, field);
 
