@@ -66,7 +66,7 @@ namespace Api.TypeScript
         /// </summary>
         /// <param name="type">The enumerable type.</param>
         /// <returns>The element type if found; otherwise, <c>null</c>.</returns>
-        public Type? GetEnumerableElementType(Type type)
+        public Type GetEnumerableElementType(Type type)
         {
             if (type.IsArray)
             {
@@ -102,7 +102,7 @@ namespace Api.TypeScript
         /// <param name="keyType">Outputs the key type if found.</param>
         /// <param name="valueType">Outputs the value type if found.</param>
         /// <returns><c>true</c> if the type is a dictionary and types were extracted; otherwise, <c>false</c>.</returns>
-        public bool GetDictionaryKeyValueTypes(Type type, out Type? keyType, out Type? valueType)
+        public bool GetDictionaryKeyValueTypes(Type type, out Type keyType, out Type valueType)
         {
             keyType = null;
             valueType = null;
@@ -139,6 +139,11 @@ namespace Api.TypeScript
             return false;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="returnType"></param>
+        /// <returns></returns>
         public bool IsEntityCollection(Type returnType)
         {
             if (!IsEnumerable(returnType))

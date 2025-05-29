@@ -205,7 +205,7 @@ namespace Api.TypeScript.Objects
         }
         
         /// <summary>
-        /// Helper method to extract base type from a collection type (e.g., List<StaticFileInfo> or StaticFileInfo[]).
+        /// Helper method to extract base type from a collection type (e.g., List StaticFileInfo or StaticFileInfo[]).
         /// </summary>
         /// <param name="type">The type to inspect.</param>
         /// <returns>The element type of the collection, or the original type if it is not a collection.</returns>

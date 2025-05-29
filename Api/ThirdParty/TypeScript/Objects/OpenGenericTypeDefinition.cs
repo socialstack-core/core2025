@@ -37,7 +37,7 @@ namespace Api.TypeScript.Objects
                     if(virtualInfo.DynamicTypeField != null){
                         virtualType = typeof(object);
                     } else if(virtualInfo.ValueGeneratorType != null) {
-                        #warning this one kinda requires context of the specific type that it is occuring on, in short is an ugly assumption that happens to be about right atm
+                        #warning this requires context of the specific type that it is occuring on, in short is an ugly assumption that happens to be about right atm!
                         virtualType = typeof(string);
                     } else {
                         virtualType = virtualInfo.Type;
@@ -58,6 +58,10 @@ namespace Api.TypeScript.Objects
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public List<Type> GetRequiredImports()
         {
             return _requiredImports;
