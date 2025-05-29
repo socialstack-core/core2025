@@ -26,11 +26,11 @@ using Microsoft.AspNetCore.Authentication;
 
 namespace Api.Pages
 {
-    /// <summary>
-    /// Handles the main generation of HTML from the index.html base template at UI/public/index.html and Admin/public/index.html
-    /// </summary>
-    [HostType("web")]
-    public partial class HtmlService : AutoService
+	/// <summary>
+	/// Handles the main generation of HTML from the index.html base template at UI/public/index.html and Admin/public/index.html
+	/// </summary>
+	[HostType("web")]
+	public partial class HtmlService : AutoService
 	{
 		private readonly PageService _pages;
 		private readonly CanvasRendererService _canvasRendererService;
@@ -43,6 +43,7 @@ namespace Api.Pages
 		private string _cacheControlHeader;
 		private List<Locale> _allLocales;
 		private string _siteDomains;
+		private string _siteDomainPrefixes;
 
 		/// <summary>
 		/// Instanced automatically.
@@ -290,7 +291,7 @@ namespace Api.Pages
 			var page = terminal.Page;
 
 			var isAdmin = terminal.IsAdmin;
-			
+
 			object primaryObject = pageAndTokens.PrimaryObject;
 			AutoService primaryService = pageAndTokens.PrimaryService;
 
@@ -472,9 +473,9 @@ namespace Api.Pages
 
 			writer.WriteASCII("</head><body>");
 			writer.WriteASCII("<div class=\"container\">");
-				writer.WriteASCII("<div class=\"alert alert-danger\" role=\"alert\">");
-			    writer.WriteASCII("<b>" + errors.Count + " error(s)</b> during UI build.");
-				writer.WriteASCII("</div>");
+			writer.WriteASCII("<div class=\"alert alert-danger\" role=\"alert\">");
+			writer.WriteASCII("<b>" + errors.Count + " error(s)</b> during UI build.");
+			writer.WriteASCII("</div>");
 
 			foreach (var error in errors)
 			{
@@ -591,13 +592,32 @@ namespace Api.Pages
 				}
 			}
 
-			writer.WriteASCII("<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/favicon-32x32.png\" />");
-			writer.WriteASCII("<link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/favicon-16x16.png\" />");
+			// favicon
+			var faviconFolder = "";
+			var sitePrefixes = GetAvailableDomainPrefixes();
+
+			// allows for different favicons to be referenced for a site with multiple domains
+			if (!string.IsNullOrEmpty(sitePrefixes))
+			{
+				string[] prefixes = sitePrefixes.Split(',');
+
+				foreach (var prefix in prefixes)
+				{
+					if (page.Url == $"/{prefix}")
+					{
+						faviconFolder = page.Url;
+					}
+				}
+			}
+
+			writer.WriteASCII($"<link rel=\"icon\" sizes=\"any\" href=\"{faviconFolder}/favicon.ico\" />");
+			writer.WriteASCII($"<link rel=\"icon\" type=\"image/svg+xml\" href=\"{faviconFolder}/favicon.svg\" />");
+			writer.WriteASCII($"<link rel=\"apple-touch-icon\" href=\"{faviconFolder}/apple-touch-icon.png\" />");
 
 			// Get the main CSS files. Note that this will (intentionally) delay on dev instances if the first compile hasn't happened yet.
 			// That's primarily because we need the hash of the contents in the URL. Note that it has an internal cache which is almost always hit.
 			var mainCssFile = await _frontend.GetMainCss(context == null ? 1 : context.LocaleId);
-			
+
 			writer.WriteASCII("<link rel=\"stylesheet\" href=\"");
 			writer.WriteASCII(_config.FullyQualifyUrls ? mainCssFile.FqPublicUrl : mainCssFile.PublicUrl);
 			writer.WriteASCII("\" />");
@@ -719,21 +739,21 @@ namespace Api.Pages
 			var themeConfig = _themeService.GetConfig();
 
 #if DEBUG
-            // Get the errors from the last build. If the initial one is happening right now, this'll wait for it.
-            var errorList = await _frontend.GetLastBuildErrors();
+			// Get the errors from the last build. If the initial one is happening right now, this'll wait for it.
+			var errorList = await _frontend.GetLastBuildErrors();
 
-            if (errorList != null)
-            {
-                // Outputting an error page - there's frontend errors, which means anything other than a helpful 
-                // error page will very likely result in a broken page anyway.
+			if (errorList != null)
+			{
+				// Outputting an error page - there's frontend errors, which means anything other than a helpful 
+				// error page will very likely result in a broken page anyway.
 
-                GenerateErrorPage(errorList, writer);
+				GenerateErrorPage(errorList, writer);
 				return true;
-            }
+			}
 #endif
 			var locale = await context.GetLocale();
 			var _config = (locale.Id < _configurationTable.Length) ? _configurationTable[locale.Id] : _defaultConfig;
-			
+
 			// Start building the document:
 			writer.WriteASCII("<!doctype html><html");
 
@@ -783,7 +803,7 @@ namespace Api.Pages
 
 				// And the user's context:
 				var publicContext = await _contextService.ToJsonString(context);
-				
+
 				try
 				{
 					var preRenderResult = await _canvasRendererService.Render(
@@ -916,6 +936,31 @@ namespace Api.Pages
 		}
 
 		/// <summary>
+		/// Get all the site domain prefixes
+		/// </summary>
+		/// <returns></returns>
+		private string GetAvailableDomainPrefixes()
+		{
+			if (_siteDomainPrefixes != null)
+			{
+				return _siteDomainPrefixes;
+			}
+
+			_siteDomainPrefixes = "";
+
+			var domainService = Services.Get("SiteDomainService");
+			if (domainService != null)
+			{
+				var getSiteDomainPrefixes = domainService.GetType().GetMethod("GetSiteDomainPrefixes");
+
+				_siteDomainPrefixes = getSiteDomainPrefixes.Invoke(domainService, null).ToString();
+			}
+
+			return _siteDomainPrefixes;
+		}
+
+
+		/// <summary>
 		/// Used to replace tokens within a string with Primary object content
 		/// </summary>
 		/// <param name="context"></param>
@@ -946,7 +991,7 @@ namespace Api.Pages
 					if (mode == 0)
 					{
 						// Optional $
-						if (currentChar == '$' && i < pageField.Length - 1 && pageField[i+1] == '{')
+						if (currentChar == '$' && i < pageField.Length - 1 && pageField[i + 1] == '{')
 						{
 							mode = 1;
 							storedIndex = i;
@@ -1139,7 +1184,7 @@ namespace Api.Pages
 
 			// The context is not authenticated yet. This is because a large 
 			// group of requests do not need to be authenticated at all and so we can do that only when necessary.
-			
+
 			// If services have not finished starting up yet, wait.
 			var svcWaiter = Services.StartupWaiter;
 
