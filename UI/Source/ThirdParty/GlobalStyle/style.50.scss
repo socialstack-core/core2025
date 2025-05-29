@@ -8,6 +8,36 @@ html, body, #react-view, #react-root, #content-root, #content-page, #react-loadi
 #react-root {
     height: auto;
     min-height: 100%;
+
+	> #wrapper {
+		min-height: 100vh;
+
+		// check - if we have:
+		// <div id="react-root">
+		//   <div id="wrapper">
+		//     <div id="content">
+		//     </div>
+		//     <footer>
+		//     </footer>
+		//   </div>
+		// </div>
+		// 
+		// ... then use flexbox to ensure content is always at least tall enough to place the footer at the bottom of the view
+		// (prevents short page content causing footer to render halfway up the page)
+		&:has(#content + footer) {
+			display: flex;
+			flex-direction: column;
+
+			> *:not(#content) {
+				flex-shrink: 0;
+			}
+
+			> #content {
+				flex-grow: 1;
+			}
+		}
+	}
+
 }
 
 html {
