@@ -13,7 +13,6 @@ namespace Api.Users
 	/// Manages user accounts.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
-	[AdminNav("fa:fa-user")]
 	public partial class UserService : AutoService<User>
 	{
 		private UserServiceConfig _config;
@@ -183,7 +182,7 @@ namespace Api.Users
 
 			SetupCookieName();
 
-			InstallAdminPages(["id", "email", "username", "role"]);
+			InstallAdminPages("Users", "fa:fa-user", ["id", "email", "username", "role"]);
 		}
 
 		/// <summary>

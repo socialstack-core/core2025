@@ -26,7 +26,6 @@ namespace Api.Uploader
     /// Handles uploading of files related to particular pieces of content.
     /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
     /// </summary>
-    [AdminNav("fa:fa-film")]
     public partial class UploadService : AutoService<Upload>
     {
         private UploaderConfig _configuration;
@@ -392,7 +391,7 @@ namespace Api.Uploader
 			}, 5);
 
 
-			InstallAdminPages(["id", "name"]);
+			InstallAdminPages("Uploads", "fa:fa-film", ["id", "name"]);
         }
 
         /// <summary>

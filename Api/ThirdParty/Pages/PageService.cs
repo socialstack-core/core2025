@@ -19,7 +19,6 @@ namespace Api.Pages
 	/// </summary>
 	[LoadPriority(9)]
 	[HostType("web")]
-	[AdminNav("fa:fa-paragraph")]
 	public partial class PageService : AutoService<Page>
 	{
 		/// <summary>
@@ -158,7 +157,7 @@ namespace Api.Pages
 			}
 
 			// Install the admin pages.
-			InstallAdminPages(["id", "url", "title"]);
+			InstallAdminPages("Pages", "fa:fa-paragraph", ["id", "url", "title"]);
 
 			Events.Page.BeforePageInstall.AddEventListener((context, builder) => {
 
@@ -194,7 +193,9 @@ namespace Api.Pages
 		/// <param name="options">
 		/// Additional config options for the page.
 		/// </param>
-		public void InstallAdminPages(Type type, string[] fields, AdminPageOptions options)
+		/// <param name="navMenuLabel">The Nav menu label</param>
+		/// <param name="navMenuIcon"></param>
+		public void InstallAdminPages(Type type, string[] fields, AdminPageOptions options, string navMenuLabel, string navMenuIcon)
 		{
 			var typeName = type.Name;
 			var typeNameLowercase = type.Name.ToLower();
@@ -210,6 +211,8 @@ namespace Api.Pages
 				Url = "/en-admin/" + typeNameLowercase,
 				Key = "admin_list:" + typeNameLowercase,
 				Title = "Edit or create " + tidyPluralName,
+				AdminNavMenuIcon = navMenuIcon,
+				AdminNavMenuTitle = navMenuLabel,
 				BuildBody = (PageBuilder builder) => {
 					return builder.AddTemplate(
 						new CanvasNode("Admin/Layouts/List")

@@ -19,7 +19,6 @@ namespace Api.Configuration
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
 	[LoadPriority(2)]
-	[AdminNav("fa:fa-cogs")]
 	public partial class ConfigurationService : AutoService<Api.Configuration.Configuration>
     {
 		/// <summary>
@@ -28,7 +27,7 @@ namespace Api.Configuration
 		public ConfigurationService(AutoFormService autoForms) : base(Events.Configuration)
         {
 			// Example admin page install:
-			InstallAdminPages(["id", "name"]);
+			InstallAdminPages("Configuration", "fa:fa-cogs", ["id", "name"]);
 
 			Cache();
 

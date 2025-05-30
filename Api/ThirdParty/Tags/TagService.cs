@@ -18,7 +18,6 @@ namespace Api.Tags
 	/// Handles tags - usually seen in e.g. knowledge bases or help guides.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
-	[AdminNav("fa:fa-tags")]
 	public partial class TagService : AutoService<Tag>
     {
 		/// <summary>
@@ -29,7 +28,7 @@ namespace Api.Tags
 			// Start preparing the queries. Doing this ahead of time leads to excellent performance savings, 
 			// whilst also using a high-level abstraction as another plugin entry point.
 
-			InstallAdminPages(["id", "name"]);
+			InstallAdminPages("Tags", "fa:fa-tags", ["id", "name"]);
 		}
 
 	}

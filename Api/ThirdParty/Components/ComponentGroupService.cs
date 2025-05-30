@@ -20,7 +20,7 @@ namespace Api.Components
 		public ComponentGroupService() : base(Events.ComponentGroup)
         {
 			// Example admin page install:
-			InstallAdminPages(["id", "name"]);
+			InstallAdminPages("Component Groups", "fa:fa-folder", ["id", "name"]);
 		}
 	}
     

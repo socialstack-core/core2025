@@ -18,7 +18,7 @@ namespace Api.Payments
 		/// </summary>
 		public PriceService() : base(Events.Price)
         {
-			InstallAdminPages(["id", "name", "amount", "currencyCode"]);
+			InstallAdminPages("Prices", "fa:fa-dollar", ["id", "name", "amount", "currencyCode"]);
 
 			Cache();
 		}

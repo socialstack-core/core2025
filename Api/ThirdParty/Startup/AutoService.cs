@@ -2093,9 +2093,9 @@ public partial class AutoService
     /// Does nothing if there isn't a page service installed, or if the admin pages already exist.
     /// </summary>
     /// <param name="fields"></param>
-    protected void InstallAdminPages(string[] fields)
+    protected void InstallAdminPages(string navMenuLabel, string navMenuIconRef, string[] fields)
 	{
-		InstallAdminPages(fields, null);
+		InstallAdminPages(navMenuLabel, navMenuIconRef, fields, null);
 	}
 
 	/// <summary>
@@ -2112,24 +2112,24 @@ public partial class AutoService
 	/// For example, if you'd like each child entry to show its Id and Title fields, specify new string[]{"id", "title"}.
 	/// </param>
 	/// <param name="visibilityJson"></param>
-	protected void InstallAdminPages(string[] fields, AdminPageOptions childAdminPage = null, string visibilityJson = null)
+	protected void InstallAdminPages(string navMenuLabel, string navMenuIconRef, string[] fields, AdminPageOptions childAdminPage = null, string visibilityJson = null)
 	{
 		if (Services.Started)
 		{
-			InstallAdminPagesInternal(fields, childAdminPage);
+			InstallAdminPagesInternal(navMenuLabel, navMenuIconRef, fields, childAdminPage);
 		}
 		else
 		{
 			// Must happen after services start otherwise the page service isn't necessarily available yet.
 			Events.Service.AfterStart.AddEventListener((Context ctx, object src) =>
 			{
-				InstallAdminPagesInternal(fields, childAdminPage);
+				InstallAdminPagesInternal(navMenuLabel, navMenuIconRef, fields, childAdminPage);
 				return new ValueTask<object>(src);
 			});
 		}
 	}
 	
-	private void InstallAdminPagesInternal(string[] fields, AdminPageOptions childAdminPage)
+	private void InstallAdminPagesInternal(string navMenuLabel, string navMenuIconRef, string[] fields, AdminPageOptions childAdminPage)
 	{
 		var pageService = Api.Startup.Services.Get("PageService");
 
@@ -2149,7 +2149,9 @@ public partial class AutoService
 				installPages.Invoke(pageService, [
 					ServicedType,
 					fields,
-					childAdminPage
+					childAdminPage,
+					navMenuIconRef,
+					navMenuLabel
 				]);
 			}
 		});

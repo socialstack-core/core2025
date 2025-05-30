@@ -17,11 +17,8 @@ namespace Api.NavMenus
 	/// Handles navigation menu items.
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
-	[AdminNav("fa:fa-child")]
 	public partial class AdminNavMenuItemService : AutoService<AdminNavMenuItem>
 	{
-		private readonly AvailableEndpointService _endpointService;
-		
 		private readonly PageService _pageService;
 		
 		/// <summary>
@@ -36,12 +33,9 @@ namespace Api.NavMenus
 		/// Calls example admin page install to bootstrap initial state.
 		/// </summary>
 		public AdminNavMenuItemService(
-			AvailableEndpointService aes,
 			PageService pageSvc
 			) : base(Events.AdminNavMenuItem)
 		{
-			_endpointService = aes;
-			_pageService = pageSvc;
 			
 			Events.Permalink.BeforeCreate.AddEventListener(async (ctx, permalink) =>
 			{
@@ -67,6 +61,11 @@ namespace Api.NavMenus
 							);
 						}
 
+						if (!page.Key.Contains(':'))
+						{
+							return permalink;
+						}
+
 						var pageKey = page.Key.Split(':');
 
 						if (pageKey.Length != 2)
@@ -88,17 +87,19 @@ namespace Api.NavMenus
 						{
 							return permalink;
 						}
-
-						var adminNavAttr = svc.GetType().GetCustomAttribute<AdminNavAttribute>();
-						var icon = adminNavAttr?.Icon ?? "fa:fa-rocket";
+					
+						var tidyPluralName = Pluralise.PluraliseWords(Pluralise.NiceName(svc.EntityName));
 						
+						// TODO: Pages/PageBuilder => Reconcile the title & icon somehow, its
+						// passed to the page builder, just need to get that context here somehow. 
+						var label = char.ToUpper(tidyPluralName[0]) + tidyPluralName[1..];
+						// for now...
+						const string icon = "fa:fa-rocket";
 						// no we have the page & permalink, construct the link.
 						
-						var tidyPluralName = Pluralise.PluraliseWords(Pluralise.NiceName(svc.EntityName));
-
 						var adminNavMenuItem = new AdminNavMenuItem()
 						{
-							Title = adminNavAttr?.Label ?? char.ToUpper(tidyPluralName[0]) + tidyPluralName[1..],
+							Title = tidyPluralName,
 							Url = permalink.Url,
 							IconRef = icon,
 							PageKey = page.Key
@@ -112,7 +113,7 @@ namespace Api.NavMenus
 			});
 			
 			// Install example admin pages for demonstration / default setup.
-			InstallAdminPages(["id", "title", "target"]);
+			InstallAdminPages("Admin Nav Menu Items", "fa:fa-rocket", ["id", "title", "target"]);
 			Cache();
 		}
 		

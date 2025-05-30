@@ -36,7 +36,7 @@ namespace Api.Payments
 			_attributeValues = attributeValues;
 
 			// Example admin page install:
-			InstallAdminPages(["id", "name"]);
+			InstallAdminPages("Product Attributes", "fa:fa-tags", ["id", "name"]);
 
 			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 			{

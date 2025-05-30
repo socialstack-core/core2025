@@ -21,7 +21,7 @@ namespace Api.Payments
 			// (Don't inject productAttributeService, it already uses this one)
 
 			// Groups need an edit and basic list page, but not a nav menu entry as their 'home' is via the products link.
-			InstallAdminPages([ "id", "name" ]);
+			InstallAdminPages("Product Attribute Groups", "fa:fa-folder", [ "id", "name" ]);
 
 			Cache();
 		}

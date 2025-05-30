@@ -1,11 +1,8 @@
-using Api.Database;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Api.Permissions;
 using Api.Contexts;
 using Api.Eventing;
 using Api.Pages;
-using System.Threading;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
@@ -51,7 +48,7 @@ namespace Api.Payments
 			_productService = productService;
 
 			// Example admin page install:
-			InstallAdminPages([ "id", "name" ]);
+			InstallAdminPages("Product categories", "fa:fa-folder", [ "id", "name" ]);
 
 			pages.Install(
 				// Install a default primary product category page.

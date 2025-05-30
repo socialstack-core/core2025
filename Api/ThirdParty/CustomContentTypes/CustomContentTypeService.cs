@@ -27,7 +27,7 @@ namespace Api.CustomContentTypes
         {
             _fieldService = fieldService;
 
-            InstallAdminPages(["id", "nickName"]);
+            InstallAdminPages("Custom Content Types", "fa:fa-folder", ["id", "nickName"]);
 
 			Events.Service.AfterStart.AddEventListener(async (Context ctx, object x) =>
             {

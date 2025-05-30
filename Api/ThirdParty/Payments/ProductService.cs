@@ -28,7 +28,7 @@ namespace Api.Payments
 			_permalinks = permalinks;
 			_config = GetConfig<ProductConfig>();
 
-			InstallAdminPages(["id", "name", "minQuantity"]);
+			InstallAdminPages("Products", "fa:fa-shopping-basket", ["id", "name", "minQuantity"]);
 
             HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" };
             HashSet<string> nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };

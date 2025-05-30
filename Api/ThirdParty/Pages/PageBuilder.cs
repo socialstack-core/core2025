@@ -9,7 +9,7 @@ namespace Api.Pages;
 /// <summary>
 /// Used to auto install pages in a modular way, whilst also optionally adding templates.
 /// </summary>
-public class PageBuilder
+public partial class PageBuilder
 {
 	/// <summary>
 	/// Mandatory page key. Start it with admin_ for any admin page.
