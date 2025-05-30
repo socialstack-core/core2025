@@ -55,28 +55,21 @@ public struct Localized<T>
 			SkipWhitespace(span, ref i);
 			if (span[i] == '}') break;
 
-			// Parse key
+			// --- Parse key ---
 			if (span[i++] != '"') break;
-			int keyStart = i;
-			while (i < span.Length && span[i] != '"') i++;
-			if (i >= span.Length) break;
-			var key = span.Slice(keyStart, i - keyStart).ToString();
-			i++; // skip closing quote
+			var key = ParseJsonString(span, ref i);
 
 			SkipWhitespace(span, ref i);
 			if (span[i++] != ':') break;
 			SkipWhitespace(span, ref i);
 
+			// --- Parse value ---
 			T value;
-
 			if (typeof(T) == typeof(string))
 			{
 				if (span[i++] != '"') break;
-				int valStart = i;
-				while (i < span.Length && span[i] != '"') i++;
-				if (i >= span.Length) break;
-				value = (T)(object)(span.Slice(valStart, i - valStart).ToString());
-				i++; // skip closing quote
+				var val = ParseJsonString(span, ref i);
+				value = (T)(object)val;
 			}
 			else
 			{
@@ -103,6 +96,52 @@ public struct Localized<T>
 		}
 
 		return result;
+	}
+
+	private static string ParseJsonString(ReadOnlySpan<char> span, ref int i)
+	{
+		int start = i;
+		var sb = new StringBuilder();
+
+		while (i < span.Length)
+		{
+			char c = span[i++];
+			if (c == '"') break;
+
+			if (c == '\\' && i < span.Length)
+			{
+				char next = span[i++];
+				switch (next)
+				{
+					case '"': sb.Append('"'); break;
+					case '\\': sb.Append('\\'); break;
+					case '/': sb.Append('/'); break;
+					case 'b': sb.Append('\b'); break;
+					case 'f': sb.Append('\f'); break;
+					case 'n': sb.Append('\n'); break;
+					case 'r': sb.Append('\r'); break;
+					case 't': sb.Append('\t'); break;
+					case 'u':
+						if (i + 4 <= span.Length &&
+							ushort.TryParse(span.Slice(i, 4), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ushort cp))
+						{
+							sb.Append((char)cp);
+							i += 4;
+						}
+						break;
+					default:
+						// Invalid escape sequence; preserve as-is
+						sb.Append('\\').Append(next);
+						break;
+				}
+			}
+			else
+			{
+				sb.Append(c);
+			}
+		}
+
+		return sb.ToString();
 	}
 
 	private static void SkipWhitespace(ReadOnlySpan<char> s, ref int i)
