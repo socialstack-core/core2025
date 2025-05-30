@@ -80,6 +80,15 @@ namespace Api.Database
 		}
 
 		/// <summary>
+		/// Sets if this column is auto-inc. Not supported on all DB engines.
+		/// </summary>
+		/// <param name="value"></param>
+		public virtual void SetIsAutoIncrement(bool value)
+		{
+			
+		}
+
+		/// <summary>
 		/// True if this columns definition has changed from the given newer one.
 		/// </summary>
 		/// <param name="newColumn"></param>

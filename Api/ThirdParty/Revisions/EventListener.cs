@@ -50,7 +50,7 @@ namespace Api.Revisions
 
                 // We've got a revisionable content type. Add a revisions table to the schema:
                 var targetEntityName = typeInfo.Name + "_revisions";
-				var targetTableName = MySQLSchema.TableName(typeInfo.Name) + "_revisions";
+				var targetTableName = newSchema.GetTableName(typeInfo, "revisions");
 				Field idField = null;
 
 				// All of the fields in the type can be revisioned, so we add them all.
@@ -72,15 +72,13 @@ namespace Api.Revisions
 						specialIdField.TargetField = revisionIdField;
 
 						// Create a column definition:
-						columnDefinition = new MySQLDatabaseColumnDefinition(specialIdField, targetTableName)
-						{
-							IsAutoIncrement = true
-						};
+						columnDefinition = newSchema.StartColumn(specialIdField, targetTableName);
+						columnDefinition.SetIsAutoIncrement(true);
 					}
 					else
 					{
 						// Create a column definition:
-						columnDefinition = new MySQLDatabaseColumnDefinition(field, targetTableName);
+						columnDefinition = newSchema.StartColumn(field, targetTableName);
 					}
 
 					if (!columnDefinition.Ignore)
@@ -99,15 +97,13 @@ namespace Api.Revisions
 					contentIdField.Name = "RevisionOriginalContentId";
 					contentIdField.SetFullName();
 
-					var contentIdColumn = new MySQLDatabaseColumnDefinition(
+					var contentIdColumn = newSchema.StartColumn(
 						contentIdField,
 						targetTableName
-					)
-					{
+					);
 
-						// It may have seen that the Id column is autoinc, depending on field attributes, so clear that:
-						IsAutoIncrement = false
-					};
+					// It may have seen that the Id column is autoinc, depending on field attributes, so clear that:
+					contentIdColumn.SetIsAutoIncrement(false);
 
 					if (!contentIdColumn.Ignore)
 					{

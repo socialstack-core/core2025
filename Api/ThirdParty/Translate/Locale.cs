@@ -1,7 +1,12 @@
 ﻿using Api.AutoForms;
+using Api.Contexts;
 using Api.Database;
+using Api.Eventing;
 using Api.Users;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Api.Translate
 {
@@ -113,6 +118,31 @@ namespace Api.Translate
 
 				return _shortCode;
 			}
+		}
+
+		/// <summary>
+		/// Initialises the essential locales set used by the database engine for the determination of locale codes.
+		/// Database engines call this during their startup routine.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <returns></returns>
+		public static async ValueTask InitialiseLocaleList(Context context)
+		{
+			List<Locale> locales = null;
+			locales = await Events.Locale.InitialList.Dispatch(context, locales);
+
+			// Find the max ID:
+			var maxId = locales.Max(locale => locale.Id);
+
+			var localeLookup = new Locale[maxId];
+
+			foreach (var locale in locales)
+			{
+				localeLookup[locale.Id - 1] = locale;
+			}
+
+			// Set the available locales:
+			ContentTypes.Locales = localeLookup;
 		}
 	}
 

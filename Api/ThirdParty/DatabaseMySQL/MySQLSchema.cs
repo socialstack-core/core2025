@@ -27,6 +27,34 @@ namespace Api.Database
 
 			return name;
 		}
+		
+		/// <summary>
+		/// Starts creating a specialised schema specific column object.
+		/// </summary>
+		/// <param name="field"></param>
+		/// <param name="table"></param>
+		/// <returns></returns>
+		/// <exception cref="NotImplementedException"></exception>
+		public override DatabaseColumnDefinition StartColumn(Field field, string table)
+		{
+			return new MySQLDatabaseColumnDefinition(field, table);
+		}
+		
+		/// <summary>
+		/// Gets the table name to use for a given type, with an optional extension.
+		/// </summary>
+		/// <param name="type"></param>
+		/// <param name="extension"></param>
+		/// <returns></returns>
+		public override string GetTableName(Type type, string extension = null)
+		{
+			if(string.IsNullOrEmpty(extension))
+			{
+				return TableName(type.Name);
+			}
+			
+			return TableName(type.Name) + "_" + extension;
+		}
 
 		/// <summary>
 		/// Generates SQL which will add all the tables in this schema. Requires multi-command capability.

@@ -32,23 +32,9 @@ namespace Api.Translate
 				{
 					return fieldMap;
 				}
-				
+
 				// Does this field map have any [Localized] fields?
-				List<Locale> locales = null;
-				locales = await Events.Locale.InitialList.Dispatch(ctx, locales);
-
-				// Find the max ID:
-				var maxId = locales.Max(locale => locale.Id);
-
-				var localeLookup = new Locale[maxId];
-
-				foreach (var locale in locales)
-				{
-					localeLookup[locale.Id - 1] = locale;
-				}
-
-				// Set the available locales:
-				ContentTypes.Locales = localeLookup;
+				var locales = ContentTypes.Locales;
 
 				// Iterate backwards for simplicity because we add to fields and order doesn't matter:
 				for (var fm=fieldMap.Fields.Count-1; fm >= 0; fm--)
@@ -71,7 +57,7 @@ namespace Api.Translate
 					}
 
 					// Got localised fields. Add dupes for each locale now.
-					for (var i = 0; i < locales.Count; i++)
+					for (var i = 0; i < locales.Length; i++)
 					{
 						if (locales[i] == null || i == 0)
 						{

@@ -172,6 +172,15 @@ namespace Api.Database
 		}
 
 		/// <summary>
+		/// Sets if this column is auto-inc. Not supported on all DB engines.
+		/// </summary>
+		/// <param name="value"></param>
+		public override void SetIsAutoIncrement(bool value)
+		{
+			IsAutoIncrement = value;
+		}
+
+		/// <summary>
 		/// Gets the type description as an SQL string.
 		/// </summary>
 		/// <returns></returns>
