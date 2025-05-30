@@ -295,6 +295,8 @@ namespace Api.Pages
 
 				return builder;
 			}, 20); // Ensure permalinks are added after pages
+
+			Cache();
 		}
 
 		private Dictionary<string, List<Permalink>> _srcDictionary;

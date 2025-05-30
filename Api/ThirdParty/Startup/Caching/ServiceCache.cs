@@ -251,6 +251,13 @@ namespace Api.Startup{
 					continue;
 				}
 
+				if (indexInfo.Columns.Length > 1)
+				{
+					// Multicolumn indices aren't supported by the cache at the moment.
+					Log.Warn("cache", "Multicolumn indices aren't supported by the cache at the moment. Tried to create one on " + entityName);
+					continue;
+				}
+
 				var firstCol = indexInfo.Columns[0].FieldInfo;
 				var indexFieldType = firstCol.FieldType;
 

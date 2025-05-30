@@ -183,12 +183,7 @@ namespace Api.Pages
 				return ValueTask.FromResult(builder);
 			}, 5);
 
-			// Pages must always have the cache on for any release site.
-			// That's because the HtmlService has a release only cache which depends on the sync messages for pages, as well as e.g. the url gen cache.
-#if !DEBUG
 			Cache();
-#endif
-
 		}
 
 		/// <summary>
