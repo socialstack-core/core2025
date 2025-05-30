@@ -65,6 +65,7 @@ interface FooterLinkProps {
  */
 const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, copyrightFrom, copyrightTo, copyright, demo, ...props }) => {
 
+	// temp
 	demo = true;
 
 	if (demo) {

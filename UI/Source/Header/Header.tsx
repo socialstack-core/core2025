@@ -8,6 +8,14 @@ import { useState, useEffect } from "react";
 import { getUrl } from 'UI/FileRef';
 import popoverPolyfillJs from './static/popover.min.js';
 import { lazyLoad } from 'UI/Functions/WebRequest';
+//import productApi from 'Api/Product';
+//import productCategoryApi, { ProductCategory } from 'Api/ProductCategory';
+import productCategoryApi from 'Api/ProductCategory';
+import useApi from "UI/Functions/UseApi";
+import Loading from "UI/Loading";
+
+// TODO: swap to 0 once "care-home-nursing-home-supplies-equipment" is no longer a thing
+const PARENT_CATEGORY_ID = 1;
 
 /**
  * Props for the Header component.
@@ -37,7 +45,12 @@ interface HeaderProps {
 	/**
 	 * outstanding notifications count
 	 */
-	notificationCount: number
+	notificationCount: number,
+
+	/**
+	 * set to true to force demo information
+	 */
+	demo?: boolean
 }
 
 /**
@@ -51,18 +64,70 @@ interface HeaderLinkProps {
 	label: string,
 
 	/** 
-	 * URL
+	 * target URL (render as link)
 	 */
-	url: string
+	url?: string,
+
+	/** 
+	 * target URL (render as button with popover target)
+	 */
+	popoverTarget?: string,
+
+	/**
+	 * function to call on click (render as button with click event)
+	 */
+	//onClick?: () => void
 }
 
 /**
  * The website header React component.
  * @param props React props.
  */
-const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, searchPlaceholder, notificationCount, ...props }) => {
-	if (!contactNumber) {
-		contactNumber = "0808 189 2044";
+const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, searchPlaceholder, notificationCount, demo, ...props }) => {
+	const [categoryId, setCategoryId] = useState(PARENT_CATEGORY_ID);
+	const [productCategory, setProductCategory] = useState();
+	const [productSubCategories, setProductSubCategories] = useState();
+
+	useApi(() => {
+		return productCategoryApi.load(categoryId, [
+			productCategoryApi.includes!.primaryurl
+		]).then(results => {
+			setProductCategory(results);
+		});
+	}, [categoryId]);
+
+	useApi(() => {
+		return productCategoryApi.list({
+			query: 'ParentId=?',
+			args: [categoryId]
+		}, [
+			productCategoryApi.includes!.primaryurl
+		]).then(results => {
+			setProductSubCategories(results.results);
+		});
+	}, [categoryId]);
+
+	// temp
+	demo = true;
+
+	if (demo) {
+
+		if (!contactNumber) {
+			contactNumber = "0808 189 2044";
+		}
+
+		if (!logoRef) {
+			logoRef = exampleLogoRef;
+		}
+
+		if (!message || !message.length) {
+			message = `Free UK Delivery Over &pound;50`;
+		}
+
+		if (!searchPlaceholder || !searchPlaceholder.length) {
+			searchPlaceholder = `Search for a product name, category or code`
+		}
+
 	}
 
 	const contactHref = getContactLink(contactNumber);
@@ -77,18 +142,31 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 		</svg>
 	</>;
 
+	/*
+	const [productCategories] = useApi(() => {
+		return productCategoryApi.list({
+			query: 'ParentId=?',
+			args: [PARENT_CATEGORY_ID]
+		}, [
+			productCategoryApi.includes!.primaryurl
+		])
+	}, []);
+	*/
+
 	useEffect(() => {
 		// check: iOS versions prior to v17 don't support popover API
 		// lazy-load polyfill if required
 		if (!isPopoverSupported()) {
-			lazyLoad(getUrl(popoverPolyfillJs));
+			lazyLoad(getUrl(popoverPolyfillJs)!);
 		}
 
 		// TODO: retrieve primary links from DB
 		setPrimaryLinks([
 			{
 				label: `Shop for products`,
-				url: `/products`
+				//url: `/products`
+				//onClick: () => {}
+				popoverTarget: 'products_popover'
 			},
 			{
 				label: `Contact Us`,
@@ -111,18 +189,6 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 		return 'popover' in test &&
 			typeof HTMLElement.prototype.showPopover === 'function' &&
 			typeof HTMLElement.prototype.hidePopover === 'function';
-	}
-
-	if (!logoRef) {
-		logoRef = exampleLogoRef;
-	}
-
-	if (!message || !message.length) {
-		message = `Free UK Delivery Over &pound;50`;
-	}
-
-	if (!searchPlaceholder || !searchPlaceholder.length) {
-		searchPlaceholder = `Search for a product name, category or code`
 	}
 
 	if (!notificationCount) {
@@ -151,7 +217,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 				</a>
 
 				<div className="site-header__search">
-					<button type="button" className="btn site-header__search-trigger" popovertarget="search_popover">
+					<button type="button" className="btn site-header__search-trigger" popoverTarget="search_popover">
 						<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
 							<path d="M14.3 12.58h-.91l-.32-.31a7.43 7.43 0 10-.8.8l.3.32v.9L18.3 20l1.7-1.7-5.7-5.72zm-6.87 0A5.14 5.14 0 117.42 2.3a5.14 5.14 0 01.01 10.28z" fill="currentColor" />
 						</svg>
@@ -210,7 +276,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 					</>}
 
 					{/* toggle basket */}
-					<button type="button" className="btn btn-outline-primary site-header__actions-basket" popovertarget="basket_popover">
+					<button type="button" className="btn btn-outline-primary site-header__actions-basket" popoverTarget="basket_popover">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 53" fill="none">
 							<path d="M1.96524 4.44736C5.36241 4.84443 6.6198 5.3518 8.34045 7.07242C9.99492 9.16806 15.0245 27.4994 15.4657 30.5877L14.6716 33.7201C14.1642 35.7055 14.6054 37.779 15.8848 39.3894C17.1422 40.9997 19.0393 41.9262 21.0909 41.9262H44.1211C45.3344 41.9262 46.327 40.9335 46.327 39.7203C46.327 38.507 45.3344 37.5143 44.1211 37.5143H21.0909C20.407 37.5143 19.7673 37.2055 19.3482 36.6761C18.929 36.1467 18.7746 35.4408 18.9511 34.779L19.3702 33.1025H36.4002C41.9372 33.1025 46.9447 29.595 48.8418 24.389L52.5699 14.1755C53.3861 11.9475 53.0552 9.47689 51.6875 7.53567C50.3198 5.59445 48.1139 4.44736 45.7314 4.44736H17.6496C16.4363 4.44736 15.4436 5.44003 15.4436 6.6533C15.4436 7.86656 16.4363 8.85923 17.6496 8.85923H45.7314C46.68 8.85923 47.5182 9.30042 48.0697 10.0725C48.6212 10.8446 48.7315 11.7931 48.4227 12.6755L44.6946 22.889C43.4372 26.3744 40.1062 28.6906 36.4002 28.6906H19.5467C18.3776 21.3448 12.7965 5.26356 11.495 3.96206C8.71546 1.18258 6.28891 0.454619 2.4726 0.0134315C1.25933 -0.118925 0.178408 0.74139 0.0239907 1.95465C-0.108367 3.16792 0.751959 4.24883 1.96524 4.40324V4.44736Z" fill="currentColor" />
 							<path d="M18.7526 53C20.58 53 22.0615 51.5186 22.0615 49.6911C22.0615 47.8636 20.58 46.3822 18.7526 46.3822C16.9251 46.3822 15.4436 47.8636 15.4436 49.6911C15.4436 51.5186 16.9251 53 18.7526 53Z" fill="currentColor" />
@@ -246,7 +312,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 				{/* primary nav */}
 				{primaryLinks?.length > 0 && <>
 					<div className="site-header__nav">
-						<button type="button" className="btn site-header__nav-trigger" popovertarget="menu_popover">
+						<button type="button" className="btn site-header__nav-trigger" popoverTarget="menu_popover">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 14">
 								<path d="M.97 2.41h12.08c.46 0 .83-.36.83-.8a.82.82 0 00-.83-.82H.97a.82.82 0 00-.83.81c0 .45.37.81.83.81zM13.05 6.19H.97A.82.82 0 00.14 7c0 .45.37.81.83.81h12.08c.46 0 .83-.36.83-.81a.82.82 0 00-.83-.81zM7.77 11.59H.97a.82.82 0 00-.83.8c0 .46.37.82.83.82h6.8c.46 0 .83-.36.83-.81a.82.82 0 00-.83-.81z" fill="currentColor" />
 							</svg>
@@ -255,15 +321,76 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 							<menu className="site-header__nav-links">
 								{primaryLinks.map(link => {
 									return <li>
-										<a href={link.url}>
-											{link.label}
-										</a>
+										{link.url && link.url.length > 0 && <>
+											<a href={link.url}>
+												{link.label}
+											</a>
+										</>}
+										{link.popoverTarget && link.popoverTarget.length > 0 && <>
+											<button type="button" className="btn" popoverTarget={link.popoverTarget}>
+												{link.label}
+											</button>
+										</>}
 									</li>;
 								})}
 							</menu>
 						</div>
 					</div>
 				</>}
+				<div className="site-header__products-wrapper" popover="auto" id="products_popover">
+					{!productSubCategories && <Loading />}
+					{productSubCategories && <>
+						<h2 className="site-header__products-title">
+							{productCategory?.parentId == null && <>
+								{`Products`}
+							</>}
+							{productCategory?.parentId != null && <>
+								<button type="button" className="btn" onClick={() => {
+									setCategoryId(productCategory.parentId)
+								}}>
+									{productCategory.name}
+								</button>
+							</>}
+						</h2>
+						{productCategory && <>
+							<a href={productCategory.primaryUrl} className="site-header__products-link">
+								{productCategory.parentId == null && <>
+									{`All products`}
+								</>}
+								{productCategory.parentId != null && <>
+									{`All ${productCategory.name}`}
+								</>}
+							</a>
+						</>}
+						{/*
+						<h3 className="site-header__products-subtitle">
+							{`All products`}
+						</h3>
+						*/}
+						<menu className="site-header__products">
+							{productSubCategories.map(subcategory => {
+								// NB: filter on isDraft?
+								return <li>
+									<button type="button" className="btn site-header__products-link" onClick={() => {
+										setCategoryId(subcategory.id)
+									}}>
+										{subcategory.name}
+									</button>
+								</li>;
+							})}
+							{/*
+							{productCategories?.results?.map(category => {
+								// NB: filter on isDraft?
+								return <li>
+									<a className="site-header__products-link" href={category.primaryUrl}>
+										{category.name}
+									</a>
+								</li>;
+							})}
+								*/}
+						</menu>
+					</>}
+				</div>
 
 				{showContact && <>
 					<div className="site-header__contact">
