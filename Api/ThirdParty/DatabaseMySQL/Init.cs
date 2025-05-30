@@ -70,7 +70,7 @@ namespace Api.DatabaseMySQL
 					locales.Add(new Locale()
 					{
 						Code = "en",
-						Name = "English",
+						Name = new Localized<string>("English"),
 						Id = 1
 					});
 				}

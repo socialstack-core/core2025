@@ -298,7 +298,7 @@ public partial class AutoService<T, ID> {
 			localeSet = new Api.Translate.Locale[] {
 				new Locale(){
 					Id = 1,
-					Name = "English",
+					Name = new Localized<string>("English"),
 					Code = "en"
 				}
 			};

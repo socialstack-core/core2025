@@ -352,7 +352,7 @@ namespace Api.Permissions
 
 				if (SortField.Localised && localeCode != null)
 				{
-					builder.Write((byte)'_');
+					builder.WriteASCII("`.`");
 					builder.WriteS(localeCode);
 				}
 

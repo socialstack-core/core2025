@@ -20,8 +20,7 @@ namespace Api.Payments
         /// The name of the product attribute
         /// </summary>
         [DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
+		public Localized<string> Name;
 
 		/// <summary>
 		/// Attribute key used for identifying it during installation of default values or through name changes.

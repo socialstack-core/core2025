@@ -15,8 +15,7 @@ namespace Api.Pages
 		/// <summary>
 		/// The default title for this page.
 		/// </summary>
-		[Localized]
-		public string Title;
+		public Localized<string> Title;
 
 		/// <summary>
 		/// A key of the form e.g. "admin_user_list" which is used to keep track of 
@@ -36,16 +35,14 @@ namespace Api.Pages
 		/// <summary>
 		/// The pages content (as canvas JSON).
 		/// </summary>
-		[Localized]
 		[Data("groups", "*")]
 		[DatabaseField(Length = 9000000)]
-		public string BodyJson;
+		public Localized<string> BodyJson;
 
 		/// <summary>
 		/// The default description for this page.
 		/// </summary>
-		[Localized]
-		public string Description;
+		public Localized<string> Description;
 
 		/// <summary>
 		/// Allow this page from being indexed by search crawlers. 

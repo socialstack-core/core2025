@@ -17,9 +17,8 @@ namespace Api.Translate
 		/// <summary>
 		/// The name.
 		/// </summary>
-		[Localized]
 		[Data("hint", "The name of the locale")]
-		public string Name;
+		public Localized<string> Name;
 
 		/// <summary>
 		/// Usually a 5 letter locale code e.g. "en_GB". May also be just 2 e.g. "fr".

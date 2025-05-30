@@ -367,22 +367,27 @@ namespace Api.CanvasRenderer
                 }
             }
 
+            #warning translation substitution needs a broad review on the new localisation mechanism.
+
             // Add/replace with local values from the db 
             if (translationList != null)
             {
                 foreach (var translation in translationList)
                 {
-                    if (translationLookup.ContainsKey(translation.Module + "/" + translation.Original))
+					var translated = translation.Translated.Get(localeId, false);
+					var original = translation.Original;
+
+					if (translationLookup.ContainsKey(translation.Module + "/" + original))
                     {
                         // only replace with local if has been translated 
-                        if (!string.IsNullOrWhiteSpace(translation.Translated) && translation.Original != translation.Translated)
+                        if (!string.IsNullOrWhiteSpace(translated) && original != translated)
                         {
-                            translationLookup[translation.Module + "/" + translation.Original] = translation;
+                            translationLookup[translation.Module + "/" + original] = translation;
                         }
                     }
                     else
                     {
-                        translationLookup[translation.Module + "/" + translation.Original] = translation;
+                        translationLookup[translation.Module + "/" + original] = translation;
                     }
                 }
             }
@@ -399,11 +404,13 @@ namespace Api.CanvasRenderer
                     // Perform substitution
                     if (translationLookup.TryGetValue(segment.Module + "/" + segment.TemplateLiteralToSearch, out Translation translation))
                     {
-                        // Got a hit! The source is likely minified (on prod it pretty much always is) 
-                        // so we'll need to consider mapping variables from the translated form.
+						// Got a hit! The source is likely minified (on prod it pretty much always is) 
+						// so we'll need to consider mapping variables from the translated form.
+						
+                        var translated = translation.Translated.Get(localeId, false);
 
-                        // Do we even have a translated value?
-                        if (string.IsNullOrEmpty(translation.Translated))
+						// Do we even have a translated value?
+						if (string.IsNullOrEmpty(translated))
                         {
                             // Retain original as-is:
                             sb.Append(segment.TemplateLiteralSource);
@@ -413,7 +420,7 @@ namespace Api.CanvasRenderer
                             if (segment.VariableMap != null)
                             {
                                 // It has a variable map so we'll need to map the variables in the translation.
-                                sb.Append(RemapTemplateLiteralVariables(translation.Translated, segment.VariableMap));
+                                sb.Append(RemapTemplateLiteralVariables(translated, segment.VariableMap));
                             }
                             else
                             {
@@ -517,17 +524,20 @@ namespace Api.CanvasRenderer
             {
                 foreach (var translation in translationList)
                 {
-                    if (translationLookup.ContainsKey(translation.Module + "/" + translation.Original))
+                    var translated = translation.Translated.Get(localeId, false);
+                    var original = translation.Original;
+
+                    if (translationLookup.ContainsKey(translation.Module + "/" + original))
                     {
                         // only replace with local if has been translated 
-                        if (!string.IsNullOrWhiteSpace(translation.Translated) && translation.Original != translation.Translated)
+                        if (!string.IsNullOrWhiteSpace(translated) && original != translated)
                         {
-                            translationLookup[translation.Module + "/" + translation.Original] = translation;
+                            translationLookup[translation.Module + "/" + original] = translation;
                         }
                     }
                     else
                     {
-                        translationLookup[translation.Module + "/" + translation.Original] = translation;
+                        translationLookup[translation.Module + "/" + original] = translation;
                     }
                 }
             }
@@ -546,14 +556,16 @@ namespace Api.CanvasRenderer
                         LocaleId = localeId
                     });
 
-                    // do we have a backend entry for the core translation?
-                    if (latestTranslation == null)
+					var translated = translation.Translated.Get(locale, false);
+
+					// do we have a backend entry for the core translation?
+					if (latestTranslation == null)
                     {
                         var newTranslation = new Translation()
                         {
                             Module = translation.Module,
                             Original = translation.Original,
-                            Translated = translation.Original,
+                            Translated = new Localized<string>(translation.Original),
                             CreatedUtc = DateTime.UtcNow
                         };
                         var addedTranslation = await _translationService.Create(new Context(), newTranslation, DataOptions.IgnorePermissions);
@@ -561,7 +573,7 @@ namespace Api.CanvasRenderer
 						Log.Info("frontendcodeservice", $"Adding default translation {translation.Module}/{translation.Original}");
 
                         // add the translated value if necessary
-                        if (translation.Original != translation.Translated && localeId != 1)
+                        if (translated != null && translation.Original != translated && localeId != 1)
                         {
 							Log.Info("frontendcodeservice", $"Updating default translation {addedTranslation.Id} {translation.Module}/{translation.Original} {translation.Translated}");
 
@@ -571,7 +583,7 @@ namespace Api.CanvasRenderer
                             }, DataOptions.IgnorePermissions);
                         }
                     }
-                    else if (localeId != 1 && translation.Original != translation.Translated && latestTranslation.Original == latestTranslation.Translated)
+                    else if (localeId != 1 && translation.Original != translated && latestTranslation.Original == translated)
                     {
                         Log.Info("frontendcodeservice",$"Updating default translation {latestTranslation.Id} {translation.Module}/{translation.Original} {translation.Translated}");
 
@@ -622,7 +634,7 @@ namespace Api.CanvasRenderer
                             {
                                 Module = segment.Module,
                                 Original = segment.TemplateLiteralToSearch,
-                                Translated = segment.TemplateLiteralToSearch,
+                                Translated = new Localized<string>(segment.TemplateLiteralToSearch),
                                 CreatedUtc = DateTime.UtcNow
                             };
                             await _translationService.Create(new Context(), newTranslation, DataOptions.IgnorePermissions);
@@ -1750,7 +1762,7 @@ namespace Api.CanvasRenderer
                             {
                                 Module = file.ModulePath.Replace($"/{file.FileName}", string.Empty),
                                 Original = value.Key,
-                                Translated = value.Value,
+                                Translated = new Localized<string>(locale, value.Value),
                                 IsDraft = false
                             });
                         }

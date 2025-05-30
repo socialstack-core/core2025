@@ -1,4 +1,5 @@
 using Api.CanvasRenderer;
+using Api.Translate;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -181,7 +182,7 @@ public partial class PageBuilder
 		var page = new Page(){
 			Url = Url,
 			Key = Key,
-			Title = Title,
+			Title = new Localized<string>(Title),
 			PrimaryContentIncludes = PrimaryContentIncludes,
 			PrimaryContentType = PrimaryContentType
 		};

@@ -638,6 +638,17 @@ namespace Api.CanvasRenderer
 		}
 
 		/// <summary>
+		/// Appends string content as a child of this node.
+		/// </summary>
+		/// <param name="stringContent"></param>
+		/// <returns></returns>
+		public CanvasNode AppendChild(string stringContent)
+		{
+			var newNode = new CanvasNode() { StringContent = stringContent };
+			return AppendChild(newNode);
+		}
+
+		/// <summary>
 		/// Chainable append child.
 		/// </summary>
 		/// <param name="child"></param>

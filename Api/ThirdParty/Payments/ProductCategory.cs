@@ -24,8 +24,7 @@ namespace Api.Payments
         /// The name of the product category
         /// </summary>
         [DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
+		public Localized<string> Name;
 
         /// <summary>
         /// The slug for product category
@@ -38,10 +37,9 @@ namespace Api.Payments
         /// The description of this product category.
         /// </summary>
         [DatabaseField(Length = 200)]
-        [Localized]
         [Data("type", "canvas")]
         [Data("main", "false")]
-        public string Description;
+        public Localized<string> Description;
 
         /// <summary>
         /// The target audience for the product category (web/internal/dev)

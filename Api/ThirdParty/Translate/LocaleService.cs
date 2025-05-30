@@ -175,7 +175,7 @@ namespace Api.Translate
 				await Create(new Context(), new Locale()
 				{
 					Code = "en",
-					Name = "English",
+					Name = new Localized<string>("English"),
 					Id = 1
 				}, DataOptions.IgnorePermissions);
 			}

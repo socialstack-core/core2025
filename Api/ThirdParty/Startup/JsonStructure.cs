@@ -653,6 +653,27 @@ namespace Api.Startup
 			var name = OriginalName;
 			var labelName = name;
 			var fieldType = TargetType;
+			var isLocalized = false;
+
+			if (fieldType.IsGenericType)
+			{
+				var genericFieldType = fieldType.GetGenericTypeDefinition();
+
+				if (genericFieldType == typeof(Localized<>))
+				{
+					isLocalized = true;
+
+					// Everything else acts as the interior type.
+					fieldType = fieldType.GetGenericArguments()[0];
+				}
+			}
+
+			var underlying = Nullable.GetUnderlyingType(fieldType);
+
+			if (underlying != null)
+			{
+				fieldType = underlying;
+			}
 
 			if (isVirtualList)
 			{
@@ -696,7 +717,7 @@ namespace Api.Startup
 			}
 			*/
 			
-			else if ((fieldType == typeof(int) || fieldType == typeof(int?) || fieldType == typeof(uint) || fieldType == typeof(uint?)) && labelName != "Id" && labelName.EndsWith("Id") && ContentTypes.GetType(labelName[0..^2].ToLower()) != null)
+			else if ((fieldType == typeof(int) || fieldType == typeof(uint)) && labelName != "Id" && labelName.EndsWith("Id") && ContentTypes.GetType(labelName[0..^2].ToLower()) != null)
 			{
 				// Remove "Id" from the end of the label:
 				labelName = labelName[0..^2];
@@ -712,7 +733,12 @@ namespace Api.Startup
 			Data["label"] = SpaceCamelCase(labelName);
 			Data["name"] = FirstCharacterToLower(name);
 			Data["type"] = type;
-			
+
+			if (isLocalized)
+			{
+				Data["localized"] = true;
+			}
+
 			// Any of these [Module] or inheritors?
 			foreach (var attrib in Attributes)
 			{
@@ -734,11 +760,6 @@ namespace Api.Startup
 				{
 					var data = attrib as DataAttribute;
 					Data[data.Name] = data.Value;
-				}
-				else if (attrib is LocalizedAttribute)
-				{
-					// Yep - it's translatable.
-					Data["localized"] = true;
 				}
 			}
 			

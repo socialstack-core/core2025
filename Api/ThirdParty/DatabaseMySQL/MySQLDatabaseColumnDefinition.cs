@@ -186,8 +186,8 @@ namespace Api.Database
 		/// <returns></returns>
 		public string TypeAsSql()
 		{
-			string sqlType = DataType.Trim();
-			if ((DataType == "varchar" || DataType == "varbinary") && MaxCharacters.HasValue)
+			string sqlType = IsJson ? "JSON" : DataType.Trim();
+			if (!IsJson && (DataType == "varchar" || DataType == "varbinary") && MaxCharacters.HasValue)
 			{
 				sqlType += "(" + MaxCharacters + ")";
 			}
@@ -213,7 +213,7 @@ namespace Api.Database
 		{
 			if (IsNullable)
 			{
-				// Includes the string types.
+				// Includes the string and json types.
 				return "null";
 			}
 

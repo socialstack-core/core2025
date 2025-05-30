@@ -175,7 +175,7 @@ namespace Api.Permissions{
 
 				if (TargetField.Localised && localeCode != null)
 				{
-					writer.Write((byte)'_');
+					writer.WriteASCII("`.`");
 					writer.WriteS(localeCode);
 				}
 
@@ -493,13 +493,13 @@ namespace Api.Permissions{
 				{
 					writer.WriteASCII("if(`");
 					writer.WriteS(Field.FieldInfo.Name);
-					writer.Write((byte)'_');
+					writer.WriteASCII("`.`");
 					writer.WriteS(localeCode);
 					writer.WriteASCII("` is null,`");
 					writer.WriteS(Field.FieldInfo.Name);
 					writer.WriteASCII("`,`");
 					writer.WriteS(Field.FieldInfo.Name);
-					writer.Write((byte)'_');
+					writer.WriteASCII("`.`");
 					writer.WriteS(localeCode);
 					writer.WriteASCII("`)");
 				}

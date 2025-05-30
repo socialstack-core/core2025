@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Api.Database;
+using Api.Translate;
 
 namespace Api.Database
 {
@@ -18,7 +19,12 @@ namespace Api.Database
 		/// The columns name.
 		/// </summary>
 		public string ColumnName;
-		
+
+		/// <summary>
+		/// True if this field is a string type but JSON on the server.
+		/// </summary>
+		public bool IsJson;
+
 		/// <summary>
 		/// True if it's nullable.
 		/// </summary>
@@ -59,21 +65,30 @@ namespace Api.Database
 			ColumnName = fromField.Name;
 			var fieldType = fromField.Type;
 
-			// fromField.TargetField.DeclaringType
-			
-			if (!fieldType.IsValueType)
+			if (fieldType.IsGenericType)
 			{
-				IsNullable = true;
-			}
-			else
-			{
-				var underlyingNullableType = Nullable.GetUnderlyingType(fieldType);
+				var genericDef = fieldType.GetGenericTypeDefinition();
 
-				if (underlyingNullableType != null)
+				if (genericDef == typeof(Localized<>))
 				{
-					fieldType = underlyingNullableType;
+					fieldType = typeof(string);
+					IsJson = true;
 					IsNullable = true;
 				}
+				else if (genericDef == typeof(Nullable<>))
+				{
+					var underlyingNullableType = Nullable.GetUnderlyingType(fieldType);
+
+					if (underlyingNullableType != null)
+					{
+						fieldType = underlyingNullableType;
+						IsNullable = true;
+					}
+				}
+			}
+			else if (!fieldType.IsValueType)
+			{
+				IsNullable = true;
 			}
 			
 			FieldType = fieldType;

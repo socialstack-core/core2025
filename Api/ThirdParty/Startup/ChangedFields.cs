@@ -644,6 +644,16 @@ namespace Api.Startup {
 				// Get field attributes:
 				var attribs = cf.Attributes;
 
+				if (field.FieldType.IsGenericType)
+				{
+					var typeDef = field.FieldType.GetGenericTypeDefinition();
+
+					if (typeDef == typeof(Localized<>))
+					{
+						cf.Localised = true;
+					}
+				}
+
 				foreach (var attrib in attribs)
 				{
 					if (attrib is DatabaseIndexAttribute attribute)
@@ -653,11 +663,6 @@ namespace Api.Startup {
 						dbi.Id = _indexSet.Count;
 						cf.AddIndex(dbi);
 						_indexSet.Add(dbi);
-					}
-
-					if (attrib is LocalizedAttribute)
-					{
-						cf.Localised = true;
 					}
 
 					if (attrib is MetaAttribute)

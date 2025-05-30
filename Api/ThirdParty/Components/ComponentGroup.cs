@@ -19,8 +19,7 @@ namespace Api.Components
         /// The name of the component group
         /// </summary>
         [DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
+		public Localized<string> Name;
 
 		/// <summary>
 		/// a flat string[] json array of components a role is allowed to access

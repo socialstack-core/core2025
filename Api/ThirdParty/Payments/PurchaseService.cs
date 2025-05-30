@@ -77,21 +77,60 @@ namespace Api.Payments
 			);
 			
 			InstallEmails(
-				new EmailTemplate()
+				new EmailBuilder()
 				{
 					Name = "Your payment receipt",
 					Subject = "Your payment receipt",
 					Key = "payment_receipt",
-					BodyJson = "{\"t\":\"Email/Default\",\"c\":[{\"t\":\"Email/Centered\",\"d\":{}," +
-					"\"c\":[\"Thank you! A payment was successfully made for \", {\"t\":\"UI/Token\",\"c\":\"${customData.printablePrice}\", \"d\":{\"mode\":\"customdata\",\"fields\":[\"printablePrice\"]}}]}," +
-					"{\"t\":\"Email/PrimaryButton\",\"d\":{\"label\":\"View payment details\",\"target\":\"/checkout/payment/${customData.paymentId}\"}}]}"
+					BuildBody = (EmailBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("Email/Centered")
+							.AppendChild(
+								"Thank you! A payment was successfully made for "
+							)
+							.AppendChild(
+								new CanvasNode("UI/Token")
+									.With("mode", "customdata")
+									.With("fields", new string[] { "printablePrice" })
+									.AppendChild("${customData.printablePrice}")
+							)
+							.AppendChild(
+								new CanvasNode("Email/PrimaryButton")
+									.With("label", "View payment details")
+									.With("target", "/checkout/payment/${customData.paymentId}")
+							)
+						);
+					}
 				},
-				new EmailTemplate()
+				new EmailBuilder()
 				{
 					Name = "A payment issue occurred",
 					Subject = "A payment issue occurred",
 					Key = "payment_fault",
-					BodyJson = "{\"c\":{\"t\":\"Email/Default\",\"d\":{},\"r\":{\"children\":[{\"t\":\"Email/Centered\",\"d\":{},\"c\":[{\"s\":\"We tried to request a payment of \",\"i\":2},{\"t\":\"UI/Token\",\"d\":{\"fields\":[\"customData\",\"printablePrice\"]},\"c\":{\"s\":\"customData.printablePrice\",\"i\":6},\"i\":4},{\"s\":\" but it was unable to go through. This can be because the card used was cancelled, has expired, or there are insufficient funds. If you're not sure, please check with your bank.\",\"i\":5}],\"i\":6},{\"t\":\"Email/PrimaryButton\",\"d\":{\"label\":\"View payment details\",\"target\":\"/checkout/payment/${customData.paymentId}\"},\"r\":{\"label\":null},\"i\":7}],\"customLogo\":null},\"i\":8},\"i\":9}"
+					BuildBody = (EmailBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("Email/Centered")
+							.AppendChild(
+								"We tried to request a payment of "
+							)
+							.AppendChild(
+								new CanvasNode("UI/Token")
+									.With("mode", "customdata")
+									.With("fields", new string[] { "printablePrice" })
+									.AppendChild("${customData.printablePrice}")
+							)
+							.AppendChild(
+								" but it was unable to go through. This can be because the card used was cancelled, has expired, or there are insufficient funds. If you're not sure, please check with your bank."
+							)
+							.AppendChild(
+								new CanvasNode("Email/PrimaryButton")
+									.With("label", "View payment details")
+									.With("target", "/checkout/payment/${customData.paymentId}")
+							)
+						);
+					}
 				}
 			);
 			

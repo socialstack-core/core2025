@@ -17,14 +17,12 @@ namespace Api.Tags
 		/// The name of the tag in the site default language.
 		/// </summary>
 		[DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
+		public Localized<string> Name;
 		
 		/// <summary>
 		/// Description of this tag.
 		/// </summary>
-		[Localized]
-		public string Description;
+		public Localized<string> Description;
 
 		/// <summary>
 		/// The feature image ref. See also: "Upload.Ref" in the Uploads module.

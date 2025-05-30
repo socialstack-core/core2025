@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using Api.Startup.Routing;
 using Api.Automations;
+using Api.Translate;
 
 namespace Api.Pages
 {
@@ -331,8 +332,6 @@ namespace Api.Pages
 			}
 		}
 		
-		private uint? _adminHomePageId;
-
 		/// <summary>
 		/// Installs the given page(s). It checks if they exist by their InstallKey, and if not, creates them.
 		/// </summary>
@@ -378,7 +377,7 @@ namespace Api.Pages
 				builder.Build();
 
 				await Events.Page.BeforePageInstall.Dispatch(context, builder);
-				builder.Page.BodyJson = builder.Body.ToJson();
+				builder.Page.BodyJson = new Localized<string>(builder.Body.ToJson());
 
 				await Create(context, builder.Page, DataOptions.IgnorePermissions);
 			}

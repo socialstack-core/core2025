@@ -18,14 +18,12 @@ namespace Api.Categories
 		/// The name of the category in the site default language.
 		/// </summary>
 		[DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
+		public Localized<string> Name;
 		
 		/// <summary>
 		/// Description of this category.
 		/// </summary>
-		[Localized]
-		public string Description;
+		public Localized<string> Description;
 
 		/// <summary>
 		/// The feature image ref. See also: "Upload.Ref" in the Uploads module.
@@ -36,7 +34,7 @@ namespace Api.Categories
 		/// <summary>
 		/// The icon ref. See also: "Upload.Ref" in the Uploads module.
 		/// </summary>
-	        [DatabaseField(Length = 300)]
+	    [DatabaseField(Length = 300)]
 		public string IconRef;
 	}
 	
