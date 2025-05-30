@@ -154,7 +154,14 @@ namespace Api.NavMenus
 
 			foreach (var item in allMenuItems)
 			{
-				if (!capabilitiesByType.TryGetValue(item.PageContentType, out var relevantCapabilities))
+				var contentType = item.PageContentType;
+
+				if (contentType is null)
+				{
+					continue;
+				}
+				
+				if (!capabilitiesByType.TryGetValue(contentType, out var relevantCapabilities))
 				{
 					continue;
 				}

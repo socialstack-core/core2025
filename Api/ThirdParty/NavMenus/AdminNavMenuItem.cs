@@ -43,7 +43,16 @@ namespace Api.NavMenus
 		{
 			get
 			{
-				var type = PageKey.Split(":")[1];
+				if (string.IsNullOrEmpty(PageKey))
+				{
+					return null;
+				}
+
+				if (!PageKey.Contains(':'))
+				{
+					return null;
+				}
+				var type = PageKey?.Split(":")[1];
 
 				if (string.IsNullOrEmpty(type))
 				{
@@ -52,7 +61,7 @@ namespace Api.NavMenus
 				}
 
 				var svc = Services.Get(type + "Service");
-				return svc.ServicedType;
+				return svc?.ServicedType;
 			}
 		}
 	}
