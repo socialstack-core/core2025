@@ -2,6 +2,7 @@ using Api.Contexts;
 using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
+using Api.Translate;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -556,9 +557,21 @@ namespace Api.Startup
 
 						// The type we may be outputting a value outputter for:
 						var fieldType = field.TargetType;
+						var isLocalised = false;
+
+						if (fieldType.IsGenericType)
+						{
+							var typeDef = fieldType.GetGenericTypeDefinition();
+
+							if (typeDef == typeof(Localized<>))
+							{
+								isLocalised = true;
+								fieldType = fieldType.GetGenericArguments()[0];
+							}
+						}
 
 						// Check if it's a nullable:
-						Type nullableType = Nullable.GetUnderlyingType(field.TargetType);
+						Type nullableType = Nullable.GetUnderlyingType(fieldType);
 
 						if (nullableType != null)
 						{
@@ -568,6 +581,7 @@ namespace Api.Startup
 						if (!typeMap.TryGetValue(fieldType, out JsonFieldType jft))
 						{
 							// Can't serialise this here.
+							Log.Warn("typeio", "Skipped serialising a field because it is of an unrecognised type: " + field.Name + " on " + typeof(T));
 							continue;
 						}
 
@@ -643,8 +657,14 @@ namespace Api.Startup
 						// ,"fieldName":
 						property.Write(writerBody);
 						// Value->str:
-						jft.EmitWrite(writerBody, field, nullableType);
-						
+						if (isLocalised)
+						{
+							jft.EmitLocalisedWrite(writerBody, field, nullableType);
+						}
+						else
+						{
+							jft.EmitWrite(writerBody, field, nullableType);
+						}
 						// Mark the end of the conditional block
 						writerBody.MarkLabel(endOfIfLabel);
 
@@ -825,6 +845,95 @@ namespace Api.Startup
 		{
 			Type = type;
 			OnSerialise = onSerialise;
+		}
+
+		/// <summary>
+		/// Emits a write of a Localised field.
+		/// </summary>
+		/// <param name="body"></param>
+		/// <param name="field"></param>
+		/// <param name="nullableType"></param>
+		public void EmitLocalisedWrite(ILGenerator body, JsonField field, Type nullableType)
+		{
+			Label endOfStatementLabel = body.DefineLabel();
+
+			// e.g. Localised<uint?> -> valueType is uint?
+			var localisedType = field.TargetType;
+			var valueType = localisedType.GetGenericArguments()[0];
+
+			// Always put the result value in to a local variable.
+			var loc = body.DeclareLocal(valueType);
+
+			if (field.PropertyGet != null)
+			{
+				var propertyLocal = body.DeclareLocal(localisedType);
+				body.Emit(OpCodes.Ldarg_1);
+				body.Emit(OpCodes.Callvirt, field.PropertyGet);
+				body.Emit(OpCodes.Stloc, propertyLocal);
+				body.Emit(OpCodes.Ldloca, propertyLocal);
+			}
+			else
+			{
+				// Field:
+				body.Emit(OpCodes.Ldarg_1);
+				body.Emit(OpCodes.Ldflda, field.FieldInfo);
+			}
+
+			// An address of the Localized struct is currently on the stack.
+
+			// Push the context and a constant 'true'
+			body.Emit(OpCodes.Ldarg_3); // context
+			body.Emit(OpCodes.Ldc_I4_1); // fallback = true
+
+			// Can now call Get:
+			var localisedGetMethod = localisedType.GetMethod(
+				"Get", BindingFlags.Public | BindingFlags.Instance,
+				new Type[] {
+					typeof(Context),
+					typeof(bool)
+				});
+
+			body.Emit(OpCodes.Callvirt, localisedGetMethod);
+
+			// The value, which can still be a nullable, is now in the local:
+			body.Emit(OpCodes.Stloc, loc);
+
+			if (nullableType != null)
+			{
+				body.Emit(OpCodes.Ldloca, loc);
+
+				// Check if it is null (and if so, output "null" and skip the following value)
+				var hasValueMethod = valueType.GetProperty("HasValue").GetGetMethod();
+
+				body.Emit(OpCodes.Callvirt, hasValueMethod);
+
+				Label notNullLabel = body.DefineLabel();
+
+				body.Emit(OpCodes.Brtrue, notNullLabel);
+				TypeIOEngine.WriteNull(body);
+				body.Emit(OpCodes.Br, endOfStatementLabel);
+				body.MarkLabel(notNullLabel);
+			}
+
+			// Serialise the value:
+			OnSerialise(body, () => {
+
+				if (nullableType == null)
+				{
+					// Emit a read of the local:
+					body.Emit(OpCodes.Ldloc, loc);
+				}
+				else
+				{
+					// This value is nullable, but it's specifically not null.
+					// Put the actual value onto the stack here.
+					body.Emit(OpCodes.Ldloca, loc);
+					var getValueMethod = field.TargetType.GetProperty("Value").GetGetMethod();
+					body.Emit(OpCodes.Callvirt, getValueMethod);
+				}
+			});
+
+			body.MarkLabel(endOfStatementLabel);
 		}
 
 		/// <summary>
