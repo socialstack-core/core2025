@@ -165,8 +165,8 @@ namespace Api.Translate
 		/// <returns></returns>
 		private async ValueTask OnCacheLoaded()
 		{
-			// Get the default cache:
-			var defaultCache = GetCacheForLocale(1);
+			// Get the cache:
+			var defaultCache = GetCache();
 
 			// Does it have anything in it?
 			if (defaultCache.Count() == 0)

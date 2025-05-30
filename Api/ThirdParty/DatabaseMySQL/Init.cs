@@ -153,8 +153,6 @@ namespace Api.DatabaseMySQL
 
 			var selectQuery = Query.Select(service.InstanceType, entityName);
 			var listQuery = Query.List(service.InstanceType, entityName);
-			var listRawQuery = Query.List(service.InstanceType, entityName);
-			listRawQuery.Raw = true;
 
 			service.EventGroup.AfterInstanceTypeUpdate.AddEventListener(async (Context context, AutoService s) => {
 
@@ -170,8 +168,6 @@ namespace Api.DatabaseMySQL
 
 				selectQuery = Query.Select(s.InstanceType, entityName);
 				listQuery = Query.List(s.InstanceType, entityName);
-				listRawQuery = Query.List(s.InstanceType, entityName);
-				listRawQuery.Raw = true;
 
 				if (isDbStored)
 				{
@@ -328,12 +324,8 @@ namespace Api.DatabaseMySQL
 
 				queryPair.Handled = true;
 
-				// "Raw" results are as-is from the database.
-				// That means the fields are not automatically filled in with the default locale when they're empty.
-				var raw = (queryPair.QueryA.DataOptions & DataOptions.RawFlag) == DataOptions.RawFlag;
-
 				// Get the results from the database:
-				queryPair.Total = await _database.GetResults(context, queryPair, queryPair.OnResult, queryPair.SrcA, queryPair.SrcB, service.InstanceType, raw ? listRawQuery : listQuery);
+				queryPair.Total = await _database.GetResults(context, queryPair, queryPair.OnResult, queryPair.SrcA, queryPair.SrcB, service.InstanceType, listQuery);
 
 				return queryPair;
 			});

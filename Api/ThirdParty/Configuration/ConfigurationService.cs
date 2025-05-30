@@ -660,7 +660,7 @@ namespace Api.Configuration
 		{
 			var set = new List<Configuration>();
 
-			var cache = GetCacheForLocale(1);
+			var cache = GetCache();
 			if (cache == null)
 			{
 				return set;

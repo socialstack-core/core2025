@@ -49,11 +49,7 @@ public enum DataOptions : int
 	/// Checks if the given row has not changed based on the EditedUtc date.
 	/// </summary>
 	CheckNotChanged = 8,
-	/// <summary>
-	/// Set this flag true to get the raw data from the db.
-	/// </summary>
-	RawFlag = 4,
-
+	
 	/// <summary>
 	/// Cache flag
 	/// </summary>
@@ -1151,121 +1147,6 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 	}
 
 	/// <summary>
-	/// Populates the given raw entity from the given entity. Any blank localised fields are copied from the primary entity.
-	/// </summary>
-	/// <param name="raw"></param>
-	/// <param name="entity"></param>
-	/// <param name="primaryEntity"></param>
-	public void PopulateRawEntityFromTarget(T raw, T entity, T primaryEntity)
-	{
-		// First, all the fields we'll be working with:
-		var allFields = FieldMap.Fields;
-
-		for (var i = 0; i < allFields.Count; i++)
-		{
-			// Get the field:
-			var field = allFields[i];
-
-			// Read the value from the original object:
-			var value = field.TargetField.GetValue(entity);
-
-			// If the field is localised, and the raw value is null, use value from primaryEntity instead.
-			// Note! [Localised] fields must be a nullable type for this to ever happen.
-
-			if (field.LocalisedName != null && field.IsNullable())
-			{
-				// If the entity field matches the primary content one and the type is nullable, set a null into raw.
-				var primaryContentValue = field.TargetField.GetValue(primaryEntity);
-
-				if (primaryContentValue != null)
-				{
-					if (primaryContentValue.Equals(value))
-					{
-						// This localised type has the same value as the primary locale. Don't translate it.
-						value = null;
-					}
-				}
-			}
-
-			field.TargetField.SetValue(raw, value);
-		}
-	}
-
-	/// <summary>
-	/// Creates a raw entity from a given localised target.
-	/// This clones the given object and sets any localised fields to their default.
-	/// </summary>
-	/// <param name="entity"></param>
-	/// <returns></returns>
-	public T CreateRawEntityFromTarget(T entity)
-	{
-		var raw = (T)Activator.CreateInstance(InstanceType);
-
-		var allFields = FieldMap.Fields;
-
-		for (var i = 0; i < allFields.Count; i++)
-		{
-			// Get the field:
-			var field = allFields[i];
-
-			// If the field is localised, it remains on its default.
-			if (field.LocalisedName == null)
-			{
-				// Not a localised field - set its value from the given entity.
-				var value = field.TargetField.GetValue(entity);
-				field.TargetField.SetValue(raw, value);
-			}
-		}
-
-		return raw;
-	}
-
-	/// <summary>
-	/// Populates the given entity from the given raw and primary entities.
-	/// The raw entity is used to check if a locale specific override exists.
-	/// If it does, the value comes from the raw entity. Otherwise, it comes from the primary entity.
-	/// </summary>
-	/// <param name="entity"></param>
-	/// <param name="raw"></param>
-	/// <param name="primaryEntity"></param>
-	public void PopulateTargetEntityFromRaw(T entity, T raw, T primaryEntity)
-	{
-		// First, all the fields we'll be working with:
-		var allFields = FieldMap.Fields;
-
-		for (var i = 0; i < allFields.Count; i++)
-		{
-			// Get the field:
-			var field = allFields[i];
-
-			object value;
-
-			// If the field is not localised, then the new value comes from the primary entity.
-			if (field.LocalisedName == null)
-			{
-				value = field.TargetField.GetValue(primaryEntity);
-			}
-			else
-			{
-				// Does the locale specify a value for this field?
-				// Read the value from the raw object:
-				value = field.TargetField.GetValue(raw);
-
-				// If the field is localised, and the raw value is null, use value from primaryEntity instead.
-				// Note! [Localised] fields must be a nullable type for this to ever happen.
-				if (value == null)
-				{
-					// Read from primary entity instead:
-					value = field.TargetField.GetValue(primaryEntity);
-				}
-			}
-
-			field.TargetField.SetValue(entity, value);
-		}
-
-	}
-
-	/// <summary>
 	/// Returns the EventGroup[T] for this AutoService, or null if it is an autoService without an EventGroup.
 	/// </summary>
 	/// <returns></returns>
@@ -1305,45 +1186,6 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 	public ulong ReverseId(ID input)
 	{
 		return _idConverter.Reverse(input);
-	}
-
-	/// <summary>
-	/// Call this when the primary object changes. It makes sure any localised versions are updated.
-	/// </summary>
-	/// <param name="entity"></param>
-	public void OnPrimaryEntityChanged(T entity)
-	{
-		// Primary locale update - must update all other caches in case they contain content from the primary locale.
-		var id = entity.GetId();
-
-		var caches = _cacheSet?.Caches;
-
-		if (caches == null)
-		{
-			return;
-		}
-
-		for (var i = 1; i < caches.Length; i++)
-		{
-			var altLocaleCache = caches[i];
-
-			if (altLocaleCache == null)
-			{
-				continue;
-			}
-
-			var altRaw = altLocaleCache.GetRaw(id);
-			var alt = altLocaleCache.Get(id);
-
-			if (altRaw == null || alt == null)
-			{
-				// This row is not in this locale.
-				continue;
-			}
-
-			// Update the alt object again:
-			PopulateTargetEntityFromRaw(alt, altRaw, entity);
-		}
 	}
 
 	/// <summary>

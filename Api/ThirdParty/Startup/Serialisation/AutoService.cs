@@ -714,10 +714,11 @@ public partial class AutoService<T, ID>
     {
         var collectedIds = idSet as IDCollector<S_ID>;
 
-        // If cached, directly enumerate over the IDs via the cache.
-        if (CacheAvailable)
+		// If cached, directly enumerate over the IDs via the cache.
+		var cache = GetCache();
+		
+        if (cache != null)
         {
-            var cache = GetCacheForLocale(1);
             var indexRef = cache.GetIndex<S_ID>(setField) as NonUniqueIndex<T, S_ID>;
 
             // This mapping type is cached.
@@ -819,12 +820,12 @@ public partial class AutoService<T, ID>
     {
         var collectedIds = idSet as IDCollector<ID>;
 
-        var cache = GetCacheForLocale(context.LocaleId);
+        var cache = GetCache();
         
         // If cached, directly enumerate over the IDs via the cache.
         if (cache != null)
         {
-            var primary = cache.GetPrimary();
+            var idIndex = cache.GetIdIndex();
 
             // This mapping type is cached.
             var _enum = collectedIds.GetNonAllocEnumerator();
@@ -834,7 +835,7 @@ public partial class AutoService<T, ID>
                 // Get current value:
                 var valID = _enum.Current();
                 // Read that ID set from the cache:
-                if (primary.TryGetValue(valID, out T entity))
+                if (idIndex.TryGetValue(valID, out T entity))
                 {
                     if (first)
                     {
