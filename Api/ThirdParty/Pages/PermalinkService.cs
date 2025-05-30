@@ -439,7 +439,7 @@ namespace Api.Pages
 		/// <returns></returns>
 		private async ValueTask<Dictionary<string, List<Permalink>>> CreateSourcesByTarget(Context context)
 		{
-			var all = await Where().ListAll(context);
+			var all = await Where(DataOptions.IgnorePermissions).ListAll(context);
 			var result = new Dictionary<string, List<Permalink>>();
 
 			foreach (var link in all)

@@ -128,6 +128,8 @@ namespace Api.Payments
 		/// <returns></returns>
 		public async ValueTask SyncPermalinks(Context context)
 		{
+            Log.Warn("product", "Sync product permalinks");
+
 			var allProducts = await Where("", DataOptions.IgnorePermissions).ListAll(context);
 			var links = new List<PermalinkUrlTarget>();
 
