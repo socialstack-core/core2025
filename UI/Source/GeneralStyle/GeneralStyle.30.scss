@@ -48,3 +48,8 @@ html {
 		*/
 	}
 }
+
+// override Bootstrap default max width
+html .container {
+	max-width: var(--max-width);
+}
