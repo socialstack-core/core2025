@@ -2,6 +2,8 @@ import { DefaultInputType } from 'UI/Input/Default';
 import { useId } from 'react';
 
 type RadioInputType = DefaultInputType & {
+	groupVariant?: string,
+	groupIcon?: string,
 	solid?: boolean,
 	value?: boolean,
 	defaultValue?: boolean
@@ -16,7 +18,7 @@ declare global {
 
 const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 	const { field, validationFailure, label, onInputRef, helpFieldId } = props;
-	const { className, solid, onChange, ...attribs } = field;
+	const { className, groupVariant, groupIcon, solid, onChange, ...attribs } = field;
 	const id = attribs.id || useId();
 
 	const classes = className ? className.split(" ") : [];
@@ -42,6 +44,30 @@ const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 
 	const value = (!!field.value) || field.checked;
 	const defaultValue = (!!field.defaultValue) || field.defaultChecked;
+
+	// grouped radio button - requires different markup
+	// ref: https://getbootstrap.com/docs/5.1/components/button-group/#checkbox-and-radio-button-groups
+	if (groupVariant) {
+		return <>
+			<input
+				ref={(el: HTMLInputElement) => onInputRef && onInputRef(el)}
+				className="btn-check"
+				type="radio"
+				autoComplete="off"
+				onInput={onChange}
+				{...attribs}
+				id={id}
+				checked={value}
+				defaultChecked={defaultValue}
+			/>
+			<label className={`btn btn-outline-${groupVariant}`} htmlFor={id}>
+				{groupIcon ? <>
+					<i className={`fr ${groupIcon}`} />
+					<span className="sr-only">{label}</span>
+					</> : label}
+			</label>
+		</>;
+	}
 
 	return (
 		<div className={attribs.readOnly ? '' : radioClass}>

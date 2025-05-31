@@ -3,6 +3,8 @@ import { useId } from 'react';
 
 type CheckboxInputType = DefaultInputType & {
 	isSwitch?: boolean,
+	groupVariant?: string,
+	groupIcon?: string,
 	solid?: boolean,
 	value?: boolean,
 	defaultValue?: boolean
@@ -25,7 +27,7 @@ interface CheckboxProps {
 const Checkbox: React.FC<CheckboxProps> = (props) => {
 	const { field, config } = props;
 	const { label, validationFailure, onInputRef, helpFieldId } = config;
-	let { isSwitch, solid, className, onChange, style, ...attribs } = field;
+	let { isSwitch, groupVariant, groupIcon, solid, className, onChange, style, ...attribs } = field;
 	const id = attribs.id || useId();
 	
 	const classes = className ? className.split(" ") : [];
@@ -53,6 +55,30 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 	const value = (!!field.value) || field.checked;
 	const defaultValue = (!!field.defaultValue) || field.defaultChecked;
 
+	// grouped radio button - requires different markup
+	// ref: https://getbootstrap.com/docs/5.1/components/button-group/#checkbox-and-radio-button-groups
+	if (groupVariant) {
+		return <>
+			<input
+				ref={(el) => onInputRef && onInputRef(el as HTMLElement)}
+				className="btn-check"
+				type="checkbox"
+				autoComplete="off"
+				onInput={onChange}
+				{...attribs}
+				id={id}
+				checked={value}
+				defaultChecked={defaultValue}
+			/>
+			<label className={`btn btn-outline-${groupVariant}`} htmlFor={id}>
+				{groupIcon ? <>
+					<i className={`fr ${groupIcon}`} />
+					<span className="sr-only">{label}</span>
+				</> : label}
+			</label>
+		</>;
+	}
+
 	return (
 		<div className={field.readOnly ? '' : checkClass} style={style}>
 			{field.readOnly ? (
@@ -64,6 +90,7 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 					type="checkbox"
 					onInput={onChange}
 					{...attribs}
+					role={isSwitch ? "switch" : undefined}
 					id={id}
 					checked={value}
 					defaultChecked={defaultValue}
