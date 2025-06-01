@@ -53,3 +53,8 @@ html {
 html .container {
 	max-width: var(--max-width);
 }
+
+// ensure there's always spacing between page content and the page footer
+#react-root > #wrapper > #content + footer {
+	margin-top: px_to_rem(40);
+}
