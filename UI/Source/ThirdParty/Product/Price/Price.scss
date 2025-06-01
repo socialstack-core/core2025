@@ -1,0 +1,42 @@
+.ui-product-view__price {
+	display: block;
+	container-name: product-price;
+	container-type: inline-size;
+
+	&-internal {
+		display: flex;
+		align-items: center;
+		gap: px_to_rem(4);
+		font-size: px_to_rem(18);
+		font-weight: 600;
+
+		// from / was elements
+		> span {
+			font-size: px_to_rem(10);
+			font-weight: 700;
+
+			// previous price
+			&:last-child {
+				color: var(--danger);
+			}
+		}
+
+	}
+
+}
+
+@container product-price (width > #{px_to_rem(210)}) {
+
+	.ui-product-view__price {
+
+		&-internal {
+			font-size: px_to_rem(39);
+
+			> span {
+				font-size: px_to_rem(15);
+			}
+
+		}
+
+	}
+}
