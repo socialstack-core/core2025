@@ -1,0 +1,22 @@
+.ui-product-qty {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border: 1px solid #ccc;
+	background-color: var(--palette-extralight-pink);
+	border-radius: px_to_rem(8);
+
+	&__down,
+	&__up {
+		min-height: px_to_rem(44);
+	}
+
+	&__down {
+		border-radius: px_to_rem(8) 0 0 px_to_rem(8);
+	}
+
+	&__up {
+		border-radius: 0 px_to_rem(8) px_to_rem(8) 0;
+	}
+
+}
