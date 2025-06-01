@@ -1,16 +1,149 @@
 .ui-product-signpost {
-	// reference an image in the same component folder
-	//background-image: url("./filename.svg");
-	
-	// Style should be mobile first with media queries for larger sizes.
-}
+	display: flex;
+	flex-direction: column;
+	gap: px_to_rem(12);
+	transition: box-shadow .3s ease-in-out;
+	padding: px_to_rem(8);
+	border-radius: px_to_rem(8);
 
-/*
-Size overrides. See bootstrap breakpoints for more information:
-https://getbootstrap.com/docs/5.0/layout/breakpoints/#min-width
-
-@include media-breakpoint-up(md) {
-	.ui-product-signpost {
+	&:hover {
+		box-shadow: 0 0 px_to_rem(16) 0 rgba(#210818, 25%);
 	}
+
+	> a {
+		color: inherit;
+		text-decoration: none;
+		display: flex;
+		flex-direction: column;
+		gap: px_to_rem(12);
+	}
+
+	&__header {
+		position: relative;
+	}
+
+	&__featured {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		border-radius: px_to_rem(8) px_to_rem(8) 0 0;
+		background: var(--secondary);
+		font-size: px_to_rem(10);
+		color: var(--secondary-fg);
+		display: flex;
+		align-items: center;
+		padding: px_to_rem(4) px_to_rem(8);
+		gap: px_to_rem(8);
+
+		> i {
+			font-size: px_to_rem(13);
+		}
+
+	}
+
+	picture {
+		display: block;
+
+		&::after {
+			content: "";
+			background: linear-gradient(225deg, rgba(255, 255, 255, 0) 0%, rgba(74, 74, 73, 0.1) 100%);
+			position: absolute;
+			inset: 0;
+		}
+
+		> img {
+			max-width: 100%;
+			height: auto;
+			object-fit: contain;
+			aspect-ratio: 149 / 140;
+		}
+	}
+
+	&__liked {
+		position: absolute;
+		left: px_to_rem(4);
+		bottom: px_to_rem(4);
+		border-radius: px_to_rem(4);
+		width: px_to_rem(28);
+		height: px_to_rem(28);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--secondary);
+		padding: 0 !important;
+
+		> .form-check-input {
+			display: none;
+		}
+
+		> .form-check-label {
+			color: var(--secondary-fg);
+
+			> i {
+				font-size: px_to_rem(13);
+			}
+		}
+	}
+
+	&__category {
+		display: flex;
+		align-items: center;
+		gap: px_to_rem(8);
+		font-size: px_to_rem(10);
+		color: #5f5f5f;
+
+		> i {
+			font-size: px_to_rem(12);
+		}
+	}
+
+	&__name {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		overflow: hidden;
+		min-height: px_to_rem(72);
+	}
+
+	&__price {
+		display: flex;
+		align-items: center;
+		gap: px_to_rem(4);
+		font-size: px_to_rem(18);
+		font-weight: 600;
+
+		> span {
+			font-size: px_to_rem(10);
+			font-weight: 700;
+
+			&:last-child {
+				color: var(--danger);
+			}
+		}
+
+	}
+
+	&__stock {
+		display: flex;
+		align-items: center;
+		gap: px_to_rem(4);
+		font-size: px_to_rem(10);
+		color: #5f5f5f;
+
+		> i {
+			font-size: px_to_rem(12);
+		}
+
+	}
+
+	&__add,
+	&__choose {
+		margin-top: auto;
+		border-radius: px_to_rem(8);
+		font-size: px_to_rem(15);
+		min-height: px_to_rem(44);
+	}
+
 }
-*/
