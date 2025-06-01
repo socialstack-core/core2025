@@ -1,7 +1,6 @@
 import { Product } from 'Api/Product';
 import Image from 'UI/Image';
 import Link from 'UI/Link';
-import Input from 'UI/Input';
 import Quantity from 'UI/Product/Quantity';
 import defaultImageRef from './image_placeholder.png';
 import ProductPrice from 'UI/Product/Price';
@@ -11,6 +10,16 @@ import ProductStock from 'UI/Product/Stock';
  * Props for the Signpost component.
  */
 interface SignpostProps {
+	/**
+	 * set true to disable link to product info
+	 */
+	disableLink?: boolean,
+
+	/**
+	 * quantity within basket
+	 */
+	quantity?: number,
+
 	/**
 	 * The content to display in this signpost.
 	 */
@@ -22,19 +31,13 @@ interface SignpostProps {
  * @param props React props.
  */
 const Signpost: React.FC<SignpostProps> = (props) => {
-	const { content } = props;
+	const { disableLink, quantity, content } = props;
 
 	// TODO: need an isFeatured flag per product
 	let isFeatured = true;
 
-	// TODO: need a flag per product to tie to "thumbs up" icon
-	let isLiked = true;
-	const thumbsUpLabel = <>
-		<i className="fr fr-thumbs-up"></i>
-		<span className="sr-only">
-			{`Like`}
-		</span>
-	</>;
+	// TODO: need an isApproved flag
+	let isApproved = true;
 
 	// TODO: retrieve associated category name
 	// productCategories array?
@@ -51,49 +54,62 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 		// TODO
 	}
 
-	return (
-		<div className="ui-product-signpost">
-			<Link href={content.primaryUrl}>
-				<header className="ui-product-signpost__header">
-					{/* optional featured product header */}
-					{isFeatured && <>
-						<span className="ui-product-signpost__featured">
-							<i className="fr fr-star"></i>
-							{`Featured product`}
+	function renderInternal() {
+		return <>
+			<header className="ui-product-signpost__header">
+				{/* optional featured product header */}
+				{isFeatured && <>
+					<span className="ui-product-signpost__featured">
+						<i className="fr fr-star"></i>
+						{`Featured product`}
+					</span>
+				</>}
+
+				{/* product image */}
+				<Image size={200} fileRef={content.featureRef || defaultImageRef} />
+
+				{/* thumbs up icon */}
+				{isApproved && <>
+					<div className="ui-product-signpost__approved">
+						<i className="fr fr-thumbs-up"></i>
+						<span className="sr-only">
+							{`Approved`}
 						</span>
-					</>}
+					</div>
+				</>}
+			</header>
 
-					{/* product image */}
-					<Image size={200} fileRef={content.featureRef || defaultImageRef} />
+			{/* category */}
+			<span className="ui-product-signpost__category">
+				<i className="fr fr-tag"></i>
+				{categoryName}
+			</span>
 
-					{/* thumbs up icon */}
-					<Input type="checkbox" className="ui-product-signpost__liked" label={thumbsUpLabel} onClick={(e) => {
-						e.stopPropagation()
-					}} value={isLiked} noWrapper />
-				</header>
+			{/* product name */}
+			<span className="ui-product-signpost__name">
+				{content.name}
+			</span>
 
-				{/* category */}
-				<span className="ui-product-signpost__category">
-					<i className="fr fr-tag"></i>
-					{categoryName}
-				</span>
+			{/* price */}
+			<ProductPrice product={content} />
 
-				{/* product name */}
-				<span className="ui-product-signpost__name">
-					{content.name}
-				</span>
+			{/* stock info */}
+			<ProductStock product={content} />
+		</>;
+	}
 
-				{/* price */}
-				<ProductPrice product={content} />
-
-				{/* stock info */}
-				<ProductStock product={content} />
-
-			</Link>
+	return (
+		<div className={disableLink ? "ui-product-signpost ui-product-signpost--disabled" : "ui-product-signpost"}>
+			{disableLink && renderInternal()}
+			{!disableLink && <>
+				<Link href={content.primaryUrl || `/product/${content.slug}`}>
+					{renderInternal()}
+				</Link>
+			</>}
 
 			{/* quantity controls */}
 			{!hasOptions && <>
-				<Quantity />
+				<Quantity inBasket={quantity} />
 			</>}
 
 			{!hasOptions && <>

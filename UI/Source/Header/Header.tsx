@@ -14,6 +14,9 @@ import { lazyLoad } from 'UI/Functions/WebRequest';
 import productCategoryApi from 'Api/ProductCategory';
 import useApi from "UI/Functions/UseApi";
 import Loading from "UI/Loading";
+import BasketItem from 'UI/Product/Signpost';
+import { useCart } from 'UI/Payments/CartSession';
+import { calculatePrice, recurrenceText } from 'UI/Functions/Payments';
 
 // TODO: swap to 0 once "care-home-nursing-home-supplies-equipment" is no longer a thing
 const PARENT_CATEGORY_ID = 1;
@@ -85,7 +88,9 @@ interface HeaderLinkProps {
  * @param props React props.
  */
 const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, searchPlaceholder, notificationCount, demo, ...props }) => {
+	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading } = useCart();
 	const [categoryId, setCategoryId] = useState(PARENT_CATEGORY_ID);
+	//const [basketItems, setBasketItems] = useState(loading ? [] : shoppingCart?.productQuantities || []);
 	const [productCategory, setProductCategory] = useState();
 	const [productSubCategories, setProductSubCategories] = useState();
 
@@ -206,9 +211,34 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 		notificationCount = 0;
 	}
 
-	// TODO
-	var basketCount = 2;
-	var basketTotal = 221.87;
+	// calculate basket totals
+	var basketCount = 0;
+	var basketTotal = 0;
+
+	let basketItems = loading ? [] : shoppingCart?.productQuantities;
+
+	basketItems.forEach(cartInfo => {
+		var product = cartInfo.product;
+
+		if (!product) {
+			return;
+		}
+
+		var qty = cartInfo.quantity;
+
+		if (qty < product.minQuantity) {
+			qty = product.minQuantity;
+		}
+
+		var cost = calculatePrice(product, qty);
+
+		basketCount += qty;
+
+		if (cost) {
+			basketTotal += cost.amount / 100;
+		}
+
+	});
 
 	let GBPound = new Intl.NumberFormat('en-GB', {
 		style: 'currency',
@@ -293,18 +323,50 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 							<path d="M18.7526 53C20.58 53 22.0615 51.5186 22.0615 49.6911C22.0615 47.8636 20.58 46.3822 18.7526 46.3822C16.9251 46.3822 15.4436 47.8636 15.4436 49.6911C15.4436 51.5186 16.9251 53 18.7526 53Z" fill="currentColor" />
 							<path d="M43.018 53C44.8455 53 46.327 51.5186 46.327 49.6911C46.327 47.8636 44.8455 46.3822 43.018 46.3822C41.1906 46.3822 39.7091 47.8636 39.7091 49.6911C39.7091 51.5186 41.1906 53 43.018 53Z" fill="currentColor" />
 						</svg>
-						{basketCount == 0 && <>
-							<span className="site-header__actions-basket-label">
-								{`Basket`}
-							</span>
+						{loading && <>
+							<Loading small />
 						</>}
-						<span className="site-header__actions-basket-total">
-							{GBPound.format(basketTotal)}
-						</span>
-						<NotificationBadge count={basketCount} />
+						{!loading && <>
+							{cartIsEmpty() && <>
+								<span className="site-header__actions-basket-label">
+									{`Basket`}
+								</span>
+							</>}
+							{!cartIsEmpty() && <>
+								<span className="site-header__actions-basket-total">
+									{GBPound.format(basketTotal)}
+								</span>
+								<NotificationBadge count={basketCount} />
+							</>}
+						</>}
 					</button>
 					<div className="site-header__basket-wrapper" popover="auto" id="basket_popover">
-						... TODO ...
+						<header>
+							{loading && <>
+								<Loading small />
+							</>}
+							{!loading && <>
+								{cartIsEmpty() && <>
+									<span>
+										{`Basket is empty`}
+									</span>
+								</>}
+								{!cartIsEmpty() && <>
+									<span>
+										{GBPound.format(basketTotal)}
+									</span>
+									<NotificationBadge count={basketCount} />
+								</>}
+							</>}
+						</header>
+						{basketItems.map(item => {
+							return <BasketItem content={item.product} quantity={Math.max(item.quantity, item.product.minQuantity)} disableLink />
+						})}
+						{!cartIsEmpty() && <>
+							<a href="/cart" className="btn btn-primary site-header__basket-checkout">
+								{`View order`}
+							</a>
+						</>}
 					</div>
 
 

@@ -5,6 +5,11 @@ import { useState } from "react";
  */
 interface QuantityProps {
 	/**
+	 * quantity currently in basket
+	 */
+	inBasket?: number,
+
+	/**
 	 * minimum quantity
 	 */
 	min?: number,
@@ -21,10 +26,10 @@ interface QuantityProps {
  */
 const Quantity: React.FC<QuantityProps> = (props) => {
 	const min = props.min || 1;
-	const { max } = props;
+	const { inBasket, max } = props;
 
 	// TODO: determine how many of this product are currently in the basket
-	const [quantity, setQuantity] = useState(min);
+	const [quantity, setQuantity] = useState(inBasket || min);
 
 	function reduceQuantity() {
 		let newQty = (quantity == min) ? 0 : quantity - 1;
