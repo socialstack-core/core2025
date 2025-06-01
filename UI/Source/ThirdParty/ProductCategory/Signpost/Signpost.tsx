@@ -1,4 +1,5 @@
 import { ProductCategory } from 'Api/ProductCategory';
+import Image from 'UI/Image';
 import Link from 'UI/Link';
 
 /**
@@ -8,7 +9,7 @@ interface SignpostProps {
 	/**
 	 * The content to display in this signpost. Requires primaryUrl to have been included.
 	 */
-	content: ProductCategory
+	content: ProductCategory,
 }
 
 /**
@@ -20,10 +21,9 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 
 	return (
 		<div className="ui-productcategory-signpost">
-			<Link href={ content.primaryUrl }>
-				{
-					content.name
-				}
+			<Link href={content.primaryUrl}>
+				<Image size={200} fileRef={content.featureRef!} />
+				{content.name}
 			</Link>
 		</div>
 	);

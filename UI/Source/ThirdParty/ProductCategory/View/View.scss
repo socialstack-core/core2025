@@ -1,8 +1,96 @@
 .ui-productcategory-view {
-	// reference an image in the same component folder
-	//background-image: url("./filename.svg");
-	
-	// Style should be mobile first with media queries for larger sizes.
+	display: grid;
+	gap: px_to_rem(20) px_to_rem(24);
+	grid-template-columns: px_to_rem(322) 1fr;
+	grid-template-rows: auto 1fr;
+	grid-template-areas: 
+		"filters header"
+		"filters products";
+
+	&__filters {
+		border-radius: px_to_rem(8);
+		padding: px_to_rem(20) px_to_rem(24);
+		background-color: #c8c9c9;
+		//background-color: var(--secondary);
+		//color: var(--secondary-fg);
+		display: flex;
+		flex-direction: column;
+		gap: px_to_rem(20);
+
+		fieldset {
+			display: flex;
+			flex-direction: column;
+			gap: px_to_rem(20);
+
+			> legend {
+				font-size: px_to_rem(15);
+				font-weight: 600;
+				margin: 0;
+			}
+
+			.form-check {
+				margin: 0;
+			}
+
+			.form-check-label {
+				font-size: px_to_rem(15);
+			}
+
+		}
+
+		.form-label {
+			margin-bottom: 0;
+		}
+
+		&-wrapper {
+			grid-area: filters;
+			display: flex;
+			flex-direction: column;
+			gap: px_to_rem(20);
+		}
+	}
+
+	&__header {
+		grid-area: header;
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: px_to_rem(12);
+
+		.form-select {
+			font-size: px_to_rem(15);
+			background-size: px_to_rem(12);
+			border-radius: px_to_rem(8);
+			min-height: px_to_rem(44);
+			width: auto;
+		}
+
+		.btn-group {
+
+			label.btn {
+				min-height: px_to_rem(44);
+				min-width: px_to_rem(48);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				&:nth-child(2) {
+					border-radius: px_to_rem(8) 0 0 px_to_rem(8);
+				}
+
+				&:last-child {
+					border-radius: 0 px_to_rem(8) px_to_rem(8) 0;
+				}
+
+			}
+
+		}
+	}
+
+	//&__products {
+	.ui-productcategory-list {
+		grid-area: products;
+	}
 }
 
 /*

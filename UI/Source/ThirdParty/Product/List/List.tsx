@@ -1,5 +1,5 @@
 import { Product } from "Api/Product";
-import Signpost from 'UI/ProductCategory/Signpost';
+import Signpost from 'UI/Product/Signpost';
 
 /**
  * Props for the List component.
@@ -8,7 +8,12 @@ interface ListProps {
 	/**
 	 * The products to list. Must have included 'primaryUrl'.
 	 */
-	content?: Product[]
+	content?: Product[],
+
+	/** 
+	 * determines if products should be shown in list or grid format
+	 */
+	viewStyle?: string
 }
 
 /**
@@ -16,19 +21,26 @@ interface ListProps {
  * @param props React props.
  */
 const List: React.FC<ListProps> = (props) => {
-
-	const { content } = props;
+	const { content, viewStyle } = props;
 
 	if (!content) {
 		return null;
 	}
 
+	let productListClasses = ["ui-product-list"];
+
+	if (viewStyle == 'grid') {
+		productListClasses.push("ui-product-list--grid");
+	}
+
 	return (
-		<div className="ui-productcategory-list">
-			{
-				content.map(category => <Signpost content={category} />)
-			}
-		</div>
+		<ul className={productListClasses.join(' ')}>
+			{content.map(product => {
+				return <li className="ui-product-list__product">
+					<Signpost content={product} />
+				</li>;
+			})}
+		</ul>
 	);
 }
 
