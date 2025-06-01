@@ -1,0 +1,51 @@
+.ui-promotion {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: px_to_rem(12);
+	padding: px_to_rem(8);
+	background: var(--warning);
+	color: var(--warning-fg);
+	//background: var(--info);
+	//color: var(--info-fg);
+	//border-radius: px_to_rem(8);
+
+	&:hover {
+		box-shadow: 0 0 px_to_rem(16) 0 rgba(#210818, 25%);
+	}
+
+	picture {
+
+		> img {
+			max-width: 100%;
+			height: auto;
+			object-fit: cover;
+			aspect-ratio: 306 / 160;
+		}
+	}
+
+	&__title {
+		font-size: px_to_rem(21);
+		font-weight: 400;
+		margin: 0;
+	}
+
+	&__description {
+		font-size: px_to_rem(15);
+		margin: 0;
+	}
+
+	&__cta {
+		border-radius: px_to_rem(8);
+		font-size: px_to_rem(15);
+		min-height: px_to_rem(44);
+		width: 100%;
+
+		&::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+		}
+	}
+
+}
