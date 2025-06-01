@@ -43,7 +43,9 @@
 	}
 
 	picture {
-		display: block;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 
 		&::after {
 			content: "";
@@ -105,37 +107,6 @@
 		line-clamp: 3;
 		overflow: hidden;
 		min-height: px_to_rem(72);
-	}
-
-	&__price {
-		display: flex;
-		align-items: center;
-		gap: px_to_rem(4);
-		font-size: px_to_rem(18);
-		font-weight: 600;
-
-		> span {
-			font-size: px_to_rem(10);
-			font-weight: 700;
-
-			&:last-child {
-				color: var(--danger);
-			}
-		}
-
-	}
-
-	&__stock {
-		display: flex;
-		align-items: center;
-		gap: px_to_rem(4);
-		font-size: px_to_rem(10);
-		color: #5f5f5f;
-
-		> i {
-			font-size: px_to_rem(12);
-		}
-
 	}
 
 	&__add,

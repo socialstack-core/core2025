@@ -4,6 +4,8 @@ import Link from 'UI/Link';
 import Input from 'UI/Input';
 import Quantity from 'UI/Product/Quantity';
 import defaultImageRef from './image_placeholder.png';
+import ProductPrice from 'UI/Product/Price';
+import ProductStock from 'UI/Product/Stock';
 
 /**
  * Props for the Signpost component.
@@ -35,26 +37,11 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 	</>;
 
 	// TODO: retrieve associated category name
+	// productCategories array?
 	let categoryName = `Category name`;
-
-	// TODO: retrieve associated price (see priceId)
-	// NB: also needs to account for:
-	// - global incl / excl VAT setting (see header)
-	// - multiple options (set to lowest price so this can be displayed as "From £X.XX")
-	let price = 85.02;
-
-	// TODO: optional previous price
-	let oldPrice = 96.99;
 
 	// TODO: determine when product has options
 	let hasOptions = false;
-	let options = 12;
-	let approved = 4;
-
-	let GBPound = new Intl.NumberFormat('en-GB', {
-		style: 'currency',
-		currency: 'GBP',
-	});
 
 	function addToOrder() {
 		// TODO
@@ -97,32 +84,10 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 				</span>
 
 				{/* price */}
-				<span className="ui-product-signpost__price">
-					{hasOptions && <span>{`From`}</span>}
-					{GBPound.format(price)}
-					{oldPrice && <span>{`Was ${GBPound.format(oldPrice) }`}</span>}
-				</span>
+				<ProductPrice product={content} />
 
 				{/* stock info */}
-				{!hasOptions && <>
-					<span className="ui-product-signpost__stock">
-						<i className="fr fr-barcode"></i>
-						<span>
-							{content.sku}
-						</span>
-						<span>
-							&mdash;
-						</span>
-						{content.stock > 0 && `${content.stock} in stock`}
-						{!content.stock && `OUT OF STOCK`}
-					</span>
-				</>}
-
-				{hasOptions && <>
-					<span className="ui-product-signpost__options">
-						{`${options} options - ${approved} approved`}
-					</span>
-				</>}
+				<ProductStock product={content} />
 
 			</Link>
 

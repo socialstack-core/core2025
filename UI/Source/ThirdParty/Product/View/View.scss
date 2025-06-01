@@ -1,16 +1,34 @@
 .ui-product-view {
-	// reference an image in the same component folder
-	//background-image: url("./filename.svg");
-	
-	// Style should be mobile first with media queries for larger sizes.
-}
 
-/*
-Size overrides. See bootstrap breakpoints for more information:
-https://getbootstrap.com/docs/5.0/layout/breakpoints/#min-width
-
-@include media-breakpoint-up(md) {
-	.ui-product-view {
+	&__title {
+		font-size: px_to_rem(39);
+		font-weight: 400;
 	}
+
+	&__internal {
+		display: grid;
+		grid-template-columns: fit-content(px_to_rem(200)) 1fr;
+		grid-template-rows: auto;
+		grid-template-areas: "sidebar content";
+		gap: px_to_rem(24);
+	}
+
+	&__sidebar {
+		grid-area: sidebar;
+		display: flex;
+		flex-direction: column;
+		gap: px_to_rem(20);
+	}
+
+	&__content {
+		grid-area: content;
+		display: flex;
+		flex-direction: column;
+		gap: px_to_rem(20);
+	}
+
+	.ui-product-qty {
+		max-width: px_to_rem(322);
+	}
+
 }
-*/
