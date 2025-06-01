@@ -1,0 +1,89 @@
+.ui-dual-range {
+	display: flex;
+	flex-direction: column;
+	gap: px_to_rem(10);
+
+	> label {
+		font-size: px_to_rem(15);
+		font-weight: 600;
+		margin: 0;
+	}
+
+	&__internal {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-template-rows: auto px_to_rem(40);
+		grid-template-areas: 
+			"from to"
+			"range range";
+
+		> label {
+			font-size: px_to_rem(15);
+			font-weight: 400;
+			margin: 0;
+
+			&:first-child {
+				grid-area: from;
+			}
+
+			&:nth-child(2) {
+				grid-area: to;
+				text-align: right;
+			}
+
+		}
+
+	}
+
+	&__gradient,
+	&__from,
+	&__to {
+		grid-area: range;
+	}
+
+	&__gradient {
+		border-radius: px_to_rem(4);
+		margin-top: px_to_rem(14);
+		height: px_to_rem(12);
+		background: linear-gradient(
+      to right,
+      var(--range-track-background) 0%,
+      var(--range-track-background) 25%,
+      var(--range-track-fill) 25%,
+      var(--range-track-fill) 75%, 
+      var(--range-track-background) 75%, 
+      var(--range-track-background) 100%);
+	}
+
+	&__from {
+		//height: 0;
+		//z-index: 1;
+	}
+
+	&__to {
+	}
+
+	input[type=range] {
+		pointer-events: none;
+		background: none;
+
+		// track
+		&::-webkit-slider-runnable-track {
+			background: transparent;
+			border: 0;
+		}
+		&::-moz-range-track {
+			background: transparent;
+			border: 0;
+		}
+
+		// thumb
+		&::-webkit-slider-thumb {
+			pointer-events: all;
+		}
+		&::-moz-range-thumb {
+			pointer-events: all;
+		}
+
+	}
+}
