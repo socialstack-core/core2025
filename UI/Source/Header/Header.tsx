@@ -6,6 +6,7 @@ import exampleLogoRef from './example-logo.png';
 import { getContactLink } from 'UI/Functions/ContactTools';
 import { useState, useEffect } from "react";
 import { getUrl } from 'UI/FileRef';
+import containerQueryPolyfillJs from './static/container-query-polyfill.js';
 import popoverPolyfillJs from './static/popover.min.js';
 import { lazyLoad } from 'UI/Functions/WebRequest';
 //import productApi from 'Api/Product';
@@ -156,8 +157,14 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	useEffect(() => {
 		// check: iOS versions prior to v17 don't support popover API
 		// lazy-load polyfill if required
-		if (!isPopoverSupported()) {
+		if (!isPopoverApiSupported()) {
 			lazyLoad(getUrl(popoverPolyfillJs)!);
+		}
+
+		// check: iOS versions prior to v16 don't support CSS container queries
+		// lazy-load polyfill if required
+		if (!areContainerQueriesSupported()) {
+			lazyLoad(getUrl(containerQueryPolyfillJs)!);
 		}
 
 		// TODO: retrieve primary links from DB
@@ -184,11 +191,15 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 	}, [])
 
-	function isPopoverSupported() {
+	function isPopoverApiSupported() {
 		const test = document.createElement('div');
 		return 'popover' in test &&
 			typeof HTMLElement.prototype.showPopover === 'function' &&
 			typeof HTMLElement.prototype.hidePopover === 'function';
+	}
+
+	function areContainerQueriesSupported() {
+		return CSS.supports('container-type', 'inline-size');
 	}
 
 	if (!notificationCount) {
