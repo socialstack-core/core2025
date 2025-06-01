@@ -234,9 +234,9 @@
 			max-width: px_to_rem(190);
 			height: 100vh;
 			height: 100dvh;
-			box-shadow: px_to_rem(-16) 0 px_to_rem(16) 0 rgba(#210818, 25%);
+			box-shadow: none;
 			transform: translateX(100%);
-			transition-property: transform, overlay, display;
+			transition-property: transform, box-shadow, overlay, display;
 			transition-duration: .3s;
 			transition-timing-function: ease-in-out;
 			transition-behavior: allow-discrete;
@@ -255,6 +255,7 @@
 			// NB: for polyfill support
 			// (do not combine with following rule)
 			&.\:popover-open {
+				box-shadow: px_to_rem(-16) 0 px_to_rem(16) 0 rgba(#210818, 25%);
 				transform: none;
 
 				&::backdrop {
@@ -264,6 +265,7 @@
 			}
 
 			&:popover-open {
+				box-shadow: px_to_rem(-16) 0 px_to_rem(16) 0 rgba(#210818, 25%);
 				transform: none;
 
 				&::backdrop {
@@ -587,6 +589,7 @@
 		&__basket-wrapper {
 
 			&.\:popover-open {
+				box-shadow: none;
 				transform: translateX(100%);
 
 				&::backdrop {
@@ -595,6 +598,7 @@
 			}
 
 			&:popover-open {
+				box-shadow: none;
 				transform: translateX(100%);
 
 				&::backdrop {
