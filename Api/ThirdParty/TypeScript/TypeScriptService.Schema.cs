@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Api.CanvasRenderer;
 using Api.Database;
+using Api.Revisions;
 using Api.Startup;
 using Api.TypeScript.Objects;
 using Api.Users;
@@ -64,6 +65,7 @@ namespace Api.TypeScript
             generics.AddContentType(typeof(VersionedContent<>));
             
             content.AddType(typeof(ListFilter));
+            generics.AddContentType(typeof(Revision<,>));
             
             content.AddGenericController(new Objects.AutoController(content));
             

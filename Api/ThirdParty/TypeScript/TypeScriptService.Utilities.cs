@@ -19,11 +19,6 @@ namespace Api.TypeScript
                 return true;
             }
 
-            if (type.IsValueType && type.Namespace == "System")
-            {
-                return true;
-            }
-
             // Nullable value types are generic types of Nullable<T>
             return Nullable.GetUnderlyingType(type) != null;
         }
