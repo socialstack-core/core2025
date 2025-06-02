@@ -764,6 +764,11 @@ public class BuilderNode
 	/// <returns></returns>
 	public TerminalNode BuildTerminalMethodNode(MethodInfo method)
 	{
+		if (method.IsGenericMethod)
+		{
+			throw new Exception("Can't use generic methods as a controller route as the router does not know what types can possibly be given.");
+		}
+
 		var bodyType = GetBodyType(method);
 
 		if (_constructedMethod == null)

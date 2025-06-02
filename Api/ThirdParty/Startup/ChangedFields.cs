@@ -799,6 +799,10 @@ namespace Api.Startup {
 						}
 					}
 				}
+				else
+				{
+					knownService = Services.GetByContentType(virtualFieldType);
+				}
 
 				var vInfo = new VirtualInfo()
 				{
@@ -831,6 +835,14 @@ namespace Api.Startup {
 					{
 						vInfo.IdSource.UsedByVirtual = cf;
 					}
+
+					// Must be of the correct 4 acceptable types.
+					if (knownService != null && !IsValidIdSource(vInfo.IdSource.FieldType, knownService.IdType))
+					{
+						throw new PublicException("Can't define virtual field '" + vInfo.FieldName + "' because the ID source field '" + vInfo.IdSourceField + "' is not of a suitable supported type. " +
+							"A common cause is wanting a nullable localized field: in this scenario it is the ID which is nullable not the localized struct itself, i.e. Localized<uint?> not Localized<uint>?.", "vfield_unsupported");
+					}
+
 				}
 
 				_vList.Add(cf);
@@ -850,6 +862,36 @@ namespace Api.Startup {
 				}
 			}
 
+		}
+
+		/// <summary>
+		/// True if the given field type is a valid ID source for the given ID type as specified by the originating service.
+		/// Basically, can uint, uint? or Localized{uint?} store a uint (yes! all 3 can).
+		/// </summary>
+		/// <param name="fieldType"></param>
+		/// <param name="idType"></param>
+		/// <returns></returns>
+		private bool IsValidIdSource(Type fieldType, Type idType)
+		{
+			// Specific linear order only - can't be nested in the wrong order, e.g. nullable on the outside.
+			if (fieldType.IsGenericType)
+			{
+				var def = fieldType.GetGenericTypeDefinition();
+
+				if (def == typeof(Localized<>))
+				{
+					fieldType = fieldType.GetGenericArguments()[0];
+				}
+			}
+
+			var underlying = Nullable.GetUnderlyingType(fieldType);
+
+			if (underlying != null)
+			{
+				fieldType = underlying;
+			}
+
+			return fieldType == idType;
 		}
 
 		/// <summary>

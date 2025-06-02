@@ -1,4 +1,5 @@
 
+using Api.Contexts;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -47,7 +48,8 @@ namespace Api.Startup
 		/// Collects a field value from the given entity.
 		/// </summary>
 		/// <param name="entity"></param>
-		public virtual void Collect(object entity)
+		/// <param name="context"></param>
+		public virtual void Collect(object entity, Context context)
 		{
 			
 		}
