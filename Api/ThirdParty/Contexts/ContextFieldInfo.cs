@@ -20,7 +20,7 @@ namespace Api.Contexts
 		public bool SkipOutput;
 		
 		/// <summary>
-		/// Private backing field. Name must be of the form _propertyName.
+		/// Private backing field. Name must be of the form _propertyName e.g. _userId.
 		/// </summary>
 		public FieldInfo PrivateFieldInfo;
 
