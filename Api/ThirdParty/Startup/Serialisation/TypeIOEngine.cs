@@ -75,7 +75,7 @@ namespace Api.Startup
 			var map = new ConcurrentDictionary<Type, JsonFieldType>();
 			_typeMap = map;
 
-			AddTo(map, typeof(bool), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(bool), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				emitValue();
 				WriteBool(code);
@@ -92,114 +92,122 @@ namespace Api.Startup
 			var writeSDecimal = typeof(Writer).GetMethod("WriteS", new Type[] { typeof(decimal) });
 			var writeEscapedUString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(ustring) });
 			var writeJsonString = typeof(Writer).GetMethod("Write", new Type[] { typeof(JsonString) });
+			var writeEscapedJsonString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(JsonString) });
 			var writeEscapedString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(string) });
 
-			AddTo(map, typeof(uint), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(uint), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUint);
 			});
 
-			AddTo(map, typeof(int), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(int), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSInt);
 			});
 
-			AddTo(map, typeof(byte), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(byte), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUint);
 			});
 
-			AddTo(map, typeof(char), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(char), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUint);
 			});
 
-			AddTo(map, typeof(sbyte), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(sbyte), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSInt);
 			});
 
-			AddTo(map, typeof(ushort), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(ushort), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUint);
 			});
 
-			AddTo(map, typeof(short), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(short), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSInt);
 			});
 
-			AddTo(map, typeof(ulong), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(ulong), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUlong);
 			});
 
-			AddTo(map, typeof(long), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(long), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSLong);
 			});
 
-			AddTo(map, typeof(DateTime), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(DateTime), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSDateTime);
 			});
 
-			AddTo(map, typeof(ustring), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(ustring), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeEscapedUString);
 			});
 			
-			AddTo(map, typeof(JsonString), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(JsonString), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
-				code.Emit(OpCodes.Callvirt, writeJsonString);
+				if (isDocumentFormat)
+				{
+					code.Emit(OpCodes.Callvirt, writeJsonString);
+				}
+				else
+				{
+					code.Emit(OpCodes.Callvirt, writeEscapedJsonString);
+				}
 			});
 
-			AddTo(map, typeof(string), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(string), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeEscapedString);
 			});
 
-			AddTo(map, typeof(double), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(double), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSDouble);
 			});
 
-			AddTo(map, typeof(float), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(float), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSFloat);
 			});
 
-			AddTo(map, typeof(decimal), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(decimal), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
@@ -316,7 +324,7 @@ namespace Api.Startup
 						EmitWriteBasicField(writeBody, field, (ILGenerator gen) =>
 						{
 							gen.Emit(OpCodes.Ldarg_1); // T obj
-						});
+						}, true);
 					}
 					else
 					{
@@ -329,7 +337,7 @@ namespace Api.Startup
 				{
 					EmitWriteBasicField(writeBody, field, (ILGenerator gen) => {
 						gen.Emit(OpCodes.Ldarg_1); // T obj
-					});
+					}, true);
 				}
 
 				writeBody.MarkLabel(nextField);
@@ -381,8 +389,9 @@ namespace Api.Startup
 		/// <param name="body"></param>
 		/// <param name="field"></param>
 		/// <param name="objLoader"></param>
+		/// <param name="isDocumentFormat"></param>
 		/// <exception cref="Exception"></exception>
-		public static void EmitWriteBasicField(ILGenerator body, ContentField field, Action<ILGenerator> objLoader)
+		public static void EmitWriteBasicField(ILGenerator body, ContentField field, Action<ILGenerator> objLoader, bool isDocumentFormat = false)
 		{
 			// Check if it's a nullable:
 			var fieldType = field.FieldType;
@@ -402,7 +411,7 @@ namespace Api.Startup
 				throw new Exception("Unable to serialise fields of this type (" + fieldType.Name + ").");
 			}
 
-			jft.EmitWrite(body, field, nullableType, objLoader);
+			jft.EmitWrite(body, field, nullableType, objLoader, isDocumentFormat);
 		}
 
 		/// <summary>
@@ -581,7 +590,7 @@ namespace Api.Startup
 
 		}
 
-		private static JsonFieldType AddTo(ConcurrentDictionary<Type, JsonFieldType> map, Type type, Action<ILGenerator, Action> onWriteValue)
+		private static JsonFieldType AddTo(ConcurrentDictionary<Type, JsonFieldType> map, Type type, Action<ILGenerator, Action, bool> onWriteValue)
 		{
 			var fieldType = new JsonFieldType(type, onWriteValue);
 			map[type] = fieldType;
@@ -1007,14 +1016,14 @@ namespace Api.Startup
 		/// <summary>
 		/// Serialises the value which is already on the stack.
 		/// </summary>
-		public Action<ILGenerator, Action> OnSerialise;
+		public Action<ILGenerator, Action, bool> OnSerialise;
 
 		/// <summary>
 		/// Defines info about an available field type.
 		/// </summary>
 		/// <param name="type"></param>
 		/// <param name="onSerialise"></param>
-		public JsonFieldType(Type type, Action<ILGenerator, Action> onSerialise)
+		public JsonFieldType(Type type, Action<ILGenerator, Action, bool> onSerialise)
 		{
 			Type = type;
 			OnSerialise = onSerialise;
@@ -1026,7 +1035,8 @@ namespace Api.Startup
 		/// <param name="body"></param>
 		/// <param name="field"></param>
 		/// <param name="nullableType"></param>
-		public void EmitLocalisedWrite(ILGenerator body, JsonField field, Type nullableType)
+		/// <param name="isDocumentFormat"></param>
+		public void EmitLocalisedWrite(ILGenerator body, JsonField field, Type nullableType, bool isDocumentFormat = false)
 		{
 			Label endOfStatementLabel = body.DefineLabel();
 
@@ -1104,7 +1114,7 @@ namespace Api.Startup
 					var getValueMethod = field.TargetType.GetProperty("Value").GetGetMethod();
 					body.Emit(OpCodes.Callvirt, getValueMethod);
 				}
-			});
+			}, isDocumentFormat);
 
 			body.MarkLabel(endOfStatementLabel);
 		}
@@ -1112,7 +1122,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Emits the necessary command to serialise the field.
 		/// </summary>
-		public void EmitWrite(ILGenerator body, JsonField field, Type nullableType)
+		public void EmitWrite(ILGenerator body, JsonField field, Type nullableType, bool isDocumentFormat = false)
 		{
 			Label? endOfStatementLabel = nullableType == null ? null : body.DefineLabel();
 
@@ -1190,7 +1200,7 @@ namespace Api.Startup
 					var getValueMethod = field.TargetType.GetProperty("Value").GetGetMethod();
 					body.Emit(OpCodes.Callvirt, getValueMethod);
 				}
-			});
+			}, isDocumentFormat);
 
 			if (endOfStatementLabel.HasValue)
 			{
@@ -1201,7 +1211,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Emits the necessary command to serialise the field.
 		/// </summary>
-		public void EmitWrite(ILGenerator body, ContentField field, Type nullableType, Action<ILGenerator> objLoader)
+		public void EmitWrite(ILGenerator body, ContentField field, Type nullableType, Action<ILGenerator> objLoader, bool isDocumentFormat = false)
 		{
 			Label? endOfStatementLabel = nullableType == null ? null : body.DefineLabel();
 
@@ -1279,7 +1289,7 @@ namespace Api.Startup
 					var getValueMethod = field.FieldType.GetProperty("Value").GetGetMethod();
 					body.Emit(OpCodes.Callvirt, getValueMethod);
 				}
-			});
+			}, isDocumentFormat);
 
 			if (endOfStatementLabel.HasValue)
 			{
