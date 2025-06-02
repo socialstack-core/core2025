@@ -764,10 +764,22 @@ public class BuilderNode
 	/// <returns></returns>
 	public TerminalNode BuildTerminalMethodNode(MethodInfo method)
 	{
+		if (method.IsGenericMethod)
+		{
+			throw new Exception("Can't use generic methods as a controller route as the router does not know what types can possibly be given.");
+		}
+
 		var bodyType = GetBodyType(method);
 
 		if (_constructedMethod == null)
 		{
+			var outputType = GetOutputType(method);
+
+			if (QuitIfServiceDoesntExist(method, outputType))
+			{
+				return null;
+			}
+
 			Validate(method);
 			_requiresFullContext = IsFullContextRequired(method);
 			InitModule();
@@ -799,8 +811,7 @@ public class BuilderNode
 			{
 				BuildBinder(method);
 				BuildBodyLoader(bodyType);
-
-				var outputType = BuildTerminalMethod(bodyType, method);
+				BuildTerminalMethod(bodyType, method, outputType);
 				BuildSerialiser(outputType, bodyType);
 
 				// Close the type and set the values now.
@@ -1307,7 +1318,7 @@ public class BuilderNode
 		EmitInvokeTerminalMethod(il, bodyType, method);
 	}
 
-	private Type BuildTerminalMethod(Type bodyType, MethodInfo method)
+	private Type GetOutputType(MethodInfo method)
 	{
 		var outputType = method.ReturnType;
 
@@ -1316,6 +1327,47 @@ public class BuilderNode
 			outputType = outputType.GetGenericArguments()[0];
 		}
 
+		return outputType;
+	}
+
+	/// <summary>
+	/// Returns true if we can quit building a terminal in the event that the associated service for the given output type does not exist.
+	/// Otherwise, if the condition is found further down the line, then it will fail.
+	/// This specifically happens with generic-typed content type endpoints which only exist on particular types - such as revision services only existing 
+	/// on types that are actually revisionable, but endpoints using Revision exist on all AutoControllers.
+	/// </summary>
+	/// <param name="method"></param>
+	/// <param name="outputType"></param>
+	/// <returns></returns>
+	private bool QuitIfServiceDoesntExist(MethodInfo method, Type outputType)
+	{
+		var nullable = Nullable.GetUnderlyingType(outputType);
+
+		if (nullable != null)
+		{
+			return QuitIfServiceDoesntExist(method, nullable);
+		}
+
+		if (!IsContentType(outputType))
+		{
+			return false;
+		}
+
+		// It's a content type - get the svc:
+		var svc = Services.GetByContentType(outputType);
+
+		if (svc != null)
+		{
+			return false;
+		}
+
+		// We'll quietly quit if ignoring this condition is made possible by the attribute:
+		var attr = method.GetCustomAttribute<OmitIfNoServiceAttribute>();
+		return attr != null;
+	}
+
+	private void BuildTerminalMethod(Type bodyType, MethodInfo method, Type outputType)
+	{
 		var stateType = GetTerminalStateType();
 
 		var methodBuilder = TypeBuilder.DefineMethod(
@@ -1334,7 +1386,6 @@ public class BuilderNode
 
 		var il = methodBuilder.GetILGenerator();
 		EmitInvokeTerminalMethod(il, bodyType, method);
-		return outputType;
 	}
 
 	private void BuildSerialiser(Type outputType, Type bodyType)

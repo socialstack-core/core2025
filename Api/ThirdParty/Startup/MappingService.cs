@@ -194,7 +194,7 @@ namespace Api.Startup
 			{
 				// Passing in onResult prevents a delegate frame allocation.
 				var _col = (IDCollector<SRC_ID>)src;
-				_col.Collect(entity);
+				_col.Collect(entity, ctx);
 				return new ValueTask();
 			},
 				collector
@@ -216,7 +216,7 @@ namespace Api.Startup
 			{
 				// Passing in onResult prevents a delegate frame allocation.
 				var _col = (IDCollector<SRC_ID>)src;
-				_col.Collect(entity);
+				_col.Collect(entity, ctx);
 				return new ValueTask();
 			},
 				collector
@@ -402,7 +402,7 @@ namespace Api.Startup
 			// Get its locale 0 cache (it's a mapping type, so it's never localised):
 			if (CacheAvailable && _cacheIndex == null){
 				
-				var cache = GetCacheForLocale(1);
+				var cache = GetCache();
 				
 				if (cache != null)
 				{
@@ -447,7 +447,7 @@ namespace Api.Startup
 						_jsonWriter.ToJson(mappingEntry, writer);
 
 						// Collect target:
-						mappingCollector.Collect(mappingEntry);
+						mappingCollector.Collect(mappingEntry, context);
 					}
 				}
 
@@ -484,7 +484,7 @@ namespace Api.Startup
 					_jsonWriter.ToJson(mappingEntry, writer);
 					
 					// Collect:
-					mappingCollector.Collect(mappingEntry);
+					mappingCollector.Collect(mappingEntry, context);
 				}
 			}
 
@@ -618,10 +618,9 @@ namespace Api.Startup
 		/// <returns></returns>
 		public NonUniqueIndex<Mapping<SRC_ID, TARG_ID>, SRC_ID> GetSourceIndex()
 		{
-			if (CacheAvailable && _cacheIndex == null)
+			if (_cacheIndex == null)
 			{
-
-				var cache = GetCacheForLocale(1);
+				var cache = GetCache();
 
 				if (cache != null)
 				{
@@ -643,9 +642,9 @@ namespace Api.Startup
 		/// <returns></returns>
 		public void SourceContainsAny(IDCollector<SRC_ID> collector, IDCollector<TARG_ID> idSet)
 		{
-			if (CacheAvailable && _cacheIndex == null)
+			if (_cacheIndex == null)
 			{
-				var cache = GetCacheForLocale(1);
+				var cache = GetCache();
 
 				if (cache != null)
 				{
@@ -731,10 +730,9 @@ namespace Api.Startup
 		/// <returns></returns>
 		public void SourceContainsAll(IDCollector<SRC_ID> collector, IDCollector<TARG_ID> idSet, bool exactMatch)
 		{
-			if (CacheAvailable && _cacheIndex == null)
+			if (_cacheIndex == null)
 			{
-
-				var cache = GetCacheForLocale(1);
+				var cache = GetCache();
 
 				if (cache != null)
 				{
@@ -860,10 +858,9 @@ namespace Api.Startup
 		/// <returns></returns>
 		public async ValueTask<Mapping<SRC_ID, TARG_ID>> GetByIds(Context context, SRC_ID src, TARG_ID targ)
 		{
-			if (CacheAvailable && _cacheIndex == null)
+			if (_cacheIndex == null)
 			{
-
-				var cache = GetCacheForLocale(1);
+				var cache = GetCache();
 
 				if (cache != null)
 				{
@@ -912,8 +909,7 @@ namespace Api.Startup
 
 			if (_cacheIndex == null)
 			{
-
-				var cache = GetCacheForLocale(1);
+				var cache = GetCache();
 
 				if (cache != null)
 				{
@@ -968,8 +964,7 @@ namespace Api.Startup
 
 			if (_cacheIndex == null)
 			{
-
-				var cache = GetCacheForLocale(1);
+				var cache = GetCache();
 
 				if (cache != null)
 				{

@@ -165,8 +165,8 @@ namespace Api.Translate
 		/// <returns></returns>
 		private async ValueTask OnCacheLoaded()
 		{
-			// Get the default cache:
-			var defaultCache = GetCacheForLocale(1);
+			// Get the cache:
+			var defaultCache = GetCache();
 
 			// Does it have anything in it?
 			if (defaultCache.Count() == 0)
@@ -175,7 +175,7 @@ namespace Api.Translate
 				await Create(new Context(), new Locale()
 				{
 					Code = "en",
-					Name = "English",
+					Name = new Localized<string>("English"),
 					Id = 1
 				}, DataOptions.IgnorePermissions);
 			}

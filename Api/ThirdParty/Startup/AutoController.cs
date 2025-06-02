@@ -67,13 +67,13 @@ public partial class AutoController<T,ID> : AutoController
 	/// </summary>
 	protected AutoService<T, ID> _service;
 
-    /// <summary>
-    /// Instanced automatically.
-    /// </summary>
-    public AutoController()
-    {
-        // Find the service:
-        if (Api.Startup.Services.AutoServices.TryGetValue(typeof(AutoService<T, ID>), out AutoService svc))
+	/// <summary>
+	/// Instanced automatically.
+	/// </summary>
+	public AutoController()
+	{
+		// Find the service:
+		if (Api.Startup.Services.AutoServices.TryGetValue(typeof(AutoService<T, ID>), out AutoService svc))
 		{
 			_service = (AutoService<T, ID>)svc;
 		}
@@ -96,14 +96,14 @@ public partial class AutoController<T,ID> : AutoController
 	{
 		var result = await _service.Get(context, id);
 		return result;
-    }
+	}
 
 	/// <summary>
 	/// DELETE /v1/entityTypeName/2/
 	/// Deletes an entity
 	/// </summary>
 	[HttpDelete("{id}")]
-    public virtual async ValueTask<T> Delete(Context context, [FromRoute] ID id)
+	public virtual async ValueTask<T> Delete(Context context, [FromRoute] ID id)
 	{
 		var result = await _service.Get(context, id);
 
@@ -320,7 +320,7 @@ public partial class AutoController<T,ID> : AutoController
 	/// <param name="fieldGroup"></param>
 	protected async ValueTask SetFieldsOnObject(AutoService<T, ID> service, T target, Context context, JObject body, JsonFieldGroup fieldGroup = JsonFieldGroup.Any)
 	{
-        // Get the JSON meta which will indicate exactly which fields are editable by this user (role):
+		// Get the JSON meta which will indicate exactly which fields are editable by this user (role):
 		var availableFields = await service.GetTypedJsonStructure(context);
 
 		foreach (var property in body.Properties())

@@ -34,7 +34,8 @@ namespace Api.Database
 		/// <summary>
 		/// Create a new database connector with the given connection string.
 		/// </summary>
-		public MySQLDatabaseService() {
+		public MySQLDatabaseService()
+		{
 			var envString = System.Environment.GetEnvironmentVariable("DatabaseConnectionString");
 
 			if (string.IsNullOrEmpty(envString))
@@ -42,7 +43,8 @@ namespace Api.Database
 				// Load from appsettings and add a change handler.
 				LoadFromAppSettings();
 
-				AppSettings.OnChange += () => {
+				AppSettings.OnChange += () =>
+				{
 					LoadFromAppSettings();
 				};
 			}
@@ -75,14 +77,14 @@ namespace Api.Database
 			{
 				cStringName = System.Environment.GetEnvironmentVariable("ConnectionStringName") ?? "DefaultConnection";
 			}
-			
+
 			ConnectionString = connectionStrings[
 				cStringName
 			];
 
 			if (ConnectionString == null)
 			{
-				throw new Exception("Your appsettings file declares a ConnectionString block but is missing a connection string with the key '" + cStringName  + "'");
+				throw new Exception("Your appsettings file declares a ConnectionString block but is missing a connection string with the key '" + cStringName + "'");
 			}
 		}
 
@@ -104,7 +106,7 @@ namespace Api.Database
 		{
 			return MySql.Data.MySqlClient.MySqlHelper.EscapeString(text);
 		}
-		
+
 
 
 		/// <summary>
@@ -123,7 +125,7 @@ namespace Api.Database
 
 			bool first = true;
 
-			foreach(var value in values)
+			foreach (var value in values)
 			{
 				if (first)
 				{
@@ -152,22 +154,22 @@ namespace Api.Database
 			return await cmd.ExecuteNonQueryAsync() > 0;
 		}
 
-        /// <summary>
-        /// Run a raw query with no arguments. Avoid when possible.
-        /// </summary>
-        /// <param name="query">The query to run.</param>
-        /// <param name="timeout">Optional timeout to use.</param>
-        /// <returns></returns>
-        public async Task<bool> Run(string query, int timeout)
-        {
+		/// <summary>
+		/// Run a raw query with no arguments. Avoid when possible.
+		/// </summary>
+		/// <param name="query">The query to run.</param>
+		/// <param name="timeout">Optional timeout to use.</param>
+		/// <returns></returns>
+		public async Task<bool> Run(string query, int timeout)
+		{
 
-            using var connection = GetConnection();
-            await connection.OpenAsync();
-            var cmd = new MySqlCommand(query, connection);
-      		cmd.CommandTimeout = timeout;
+			using var connection = GetConnection();
+			await connection.OpenAsync();
+			var cmd = new MySqlCommand(query, connection);
+			cmd.CommandTimeout = timeout;
 
-            return await cmd.ExecuteNonQueryAsync() > 0;
-        }
+			return await cmd.ExecuteNonQueryAsync() > 0;
+		}
 
 		/// <summary>
 		/// Usually used for bulk deletes.
@@ -245,7 +247,7 @@ namespace Api.Database
 			builder.Append(queryText);
 
 			// For each one..
-			for (var x=0;x < toInsertSet.Count;x++)
+			for (var x = 0; x < toInsertSet.Count; x++)
 			{
 				var toInsert = toInsertSet[x];
 
@@ -257,7 +259,7 @@ namespace Api.Database
 				{
 					builder.Append("), (");
 				}
-				
+
 				for (var i = 0; i < fieldCount; i++)
 				{
 					if (i != 0)
@@ -265,29 +267,35 @@ namespace Api.Database
 						builder.Append(',');
 					}
 					// Bind the field value:
-					var fieldValue = q.Fields[i].TargetField.GetValue(toInsert);
+					var field = q.Fields[i];
+					var fieldValue = field.TargetField.GetValue(toInsert);
 					if (fieldValue is DateTime dt)
 					{
 						fieldValue = dt.ToString("yyyy-MM-dd HH:mm:ss");
 					}
 
-					if(fieldValue is bool)
+					if (fieldValue is bool)
 					{
-						if(fieldValue is true)
+						if (fieldValue is true)
 						{
 							builder.Append("b'0'");
-						}else{
+						}
+						else
+						{
 							builder.Append("b'1'");
 						}
-					}else if(fieldValue != null)
+					}
+					else if (fieldValue != null)
 					{
 						builder.Append('\"');
 						builder.Append(Escape(fieldValue.ToString()));
 						builder.Append('\"');
-					}else{
+					}
+					else
+					{
 						builder.Append("NULL");
 					}
-					
+
 				}
 			}
 
@@ -328,7 +336,7 @@ namespace Api.Database
 		/// <param name="id"></param>
 		/// <returns></returns>
 		public async Task<bool> Run<T, ID>(Context context, Query q, T srcObject, ID? id = null)
-			where T:class, new()
+			where T : class, new()
 			where ID : struct, IConvertible, IEquatable<ID>
 		{
 			// UPDATE, DELETE and INSERT - Loop through each field in the query:
@@ -336,7 +344,7 @@ namespace Api.Database
 
 			// Auto edited/ created dates.
 			// Applying to the actual entity so the object is up to date too.
-			if(q.IsInsert)
+			if (q.IsInsert)
 			{
 				if (srcObject is IHaveTimestamps revRow)
 				{
@@ -351,7 +359,7 @@ namespace Api.Database
 					}
 				}
 			}
-			
+
 			uint localeId = 0;
 			string localeCode = null;
 			if (context != null && context.LocaleId > 1)
@@ -370,7 +378,24 @@ namespace Api.Database
 			{
 				var parameter = cmd.CreateParameter();
 				parameter.ParameterName = "p" + i;
-				parameter.Value = q.Fields[i].TargetField.GetValue(srcObject);
+				var field = q.Fields[i];
+				var val = field.TargetField.GetValue(srcObject);
+
+				if (field.IsLocalized)
+				{
+					parameter.Value = val == null ? null : val.ToString();
+					parameter.MySqlDbType = MySqlDbType.JSON;
+				}
+				else if (field.Type == typeof(JsonString))
+				{
+					parameter.Value = val == null ? null : ((JsonString)val).ValueOf();
+					parameter.MySqlDbType = MySqlDbType.JSON;
+				}
+				else
+				{
+					parameter.Value = val;
+				}
+
 				cmd.Parameters.Add(parameter);
 			}
 
@@ -449,7 +474,7 @@ namespace Api.Database
 		/// <param name="instanceType">The type to instantiate</param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public async Task<T> Select<T, ID>(Context context, Query q, Type instanceType, ID id) where T:new()
+		public async Task<T> Select<T, ID>(Context context, Query q, Type instanceType, ID id) where T : new()
 		{
 			// Only SELECT comes through here.
 			// This is almost exactly the same as GetRow 
@@ -497,7 +522,15 @@ namespace Api.Database
 
 				try
 				{
-					if (field.Type == typeof(bool) || field.Type == typeof(bool?))
+					if (field.IsLocalized)
+					{
+						field.TargetField.SetValue(result, field.ParseLocalized(value as string));
+					}
+					else if (field.Type == typeof(JsonString))
+					{
+						field.TargetField.SetValue(result, new JsonString(value as string));
+					}
+					else if (field.Type == typeof(bool) || field.Type == typeof(bool?))
 					{
 						// Set the value:
 						field.TargetField.SetValue(result, Convert.ToBoolean(value));
@@ -544,6 +577,11 @@ namespace Api.Database
 				localeCode = locale?.Code;
 			}
 
+			if (localeCode == null)
+			{
+				localeCode = "en";
+			}
+
 			var includeTotal = queryPair.QueryA == null ? false : queryPair.QueryA.IncludeTotal;
 
 			int total = 0;
@@ -554,7 +592,7 @@ namespace Api.Database
 
 				var cmd = new MySqlCommand();
 				cmd.Connection = connection;
-				
+
 				// When pagination is active and a total has to be calculated separately, qryText is actually a comma separated double query.
 				q.ApplyQuery(context, cmd, queryPair, false, localeId, localeCode, includeTotal);
 
@@ -590,7 +628,15 @@ namespace Api.Database
 
 						try
 						{
-							if (field.Type == typeof(bool) || field.Type == typeof(bool?))
+							if (field.IsLocalized)
+							{
+								field.TargetField.SetValue(result, field.ParseLocalized(value as string));
+							}
+							else if (field.Type == typeof(JsonString))
+							{
+								field.TargetField.SetValue(result, new JsonString(value as string));
+							}
+							else if (field.Type == typeof(bool) || field.Type == typeof(bool?))
 							{
 								// Set the value:
 								field.TargetField.SetValue(result, Convert.ToBoolean(value));
@@ -615,7 +661,7 @@ namespace Api.Database
 
 			return total;
 		}
-		
+
 		/// <summary>
 		/// Runs the given query with the given args to bind. Returns the results mapped as a list of the given type.
 		/// </summary>
@@ -672,17 +718,27 @@ namespace Api.Database
 
 						try
 						{
-							if (field.Type == typeof(bool))
+							if (field.IsLocalized)
+							{
+								field.TargetField.SetValue(result, field.ParseLocalized(value as string));
+							}
+							else if (field.Type == typeof(JsonString))
+							{
+								field.TargetField.SetValue(result, new JsonString(value as string));
+							}
+							else if (field.Type == typeof(bool))
 							{
 								// Set the value:
 								field.TargetField.SetValue(result, Convert.ToBoolean(value));
 							}
 							else if (field.Type == typeof(bool?))
 							{
-								if(value == null)
+								if (value == null)
 								{
 									field.TargetField.SetValue(result, null);
-								}else{
+								}
+								else
+								{
 									bool? newValue = Convert.ToBoolean(value);
 									field.TargetField.SetValue(result, newValue);
 								}
@@ -706,6 +762,5 @@ namespace Api.Database
 
 			return results;
 		}
-		
-    }
+	}
 }

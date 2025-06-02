@@ -301,7 +301,7 @@ namespace Api.Pages
 
 			if (terminal.Generator == null)
 			{
-				writer.WriteS(page.BodyJson);
+				writer.WriteS(page.BodyJson.Get(context).ValueOf());
 			}
 			else
 			{
@@ -310,7 +310,7 @@ namespace Api.Pages
 			}
 
 			writer.WriteASCII(",\"title\":\"");
-			writer.WriteS(page.Title);
+			writer.WriteS(page.Title.Get(context));
 			writer.WriteASCII("\",\"id\":");
 			writer.WriteS(page.Id);
 			writer.Write((byte)'}');
@@ -356,10 +356,11 @@ namespace Api.Pages
 				await primaryService.ObjectToJson(context, primaryObject, writer, null, page.PrimaryContentIncludes);
 			}
 
-			if (page != null && !string.IsNullOrEmpty(page.Title))
+			var titleStr = page.Title.Get(context);
+
+			if (!string.IsNullOrEmpty(titleStr))
 			{
 				writer.WriteASCII(",\"title\":");
-				var titleStr = page.Title;
 
 				if (primaryObject != null)
 				{
@@ -371,10 +372,11 @@ namespace Api.Pages
 				}
 			}
 
-			if (page != null && !string.IsNullOrEmpty(page.Description))
+			var descriptionStr = page.Description.Get(context);
+
+			if (page != null && !string.IsNullOrEmpty(descriptionStr))
 			{
 				writer.WriteASCII(",\"description\":");
-				var descriptionStr = page.Description;
 
 				if (primaryObject != null)
 				{
@@ -631,21 +633,21 @@ namespace Api.Pages
 				writer.WriteASCII("\" />");
 			}
 
-			var pageTitle = page?.Title;
-			var pageDescription = page?.Description;
+			var pageTitle = page == null ? null : page.Title.Get(context);
+			var pageDescription = page == null ? null : page.Description.Get(context);
 
 			if (pageWithTokens.PrimaryObject != null)
 			{
-				pageTitle = await ReplaceTokens(context, page.Title, pageWithTokens.PrimaryObject);
-				pageDescription = await ReplaceTokens(context, page.Description, pageWithTokens.PrimaryObject);
+				pageTitle = await ReplaceTokens(context, pageTitle, pageWithTokens.PrimaryObject);
+				pageDescription = await ReplaceTokens(context, pageDescription, pageWithTokens.PrimaryObject);
 			}
 
 			writer.WriteASCII("<meta name=\"msapplication-TileColor\" content=\"#ffffff\" />");
 			writer.WriteASCII("<meta name=\"theme-color\" content=\"#ffffff\" />");
 			writer.WriteASCII("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />");
-			writer.WriteASCII("<meta name=\"description\" content=");
+			writer.WriteASCII("<meta name=\"description\" content=\"");
 			writer.WriteEscaped(pageDescription);
-			writer.WriteASCII(" /><title>");
+			writer.WriteASCII("\" /><title>");
 			writer.WriteASCII(pageTitle);
 			writer.WriteASCII("</title>");
 
@@ -1060,8 +1062,10 @@ namespace Api.Pages
 						break;
 					}
 
+					var localized = value as ILocalized;
+
 					// We need to swap out the string with the value.
-					var strValue = value.ToString();
+					var strValue = (localized != null) ? localized.GetStringValue(context) : value.ToString();
 
 					if (strValue.StartsWith('{') && strValue.EndsWith('}'))
 					{

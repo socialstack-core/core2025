@@ -81,8 +81,8 @@ public class Init
 				return new ValueTask<T>((T)null);
 			}
 
-			// Remove from the primary cache:
-			var cache = service.GetCacheForLocale(1);
+			// Remove from the cache:
+			var cache = service.GetCache();
 
 			if (cache != null)
 			{
@@ -101,7 +101,7 @@ public class Init
 
 			// Cache update.
 			var locale = context == null ? 1 : context.LocaleId;
-			var cache = service.GetCacheForLocale(locale);
+			var cache = service.GetCache();
 
 			if (cache == null)
 			{
@@ -117,51 +117,7 @@ public class Init
 			// Anything that makes an assumption that the object doesn't change can continue with that assumption.
 			service.CloneEntityInto(entity, orig);
 
-			var id = orig.Id;
-
-			T raw = null;
-
-			if (locale == 1)
-			{
-				raw = orig;
-			}
-			else
-			{
-				if (cache != null)
-				{
-					raw = cache.GetRaw(id);
-				}
-
-				if (raw == null)
-				{
-					raw = new T();
-				}
-
-				// Must also update the raw object in the cache (as the given entity is _not_ the raw one).
-				T primaryEntity;
-
-				if (cache == null)
-				{
-					primaryEntity = await service.Get(new Context(1, context.User, context.RoleId), id, DataOptions.IgnorePermissions);
-				}
-				else
-				{
-					primaryEntity = service.GetCacheForLocale(1).Get(id);
-				}
-
-				service.PopulateRawEntityFromTarget(raw, orig, primaryEntity);
-			}
-
-			if (cache != null)
-			{
-				cache.Add(context, orig, raw);
-
-				if (locale == 1)
-				{
-					service.OnPrimaryEntityChanged(orig);
-				}
-
-			}
+			cache.Add(context, orig);
 
 			return entity;
 		}, 100);
@@ -174,7 +130,7 @@ public class Init
 			}
 
 			// Load from cache if there is one.
-			var cache = service.GetCacheForLocale(context == null ? 1 : context.LocaleId);
+			var cache = service.GetCache();
 
 			if (cache != null)
 			{
@@ -186,62 +142,12 @@ public class Init
 
 		service.EventGroup.CreatePartial.AddEventListener((Context context, T newEntity) =>
 		{
+			// If this is a cached type, add it to cache.
+			var cache = service.GetCache();
 
-			// If this is a cached type, must add it to all locale caches.
-			if (service.CacheAvailable)
+			if (cache != null)
 			{
-				// If the newEntity is not in the primary locale, we will need to derive the raw object.
-				// Any localised fields should be set to their default value (null/ 0).
-				// [May2023] The above causes issues where an entity is created on a locale other than 1 and is then used by an include
-				// which iterates over the cache for locale #1 to collect IDs. DB engine gets it correct but cache does not.
-
-				var raw = context.LocaleId == 1 ? newEntity : new T();
-
-				if (context.LocaleId != 1)
-				{
-					service.CloneEntityInto(newEntity, raw);
-				}
-
-				var localeSet = ContentTypes.Locales;
-
-				for (var i = 0; i < localeSet.Length; i++)
-				{
-					var locale = localeSet[i];
-
-					if (locale == null)
-					{
-						continue;
-					}
-
-					var cache = service.GetCacheForLocale(locale.Id);
-
-					if (cache == null)
-					{
-						continue;
-					}
-
-					if (i == 0)
-					{
-						// Primary locale cache - raw and target are the same object.
-						cache.Add(context, raw, raw);
-					}
-					else if (locale.Id == context.LocaleId)
-					{
-						// Add the given object as-is.
-						cache.Add(context, newEntity, raw);
-					}
-					else
-					{
-						// Secondary locale. The target object is just a clone of the raw object.
-						var entity = (T)Activator.CreateInstance(service.InstanceType);
-						service.PopulateTargetEntityFromRaw(entity, raw, raw);
-
-						var localeRaw = (T)Activator.CreateInstance(service.InstanceType);
-						service.PopulateTargetEntityFromRaw(localeRaw, raw, raw);
-
-						cache.Add(context, entity, localeRaw);
-					}
-				}
+				cache.Add(context, newEntity);
 			}
 
 			return new ValueTask<T>(newEntity);
@@ -256,7 +162,7 @@ public class Init
 			}
 
 			// Do we have a cache?
-			var cache = (queryPair.QueryA.DataOptions & DataOptions.CacheFlag) == DataOptions.CacheFlag ? service.GetCacheForLocale(context.LocaleId) : null;
+			var cache = (queryPair.QueryA.DataOptions & DataOptions.CacheFlag) == DataOptions.CacheFlag ? service.GetCache() : null;
 
 			if (cache != null)
 			{

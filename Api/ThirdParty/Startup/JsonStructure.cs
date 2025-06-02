@@ -413,6 +413,22 @@ namespace Api.Startup
 		/// <returns></returns>
 		private static bool IsNumericType(Type type)
 		{
+			if (type.IsGenericType)
+			{
+				var def = type.GetGenericTypeDefinition();
+
+				if (def == typeof(Localized<>))
+				{
+					return IsNumericType(type.GetGenericArguments()[0]);
+				}
+				else if (def == typeof(Nullable<>))
+				{
+					return IsNumericType(type.GetGenericArguments()[0]);
+				}
+
+				return false;
+			}
+
 			switch (Type.GetTypeCode(type))
 			{
 				case TypeCode.Byte:
@@ -445,12 +461,8 @@ namespace Api.Startup
 			// Set the default just before the field event:
 			field.SetDefaultDisplayModule();
 
-			// Get underlying nullable type:
-			var nullableType = Nullable.GetUnderlyingType(field.TargetType);
-
 			// Set if it's numeric:
-			field.UnderlyingNullable = nullableType;
-			field.IsNumericField = IsNumericType(nullableType ?? field.TargetType);
+			field.IsNumericField = IsNumericType(field.TargetType);
 
 			var readable = readableState;
 
@@ -606,10 +618,6 @@ namespace Api.Startup
 		/// </summary>
 		public Type TargetType;
 		/// <summary>
-		/// If TargetType is nullable, the underlying type.
-		/// </summary>
-		public Type UnderlyingNullable;
-		/// <summary>
 		/// True if this is a numeric field (int, double etc).
 		/// </summary>
 		public bool IsNumericField;
@@ -653,6 +661,27 @@ namespace Api.Startup
 			var name = OriginalName;
 			var labelName = name;
 			var fieldType = TargetType;
+			var isLocalized = false;
+
+			if (fieldType.IsGenericType)
+			{
+				var genericFieldType = fieldType.GetGenericTypeDefinition();
+
+				if (genericFieldType == typeof(Localized<>))
+				{
+					isLocalized = true;
+
+					// Everything else acts as the interior type.
+					fieldType = fieldType.GetGenericArguments()[0];
+				}
+			}
+
+			var underlying = Nullable.GetUnderlyingType(fieldType);
+
+			if (underlying != null)
+			{
+				fieldType = underlying;
+			}
 
 			if (isVirtualList)
 			{
@@ -696,7 +725,7 @@ namespace Api.Startup
 			}
 			*/
 			
-			else if ((fieldType == typeof(int) || fieldType == typeof(int?) || fieldType == typeof(uint) || fieldType == typeof(uint?)) && labelName != "Id" && labelName.EndsWith("Id") && ContentTypes.GetType(labelName[0..^2].ToLower()) != null)
+			else if ((fieldType == typeof(int) || fieldType == typeof(uint)) && labelName != "Id" && labelName.EndsWith("Id") && ContentTypes.GetType(labelName[0..^2].ToLower()) != null)
 			{
 				// Remove "Id" from the end of the label:
 				labelName = labelName[0..^2];
@@ -712,7 +741,12 @@ namespace Api.Startup
 			Data["label"] = SpaceCamelCase(labelName);
 			Data["name"] = FirstCharacterToLower(name);
 			Data["type"] = type;
-			
+
+			if (isLocalized)
+			{
+				Data["localized"] = true;
+			}
+
 			// Any of these [Module] or inheritors?
 			foreach (var attrib in Attributes)
 			{
@@ -734,11 +768,6 @@ namespace Api.Startup
 				{
 					var data = attrib as DataAttribute;
 					Data[data.Name] = data.Value;
-				}
-				else if (attrib is LocalizedAttribute)
-				{
-					// Yep - it's translatable.
-					Data["localized"] = true;
 				}
 			}
 			
@@ -829,102 +858,112 @@ namespace Api.Startup
 			if (targetValue is JToken targetJToken)
 			{
 				// Still a JToken - lets try and map it through now.
-
-				if (TargetType == typeof(DateTime) || TargetType == typeof(DateTime?))
-				{
-					// Special case for a date. If the value is numeric, it's a JS compatible timestamp (unix timestamp in *milliseconds*).
-					// Otherwise, it's the JS compatible date string.
-
-					if (targetJToken.Type == JTokenType.Integer || targetJToken.Type == JTokenType.Float)
-					{
-						// JS Timestamp (milliseconds).
-						var msTimestamp = targetJToken.ToObject<double>();
-
-						targetValue = ConvertFromJsUnixTimestamp(msTimestamp);
-					}
-					else
-					{
-						var str = value.ToObject<string>();
-
-						if (string.IsNullOrWhiteSpace(str))
-						{
-							if (TargetType == typeof(DateTime))
-							{
-								throw new PublicException("A date is required for " + Name, "date_format");
-							}
-							targetValue = null;
-						}
-						else if(ulong.TryParse(str, out ulong timestamp))
-						{
-							// it's a timestamp, in milliseconds from year 0.
-							// It was parsed as a ulong because negative numbers are not permitted here (BC years).
-							// Milliseconds from 0 to ticks is simply a multiply:
-							targetValue = new DateTime((long)(timestamp * 10000));
-						}
-						else if (DateTime.TryParse(
-							str,
-							CultureInfo.InvariantCulture,
-							System.Globalization.DateTimeStyles.RoundtripKind,
-							out DateTime dateResult))
-						{
-							targetValue = dateResult;
-						}
-						else
-						{
-							// Unrecognised date format.
-							throw new PublicException("Unrecognised date format", "date_format");
-						}
-					}
-
-				}
-				else if (targetJToken.Type == JTokenType.Null)
-				{
-					// Use the default targetValue:
-					if (TargetType.IsValueType)
-					{
-						targetValue = Activator.CreateInstance(TargetType);
-					}
-					else
-					{
-						targetValue = null;
-					}
-				}
-				else if (targetJToken.Type == JTokenType.String && IsNumericField)
-				{
-					// can be e.g. an empty string on a numeric field.
-					var str = targetJToken.Value<string>();
-
-					if (string.IsNullOrEmpty(str))
-					{
-						// Use the default value:
-						targetValue = Activator.CreateInstance(TargetType);
-					}
-					else
-					{
-						// Try parse:
-						targetValue = targetJToken.ToObject(TargetType);
-					}
-				}
-				else
-				{
-					targetValue = targetJToken.ToObject(TargetType);
-				}
+				targetValue = ConvertToken(targetJToken, TargetType);
 			}
 
 			return targetValue;
 		}
-		
+
+		private object ConvertToken(JToken src, Type targetType)
+		{
+			if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Localized<>))
+			{
+				var argType = targetType.GetGenericArguments()[0];
+				var baseVal = ConvertToken(src, argType);
+				return Activator.CreateInstance(targetType, baseVal);
+			}
+
+			if (targetType == typeof(DateTime) || targetType == typeof(DateTime?))
+			{
+				// Special case for a date. If the value is numeric, it's a JS compatible timestamp (unix timestamp in *milliseconds*).
+				// Otherwise, it's the JS compatible date string.
+
+				if (src.Type == JTokenType.Integer || src.Type == JTokenType.Float)
+				{
+					// JS Timestamp (milliseconds).
+					var msTimestamp = src.ToObject<double>();
+
+					return ConvertFromJsUnixTimestamp(msTimestamp);
+				}
+
+				var str = src.ToObject<string>();
+
+				if (string.IsNullOrWhiteSpace(str))
+				{
+					if (targetType == typeof(DateTime))
+					{
+						throw new PublicException("A date is required for " + Name, "date_format");
+					}
+
+					return null;
+				}
+				else if (ulong.TryParse(str, out ulong timestamp))
+				{
+					// it's a timestamp, in milliseconds from year 0.
+					// It was parsed as a ulong because negative numbers are not permitted here (BC years).
+					// Milliseconds from 0 to ticks is simply a multiply:
+					return new DateTime((long)(timestamp * 10000));
+				}
+				else if (DateTime.TryParse(
+					str,
+					CultureInfo.InvariantCulture,
+					System.Globalization.DateTimeStyles.RoundtripKind,
+					out DateTime dateResult))
+				{
+					return dateResult;
+				}
+
+				// Unrecognised date format.
+				throw new PublicException("Unrecognised date format", "date_format");
+			}
+			
+			if (src.Type == JTokenType.Null)
+			{
+				// Use the default targetValue:
+				if (targetType.IsValueType)
+				{
+					return Activator.CreateInstance(targetType);
+				}
+				
+				return null;
+			}
+			
+			if (src.Type == JTokenType.String && IsNumericField)
+			{
+				// can be e.g. an empty string on a numeric field.
+				var str = src.Value<string>();
+
+				if (string.IsNullOrEmpty(str))
+				{
+					// Use the default value:
+					return Activator.CreateInstance(targetType);
+				}
+				
+				// Try parse:
+				return ConvertToObjectNumber(str, targetType);
+			}
+
+			return src.ToObject(targetType);
+		}
+
 		/// <summary>
 		/// Allocating number parse to the target value.
 		/// </summary>
 		/// <param name="srcValue"></param>
+		/// <param name="targetType"></param>
 		/// <returns></returns>
-		private object ConvertToObjectNumber(string srcValue)
+		private object ConvertToObjectNumber(string srcValue, Type targetType)
 		{
-			var isNullable = UnderlyingNullable != null;
-			var type = isNullable ? UnderlyingNullable : TargetType;
+			var underlying = Nullable.GetUnderlyingType(targetType);
+			var isNullable = false;
 
-			switch (Type.GetTypeCode(type))
+			if (underlying != null)
+			{
+				targetType = underlying;
+				isNullable = true;
+			}
+
+			switch (Type.GetTypeCode(targetType))
 			{
 				case TypeCode.Byte:
 
@@ -1043,22 +1082,7 @@ namespace Api.Startup
 			if (IsNumericField)
 			{
 				// byte, int etc. Can be nullable.
-				if (UnderlyingNullable != null)
-				{
-					if (srcValue != null)
-					{
-						valueToSet = ConvertToObjectNumber(srcValue);
-					}
-				}
-				else if (srcValue == null)
-				{
-					// Not valid
-					return;
-				}
-				else
-				{
-					valueToSet = ConvertToObjectNumber(srcValue);
-				}
+				valueToSet = ConvertToObjectNumber(srcValue, TargetType);
 			}
 			else if (TargetType == typeof(bool?))
 			{
@@ -1085,6 +1109,13 @@ namespace Api.Startup
 				{
 					valueToSet = false;
 				}
+			}
+			else if (TargetType == typeof(Localized<string>))
+			{
+				// Currently the only Localized case actually used by the pot file bits which use this method.
+				// Ideally needs conversion towards being a set of generated methods
+				// but that is a much bigger edit on this rarely used method than..
+				valueToSet = new Localized<string>(srcValue);
 			}
 			else if (TargetType == typeof(string))
 			{
@@ -1122,7 +1153,7 @@ namespace Api.Startup
 				{
 					return;
 				}
-					
+
 				if (double.TryParse(srcValue, out double ticks))
 				{
 					// It was a number of ticks
@@ -1141,6 +1172,13 @@ namespace Api.Startup
 						return;
 					}
 				}
+			}
+			else
+			{
+				throw new Exception(
+					"Can't set this field which is of type '" + TargetType.Name + "' from a string yet. " +
+					"If it's a localized field specifically, then making this method broader is currently a todo."
+				);
 			}
 
 			if (PropertySet != null)

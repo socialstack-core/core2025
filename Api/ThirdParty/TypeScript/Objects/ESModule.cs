@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Api.Contexts;
+using Api.Database;
 using Newtonsoft.Json.Linq;
 
 namespace Api.TypeScript.Objects
@@ -70,6 +71,11 @@ namespace Api.TypeScript.Objects
                 return;
 
             if (type == typeof(Context))
+            {
+                return;
+            }
+
+            if (type == typeof(JsonString))
             {
                 return;
             }

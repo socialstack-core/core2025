@@ -37,7 +37,7 @@ namespace Api.Templates
 			{
 				Title = "Site default",
 				Key = "site_default",
-				BodyJson = @"{
+				BodyJson = new JsonString(@"{
 					""t"": ""UI/Templates/BaseWebTemplate"",
 					""r"": {
 						""body"": {
@@ -45,14 +45,14 @@ namespace Api.Templates
 							""d"": {""name"": ""body""}
 						}
 					}
-				}"
+				}")
 			});
 
 			Install(new Template()
 			{
 				Title = "Admin default",
 				Key = "admin_default",
-				BodyJson = @"{
+				BodyJson = new JsonString(@"{
 					""t"": ""Admin/Templates/BaseAdminTemplate"",
 					""r"": {
 						""children"": {
@@ -60,7 +60,7 @@ namespace Api.Templates
 							""d"": {""name"": ""body""}
 						}
 					}
-				}"
+				}")
 			});
 
 			Events.Page.TransformCanvasNode.AddEventListener(async (Context context, CanvasNode node) => {
@@ -280,7 +280,7 @@ namespace Api.Templates
 		public async ValueTask<TemplateDetails> LoadTemplate(Context context, Template template, CanvasNode templateConfig)
 		{
 			// Load the JSON.
-			var json = Newtonsoft.Json.JsonConvert.DeserializeObject(template.BodyJson) as JToken;
+			var json = Newtonsoft.Json.JsonConvert.DeserializeObject(template.BodyJson.ValueOf()) as JToken;
 
 			var details = new TemplateDetails()
 			{

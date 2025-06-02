@@ -108,7 +108,6 @@ namespace Api.AutoForms
 			{
 				yield return new ContentType()
 				{
-					Id = kvp.Value.Id,
 					Name = kvp.Value.Name
 				};
 			}
@@ -127,9 +126,15 @@ namespace Api.AutoForms
 			// For each AutoService..
 			foreach (var serviceKvp in Services.All)
 			{
-				if (serviceKvp.Value.IsMapping || serviceKvp.Value.IsTypeProxy || serviceKvp.Value.InstanceType == null)
+				if (serviceKvp.Value.IsMapping || serviceKvp.Value.InstanceType == null)
 				{
-					// Omit mapping services and proxies (like revisions subservices)
+					// Omit mapping services
+					continue;
+				}
+
+				if (serviceKvp.Value.InstanceType.IsGenericType)
+				{
+					// Omit base classes and things like Revision<> services
 					continue;
 				}
 
@@ -206,6 +211,18 @@ namespace Api.AutoForms
 			var customAttributes = jsonField.Attributes;
 			var isIncludable = false;
 			string valueType = null;
+			var isLocalized = false;
+
+			if (fieldType.IsGenericType)
+			{
+				var def = fieldType.GetGenericTypeDefinition();
+
+				if (def == typeof(Localized<>))
+				{
+					isLocalized = true;
+					fieldType = fieldType.GetGenericArguments()[0];
+				}
+			}
 
 			if (jsonField.ContentField != null && jsonField.ContentField.VirtualInfo != null && jsonField.ContentField.VirtualInfo.IsList)
 			{
@@ -359,6 +376,11 @@ namespace Api.AutoForms
 				field.Data["readonly"] = true;
 			}
 
+			if (isLocalized)
+			{
+				field.Data["localized"] = true;
+			}
+
 			// Any of these [Module] or inheritors?
 			foreach (var attrib in customAttributes)
 			{
@@ -385,11 +407,6 @@ namespace Api.AutoForms
 				{
 					var data = attrib as DataAttribute;
 					field.Data[data.Name] = data.Value;
-				}
-				else if (attrib is LocalizedAttribute)
-				{
-					// Yep - it's translatable.
-					field.Data["localized"] = true;
 				}
 				else if (attrib is DatabaseFieldAttribute)
 				{

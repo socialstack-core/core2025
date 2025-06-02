@@ -2,6 +2,8 @@ using Api.Contexts;
 using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
+using Api.Translate;
+using Stripe;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -73,7 +75,7 @@ namespace Api.Startup
 			var map = new ConcurrentDictionary<Type, JsonFieldType>();
 			_typeMap = map;
 
-			AddTo(map, typeof(bool), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(bool), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				emitValue();
 				WriteBool(code);
@@ -89,107 +91,123 @@ namespace Api.Startup
 			var writeSFloat = typeof(Writer).GetMethod("WriteS", new Type[] { typeof(float) });
 			var writeSDecimal = typeof(Writer).GetMethod("WriteS", new Type[] { typeof(decimal) });
 			var writeEscapedUString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(ustring) });
+			var writeJsonString = typeof(Writer).GetMethod("Write", new Type[] { typeof(JsonString) });
+			var writeEscapedJsonString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(JsonString) });
 			var writeEscapedString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(string) });
 
-			AddTo(map, typeof(uint), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(uint), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUint);
 			});
 
-			AddTo(map, typeof(int), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(int), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSInt);
 			});
 
-			AddTo(map, typeof(byte), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(byte), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUint);
 			});
 
-			AddTo(map, typeof(char), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(char), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUint);
 			});
 
-			AddTo(map, typeof(sbyte), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(sbyte), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSInt);
 			});
 
-			AddTo(map, typeof(ushort), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(ushort), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUint);
 			});
 
-			AddTo(map, typeof(short), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(short), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSInt);
 			});
 
-			AddTo(map, typeof(ulong), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(ulong), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSUlong);
 			});
 
-			AddTo(map, typeof(long), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(long), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSLong);
 			});
 
-			AddTo(map, typeof(DateTime), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(DateTime), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSDateTime);
 			});
 
-			AddTo(map, typeof(ustring), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(ustring), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeEscapedUString);
 			});
+			
+			AddTo(map, typeof(JsonString), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
+			{
+				code.Emit(OpCodes.Ldarg_2); // Writer
+				emitValue();
+				if (isDocumentFormat)
+				{
+					code.Emit(OpCodes.Callvirt, writeJsonString);
+				}
+				else
+				{
+					code.Emit(OpCodes.Callvirt, writeEscapedJsonString);
+				}
+			});
 
-			AddTo(map, typeof(string), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(string), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeEscapedString);
 			});
 
-			AddTo(map, typeof(double), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(double), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSDouble);
 			});
 
-			AddTo(map, typeof(float), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(float), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeSFloat);
 			});
 
-			AddTo(map, typeof(decimal), (ILGenerator code, Action emitValue) =>
+			AddTo(map, typeof(decimal), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
 				code.Emit(OpCodes.Ldarg_2); // Writer
 				emitValue();
@@ -202,13 +220,178 @@ namespace Api.Startup
 		}
 
 		/// <summary>
-		/// Emits JSON write of a given content field in to the given body.
+		/// Generates a document reader/writer for the given content type.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <typeparam name="ID"></typeparam>
+		/// <param name="fields"></param>
+		/// <returns></returns>
+		public static TypeDocumentReaderWriter<T> GenerateDocumentReaderWriter<T, ID>(ContentFields fields)
+			where T : Content<ID>, new()
+			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
+		{
+
+			AssemblyName assemblyName = new AssemblyName("GeneratedDocRW_" + counter);
+			counter++;
+			AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
+			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
+
+			// Base type to use:
+			var baseType = typeof(TypeDocumentReaderWriter<T>);
+
+			// Start building the type:
+			var typeName = typeof(T).Name;
+			TypeBuilder typeBuilder = moduleBuilder.DefineType(typeName + "_DocRW", TypeAttributes.Public, baseType);
+
+			var writerMethod = typeBuilder.DefineMethod("WriteStoredJson", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), new Type[] {
+				typeof(T),
+				typeof(Writer)
+			});
+
+			ILGenerator writeBody = writerMethod.GetILGenerator();
+
+			var first = true;
+
+			EmitWriteChar(writeBody, '{');
+
+			foreach (var field in fields.List)
+			{
+				if (field.FieldInfo == null)
+				// || field.VirtualInfo != null && field.VirtualInfo.IsList { future feature, would need to grab these sets too }
+				{
+					continue;
+				}
+
+				if (field.FieldInfo.FieldType.IsArray)
+				{
+					Log.Warn("typeio", "Temporarily ignored an array field from probably revisions (WIP)");
+					continue;
+				}
+
+				if (first)
+				{
+					first = false;
+				}
+				else
+				{
+					EmitWriteChar(writeBody, ',');
+				}
+
+				EmitWriteASCII(writeBody, "\"" + field.Name + "\"");
+				EmitWriteChar(writeBody, ':');
+
+				var type = field.FieldInfo.FieldType;
+				var nextField = writeBody.DefineLabel();
+
+				if (!type.IsValueType)
+				{
+					// if(x.field == null) { writer.WriteASCII("null"); }
+					writeBody.Emit(OpCodes.Ldarg_1); // T obj
+					writeBody.Emit(OpCodes.Ldfld, field.FieldInfo); // .theField
+					writeBody.Emit(OpCodes.Ldnull);
+					writeBody.Emit(OpCodes.Ceq);
+					var notNull = writeBody.DefineLabel();
+					writeBody.Emit(OpCodes.Brfalse, notNull);
+						EmitWriteASCII(writeBody, "null");
+						writeBody.Emit(OpCodes.Br, nextField);
+					writeBody.MarkLabel(notNull);
+				}
+
+				// Here it is either a value type (which can still be a Nullable) or a not null object.
+
+				if (type.IsGenericType)
+				{
+					var gDef = type.GetGenericTypeDefinition();
+
+					if (gDef == typeof(Localized<>))
+					{
+						// Call ToJson.
+						var toJson = type.GetMethod("ToJson", BindingFlags.Instance | BindingFlags.Public, new Type[] { typeof(Writer) });
+
+						if (toJson == null)
+						{
+							throw new Exception("ToJson(writer) on a localised type missing somehow!");
+						}
+
+						writeBody.Emit(OpCodes.Ldarg_1); // T obj
+						writeBody.Emit(OpCodes.Ldflda, field.FieldInfo); // .theLocalizedField (this)
+						writeBody.Emit(OpCodes.Ldarg_2); // writer
+						writeBody.Emit(OpCodes.Callvirt, toJson); // invoke toJson
+
+					}
+					else if (gDef == typeof(Nullable<>))
+					{
+						EmitWriteBasicField(writeBody, field, (ILGenerator gen) =>
+						{
+							gen.Emit(OpCodes.Ldarg_1); // T obj
+						}, true);
+					}
+					else
+					{
+						// probably a list - fail!
+						throw new NotSupportedException("Can't currently store this generic type in db documents. " +
+							"This can happen if there is e.g. a List in a versioned piece of content.");
+					}
+				}
+				else
+				{
+					EmitWriteBasicField(writeBody, field, (ILGenerator gen) => {
+						gen.Emit(OpCodes.Ldarg_1); // T obj
+					}, true);
+				}
+
+				writeBody.MarkLabel(nextField);
+			}
+
+			EmitWriteChar(writeBody, '}');
+
+			writeBody.Emit(OpCodes.Ret);
+
+			// Finish the type and instance it.
+			Type builtType = typeBuilder.CreateType();
+			var instance = Activator.CreateInstance(builtType) as TypeDocumentReaderWriter<T>;
+			return instance;
+		}
+
+		/// <summary>
+		/// Emits writer.WriteASCII(val);
+		/// </summary>
+		/// <param name="gen"></param>
+		/// <param name="val"></param>
+		public static void EmitWriteASCII(ILGenerator gen, string val)
+		{
+			gen.Emit(OpCodes.Ldarg_2); // writer.
+			var writeAscii = typeof(Writer).GetMethod("WriteASCII", BindingFlags.Public | BindingFlags.Instance);
+			gen.Emit(OpCodes.Ldstr, val);
+			gen.Emit(OpCodes.Callvirt, writeAscii);
+		}
+		
+		/// <summary>
+		/// Emits writer.Write(theChar);
+		/// </summary>
+		/// <param name="gen"></param>
+		/// <param name="val"></param>
+		public static void EmitWriteChar(ILGenerator gen, char val)
+		{
+			gen.Emit(OpCodes.Ldarg_2); // writer.
+			var writeByte = typeof(Writer).GetMethod("Write", BindingFlags.Public | BindingFlags.Instance, new Type[]{
+				typeof(byte)
+			});
+
+			gen.Emit(OpCodes.Ldc_I4, (int)((byte)val));
+			gen.Emit(OpCodes.Callvirt, writeByte);
+		}
+
+		/// <summary>
+		/// Emits JSON write of a given content field in to the given body. 
+		/// It must be a basic type or a nullable of one of those types.
 		/// </summary>
 		/// <param name="body"></param>
 		/// <param name="field"></param>
 		/// <param name="objLoader"></param>
+		/// <param name="isDocumentFormat"></param>
 		/// <exception cref="Exception"></exception>
-		public static void EmitWriteField(ILGenerator body, ContentField field, Action<ILGenerator> objLoader)
+		public static void EmitWriteBasicField(ILGenerator body, ContentField field, Action<ILGenerator> objLoader, bool isDocumentFormat = false)
 		{
 			// Check if it's a nullable:
 			var fieldType = field.FieldType;
@@ -225,10 +408,10 @@ namespace Api.Startup
 			if (!typeMap.TryGetValue(fieldType, out JsonFieldType jft))
 			{
 				// Can't serialise this here.
-				throw new Exception("Unable to serialise fields of this type.");
+				throw new Exception("Unable to serialise fields of this type (" + fieldType.Name + ").");
 			}
 
-			jft.EmitWrite(body, field, nullableType, objLoader);
+			jft.EmitWrite(body, field, nullableType, objLoader, isDocumentFormat);
 		}
 
 		/// <summary>
@@ -291,7 +474,8 @@ namespace Api.Startup
 							MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual,
 							typeof(void),
 							new Type[] {
-								typeof(object)
+								typeof(object),
+								typeof(Context)
 							}
 						);
 
@@ -322,13 +506,40 @@ namespace Api.Startup
 					if (idSrc.FieldInfo != null)
 					{
 						body.Emit(OpCodes.Ldarg_1);
-						body.Emit(OpCodes.Ldfld, idSrc.FieldInfo);
+						var idFldType = idSrc.FieldInfo.FieldType;
+
+						// If it's a localized ID, resolve to the actual value.
+						if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
+						{
+							body.Emit(OpCodes.Ldflda, idSrc.FieldInfo);
+							body.Emit(OpCodes.Ldarg_2); // context
+							body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
+							var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[]{ typeof(Context), typeof(bool) });
+							body.Emit(OpCodes.Callvirt, localizedGetMethod);
+						}
+						else
+						{
+							body.Emit(OpCodes.Ldfld, idSrc.FieldInfo);
+						}
 					}
 					else
 					{
 						// Property
 						body.Emit(OpCodes.Ldarg_1);
 						body.Emit(OpCodes.Callvirt, idSrc.PropertyInfo.GetGetMethod());
+						var idFldType = idSrc.PropertyInfo.PropertyType;
+
+						if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
+						{
+							// Need an address - store as a local:
+							var localizedLocal = body.DeclareLocal(idFldType);
+							body.Emit(OpCodes.Stloc, localizedLocal);
+							body.Emit(OpCodes.Ldloca, localizedLocal);
+							body.Emit(OpCodes.Ldarg_2); // context
+							body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
+							var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
+							body.Emit(OpCodes.Callvirt, localizedGetMethod);
+						}
 					}
 
 					// Add to the collector:
@@ -340,11 +551,19 @@ namespace Api.Startup
 					continue;
 				}
 
+				var idFieldType = idField.FieldType;
+
+				// If it's localized, unwrap it. Must always happen before nullable check.
+				if (idFieldType.IsGenericType && idFieldType.GetGenericTypeDefinition() == typeof(Localized<>))
+				{
+					idFieldType = idFieldType.GetGenericArguments()[0];
+				}
+
 				// If the field type is nullable, use the base type here.
-				var nullableBaseType = Nullable.GetUnderlyingType(idField.FieldType);
+				var nullableBaseType = Nullable.GetUnderlyingType(idFieldType);
 
 				baseType = typeof(IDCollector<>).MakeGenericType(new Type[] {
-					nullableBaseType == null ? idField.FieldType : nullableBaseType
+					nullableBaseType == null ? idFieldType : nullableBaseType
 				});
 
 				// Get the Add method:
@@ -354,9 +573,14 @@ namespace Api.Startup
 				typeBuilder = moduleBuilder.DefineType("FieldWriter_" + idField.Name + "_" + counter, TypeAttributes.Public, baseType);
 				counter++;
 
-				collect = typeBuilder.DefineMethod("Collect", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), new Type[] {
-					typeof(object)
-				});
+				collect = typeBuilder.DefineMethod(
+					"Collect", 
+					MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, 
+					typeof(void), new Type[] {
+						typeof(object),
+						typeof(Context)
+					}
+				);
 
 				// "This" is the ID collector, with it's Add method.
 				// arg1 is the object to collect from.
@@ -368,24 +592,50 @@ namespace Api.Startup
 				if (idField.FieldInfo != null)
 				{
 					body.Emit(OpCodes.Ldarg_1);
-					body.Emit(OpCodes.Ldfld, idField.FieldInfo);
+
+					var idFldType = idField.FieldType;
+					if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
+					{
+						body.Emit(OpCodes.Ldflda, idField.FieldInfo);
+						body.Emit(OpCodes.Ldarg_2); // context
+						body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
+						var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
+						body.Emit(OpCodes.Callvirt, localizedGetMethod);
+					}
+					else
+					{
+						body.Emit(OpCodes.Ldfld, idField.FieldInfo);
+					}
 				}
 				else
 				{
 					// Property
 					body.Emit(OpCodes.Ldarg_1);
 					body.Emit(OpCodes.Callvirt, idField.PropertyInfo.GetGetMethod());
+
+					var idFldType = idField.PropertyInfo.PropertyType;
+					if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
+					{
+						// Need an address - store as a local:
+						var localizedLocal = body.DeclareLocal(idFldType);
+						body.Emit(OpCodes.Stloc, localizedLocal);
+						body.Emit(OpCodes.Ldloca, localizedLocal);
+						body.Emit(OpCodes.Ldarg_2); // context
+						body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
+						var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
+						body.Emit(OpCodes.Callvirt, localizedGetMethod);
+					}
 				}
 
 				if (nullableBaseType != null)
 				{
 					// If nullable, and it's null, do nothing. To check though, we need an address. We'll need to store it in a local for that:
-					var loc = body.DeclareLocal(idField.FieldType);
+					var loc = body.DeclareLocal(idFieldType);
 					var after = body.DefineLabel();
 					body.Emit(OpCodes.Stloc, loc);
 					body.Emit(OpCodes.Ldloca, 0);
 					body.Emit(OpCodes.Dup);
-					body.Emit(OpCodes.Callvirt, idField.FieldType.GetProperty("HasValue").GetGetMethod());
+					body.Emit(OpCodes.Callvirt, idFieldType.GetProperty("HasValue").GetGetMethod());
 					// The t/f is now on the stack. Check if it's null, and if so, ret.
 					body.Emit(OpCodes.Ldc_I4_0);
 					body.Emit(OpCodes.Ceq);
@@ -394,7 +644,7 @@ namespace Api.Startup
 					body.Emit(OpCodes.Pop);
 					body.Emit(OpCodes.Ret);
 					body.MarkLabel(after);
-					body.Emit(OpCodes.Callvirt, idField.FieldType.GetProperty("Value").GetGetMethod());
+					body.Emit(OpCodes.Callvirt, idFieldType.GetProperty("Value").GetGetMethod());
 				}
 
 				// Add:
@@ -407,7 +657,7 @@ namespace Api.Startup
 
 		}
 
-		private static JsonFieldType AddTo(ConcurrentDictionary<Type, JsonFieldType> map, Type type, Action<ILGenerator, Action> onWriteValue)
+		private static JsonFieldType AddTo(ConcurrentDictionary<Type, JsonFieldType> map, Type type, Action<ILGenerator, Action, bool> onWriteValue)
 		{
 			var fieldType = new JsonFieldType(type, onWriteValue);
 			map[type] = fieldType;
@@ -556,9 +806,21 @@ namespace Api.Startup
 
 						// The type we may be outputting a value outputter for:
 						var fieldType = field.TargetType;
+						var isLocalised = false;
+
+						if (fieldType.IsGenericType)
+						{
+							var typeDef = fieldType.GetGenericTypeDefinition();
+
+							if (typeDef == typeof(Localized<>))
+							{
+								isLocalised = true;
+								fieldType = fieldType.GetGenericArguments()[0];
+							}
+						}
 
 						// Check if it's a nullable:
-						Type nullableType = Nullable.GetUnderlyingType(field.TargetType);
+						Type nullableType = Nullable.GetUnderlyingType(fieldType);
 
 						if (nullableType != null)
 						{
@@ -568,6 +830,7 @@ namespace Api.Startup
 						if (!typeMap.TryGetValue(fieldType, out JsonFieldType jft))
 						{
 							// Can't serialise this here.
+							Log.Warn("typeio", "Skipped serialising a field because it is of an unrecognised type: " + field.Name + " on " + typeof(T));
 							continue;
 						}
 
@@ -643,8 +906,14 @@ namespace Api.Startup
 						// ,"fieldName":
 						property.Write(writerBody);
 						// Value->str:
-						jft.EmitWrite(writerBody, field, nullableType);
-						
+						if (isLocalised)
+						{
+							jft.EmitLocalisedWrite(writerBody, field, nullableType);
+						}
+						else
+						{
+							jft.EmitWrite(writerBody, field, nullableType);
+						}
 						// Mark the end of the conditional block
 						writerBody.MarkLabel(endOfIfLabel);
 
@@ -814,23 +1083,113 @@ namespace Api.Startup
 		/// <summary>
 		/// Serialises the value which is already on the stack.
 		/// </summary>
-		public Action<ILGenerator, Action> OnSerialise;
+		public Action<ILGenerator, Action, bool> OnSerialise;
 
 		/// <summary>
 		/// Defines info about an available field type.
 		/// </summary>
 		/// <param name="type"></param>
 		/// <param name="onSerialise"></param>
-		public JsonFieldType(Type type, Action<ILGenerator, Action> onSerialise)
+		public JsonFieldType(Type type, Action<ILGenerator, Action, bool> onSerialise)
 		{
 			Type = type;
 			OnSerialise = onSerialise;
 		}
 
 		/// <summary>
+		/// Emits a write of a Localised field.
+		/// </summary>
+		/// <param name="body"></param>
+		/// <param name="field"></param>
+		/// <param name="nullableType"></param>
+		/// <param name="isDocumentFormat"></param>
+		public void EmitLocalisedWrite(ILGenerator body, JsonField field, Type nullableType, bool isDocumentFormat = false)
+		{
+			Label endOfStatementLabel = body.DefineLabel();
+
+			// e.g. Localised<uint?> -> valueType is uint?
+			var localisedType = field.TargetType;
+			var valueType = localisedType.GetGenericArguments()[0];
+
+			// Always put the result value in to a local variable.
+			var loc = body.DeclareLocal(valueType);
+
+			if (field.PropertyGet != null)
+			{
+				var propertyLocal = body.DeclareLocal(localisedType);
+				body.Emit(OpCodes.Ldarg_1);
+				body.Emit(OpCodes.Callvirt, field.PropertyGet);
+				body.Emit(OpCodes.Stloc, propertyLocal);
+				body.Emit(OpCodes.Ldloca, propertyLocal);
+			}
+			else
+			{
+				// Field:
+				body.Emit(OpCodes.Ldarg_1);
+				body.Emit(OpCodes.Ldflda, field.FieldInfo);
+			}
+
+			// An address of the Localized struct is currently on the stack.
+
+			// Push the context and a constant 'true'
+			body.Emit(OpCodes.Ldarg_3); // context
+			body.Emit(OpCodes.Ldc_I4_1); // fallback = true
+
+			// Can now call Get:
+			var localisedGetMethod = localisedType.GetMethod(
+				"Get", BindingFlags.Public | BindingFlags.Instance,
+				new Type[] {
+					typeof(Context),
+					typeof(bool)
+				});
+
+			body.Emit(OpCodes.Callvirt, localisedGetMethod);
+
+			// The value, which can still be a nullable, is now in the local:
+			body.Emit(OpCodes.Stloc, loc);
+
+			if (nullableType != null)
+			{
+				body.Emit(OpCodes.Ldloca, loc);
+
+				// Check if it is null (and if so, output "null" and skip the following value)
+				var hasValueMethod = valueType.GetProperty("HasValue").GetGetMethod();
+
+				body.Emit(OpCodes.Callvirt, hasValueMethod);
+
+				Label notNullLabel = body.DefineLabel();
+
+				body.Emit(OpCodes.Brtrue, notNullLabel);
+				TypeIOEngine.WriteNull(body);
+				body.Emit(OpCodes.Br, endOfStatementLabel);
+				body.MarkLabel(notNullLabel);
+			}
+
+			// Serialise the value:
+			OnSerialise(body, () => {
+
+				if (nullableType == null)
+				{
+					// Emit a read of the local:
+					body.Emit(OpCodes.Ldloc, loc);
+				}
+				else
+				{
+					// This value is nullable, but it's specifically not null.
+					// Put the actual value onto the stack here.
+					body.Emit(OpCodes.Ldloca, loc);
+					var getValueMethod = field.TargetType.GetProperty("Value").GetGetMethod();
+					body.Emit(OpCodes.Callvirt, getValueMethod);
+				}
+			}, isDocumentFormat);
+
+			body.MarkLabel(endOfStatementLabel);
+		}
+
+		/// <summary>
 		/// Emits the necessary command to serialise the field.
 		/// </summary>
-		public void EmitWrite(ILGenerator body, JsonField field, Type nullableType)
+		public void EmitWrite(ILGenerator body, JsonField field, Type nullableType, bool isDocumentFormat = false)
 		{
 			Label? endOfStatementLabel = nullableType == null ? null : body.DefineLabel();
 
@@ -908,7 +1267,7 @@ namespace Api.Startup
 					var getValueMethod = field.TargetType.GetProperty("Value").GetGetMethod();
 					body.Emit(OpCodes.Callvirt, getValueMethod);
 				}
-			});
+			}, isDocumentFormat);
 
 			if (endOfStatementLabel.HasValue)
 			{
@@ -919,7 +1278,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Emits the necessary command to serialise the field.
 		/// </summary>
-		public void EmitWrite(ILGenerator body, ContentField field, Type nullableType, Action<ILGenerator> objLoader)
+		public void EmitWrite(ILGenerator body, ContentField field, Type nullableType, Action<ILGenerator> objLoader, bool isDocumentFormat = false)
 		{
 			Label? endOfStatementLabel = nullableType == null ? null : body.DefineLabel();
 
@@ -997,7 +1356,7 @@ namespace Api.Startup
 					var getValueMethod = field.FieldType.GetProperty("Value").GetGetMethod();
 					body.Emit(OpCodes.Callvirt, getValueMethod);
 				}
-			});
+			}, isDocumentFormat);
 
 			if (endOfStatementLabel.HasValue)
 			{

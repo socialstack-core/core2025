@@ -54,7 +54,7 @@ public class RouterPageTerminal : TerminalNode
 	{
 		Page = page;
 		_htmlService = Services.Get<HtmlService>();
-		Generator = new CanvasGenerator(page.BodyJson, primaryType);
+		Generator = new CanvasGenerator(page.BodyJson.GetFallback().ValueOf(), primaryType);
 
 		if (!string.IsNullOrEmpty(page.Key))
 		{
@@ -125,9 +125,21 @@ public class RouterPageTerminal : TerminalNode
 	/// <returns></returns>
 	public override RouterNodeMetadata? GetMetadata()
 	{
+		string name = "Untitled Page";
+
+		if (Page != null)
+		{
+			var pageTitle = Page.Title.GetFallback();
+
+			if (!string.IsNullOrEmpty(pageTitle))
+			{
+				name = pageTitle;
+			}
+		}
+
 		return new RouterNodeMetadata()
 		{
-			Name = Page == null || string.IsNullOrEmpty(Page.Title) ? "Untitled Page" : Page.Title,
+			Name = name,
 			HasChildren = HasChildren(),
 			ChildKey = ExactMatch,
 			FullRoute = FullRoute,

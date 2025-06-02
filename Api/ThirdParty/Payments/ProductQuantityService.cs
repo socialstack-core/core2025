@@ -297,7 +297,9 @@ namespace Api.Payments
 			Price price;
 			ulong totalCost;
 
-			if (prodToUse.PriceId == 0)
+			var priceId = prodToUse.PriceId.Get(context);
+
+			if (priceId == 0)
 			{
 				throw new PublicException(
 					"Product is not currently available in your currency. If you believe this is a mistake, please get in touch.",
@@ -306,7 +308,7 @@ namespace Api.Payments
 			}
 
 			// Get the base price:
-			price = await _prices.Get(context, prodToUse.PriceId, DataOptions.IgnorePermissions);
+			price = await _prices.Get(context, priceId, DataOptions.IgnorePermissions);
 
 			if (price == null)
 			{
@@ -360,7 +362,7 @@ namespace Api.Payments
 							prodToUse = tiers[targetTier];
 
 							// Get the price:
-							price = await _prices.Get(context, prodToUse.PriceId, DataOptions.IgnorePermissions);
+							price = await _prices.Get(context, prodToUse.PriceId.Get(context), DataOptions.IgnorePermissions);
 
 							if (price == null)
 							{
@@ -402,7 +404,7 @@ namespace Api.Payments
 							prodToUse = tiers[targetTier];
 
 							// Get the price:
-							price = await _prices.Get(context, prodToUse.PriceId, DataOptions.IgnorePermissions);
+							price = await _prices.Get(context, prodToUse.PriceId.Get(context), DataOptions.IgnorePermissions);
 
 							if (price == null)
 							{
@@ -451,7 +453,7 @@ namespace Api.Payments
 								var tier = tiers[i];
 								var max = tiers[i + 1].MinQuantity - tier.MinQuantity;
 
-								price = await _prices.Get(context, tier.PriceId, DataOptions.IgnorePermissions);
+								price = await _prices.Get(context, tier.PriceId.Get(context), DataOptions.IgnorePermissions);
 
 								if (price == null)
 								{
@@ -482,7 +484,7 @@ namespace Api.Payments
 							prodToUse = tiers[targetTier];
 							excess = quantity - (prodToUse.MinQuantity - 1);
 
-							price = await _prices.Get(context, prodToUse.PriceId, DataOptions.IgnorePermissions);
+							price = await _prices.Get(context, prodToUse.PriceId.Get(context), DataOptions.IgnorePermissions);
 
 							if (price == null)
 							{
@@ -524,7 +526,7 @@ namespace Api.Payments
 				// Just a simple price * qty.
 
 				// Get the price:
-				price = await _prices.Get(context, prodToUse.PriceId, DataOptions.IgnorePermissions);
+				price = await _prices.Get(context, prodToUse.PriceId.Get(context), DataOptions.IgnorePermissions);
 
 				if (price == null)
 				{

@@ -1,3 +1,4 @@
+using Api.Database;
 using Api.Startup;
 using Api.Startup.Utf8Helpers;
 using System;
@@ -947,6 +948,35 @@ namespace Api.SocketServerLibrary
 			Write((byte)'"');
 			Write((byte)'"');
 			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// Writes the given JsonString as an escaped string to the writer.
+		/// </summary>
+		/// <param name="jStr"></param>
+		public void WriteEscaped(JsonString jStr)
+		{
+			var val = jStr.ValueOf();
+			WriteEscaped(val);
+		}
+		
+		/// <summary>
+		/// Writes the given JsonString as-is to the writer.
+		/// </summary>
+		/// <param name="jStr"></param>
+		public void Write(JsonString jStr)
+		{
+			var val = jStr.ValueOf();
+
+			if (val == null)
+			{
+				WriteASCII("null");
+			}
+			else
+			{
+				// As-is:
+				WriteS(val);
+			}
 		}
 
 		/// <summary>

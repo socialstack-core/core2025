@@ -70,7 +70,7 @@ namespace Api.DatabaseMySQL
 					locales.Add(new Locale()
 					{
 						Code = "en",
-						Name = "English",
+						Name = new Localized<string>("English"),
 						Id = 1
 					});
 				}
@@ -153,8 +153,6 @@ namespace Api.DatabaseMySQL
 
 			var selectQuery = Query.Select(service.InstanceType, entityName);
 			var listQuery = Query.List(service.InstanceType, entityName);
-			var listRawQuery = Query.List(service.InstanceType, entityName);
-			listRawQuery.Raw = true;
 
 			service.EventGroup.AfterInstanceTypeUpdate.AddEventListener(async (Context context, AutoService s) => {
 
@@ -170,8 +168,6 @@ namespace Api.DatabaseMySQL
 
 				selectQuery = Query.Select(s.InstanceType, entityName);
 				listQuery = Query.List(s.InstanceType, entityName);
-				listRawQuery = Query.List(s.InstanceType, entityName);
-				listRawQuery.Raw = true;
 
 				if (isDbStored)
 				{
@@ -262,22 +258,24 @@ namespace Api.DatabaseMySQL
 					{
 						str.Append(", ");
 					}
-					if (localeCode == null || field.LocalisedName == null)
-					{
-						str.Append(field.FullName);
-					}
-					else
-					{
-						str.Append(field.LocalisedName);
-						str.Append(localeCode);
-						str.Append('`');
-					}
+					str.Append(field.FullName);
 					str.Append("=@p");
 					str.Append(paramIndex);
 
 					parameter = cmd.CreateParameter();
 					parameter.ParameterName = "p" + paramIndex;
-					parameter.Value = field.TargetField.GetValue(entity);
+					var chgValue = field.TargetField.GetValue(entity);
+
+					if (field.IsLocalized || field.Type == typeof(JsonString))
+					{
+						parameter.Value = chgValue.ToString();
+						parameter.MySqlDbType = MySqlDbType.JSON;
+					}
+					else
+					{
+						parameter.Value = chgValue;
+					}
+
 					cmd.Parameters.Add(parameter);
 					paramIndex++;
 				}
@@ -328,12 +326,8 @@ namespace Api.DatabaseMySQL
 
 				queryPair.Handled = true;
 
-				// "Raw" results are as-is from the database.
-				// That means the fields are not automatically filled in with the default locale when they're empty.
-				var raw = (queryPair.QueryA.DataOptions & DataOptions.RawFlag) == DataOptions.RawFlag;
-
 				// Get the results from the database:
-				queryPair.Total = await _database.GetResults(context, queryPair, queryPair.OnResult, queryPair.SrcA, queryPair.SrcB, service.InstanceType, raw ? listRawQuery : listQuery);
+				queryPair.Total = await _database.GetResults(context, queryPair, queryPair.OnResult, queryPair.SrcA, queryPair.SrcB, service.InstanceType, listQuery);
 
 				return queryPair;
 			});
@@ -502,7 +496,7 @@ namespace Api.DatabaseMySQL
 
 			var existingSchema = await LoadSchema();
 			
-			if(existingSchema == null || service.IsTypeProxy)
+			if(existingSchema == null)
 			{
 				return;
 			}

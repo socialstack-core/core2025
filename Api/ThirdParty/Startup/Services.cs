@@ -65,11 +65,6 @@ namespace Api.Startup
         public static readonly ConcurrentDictionary<Type, AutoService> AutoServices = new ConcurrentDictionary<Type, AutoService>();
 
         /// <summary>
-        /// A lookup by content type ID to the autoService relating to it.
-        /// </summary>
-        public static readonly ConcurrentDictionary<int, AutoService> ServiceByContentType = new ConcurrentDictionary<int, AutoService>();
-
-        /// <summary>
         /// A lookup by actual content type to the autoService relating to it.
         /// </summary>
         public static readonly ConcurrentDictionary<Type, AutoService> ServicedTypes = new ConcurrentDictionary<Type, AutoService>();
@@ -460,16 +455,14 @@ namespace Api.Startup
 
                 await Events.Service.BeforeCreate.Dispatch(ctx, autoService);
 
-                if (autoServiceType != null && !autoService.IsTypeProxy)
+                if (autoServiceType != null)
                 {
                     AutoServices[autoServiceType] = autoService;
                 }
 
-                if (autoService.ServicedType != null && !autoService.IsTypeProxy)
+                if (autoService.ServicedType != null)
                 {
                     ServicedTypes[autoService.ServicedType] = autoService;
-                    var contentId = Api.Database.ContentTypes.GetId(autoService.ServicedType);
-                    ServiceByContentType[contentId] = autoService;
                     Api.Database.ContentTypes.StateChange(true, autoService, autoService.ServicedType);
                 }
 
@@ -492,16 +485,14 @@ namespace Api.Startup
 
                 await Events.Service.BeforeDelete.Dispatch(ctx, autoService);
 
-                if (autoServiceType != null && !autoService.IsTypeProxy)
+                if (autoServiceType != null)
                 {
                     AutoServices.Remove(autoServiceType, out _);
                 }
 
-                if (autoService.ServicedType != null && !autoService.IsTypeProxy)
+                if (autoService.ServicedType != null)
                 {
                     ServicedTypes.Remove(autoService.ServicedType, out _);
-                    var contentId = Database.ContentTypes.GetId(autoService.ServicedType);
-                    ServiceByContentType.Remove(contentId, out _);
                     Api.Database.ContentTypes.StateChange(false, autoService, autoService.ServicedType);
                 }
 
@@ -571,17 +562,6 @@ namespace Api.Startup
 		public static AutoService GetByContentType(Type type)
         {
             ServicedTypes.TryGetValue(type, out AutoService result);
-            return result;
-        }
-
-        /// <summary>
-        /// Gets a service by the content type ID.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public static AutoService GetByContentTypeId(int id)
-        {
-            ServiceByContentType.TryGetValue(id, out AutoService result);
             return result;
         }
 

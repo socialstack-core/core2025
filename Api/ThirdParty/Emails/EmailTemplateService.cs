@@ -190,30 +190,59 @@ namespace Api.Emails
 			});
 
 			InstallEmails(
-				new EmailTemplate(){
+				new EmailBuilder(){
 					Name = "Verify email address",
 					Subject = "Verify your email address",
 					Key = "verify_email",
-					BodyJson = "{\"module\":\"Email/Default\",\"content\":[{\"module\":\"Email/Centered\",\"data\":{}," +
-					"\"content\":\"An account was recently created with us. If this was you, click the following link to proceed:\"},"+
-					"{\"module\":\"Email/PrimaryButton\",\"data\":{\"label\":\"Verify my email address\",\"target\":\"/email-verify/${customData.userId}/${customData.token}\"}}]}"
+					BuildBody = (EmailBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("Email/Centered")
+							.AppendChild(
+								"An account was recently created with us. If this was you, click the following link to proceed:"
+							)
+							.AppendChild(
+								new CanvasNode("Email/PrimaryButton")
+								.With("label", "Verify my email address")
+								.With("target", "/email-verify/${customData.userId}/${customData.token}")
+							)
+						);
+					}
 				},
-				new EmailTemplate()
+				new EmailBuilder()
                 {
 					Name = "Password reset",
 					Subject = "Password reset",
 					Key = "forgot_password",
-					BodyJson = "{\"module\":\"Email/Default\",\"content\":[{\"module\":\"Email/Centered\",\"data\":{}," +
-					"\"content\":\"A password reset request was recently created with us for this email. If this was you, click the following link to proceed:\"}," +
-					"{\"module\":\"Email/PrimaryButton\",\"data\":{\"label\":\"Verify my email address\",\"target\":\"/password/reset/${customData.token}\"}}]}"
+					BuildBody = (EmailBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("Email/Centered")
+							.AppendChild(
+								"A password reset request was recently created with us for this email. If this was you, click the following link to proceed:"
+							)
+							.AppendChild(
+								new CanvasNode("Email/PrimaryButton")
+								.With("label", "Reset my password")
+								.With("target", "/password/reset/${customData.token}")
+							)
+						);
+					}
 				},
-				new EmailTemplate()
+				new EmailBuilder()
 				{
 					Name = "Welcome",
 					Subject = "Welcome aboard!",
 					Key = "welcome_member_email",
-					BodyJson = "{\"module\":\"Email/Default\",\"content\":[{\"module\":\"Email/Centered\",\"data\":{}," +
-					"\"content\":\"Thanks for joining! If you have any questions please reach out.\"}]}"
+					BuildBody = (EmailBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("Email/Centered")
+							.AppendChild(
+								"Thanks for joining! If you have any questions please reach out."
+							)
+						);
+					}
 				}
 			);
 			
@@ -321,7 +350,7 @@ namespace Api.Emails
 			// Render the template now:
 			var state = "{\"po\": " + Newtonsoft.Json.JsonConvert.SerializeObject(recipient.CustomData, jsonSettings) + "}";
 
-			return await _canvasRendererService.Render(recipient.Context, template.BodyJson, state);
+			return await _canvasRendererService.Render(recipient.Context, template.BodyJson.Get(recipient.Context).ValueOf(), state);
 		}
 
 		private readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
@@ -336,17 +365,25 @@ namespace Api.Emails
 		/// <summary>
 		/// Installs a template (Creates it if it doesn't already exist).
 		/// </summary>
-		public async ValueTask InstallNow(EmailTemplate template)
+		public async ValueTask InstallNow(EmailBuilder builder)
 		{
 			var context = new Context();
 
 			// Match by target URL of the item.
-			var existingEntry = await Where("Key=?", DataOptions.NoCacheIgnorePermissions).Bind(template.Key).ListAll(context);
+			var existingEntry = await Where("Key=?", DataOptions.NoCacheIgnorePermissions).Bind(builder.Key).ListAll(context);
 
-			if (existingEntry.Count == 0)
+			if (existingEntry.Count != 0)
 			{
-				await Create(context, template, DataOptions.IgnorePermissions);
+				return;
 			}
+
+			// Start building:
+			builder.Build();
+
+			await Events.EmailTemplate.BeforeInstall.Dispatch(context, builder);
+			builder.EmailTemplate.BodyJson = new Localized<JsonString>(new JsonString(builder.Body.ToJson()));
+
+			await Create(context, builder.EmailTemplate, DataOptions.IgnorePermissions);
 		}
 		
 		/// <summary>
@@ -502,7 +539,7 @@ namespace Api.Emails
 				var set = localeKvp.Value;
 
 				// Email subject:
-				var subject = set.Template?.Subject;
+				var subject = set.Template.Subject;
 
 				// For each recipient, render it.
 				for (var i=0;i<set.Recipients.Count;i++)
@@ -512,13 +549,13 @@ namespace Api.Emails
 					// Render all. The results are in the exact same order as the recipients set.
 					var state = "{\"po\": " + Newtonsoft.Json.JsonConvert.SerializeObject(recipient.CustomData, jsonSettings) + "}";
 
-					var renderedResult = await _canvasRendererService.Render(recipient.Context, set.Template.BodyJson, state);
+					var renderedResult = await _canvasRendererService.Render(recipient.Context, set.Template.BodyJson.Get(recipient.Context).ValueOf(), state);
 
 					// Email to send to:
 					var targetEmail = recipient.EmailAddress == null ? recipient.User.Email : recipient.EmailAddress;
 
 					// Send now:
-					await Send(targetEmail, subject, renderedResult.Body, messageId, null, attachments);
+					await Send(targetEmail, subject.Get(recipient.Context), renderedResult.Body, messageId, null, attachments);
 				}
 			}
 

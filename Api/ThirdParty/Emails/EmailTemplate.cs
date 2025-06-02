@@ -26,14 +26,12 @@ namespace Api.Emails
 		/// Email subject - can be overriden by document title when rendering the body.
 		/// </summary>
 		[DatabaseField(Length = 200)]
-		[Localized]
-		public string Subject;
+		public Localized<string> Subject;
 		
 		/// <summary>
 		/// The canvas JSON for this email. This also outputs the emails subject too (as the document title).
 		/// </summary>
-		[Localized]
-		public string BodyJson;
+		public Localized<JsonString> BodyJson;
 
 		/// <summary>
 		/// The notes for this email.

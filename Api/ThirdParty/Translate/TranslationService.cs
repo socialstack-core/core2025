@@ -136,13 +136,15 @@ namespace Api.Translate
                         {
                             foreach(var translation in translations)
                             {
-                                if (translation.Translated != po.Translated) {
+                                var translated = translation.Translated.Get(context);
+
+                                if (translated != po.Translated) {
 
 									Log.Info(LogTag, $"Updating translation [{translation.Id}] {translation.Module} {translation.Original}->{po.Translated}");
 
                                     await Update(context, translation, (Context ctx, Translation trans, Translation orig) =>
                                     {
-                                        trans.Translated = po.Translated;
+                                        trans.Translated.Set(context, po.Translated);
                                     }, DataOptions.IgnorePermissions);
                                 }
 

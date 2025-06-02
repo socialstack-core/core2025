@@ -42,6 +42,7 @@ namespace Api.Database
 			TypeMap = new Dictionary<Type, MySQLType>();
 			
 			TypeMap[typeof(string)] = new MySQLType("text", "varchar", "longtext");
+			TypeMap[typeof(JsonString)] = new MySQLType("json");
 			TypeMap[typeof(byte[])] = new MySQLType("blob", "varbinary", "longblob");
 			TypeMap[typeof(bool)] = new MySQLType("bit");
 			TypeMap[typeof(sbyte)] = new MySQLType("tinyint");
@@ -199,7 +200,7 @@ namespace Api.Database
 			sqlType += IsUnsigned ? " unsigned" : "";
 			sqlType += IsNullable ? " null" : " not null";
 
-			if (!IsAutoIncrement)
+			if (!IsAutoIncrement && DataType != "json")
 			{
 				sqlType += " DEFAULT " + GetDefaultValueForType();
 			}
@@ -213,7 +214,7 @@ namespace Api.Database
 		{
 			if (IsNullable)
 			{
-				// Includes the string types.
+				// Includes the string and json types.
 				return "null";
 			}
 
@@ -292,5 +293,4 @@ namespace Api.Database
 			return false;
 		}
 	}
-	
 }

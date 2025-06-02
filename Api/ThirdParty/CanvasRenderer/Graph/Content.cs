@@ -459,7 +459,7 @@ public class Content : Executor
 		compileEngine.CodeBody.MarkLabel(notNull);
 
 		// Write a singular field:
-		TypeIOEngine.EmitWriteField(compileEngine.CodeBody, fld, (ILGenerator body) => {
+		TypeIOEngine.EmitWriteBasicField(compileEngine.CodeBody, fld, (ILGenerator body) => {
 
             // Load the input:
             if (_isPrimary)

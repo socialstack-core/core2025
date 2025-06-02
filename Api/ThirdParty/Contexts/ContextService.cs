@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using Api.Configuration;
@@ -14,145 +15,6 @@ using Api.Users;
 
 namespace Api.Contexts
 {
-	/// <summary>
-	/// Holds useful information about Context objects.
-	/// </summary>
-	public static class ContextFields
-	{
-
-		/// <summary>
-		/// Fields by the shortcode, which is usually the first character of a context field name.
-		/// </summary>
-		public static readonly ContextFieldInfo[] FieldsByShortcode = new ContextFieldInfo[64];
-
-		/// <summary>
-		/// Maps lowercase field names to the info about them.
-		/// </summary>
-		public static readonly Dictionary<string, ContextFieldInfo> Fields = new Dictionary<string, ContextFieldInfo>();
-
-		/// <summary>
-		/// The raw list of fields.
-		/// </summary>
-		public static readonly List<ContextFieldInfo> FieldList = new List<ContextFieldInfo>();
-
-		/// <summary>
-		/// Maps a content type ID to the context field info. Your context property must end with 'Id' to get an entry here.
-		/// </summary>
-		public static readonly Dictionary<int, ContextFieldInfo> ContentTypeToFieldInfo = new Dictionary<int, ContextFieldInfo>();
-
-
-		static ContextFields()
-		{
-			// Load all the props now.
-			var properties = typeof(Context).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-			var fields = typeof(Context).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-
-			var mapping = new Dictionary<string, FieldInfo>();
-
-			foreach (var field in fields)
-			{
-				mapping[field.Name.ToLower()] = field;
-			}
-
-			var defaultValueChecker = new Context();
-
-			foreach (var field in properties)
-			{
-				// must be a uint field.
-				if (field.PropertyType != typeof(uint))
-				{
-					continue;
-				}
-
-				if (!field.Name.EndsWith("Id"))
-				{
-					continue;
-				}
-
-				var lcName = field.Name.ToLower();
-				var getMethod = field.GetGetMethod();
-
-				var defaultValue = (uint)getMethod.Invoke(defaultValueChecker, System.Array.Empty<object>());
-
-				if (!mapping.TryGetValue("_" + lcName, out FieldInfo privateField))
-				{
-					throw new Exception(
-						"For '" + field.Name + "' to be a valid Context property, it must have a private backing field called _" + lcName +
-						". This is such that you can restrict setting your context field from anything other than a token or an object set."
-					);
-				}
-
-				// E.g. UserId, LocaleId to User
-				var contentName = field.Name[0..^2];
-
-				var fld = new ContextFieldInfo()
-				{
-					ContentName = contentName,
-					PrivateFieldInfo = privateField,
-					Property = field,
-					Name = field.Name,
-					DefaultValue = defaultValue,
-					SkipOutput = lcName == "roleid"
-				};
-
-				var shortCodeAttrib = field.GetCustomAttribute<ContextShortcodeAttribute>();
-
-				var shortcode = shortCodeAttrib == null ? lcName[0] : shortCodeAttrib.Shortcode;
-
-				var shortIndex = shortcode - 'A';
-
-				if (shortIndex < 0 || shortIndex >= 64)
-				{
-					throw new Exception("Can't use " + shortcode + " as a context field shortcode - it must be A-Z or a-z.");
-				}
-
-				fld.Shortcode = shortcode;
-
-				if (FieldsByShortcode[shortIndex] != null)
-				{
-					throw new Exception(
-						"Context field '" + field.Name + "' can't use context field short name '" + shortcode +
-						"' because it's in use. Specify one to use with [ContextShortcode('...')] on the public property.");
-				}
-
-				FieldsByShortcode[shortIndex] = fld;
-
-				// Get content type ID:
-				AutoService svc = null;
-
-				//Hack for currencyLocale
-				if (contentName == "CurrencyLocale")
-                {
-					var contentTypeId = ContentTypes.GetId("Locale");
-					fld.ContentTypeId = contentTypeId;
-					ContentTypeToFieldInfo[contentTypeId] = fld;
-
-					svc = Services.GetByContentTypeId(contentTypeId);
-				} 
-				else
-                {
-					var contentTypeId = ContentTypes.GetId(contentName);
-					fld.ContentTypeId = contentTypeId;
-					ContentTypeToFieldInfo[contentTypeId] = fld;
-
-					svc = Services.GetByContentTypeId(contentTypeId);
-				}
-
-				if (svc != null)
-				{
-					fld.ViewCapability = svc.GetEventGroup().GetLoadCapability();
-				}
-
-				var jsonHeader = "\"" + fld.JsonFieldName + "\":";
-
-				fld.JsonFieldHeader = Encoding.UTF8.GetBytes(jsonHeader);
-
-				Fields[lcName] = fld;
-				FieldList.Add(fld);
-			}
-		}
-	}
-
 	/// <summary>
 	/// Used to establish primary user context - role, locale and the user ID - when possible.
 	/// This is signature based - it doesn't generate any database traffic.
@@ -236,11 +98,6 @@ namespace Api.Contexts
 				// Write the header (Also includes a comma at the start if i!=0):
 				writer.Write(fld.JsonFieldHeader, 0, fld.JsonFieldHeader.Length);
 
-				if (fld.Service == null)
-				{
-					fld.Service = Services.GetByContentTypeId(fld.ContentTypeId);
-				}
-
 				// Note that this allocates due to the boxing of the id.
 				var id = (uint)fld.PrivateFieldInfo.GetValue(context);
 
@@ -289,15 +146,6 @@ namespace Api.Contexts
 		public async ValueTask ToJsonString(Context context, Writer writer)
 		{
 			await ToJson(context, writer);
-		}
-
-		/// <summary>
-		/// Gets Context field info for the given contentType. Null if it doesn't exist in Context.
-		/// </summary>
-		public ContextFieldInfo FieldByContentType(int contentTypeId)
-		{
-			ContextFields.ContentTypeToFieldInfo.TryGetValue(contentTypeId, out ContextFieldInfo result);
-			return result;
 		}
 
 		/// <summary>

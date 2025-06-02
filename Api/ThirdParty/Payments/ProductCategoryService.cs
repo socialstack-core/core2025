@@ -273,7 +273,7 @@ namespace Api.Payments
 				{
 					foreach (var root in roots)
 					{
-						rootSet.Add(ConvertNode(root, root.Category.Slug));
+						rootSet.Add(ConvertNode(context, root, root.Category.Slug));
 					}
 				}
 
@@ -317,7 +317,7 @@ namespace Api.Payments
 			{
 				foreach (var child in kids)
 				{
-					childSet.Add(ConvertNode(child, path + "/" + child.Category.Slug));
+					childSet.Add(ConvertNode(context, child, path + "/" + child.Category.Slug));
 				}
 			}
 
@@ -327,13 +327,13 @@ namespace Api.Payments
 			{
 				foreach (var child in products)
 				{
-					childSet.Add(ConvertNode(child));
+					childSet.Add(ConvertNode(context, child));
 				}
 			}
 
 			return new TreeNodeDetail()
 			{
-				Self = ConvertNode(node, path),
+				Self = ConvertNode(context, node, path),
 				Children = childSet
 			};
 		}
@@ -342,13 +342,13 @@ namespace Api.Payments
 		/// Builds an admin tree view compatible struct of metadata for the given category node.
 		/// </summary>
 		/// <returns></returns>
-		private RouterNodeMetadata ConvertNode(ProductCategoryNode node, string fullRoute)
+		private RouterNodeMetadata ConvertNode(Context context, ProductCategoryNode node, string fullRoute)
 		{
 			return new RouterNodeMetadata() {
 				Type = "ProductCategory",
 				EditUrl = "/en-admin/productcategory/" + node.Category.Id,
 				ContentId = node.Category.Id,
-				Name = node.Category.Name,
+				Name = node.Category.Name.Get(context),
 				FullRoute = fullRoute,
 				ChildKey = node.Category.Slug,
 				HasChildren = node.Children != null && node.Children.Count > 0
@@ -359,13 +359,13 @@ namespace Api.Payments
 		/// Builds an admin tree view compatible struct of metadata for the given product node.
 		/// </summary>
 		/// <returns></returns>
-		private RouterNodeMetadata ConvertNode(ProductNode node)
+		private RouterNodeMetadata ConvertNode(Context context, ProductNode node)
 		{
 			return new RouterNodeMetadata() {
 				Type = "Product",
 				EditUrl = "/en-admin/product/" + node.Product.Id,
 				ContentId = node.Product.Id,
-				Name = node.Product.Name,
+				Name = node.Product.Name.Get(context),
 				FullRoute = node.Product.Slug,
 				ChildKey = node.Product.Slug,
 				HasChildren = false
@@ -584,9 +584,14 @@ namespace Api.Payments
 				{
 					slugs.Push(product.Slug);
 				}
-				else if (string.IsNullOrWhiteSpace(product.Name))
+				else
 				{
-					slugs.Push(ToSlug(product.Name));
+					var name = product.Name.GetFallback();
+
+					if (string.IsNullOrWhiteSpace(name))
+					{
+						slugs.Push(ToSlug(name));
+					}
 				}
 			}
 
@@ -596,9 +601,14 @@ namespace Api.Payments
 				{
 					slugs.Push(node.Category.Slug);
 				}
-				else if (string.IsNullOrWhiteSpace(node.Category.Name))
+				else
 				{
-					slugs.Push(ToSlug(node.Category.Name));
+					var cat = node.Category.Name.GetFallback();
+
+					if (string.IsNullOrWhiteSpace(cat))
+					{
+						slugs.Push(ToSlug(cat));
+					}
 				}
 				node = node.Parent!;
 			}

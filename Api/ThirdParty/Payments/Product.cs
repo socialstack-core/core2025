@@ -38,8 +38,7 @@ namespace Api.Payments
         /// The name of the product
         /// </summary>
         [DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
+		public Localized<string> Name;
 
         /// <summary>
         /// The slug for product
@@ -72,10 +71,9 @@ namespace Api.Payments
 		/// <summary>
 		/// The content of this product.
 		/// </summary>
-		[Localized]
         [Data("type", "canvas")]
         [Data("main", "false")]
-        public string DescriptionJson;
+        public Localized<string> DescriptionJson;
 
 		/// <summary>
 		/// The feature image ref
@@ -96,8 +94,7 @@ namespace Api.Payments
 		/// <summary>
 		/// The price to use.
 		/// </summary>
-		[Localized]
-		public uint PriceId;
+		public Localized<uint> PriceId;
 
 		/// <summary>
 		/// Available stock. Null indicates it is unlimited.

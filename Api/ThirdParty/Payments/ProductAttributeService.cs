@@ -10,6 +10,7 @@ using Api.Pages;
 using System;
 using Api.Startup.Routing;
 using static Api.Pages.PageController;
+using Api.Translate;
 
 namespace Api.Payments
 {
@@ -58,127 +59,127 @@ namespace Api.Payments
 					context,
 					new ProductAttributeGroup()
 					{
-						Name = "Physical Attributes",
+						Name = new Localized<string>("Physical Attributes"),
 						Key = "physical"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Dimensions",
+						Name = new Localized<string>("Dimensions"),
 						Key = "dimensions",
 						ParentGroupKey = "physical"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Weight",
+						Name = new Localized<string>("Weight"),
 						Key = "weight",
 						ParentGroupKey = "physical"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Material & Build",
+						Name = new Localized<string>("Material & Build"),
 						Key = "material_build",
 						ParentGroupKey = "physical"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Performance & Technicals",
+						Name = new Localized<string>("Performance & Technicals"),
 						Key = "performance_technicals"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Power & Energy",
+						Name = new Localized<string>("Power & Energy"),
 						Key = "power_energy",
 						ParentGroupKey = "performance_technicals"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Computing",
+						Name = new Localized<string>("Computing"),
 						Key = "computing",
 						ParentGroupKey = "performance_technicals"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Mechanical",
+						Name = new Localized<string>("Mechanical"),
 						Key = "mechanical",
 						ParentGroupKey = "performance_technicals"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Load Ranges",
+						Name = new Localized<string>("Load Ranges"),
 						Key = "load_ranges",
 						ParentGroupKey = "performance_technicals"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Chemical",
+						Name = new Localized<string>("Chemical"),
 						Key = "chemical",
 						ParentGroupKey = "performance_technicals"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Usage & Compatibility",
+						Name = new Localized<string>("Usage & Compatibility"),
 						Key = "usage_compatibility"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Application",
+						Name = new Localized<string>("Application"),
 						Key = "application",
 						ParentGroupKey = "usage_compatibility"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Compatibility",
+						Name = new Localized<string>("Compatibility"),
 						Key = "compatibility",
 						ParentGroupKey = "usage_compatibility"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Aesthetic & Style",
+						Name = new Localized<string>("Aesthetic & Style"),
 						Key = "aesthetic_style"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Design",
+						Name = new Localized<string>("Design"),
 						Key = "design",
 						ParentGroupKey = "aesthetic_style"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Branding",
+						Name = new Localized<string>("Branding"),
 						Key = "branding",
 						ParentGroupKey = "aesthetic_style"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Packaging & Logistics",
+						Name = new Localized<string>("Packaging & Logistics"),
 						Key = "packaging_logistics"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Packaging",
+						Name = new Localized<string>("Packaging"),
 						Key = "packaging",
 						ParentGroupKey = "packaging_logistics"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Shipping",
+						Name = new Localized<string>("Shipping"),
 						Key = "shipping",
 						ParentGroupKey = "packaging_logistics"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Regulatory & Certifications",
+						Name = new Localized<string>("Regulatory & Certifications"),
 						Key = "regulatory_certifications"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Compliance",
+						Name = new Localized<string>("Compliance"),
 						Key = "compliance",
 						ParentGroupKey = "regulatory_certifications"
 					},
 					new ProductAttributeGroup()
 					{
-						Name = "Warranty",
+						Name = new Localized<string>("Warranty"),
 						Key = "warranty",
 						ParentGroupKey = "regulatory_certifications"
 					}
@@ -187,115 +188,115 @@ namespace Api.Payments
 				// Next, install default attributes. 
 				await InstallDefaults(context, groupLookup, 
 					new ProductAttribute {
-						Name = "Width",
+						Name = new Localized<string>("Width"),
 						ProductAttributeType = 1, // long
 						Units = "mm",
 						ProductAttributeGroupKey = "dimensions"
 					},
 					new ProductAttribute
 					{
-						Name = "Height",
+						Name = new Localized<string>("Height"),
 						ProductAttributeType = 2, // double
 						Units = "mm",
 						ProductAttributeGroupKey = "dimensions"
 					},
 					new ProductAttribute
 					{
-						Name = "Length",
+						Name = new Localized<string>("Length"),
 						ProductAttributeType = 2, // double
 						Units = "mm",
 						ProductAttributeGroupKey = "dimensions"
 					},
 					new ProductAttribute
 					{
-						Name = "Depth",
+						Name = new Localized<string>("Depth"),
 						ProductAttributeType = 2, // double
 						Units = "mm",
 						ProductAttributeGroupKey = "dimensions"
 					},
 					new ProductAttribute
 					{
-						Name = "Net Weight",
+						Name = new Localized<string>("Net Weight"),
 						ProductAttributeType = 2, // double
 						Units = "kg",
 						ProductAttributeGroupKey = "weight"
 					},
 					new ProductAttribute
 					{
-						Name = "Gross Weight",
+						Name = new Localized<string>("Gross Weight"),
 						ProductAttributeType = 2, // double
 						Units = "kg",
 						ProductAttributeGroupKey = "weight"
 					},
 					new ProductAttribute
 					{
-						Name = "Material",
+						Name = new Localized<string>("Material"),
 						ProductAttributeType = 3, // text (cotton, plastic, aluminium, ..)
 						Multiple = true,
 						ProductAttributeGroupKey = "material_build"
 					},
 					new ProductAttribute
 					{
-						Name = "Finish",
+						Name = new Localized<string>("Finish"),
 						ProductAttributeType = 3, // text (glossy, matte, ..)
 						ProductAttributeGroupKey = "material_build"
 					},
 					new ProductAttribute
 					{
-						Name = "Colour",
+						Name = new Localized<string>("Colour"),
 						ProductAttributeType = 3, // text (white, red, black, ..)
 						ProductAttributeGroupKey = "material_build"
 					},
 					new ProductAttribute
 					{
-						Name = "Texture",
+						Name = new Localized<string>("Texture"),
 						ProductAttributeType = 3, // text (rough, smooth, ..)
 						ProductAttributeGroupKey = "material_build"
 					},
 					new ProductAttribute
 					{
-						Name = "Power Consumption",
+						Name = new Localized<string>("Power Consumption"),
 						ProductAttributeType = 2, // double
 						Units = "W",
 						ProductAttributeGroupKey = "power_energy"
 					},
 					new ProductAttribute
 					{
-						Name = "Voltage",
+						Name = new Localized<string>("Voltage"),
 						ProductAttributeType = 2, // double
 						Units = "V",
 						ProductAttributeGroupKey = "power_energy"
 					},
 					new ProductAttribute
 					{
-						Name = "Current",
+						Name = new Localized<string>("Current"),
 						ProductAttributeType = 2, // double
 						Units = "A",
 						ProductAttributeGroupKey = "power_energy"
 					},
 					new ProductAttribute
 					{
-						Name = "Battery Type",
+						Name = new Localized<string>("Battery Type"),
 						ProductAttributeType = 3, // text (Lithium ion, ..)
 						ProductAttributeGroupKey = "power_energy"
 					},
 					new ProductAttribute
 					{
-						Name = "Battery Capacity",
+						Name = new Localized<string>("Battery Capacity"),
 						ProductAttributeType = 2, // double
 						Units = "Ah",
 						ProductAttributeGroupKey = "power_energy"
 					},
 					new ProductAttribute
 					{
-						Name = "Energy Efficiency Rating",
+						Name = new Localized<string>("Energy Efficiency Rating"),
 						ProductAttributeType = 3, // text (A, B, C, ..)
 						ProductAttributeGroupKey = "power_energy"
 					},
 
 					new ProductAttribute
 					{
-						Name = "Processing Speed",
+						Name = new Localized<string>("Processing Speed"),
 						ProductAttributeType = 2, // double
 						Units = "GHz",
 						ProductAttributeGroupKey = "computing"
@@ -303,7 +304,7 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Storage Capacity",
+						Name = new Localized<string>("Storage Capacity"),
 						ProductAttributeType = 2, // double
 						Units = "GB",
 						ProductAttributeGroupKey = "computing"
@@ -311,7 +312,7 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Acidity",
+						Name = new Localized<string>("Acidity"),
 						ProductAttributeType = 2, // double
 						Units = "pH",
 						ProductAttributeGroupKey = "chemical"
@@ -319,7 +320,7 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Rotor Speed",
+						Name = new Localized<string>("Rotor Speed"),
 						ProductAttributeType = 2, // double
 						Units = "RPM",
 						RangeType = 2,
@@ -328,14 +329,14 @@ namespace Api.Payments
 					
 					new ProductAttribute
 					{
-						Name = "Cylinder count",
+						Name = new Localized<string>("Cylinder count"),
 						ProductAttributeType = 1, // long
 						ProductAttributeGroupKey = "mechanical"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Weight capacity",
+						Name = new Localized<string>("Weight capacity"),
 						ProductAttributeType = 2, // double
 						Units = "kg",
 						RangeType = 2,
@@ -344,14 +345,14 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Usable Outdoors",
+						Name = new Localized<string>("Usable Outdoors"),
 						ProductAttributeType = 7, // bool
 						ProductAttributeGroupKey = "application"
 					},
 
 					new ProductAttribute
 					{
-						Name = "Intended Use",
+						Name = new Localized<string>("Intended Use"),
 						ProductAttributeType = 3, // string (bedroom, kitchen, ..)
 						Multiple = true,
 						ProductAttributeGroupKey = "application"
@@ -359,7 +360,7 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Target User",
+						Name = new Localized<string>("Target User"),
 						ProductAttributeType = 3, // string (adults, pets, children, ..)
 						Multiple = true,
 						ProductAttributeGroupKey = "application"
@@ -367,7 +368,7 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Supported Platforms",
+						Name = new Localized<string>("Supported Platforms"),
 						ProductAttributeType = 3, // string (PC, Nintendo Switch, Xbox One, ..)
 						Multiple = true,
 						ProductAttributeGroupKey = "compatibility"
@@ -375,7 +376,7 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Connection Types",
+						Name = new Localized<string>("Connection Types"),
 						ProductAttributeType = 3, // string (USB-C, Bluetooth, ..)
 						Multiple = true,
 						ProductAttributeGroupKey = "compatibility"
@@ -383,56 +384,56 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Style",
+						Name = new Localized<string>("Style"),
 						ProductAttributeType = 3, // string (Modern, Rustic, ..)
 						ProductAttributeGroupKey = "design"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Pattern",
+						Name = new Localized<string>("Pattern"),
 						ProductAttributeType = 3, // string (Checkered, Dotted, ..)
 						ProductAttributeGroupKey = "design"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Brand Name",
+						Name = new Localized<string>("Brand Name"),
 						ProductAttributeType = 3, // string (Apple, Nvidia, ..)
 						ProductAttributeGroupKey = "branding"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Logo Presence",
+						Name = new Localized<string>("Logo Presence"),
 						ProductAttributeType = 7, // boolean (yes, no)
 						ProductAttributeGroupKey = "branding"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Customizable",
+						Name = new Localized<string>("Customizable"),
 						ProductAttributeType = 7, // boolean (yes, no)
 						ProductAttributeGroupKey = "branding"
 					},
 
 					new ProductAttribute
 					{
-						Name = "Package Width",
+						Name = new Localized<string>("Package Width"),
 						ProductAttributeType = 1, // long
 						Units = "mm",
 						ProductAttributeGroupKey = "packaging"
 					},
 					new ProductAttribute
 					{
-						Name = "Package Height",
+						Name = new Localized<string>("Package Height"),
 						ProductAttributeType = 2, // double
 						Units = "mm",
 						ProductAttributeGroupKey = "packaging"
 					},
 					new ProductAttribute
 					{
-						Name = "Package Length",
+						Name = new Localized<string>("Package Length"),
 						ProductAttributeType = 2, // double
 						Units = "mm",
 						ProductAttributeGroupKey = "packaging"
@@ -440,7 +441,7 @@ namespace Api.Payments
 
 					new ProductAttribute
 					{
-						Name = "Max Stack Height",
+						Name = new Localized<string>("Max Stack Height"),
 						ProductAttributeType = 2, // double
 						Units = "m",
 						ProductAttributeGroupKey = "shipping"
@@ -448,14 +449,14 @@ namespace Api.Payments
 					
 					new ProductAttribute
 					{
-						Name = "Max Units Stacked",
+						Name = new Localized<string>("Max Units Stacked"),
 						ProductAttributeType = 1, // long
 						ProductAttributeGroupKey = "shipping"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Stack Load Limit",
+						Name = new Localized<string>("Stack Load Limit"),
 						ProductAttributeType = 2, // double
 						Units = "kg",
 						ProductAttributeGroupKey = "shipping"
@@ -463,35 +464,35 @@ namespace Api.Payments
 					
 					new ProductAttribute
 					{
-						Name = "Pallet Quantity",
+						Name = new Localized<string>("Pallet Quantity"),
 						ProductAttributeType = 1, // long
 						ProductAttributeGroupKey = "shipping"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Fragility",
+						Name = new Localized<string>("Fragility"),
 						ProductAttributeType = 7, // bool
 						ProductAttributeGroupKey = "shipping"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Explosive",
+						Name = new Localized<string>("Explosive"),
 						ProductAttributeType = 7, // bool
 						ProductAttributeGroupKey = "shipping"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Certifications",
+						Name = new Localized<string>("Certifications"),
 						ProductAttributeType = 3, // text (CE, FCC, ..)
 						ProductAttributeGroupKey = "compliance"
 					},
 					
 					new ProductAttribute
 					{
-						Name = "Country of Origin",
+						Name = new Localized<string>("Country of Origin"),
 						ProductAttributeType = 3, // text (United Kingdom, China, ..)
 						ProductAttributeGroupKey = "compliance"
 					},
@@ -500,7 +501,7 @@ namespace Api.Payments
 					{
 						// Just in case some warranties are in days or years - they're just different attributes.
 						Key = "warranty_period_months",
-						Name = "Warranty Period",
+						Name = new Localized<string>("Warranty Period"),
 						ProductAttributeType = 1, // long
 						Units = "months",
 						ProductAttributeGroupKey = "warranty"
@@ -515,7 +516,7 @@ namespace Api.Payments
 
 					if (string.IsNullOrEmpty(attrib.Key))
 					{
-						attrib.Key = ToAttributeKey(attrib.Name);
+						attrib.Key = ToAttributeKey(attrib.Name.GetFallback());
 					}
 
 					return new ValueTask<ProductAttribute>(attrib);
@@ -670,7 +671,7 @@ namespace Api.Payments
 				{
 					foreach (var root in roots)
 					{
-						rootSet.Add(ConvertNode(root, root.Group.Key));
+						rootSet.Add(ConvertNode(context, root, root.Group.Key));
 					}
 				}
 
@@ -715,7 +716,7 @@ namespace Api.Payments
 			{
 				foreach (var child in kids)
 				{
-					childSet.Add(ConvertNode(child, path + "/" + child.Group.Key));
+					childSet.Add(ConvertNode(context, child, path + "/" + child.Group.Key));
 				}
 			}
 
@@ -723,13 +724,13 @@ namespace Api.Payments
 			{
 				foreach (var attr in node.Attributes)
 				{
-					childSet.Add(ConvertNode(attr));
+					childSet.Add(ConvertNode(context, attr));
 				}
 			}
 
 			return new TreeNodeDetail()
 			{
-				Self = ConvertNode(node, path),
+				Self = ConvertNode(context, node, path),
 				Children = childSet
 			};
 		}
@@ -738,14 +739,14 @@ namespace Api.Payments
 		/// Builds an admin tree view compatible struct of metadata for the given attrib group node.
 		/// </summary>
 		/// <returns></returns>
-		private RouterNodeMetadata ConvertNode(ProductAttributeGroupNode node, string path)
+		private RouterNodeMetadata ConvertNode(Context context, ProductAttributeGroupNode node, string path)
 		{
 			return new RouterNodeMetadata()
 			{
 				Type = "ProductAttributeGroup",
 				EditUrl = "/en-admin/productattributegroup/" + node.Group.Id,
 				ContentId = node.Group.Id,
-				Name = node.Group.Name,
+				Name = node.Group.Name.Get(context),
 				ChildKey = node.Group.Key,
 				FullRoute = path,
 				HasChildren = (node.Children != null && node.Children.Count > 0) || (node.Attributes != null && node.Attributes.Count > 0)
@@ -756,14 +757,14 @@ namespace Api.Payments
 		/// Builds an admin tree view compatible struct of metadata for the given attrib node.
 		/// </summary>
 		/// <returns></returns>
-		private RouterNodeMetadata ConvertNode(ProductAttributeNode node)
+		private RouterNodeMetadata ConvertNode(Context context, ProductAttributeNode node)
 		{
 			return new RouterNodeMetadata()
 			{
 				Type = "ProductAttribute",
 				EditUrl = "/en-admin/productattribute/" + node.Attribute.Id,
 				ContentId = node.Attribute.Id,
-				Name = node.Attribute.Name,
+				Name = node.Attribute.Name.Get(context),
 				ChildKey = node.Attribute.Key,
 				HasChildren = false // It may have values but they don't appear as children in the tree.
 			};
@@ -822,7 +823,7 @@ namespace Api.Payments
 			{
 				if (string.IsNullOrEmpty(attrib.Key))
 				{
-					attrib.Key = ToAttributeKey(attrib.Name);
+					attrib.Key = ToAttributeKey(attrib.Name.GetFallback());
 				}
 
 				if (lookup.ContainsKey(attrib.Key))
@@ -874,7 +875,7 @@ namespace Api.Payments
 			{
 				if (string.IsNullOrEmpty(group.Key))
 				{
-					group.Key = ToAttributeKey(group.Name);
+					group.Key = ToAttributeKey(group.Name.GetFallback());
 				}
 
 				if (lookup.ContainsKey(group.Key))

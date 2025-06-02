@@ -2,6 +2,7 @@ using Api.Contexts;
 using Api.Database;
 using Api.SocketServerLibrary;
 using Api.Startup;
+using Api.Translate;
 using Api.Users;
 using MySql.Data.MySqlClient;
 using System;
@@ -637,19 +638,40 @@ namespace Api.Permissions{
 				{
 					// Create the arg now:
 					isEnumerable = argNode.Array;
-					var argField = DeclareArg(argNode.Id, argNode.Array ? typeof(IEnumerable<>).MakeGenericType(fieldType) : fieldType);
+					Type argElementType = fieldType;
+
+					if (argElementType.IsGenericType && argElementType.GetGenericTypeDefinition() == typeof(Localized<>))
+					{
+						// Unwrap localized fields:
+						argElementType = argElementType.GetGenericArguments()[0];
+					}
+
+					// JsonString is an alias:
+					if (argElementType == typeof(JsonString))
+					{
+						argElementType = typeof(string);
+					}
+
+					var argType = argElementType;
+
+					if (argNode.Array)
+					{
+						argType = typeof(IEnumerable<>).MakeGenericType(argElementType);
+					}
+
+					var argField = DeclareArg(argNode.Id, argType);
 					argNode.Binding = argField;
 					generator.Emit(OpCodes.Ldarg_0);
 
 					// If it's nullable, unwrap it.
 					if (unwrapNullables)
 					{
-						var underlyingType = Nullable.GetUnderlyingType(fieldType);
+						var underlyingType = Nullable.GetUnderlyingType(argElementType);
 
 						if (underlyingType != null)
 						{
 							// GetValueOrDefault call:
-							var valOrDefault = fieldType.GetMethod("GetValueOrDefault", BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
+							var valOrDefault = argElementType.GetMethod("GetValueOrDefault", BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
 
 							if (valOrDefault != null)
 							{
@@ -1889,13 +1911,44 @@ namespace Api.Permissions{
 					fieldType = member.Field.FieldInfo.FieldType;
 				}
 
-				var nonNullable = Nullable.GetUnderlyingType(fieldType);
+				var unwrapedType = fieldType;
+				var isLocalized = false;
+
+				if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == typeof(Localized<>))
+				{
+					unwrapedType = fieldType.GetGenericArguments()[0];
+					isLocalized = true;
+				}
+
+				var nonNullable = Nullable.GetUnderlyingType(unwrapedType);
 				if (nonNullable == null)
 				{
-					nonNullable = fieldType;
+					nonNullable = unwrapedType;
 				}
 
 				ast.EmitReadValue(generator, member, fieldType);
+
+				if (isLocalized)
+				{
+					// .Get(context) => T
+					var localized = generator.DeclareLocal(fieldType);
+					generator.Emit(OpCodes.Stloc, localized);
+					generator.Emit(OpCodes.Ldloca, localized);
+					generator.Emit(OpCodes.Ldarg_1); // Context
+					generator.Emit(OpCodes.Ldc_I4_1); // With fallback (true)
+					generator.Emit(
+						OpCodes.Callvirt,
+						fieldType
+							.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] {
+								typeof(Context),
+								typeof(bool)
+							})
+					);
+
+					// Unwrap the localized attr:
+					fieldType = unwrapedType;
+				}
+
 				var isEnumerable = ast.EmitReadValue(generator, B, fieldType);
 
 				if (Operation == "=")
@@ -2132,21 +2185,35 @@ namespace Api.Permissions{
 				}
 				else if (Operation == "startswith")
 				{
-					if (_strStartsWith == null)
+					if (fieldType == typeof(string))
 					{
-						_strStartsWith = typeof(string).GetMethod("StartsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
-					}
+						if (_strStartsWith == null)
+						{
+							_strStartsWith = typeof(string).GetMethod("StartsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
+						}
 
-					generator.Emit(OpCodes.Call, _strStartsWith);
+						generator.Emit(OpCodes.Call, _strStartsWith);
+					}
+					else
+					{
+						throw new PublicException("StartsWith can only be used on strings.", "filter_invalid");
+					}
 				}
 				else if (Operation == "endswith")
 				{
-					if (_strEndsWith == null)
+					if (fieldType == typeof(string))
 					{
-						_strEndsWith = typeof(string).GetMethod("EndsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
-					}
+						if (_strEndsWith == null)
+						{
+							_strEndsWith = typeof(string).GetMethod("EndsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
+						}
 
-					generator.Emit(OpCodes.Call, _strEndsWith);
+						generator.Emit(OpCodes.Call, _strEndsWith);
+					}
+					else
+					{
+						throw new PublicException("EndsWith can only be used on strings.", "filter_invalid");
+					}
 				}
 				else
 				{

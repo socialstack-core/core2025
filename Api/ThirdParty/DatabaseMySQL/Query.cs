@@ -43,12 +43,6 @@ namespace Api.Database
 		protected int Operation;
 
 		/// <summary>
-		/// True if this query gets the 'raw' object or not.
-		/// The raw object is a localised version, exactly as-is from the database.
-		/// </summary>
-		public bool Raw;
-
-		/// <summary>
 		/// The field map for any fields that are being inserted/ updated etc.
 		/// Either maps params to object fields or result row fields to object fields
 		/// depending on what the query is being used for.
@@ -245,30 +239,7 @@ namespace Api.Database
 						{
 							str.WriteS(", ");
 						}
-						if (localeCode == null || field.LocalisedName == null)
-						{
-							str.WriteS(field.FullName);
-						}
-						else if (Raw || field.IsPrice)
-						{
-							// Using this will result in a 'raw' object being returned.
-							str.WriteS(field.LocalisedName);
-							str.WriteS(localeCode);
-							str.Write((byte)'`');
-						}
-						else
-						{
-							// Of the form if(FIELD_locale is null,FIELD,FIELD_locale)");
-							str.WriteS("if(");
-							str.WriteS(field.LocalisedName);
-							str.WriteS(localeCode);
-							str.WriteS("` is null,");
-							str.WriteS(field.FullName);
-							str.Write((byte)',');
-							str.WriteS(field.LocalisedName);
-							str.WriteS(localeCode);
-							str.WriteS("`)");
-						}
+						str.WriteS(field.FullName);
 					}
 
 					fromLocation = str.Length;
@@ -567,30 +538,7 @@ namespace Api.Database
 						{
 							str.Append(", ");
 						}
-						if (localeCode == null || field.LocalisedName == null)
-						{
-							str.Append(field.FullName);
-						}
-						else if (Raw || field.IsPrice)
-						{
-							// Using this will result in a 'raw' object being returned.
-							str.Append(field.LocalisedName);
-							str.Append(localeCode);
-							str.Append('`');
-						}
-						else
-						{
-							// Of the form if(FIELD_locale is null,FIELD,FIELD_locale)");
-							str.Append("if(");
-							str.Append(field.LocalisedName);
-							str.Append(localeCode);
-							str.Append("` is null,");
-							str.Append(field.FullName);
-							str.Append(',');
-							str.Append(field.LocalisedName);
-							str.Append(localeCode);
-							str.Append("`)");
-						}
+						str.Append(field.FullName);
 					}
 
 					fromLocation = str.Length;

@@ -8,6 +8,7 @@ using Api.Startup;
 using System;
 using Api.Emails;
 using Api.Users;
+using Api.CanvasRenderer;
 
 namespace Api.Payments
 {
@@ -73,66 +74,104 @@ namespace Api.Payments
             config = GetConfig<SubscriptionConfig>();
 
             InstallEmails(
-                new EmailTemplate
+                new EmailBuilder
                 {
                     Name = "Cancelled subscription",
                     Subject = "We're sorry to see you go",
                     Key = "subscription_cancelled",
-                    BodyJson =
-                        "{\"module\":\"Email/Default\",\"content\":[{\"module\":\"Email/Centered\",\"data\":{}," +
-                        "\"content\":[\"Your subscription with us has now been fully cancelled. Thank you for subscribing and we hope to see you again in the future.\"]}]}"
+					BuildBody = (EmailBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("Email/Centered")
+							.AppendChild(
+								"Your subscription with us has now been fully cancelled. Thank you for subscribing and we hope to see you again in the future."
+							)
+						);
+					}
                 },
-                new EmailTemplate
+                new EmailBuilder
                 {
                     Name = "Payment method expires soon",
                     Subject = "Your payment card expires soon",
                     Key = "card_expires_soon",
-                    BodyJson =
-                        "{\"c\":{\"t\":\"Email/Default\",\"d\":{},\"r\":{\"children\":{\"t\":\"Email/Centered\",\"d\":{},\"c\":[{\"s\":\"Your payment card ending \",\"i\":2},{\"t\":\"b\",\"c\":{\"t\":\"UI/Token\",\"d\":{\"mode\":\"customdata\",\"fields\":[\"cardLastFour\"]},\"i\":4},\"i\":6},{\"s\":\" expires soon.\",\"i\":2},{\"t\":\"p\",\"c\":{\"s\":\"In order to avoid disruptions, please log into your customer dashboard to update your payment details.\",\"i\":7},\"i\":8},{\"t\":\"Email/PrimaryButton\",\"d\":{\"label\":\"Update Billing Information\",\"target\":\"/subscription/${customData.subscriptionId}/update-card\"},\"r\":{\"label\":{\"s\":\"Update Billing Information\",\"i\":6}},\"i\":4},{\"t\":\"p\",\"c\":{\"s\":\"If you have received this in error, please get in touch as soon as possible. \",\"i\":7},\"i\":8}],\"i\":3},\"customLogo\":null},\"i\":4},\"i\":5}"
-                },
-                new EmailTemplate // Not sent by default. Activated by Subscription config/ SendRenewalEmails
-                {
-                    Name = "Your subscription is renewing soon",
-                    Subject = "Your subscription is renewing soon",
-                    Key = "subscription_renews_soon",
-                    BodyJson = "{\"c\":{\"t\":\"Email/Default\",\"d\":{},\"r\":{\"children\":" +
-                               "{\"t\":\"Email/Centered\",\"d\":{},\"c\":[{\"t\":\"p\"," +
-                               "\"c\":{\"s\":\"Thank you for being a customer.\",\"i\":6},\"i\":6}," +
-                               "{\"t\":\"p\",\"c\":{\"s\":\"We hope you're enjoying the service.\",\"i\":7},\"i\":6},{\"t\":\"p\",\"c\":{\"s\":\"We’re letting you " +
-                               "know your subscription will automatically renew soon.\",\"i\":8},\"i\":6}," +
-                               "{\"t\":\"p\",\"c\":{\"s\":\"You do not need to do anything, but if you wish to " +
-                               "cancel or update your payment details, you can do so from your customer dashboard.\"," +
-                               "\"i\":11},\"i\":12},{\"t\":\"p\",\"c\":{\"s\":\"Thank you again!\",\"i\":6},\"i\":7}],\"i\":3},\"customLogo\":null},\"i\":4},\"i\":5}"
-                },
-                new
-                    EmailTemplate // Not sent by default. Activated by Subscription config/ SendSubscriptionReminderAfterDays
-                    {
-                        Name = "Not subscribed - Reminder to subscribe",
-                        Subject = "Looks like you haven't subscribed yet",
-                        Key = "not_subscribed_reminder",
-                        BodyJson = "{\"c\":{\"t\":\"Email/Default\",\"d\":{},\"r\":{\"children\":[{\"t\":" +
-                                   "\"Email/Centered\",\"d\":{},\"c\":[{\"t\":\"p\",\"c\":{\"s\":\"It\u2019s been " +
-                                   "some time since you created an account with us, but haven\u2019t yet started a " +
-                                   "subscription.\",\"i\":6},\"i\":6},{\"t\":\"p\"" +
-                                   ",\"c\":{\"s\":\"We\u2019re here to help you " +
-                                   "so don\u2019t hesitate to reach out with questions.\",\"i\":6},\"i\":7}],\"i\":3}," +
-                                   "{\"t\":\"Email/PrimaryButton\",\"d\":{\"label\":\"Get Started\"," +
-                                   "\"target\":\"/subscribe\"},\"r\":{\"label\":{\"s\":\"Get Started\",\"i\":6}}," +
-                                   "\"i\":7}],\"customLogo\":null},\"i\":4},\"i\":5}"
-                    },
-                new EmailTemplate // Not sent by default. Activated by Subscription config/ SendThankYouEmail
-                {
-                    Name = "Thank you for subscribing",
-                    Subject = "Thank you for subscribing",
-                    Key = "thank_you_for_subscribing",
-                    BodyJson = "{\"c\":{\"t\":\"Email/Default\",\"d\":{},\"r\":{\"children\":[{\"t\":\"" +
-                               "Email/Centered\",\"d\":{},\"c\":{\"t\":\"p\",\"c\":[{\"s\":\"Your subscription is now confirmed and will next renew on \",\"i\":6}," +
-                               "{\"t\":\"UI/Token\",\"d\":{\"fields\":[\"customData\",\"nextChargeUtc\"]},\"c\":{\"s\":\"customData.nextChargeUtc\",\"i\":6},\"i\":7}," +
-                               "{\"s\":\". If you have any questions please get in touch. Thank you!\",\"i\":8}],\"i\":6},\"i\":3}," +
-                               "{\"t\":\"Email/PrimaryButton\",\"d\":{\"label\":\"My subscriptions\",\"target\":\"/my-subscriptions\"}," +
-                               "\"r\":{\"label\":{\"s\":\"My Subscriptions\",\"i\":6}},\"i\":7}],\"customLogo\":null},\"i\":4},\"i\":5}"
+					BuildBody = (EmailBuilder builder) =>
+					{
+                        return builder.AddTemplate(
+                            new CanvasNode("Email/Centered")
+                            .AppendChild(
+                                "Your payment card ending "
+                            )
+                            .AppendChild(
+                                new CanvasNode("UI/Token")
+                                .With("mode", "customdata")
+                                .With("fields", new string[] {
+									"cardLastFour"
+								})
+                            )
+                            .AppendChild(
+                                " expires soon."
+                            )
+                            .AppendChild(
+                                new CanvasNode("p")
+                                    .AppendChild("In order to avoid disruptions, please log into your customer dashboard to update your payment details.")
+							)
+							.AppendChild(
+							   new CanvasNode("Email/PrimaryButton")
+                               .With("label", "Update billing information")
+                               .With("target", "/subscription/${customData.subscriptionId}/update-card")
+							)
+							.AppendChild(
+                                new CanvasNode("p")
+                                    .AppendChild("If you have received this in error, please get in touch as soon as possible.") 
+                            )
+						);
+					}
                 }
-            );
+			/*
+			new EmailBuilder // Not sent by default. Activated by Subscription config/ SendRenewalEmails
+			{
+				Name = "Your subscription is renewing soon",
+				Subject = "Your subscription is renewing soon",
+				Key = "subscription_renews_soon",
+				BodyJson = "{\"c\":{\"t\":\"Email/Default\",\"d\":{},\"r\":{\"children\":" +
+						   "{\"t\":\"Email/Centered\",\"d\":{},\"c\":[{\"t\":\"p\"," +
+						   "\"c\":{\"s\":\"Thank you for being a customer.\",\"i\":6},\"i\":6}," +
+						   "{\"t\":\"p\",\"c\":{\"s\":\"We hope you're enjoying the service.\",\"i\":7},\"i\":6},{\"t\":\"p\",\"c\":{\"s\":\"We’re letting you " +
+						   "know your subscription will automatically renew soon.\",\"i\":8},\"i\":6}," +
+						   "{\"t\":\"p\",\"c\":{\"s\":\"You do not need to do anything, but if you wish to " +
+						   "cancel or update your payment details, you can do so from your customer dashboard.\"," +
+						   "\"i\":11},\"i\":12},{\"t\":\"p\",\"c\":{\"s\":\"Thank you again!\",\"i\":6},\"i\":7}],\"i\":3},\"customLogo\":null},\"i\":4},\"i\":5}"
+			},
+			new
+			EmailBuilder // Not sent by default. Activated by Subscription config/ SendSubscriptionReminderAfterDays
+			{
+				Name = "Not subscribed - Reminder to subscribe",
+				Subject = "Looks like you haven't subscribed yet",
+				Key = "not_subscribed_reminder",
+				BodyJson = "{\"c\":{\"t\":\"Email/Default\",\"d\":{},\"r\":{\"children\":[{\"t\":" +
+							"\"Email/Centered\",\"d\":{},\"c\":[{\"t\":\"p\",\"c\":{\"s\":\"It\u2019s been " +
+							"some time since you created an account with us, but haven\u2019t yet started a " +
+							"subscription.\",\"i\":6},\"i\":6},{\"t\":\"p\"" +
+							",\"c\":{\"s\":\"We\u2019re here to help you " +
+							"so don\u2019t hesitate to reach out with questions.\",\"i\":6},\"i\":7}],\"i\":3}," +
+							"{\"t\":\"Email/PrimaryButton\",\"d\":{\"label\":\"Get Started\"," +
+							"\"target\":\"/subscribe\"},\"r\":{\"label\":{\"s\":\"Get Started\",\"i\":6}}," +
+							"\"i\":7}],\"customLogo\":null},\"i\":4},\"i\":5}"
+			},
+			new EmailBuilder // Not sent by default. Activated by Subscription config/ SendThankYouEmail
+			{
+				Name = "Thank you for subscribing",
+				Subject = "Thank you for subscribing",
+				Key = "thank_you_for_subscribing",
+				BodyJson = "{\"c\":{\"t\":\"Email/Default\",\"d\":{},\"r\":{\"children\":[{\"t\":\"" +
+						   "Email/Centered\",\"d\":{},\"c\":{\"t\":\"p\",\"c\":[{\"s\":\"Your subscription is now confirmed and will next renew on \",\"i\":6}," +
+						   "{\"t\":\"UI/Token\",\"d\":{\"fields\":[\"customData\",\"nextChargeUtc\"]},\"c\":{\"s\":\"customData.nextChargeUtc\",\"i\":6},\"i\":7}," +
+						   "{\"s\":\". If you have any questions please get in touch. Thank you!\",\"i\":8}],\"i\":6},\"i\":3}," +
+						   "{\"t\":\"Email/PrimaryButton\",\"d\":{\"label\":\"My subscriptions\",\"target\":\"/my-subscriptions\"}," +
+						   "\"r\":{\"label\":{\"s\":\"My Subscriptions\",\"i\":6}},\"i\":7}],\"customLogo\":null},\"i\":4},\"i\":5}"
+			}
+			*/
+			);
 
             // If a subscription payment changes to state 202, fulfil it immediately.
             Events.Purchase.BeforeUpdate.AddEventListener(

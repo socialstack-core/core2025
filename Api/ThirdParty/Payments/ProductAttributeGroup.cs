@@ -31,8 +31,7 @@ namespace Api.Payments
         /// The name of the attribute group e.g. "Dimensions".
         /// </summary>
         [DatabaseField(Length = 200)]
-		[Localized]
-		public string Name;
+		public Localized<string> Name;
 
 		/// <summary>
 		/// Not available most of the time. A temporary lookup mechanism used by group installation.
