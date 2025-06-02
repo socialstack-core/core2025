@@ -901,7 +901,7 @@ namespace Api.Startup {
 		public ContentField UsedByVirtual;
 
 		/// <summary>
-		/// True if this field is [Localised]
+		/// True if this field is a Localized type
 		/// </summary>
 		public bool Localised;
 

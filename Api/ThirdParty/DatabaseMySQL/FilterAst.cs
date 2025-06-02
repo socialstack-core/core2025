@@ -175,12 +175,15 @@ namespace Api.Permissions{
 
 				if (TargetField.Localised && localeCode != null)
 				{
-					writer.WriteASCII("`.`");
+					// Reading from a JSON field:
+					writer.WriteASCII("`->>'$.");
 					writer.WriteS(localeCode);
+					writer.Write((byte)'\'');
 				}
-
-				writer.Write((byte)'`');
-
+				else
+				{
+					writer.Write((byte)'`');
+				}
 				var idNode = Id as ArgFilterTreeNode<T, ID>;
 
 				// Read the ID:
@@ -493,15 +496,15 @@ namespace Api.Permissions{
 				{
 					writer.WriteASCII("if(`");
 					writer.WriteS(Field.FieldInfo.Name);
-					writer.WriteASCII("`.`");
+					writer.WriteASCII("`->>'$.");
 					writer.WriteS(localeCode);
-					writer.WriteASCII("` is null,`");
+					writer.WriteASCII("' is null,`");
 					writer.WriteS(Field.FieldInfo.Name);
-					writer.WriteASCII("`,`");
+					writer.WriteASCII("`->>'$.en',`");
 					writer.WriteS(Field.FieldInfo.Name);
-					writer.WriteASCII("`.`");
+					writer.WriteASCII("`->>'$.");
 					writer.WriteS(localeCode);
-					writer.WriteASCII("`)");
+					writer.WriteASCII("')");
 				}
 				else
 				{

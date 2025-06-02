@@ -576,6 +576,11 @@ namespace Api.Database
 				localeCode = locale?.Code;
 			}
 
+			if (localeCode == null)
+			{
+				localeCode = "en";
+			}
+
 			var includeTotal = queryPair.QueryA == null ? false : queryPair.QueryA.IncludeTotal;
 
 			int total = 0;
