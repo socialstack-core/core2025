@@ -389,6 +389,7 @@ namespace Api.Database
 				else if (field.Type == typeof(JsonString))
 				{
 					parameter.Value = val == null ? null : ((JsonString)val).ValueOf();
+					parameter.MySqlDbType = MySqlDbType.JSON;
 				}
 				else
 				{
