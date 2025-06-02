@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Api.Translate;
 
 namespace Api.TypeScript
 {
@@ -31,6 +32,12 @@ namespace Api.TypeScript
         {
             // Check if the type is generic and is a ValueTask<>
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ValueTask<>))
+            {
+                contentType = type.GetGenericArguments()[0];
+                return true;
+            }
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Localized<>))
             {
                 contentType = type.GetGenericArguments()[0];
                 return true;

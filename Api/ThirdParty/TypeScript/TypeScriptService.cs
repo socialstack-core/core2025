@@ -133,6 +133,7 @@ namespace Api.TypeScript
             SetTypeOverwrite(typeof(ValueTask), "void");
             SetTypeOverwrite(typeof(void), "void");
             SetTypeOverwrite(typeof(DateTime), "Date | string | number");
+            SetTypeOverwrite(typeof(JsonString), "string");
         }
 
         private void SetupIgnores()
@@ -140,6 +141,7 @@ namespace Api.TypeScript
             AddIgnoreType(typeof(AutoService));
             AddIgnoreType(typeof(AutoService<>));
             AddIgnoreType(typeof(Type));
+            AddIgnoreType(typeof(JsonString));
         }
         private void SetupEvents()
         {
