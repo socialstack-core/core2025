@@ -11,6 +11,16 @@ import ProductStock from 'UI/Product/Stock';
  */
 interface SignpostProps {
 	/**
+	 * set true to hide quantity controls
+	 */
+	hideQuantity?: boolean,
+
+	/**
+	 * set true to hide add to order / choose options controls
+	 */
+	hideOrder?: boolean,
+
+	/**
 	 * set true to disable link to product info
 	 */
 	disableLink?: boolean,
@@ -31,7 +41,7 @@ interface SignpostProps {
  * @param props React props.
  */
 const Signpost: React.FC<SignpostProps> = (props) => {
-	const { disableLink, quantity, content } = props;
+	const { disableLink, quantity, content, hideQuantity, hideOrder } = props;
 
 	// TODO: need an isFeatured flag per product
 	let isFeatured = true;
@@ -100,25 +110,29 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 
 	return (
 		<div className={disableLink ? "ui-product-signpost ui-product-signpost--disabled" : "ui-product-signpost"}>
-			{disableLink && renderInternal()}
+			{disableLink && <>
+				<div className="ui-product-signpost__internal">
+					{renderInternal()}
+				</div>
+			</>}
 			{!disableLink && <>
-				<Link href={content.primaryUrl || `/product/${content.slug}`}>
+				<Link className="ui-product-signpost__internal" href={content.primaryUrl || `/product/${content.slug}`}>
 					{renderInternal()}
 				</Link>
 			</>}
 
 			{/* quantity controls */}
-			{!hasOptions && <>
+			{!hideQuantity && !hasOptions && <>
 				<Quantity inBasket={quantity} />
 			</>}
 
-			{!hasOptions && <>
+			{!hideOrder && !hasOptions && <>
 				<button type="button" className="btn btn-secondary ui-product-signpost__add" onClick={() => addToOrder()}>
 					{`Add to order`}
 				</button>
 			</>}
 
-			{hasOptions && <>
+			{!hideOrder && hasOptions && <>
 				<button type="button" className="btn btn-secondary ui-product-signpost__choose" onClick={() => chooseOptions()}>
 					{`Choose options`}
 				</button>

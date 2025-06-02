@@ -1,9 +1,16 @@
 .shopping-cart__table {
-    max-width: 800px;
+
+	.qty-column {
+		width: px_to_rem(160);
+	}
 
     .qty-column,
     .currency-column {
         text-align: right;
     }
+
+	.ui-product-qty {
+		width: 100%;
+	}
 
 }

@@ -5,33 +5,45 @@ import Icon from 'UI/Icon';
 import productApi from 'Api/Product';
 import { calculatePrice, recurrenceText } from 'UI/Functions/Payments';
 import { useSession } from 'UI/Session';
+import BasketItem from 'UI/Product/Signpost';
+import Quantity from 'UI/Product/Quantity';
 
 const STRATEGY_STD = 0;
 const STRATEGY_STEP1 = 1;
 const STRATEGY_STEPALWAYS = 2;
 
-export default function ProductTable(props){
-	var {shoppingCart, addToCart, readonly} = props;
+/**
+ * Props for the ProductTable component.
+ */
+interface ProductTable {
+}
+
+/**
+ * The ProductTable React component.
+ * @param props React props.
+ */
+const ProductTable: React.FC<ProductTableProps> = (props) => {
+	var { shoppingCart, addToCart, readonly } = props;
 	const { session } = useSession();
 
-	function renderTotals(cartTotals, options){
+	function renderTotals(cartTotals, options) {
 		var totals = [];
 		var coupon = options && options.coupon;
-		
-		for(var i=0;i<5;i++){
-			if(cartTotals[i]){
+
+		for (var i = 0; i < 5; i++) {
+			if (cartTotals[i]) {
 				var total = cartTotals[i];
 				var totalCost = total;
-				
+
 				if (coupon != null) {
-					if (coupon.minSpendPrice) {		
+					if (coupon.minSpendPrice) {
 						// Are we above it?
 						if (totalCost < coupon.minSpendPrice.amount) {
 							// No!
 							coupon = null;
 						}
 					}
-					
+
 					if (coupon && coupon.discountPercent != 0) {
 						var discountedTotal = totalCost * (1 - (coupon.discountPercent / 100));
 
@@ -43,8 +55,8 @@ export default function ProductTable(props){
 							totalCost = Math.ceil(discountedTotal);
 						}
 					}
-					
-					if (coupon && coupon.discountAmount) {		
+
+					if (coupon && coupon.discountAmount) {
 						if (totalCost < coupon.discountAmount.amount) {
 							// Becoming free!
 							totalCost = 0;
@@ -56,78 +68,78 @@ export default function ProductTable(props){
 				}
 
 				var recurTitle = recurrenceText(i);
-				
-				if(totalCost != total){
-					if(i){
+
+				if (totalCost != total) {
+					if (i) {
 						// i is 0 for one off payments.
 						// This is any recurring things with a discount, where the discount is applied on the first payment only.
 						totals.push(<div>{formatCurrency(totalCost, options)} today, then {
 							formatCurrency(total, options)
 						} {recurTitle}</div>);
-					}else{
+					} else {
 						totals.push(<div><small><s>{
 							formatCurrency(total, options)
 						}</s></small> {formatCurrency(totalCost, options)}</div>);
 					}
-				}else{
+				} else {
 					totals.push(<div>{
 						formatCurrency(totalCost, options)
 					} {recurTitle}</div>);
 				}
 			}
 		}
-		
+
 		return totals;
 	}
-	
+
 	var items = shoppingCart?.productQuantities || [];
-	
-	if(!items.length){
+
+	if (!items.length) {
 		return <Alert type="info">
 			{readonly ? <>
 				{`This purchase is empty`}
 			</> : <>
 				{`Your shopping cart is empty.`}
 			</>}
-			
+
 		</Alert>;
 	}
-	
+
 	// 'price', 'tiers', 'tiers.price'
-	
-	var cartTotalByFrequency = [0,0,0,0,0];
-	
+
+	var cartTotalByFrequency = [0, 0, 0, 0, 0];
+
 	var itemSet = [];
 	var currencyCode = null;
 	var hasAtLeastOneSubscription = false;
-	
+
 	items.forEach(cartInfo => {
 		var product = cartInfo.product;
-		if(!product){
+		if (!product) {
 			return;
 		}
-		
-		if(product.billingFrequency){
+
+		if (product.billingFrequency) {
 			hasAtLeastOneSubscription = true;
 		}
-		
+
 		var qty = cartInfo.quantity;
-		
-		if(qty < product.minQuantity){
+
+		if (qty < product.minQuantity) {
 			qty = product.minQuantity;
 		}
 
 		var cost = calculatePrice(product, qty);
 
-		if(cost){
+		if (cost) {
 			cartTotalByFrequency[product.billingFrequency] += cost.amount;
-			
+
 			itemSet.push({
 				...cartInfo,
 				cost
 			});
-			
-			if(!currencyCode){
+
+			if (!currencyCode) {
 				currencyCode = cost.currencyCode;
 			}
 		}
@@ -155,17 +167,17 @@ export default function ProductTable(props){
 				var product = cartInfo.product;
 				var qty = cartInfo.quantity;
 				var cost = cartInfo.cost;
-				
-				if(qty < product.minQuantity){
+
+				if (qty < product.minQuantity) {
 					qty = product.minQuantity;
 				}
-				
-				var formattedCost = formatCurrency(cost.amount, {currencyCode});
-				
-				if(product.billingFrequency){
+
+				var formattedCost = formatCurrency(cost.amount, { currencyCode });
+
+				if (product.billingFrequency) {
 					formattedCost += ' ' + recurrenceText(product.billingFrequency);
 				}
-				
+
 				// subscription
 				if (product.billingFrequency) {
 
@@ -193,21 +205,20 @@ export default function ProductTable(props){
 				// standard quantity of product
 				return <tr>
 					<td>
-						{product.name}
+						<BasketItem content={product} quantity={cartInfo.quantity} disableLink hideQuantity hideOrder />
 					</td>
 					<td className="qty-column">
-						{/* could have a + and - button which does e.g. addToCart(product.id, cartInfo.quantity + 1)*/}
-						{cartInfo.quantity}
+						<Quantity inBasket={cartInfo.quantity} />
 					</td>
 					<td className="currency-column">
 						{formatCurrency(product.price.amount, { currencyCode })}
 					</td>
 					{!readonly && <td className="actions-column">
 						<button type="button" className="btn btn-small btn-outline-danger" title={`Remove`}
-								onClick={() => {
-									addToCart(product.id, 0)
+							onClick={() => {
+								addToCart(product.id, 0)
 							}}>
-								<Icon type='fa-trash' />
+							<Icon type='fa-trash' />
 						</button>
 					</td>}
 				</tr>;
@@ -218,8 +229,8 @@ export default function ProductTable(props){
 				</td>
 				<td className="qty-column">
 				</td>
-				<td className="currency-column" style={{fontWeight: 'bold'}}>
-					{currencyCode ? renderTotals(cartTotalByFrequency, {currencyCode, coupon: props.coupon}) : '-'}
+				<td className="currency-column" style={{ fontWeight: 'bold' }}>
+					{currencyCode ? renderTotals(cartTotalByFrequency, { currencyCode, coupon: props.coupon }) : '-'}
 				</td>
 				<td>
 					&nbsp;
@@ -235,3 +246,5 @@ export default function ProductTable(props){
 		</tbody>
 	</table>;
 }
+
+export default ProductTable;

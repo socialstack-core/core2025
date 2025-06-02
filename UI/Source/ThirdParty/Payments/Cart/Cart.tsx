@@ -1,26 +1,35 @@
 import Modal from 'UI/Modal';
 import Loading from 'UI/Loading';
-import { useSession } from 'UI/Session';
 import { useRouter } from 'UI/Router';
 import { useCart } from 'UI/Payments/CartSession';
 import ProductTable from 'UI/Payments/ProductTable';
-import { useToast } from 'UI/Functions/Toast';
 import { useState } from 'react';
 
-export default function Cart(props) {
-	const { session } = useSession();
+/**
+ * Props for the Cart component.
+ */
+interface CartProps {
+	/**
+	 * associated title
+	 */
+	title?: string,
+}
+
+/**
+ * The Cart React component.
+ * @param props React props.
+ */
+const Cart: React.FC<CartProps> = (props) => {
+	const title = props.title?.length ? props.title : `Shopping Cart`;
 	const { setPage } = useRouter();
-	const { pop } = useToast();
 	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading } = useCart();
-
 	var [showEmptyCartPrompt, setShowEmptyCartPrompt] = useState(null);
-	
-	return <>
-		<h2 className="shopping-cart__title">
-			{`Shopping Cart`}
-		</h2>
 
-		{loading ? <Loading /> : <ProductTable shoppingCart={shoppingCart} addToCart={addToCart}/>}
+	return <>
+		<h1 className="shopping-cart__title">
+			{title}
+		</h1>
+		{loading ? <Loading /> : <ProductTable shoppingCart={shoppingCart} addToCart={addToCart} />}
 
 		{!cartIsEmpty() && <>
 			<div className="shopping-cart__footer">
@@ -54,13 +63,7 @@ export default function Cart(props) {
 				</Modal>
 			</>
 		}
-	</>
+	</>;
 }
 
-Cart.propTypes = {
-};
-
-Cart.defaultProps = {
-}
-
-Cart.icon='shopping-cart';
+export default Cart;
