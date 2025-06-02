@@ -54,7 +54,7 @@ public class RouterPageTerminal : TerminalNode
 	{
 		Page = page;
 		_htmlService = Services.Get<HtmlService>();
-		Generator = new CanvasGenerator(page.BodyJson.GetFallback(), primaryType);
+		Generator = new CanvasGenerator(page.BodyJson.GetFallback().ValueOf(), primaryType);
 
 		if (!string.IsNullOrEmpty(page.Key))
 		{

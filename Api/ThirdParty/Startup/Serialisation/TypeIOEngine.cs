@@ -3,6 +3,7 @@ using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
 using Api.Translate;
+using Stripe;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -90,6 +91,7 @@ namespace Api.Startup
 			var writeSFloat = typeof(Writer).GetMethod("WriteS", new Type[] { typeof(float) });
 			var writeSDecimal = typeof(Writer).GetMethod("WriteS", new Type[] { typeof(decimal) });
 			var writeEscapedUString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(ustring) });
+			var writeJsonString = typeof(Writer).GetMethod("Write", new Type[] { typeof(JsonString) });
 			var writeEscapedString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(string) });
 
 			AddTo(map, typeof(uint), (ILGenerator code, Action emitValue) =>
@@ -168,6 +170,13 @@ namespace Api.Startup
 				emitValue();
 				code.Emit(OpCodes.Callvirt, writeEscapedUString);
 			});
+			
+			AddTo(map, typeof(JsonString), (ILGenerator code, Action emitValue) =>
+			{
+				code.Emit(OpCodes.Ldarg_2); // Writer
+				emitValue();
+				code.Emit(OpCodes.Callvirt, writeJsonString);
+			});
 
 			AddTo(map, typeof(string), (ILGenerator code, Action emitValue) =>
 			{
@@ -203,13 +212,177 @@ namespace Api.Startup
 		}
 
 		/// <summary>
-		/// Emits JSON write of a given content field in to the given body.
+		/// Generates a document reader/writer for the given content type.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <typeparam name="ID"></typeparam>
+		/// <param name="fields"></param>
+		/// <returns></returns>
+		public static TypeDocumentReaderWriter<T> GenerateDocumentReaderWriter<T, ID>(ContentFields fields)
+			where T : Content<ID>, new()
+			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
+		{
+
+			AssemblyName assemblyName = new AssemblyName("GeneratedDocRW_" + counter);
+			counter++;
+			AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
+			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
+
+			// Base type to use:
+			var baseType = typeof(TypeDocumentReaderWriter<T>);
+
+			// Start building the type:
+			var typeName = typeof(T).Name;
+			TypeBuilder typeBuilder = moduleBuilder.DefineType(typeName + "_DocRW", TypeAttributes.Public, baseType);
+
+			var writerMethod = typeBuilder.DefineMethod("WriteStoredJson", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), new Type[] {
+				typeof(T),
+				typeof(Writer)
+			});
+
+			ILGenerator writeBody = writerMethod.GetILGenerator();
+
+			var first = true;
+
+			EmitWriteChar(writeBody, '{');
+
+			foreach (var field in fields.List)
+			{
+				if (field.FieldInfo == null)
+				// || field.VirtualInfo != null && field.VirtualInfo.IsList { future feature, would need to grab these sets too }
+				{
+					continue;
+				}
+
+				if (field.FieldInfo.FieldType.IsArray)
+				{
+					Log.Warn("typeio", "Temporarily ignored an array field from probably revisions (WIP)");
+					continue;
+				}
+
+				if (first)
+				{
+					first = false;
+				}
+				else
+				{
+					EmitWriteChar(writeBody, ',');
+				}
+
+				EmitWriteASCII(writeBody, "\"" + field.Name + "\"");
+				EmitWriteChar(writeBody, ':');
+
+				var type = field.FieldInfo.FieldType;
+				var nextField = writeBody.DefineLabel();
+
+				if (!type.IsValueType)
+				{
+					// if(x.field == null) { writer.WriteASCII("null"); }
+					writeBody.Emit(OpCodes.Ldarg_1); // T obj
+					writeBody.Emit(OpCodes.Ldfld, field.FieldInfo); // .theField
+					writeBody.Emit(OpCodes.Ldnull);
+					writeBody.Emit(OpCodes.Ceq);
+					var notNull = writeBody.DefineLabel();
+					writeBody.Emit(OpCodes.Brfalse, notNull);
+						EmitWriteASCII(writeBody, "null");
+						writeBody.Emit(OpCodes.Br, nextField);
+					writeBody.MarkLabel(notNull);
+				}
+
+				// Here it is either a value type (which can still be a Nullable) or a not null object.
+
+				if (type.IsGenericType)
+				{
+					var gDef = type.GetGenericTypeDefinition();
+
+					if (gDef == typeof(Localized<>))
+					{
+						// Call ToJson.
+						var toJson = type.GetMethod("ToJson", BindingFlags.Instance | BindingFlags.Public, new Type[] { typeof(Writer) });
+
+						if (toJson == null)
+						{
+							throw new Exception("ToJson(writer) on a localised type missing somehow!");
+						}
+
+						writeBody.Emit(OpCodes.Ldarg_1); // T obj
+						writeBody.Emit(OpCodes.Ldflda, field.FieldInfo); // .theLocalizedField (this)
+						writeBody.Emit(OpCodes.Ldarg_2); // writer
+						writeBody.Emit(OpCodes.Callvirt, toJson); // invoke toJson
+
+					}
+					else if (gDef == typeof(Nullable<>))
+					{
+						EmitWriteBasicField(writeBody, field, (ILGenerator gen) =>
+						{
+							gen.Emit(OpCodes.Ldarg_1); // T obj
+						});
+					}
+					else
+					{
+						// probably a list - fail!
+						throw new NotSupportedException("Can't currently store this generic type in db documents. " +
+							"This can happen if there is e.g. a List in a versioned piece of content.");
+					}
+				}
+				else
+				{
+					EmitWriteBasicField(writeBody, field, (ILGenerator gen) => {
+						gen.Emit(OpCodes.Ldarg_1); // T obj
+					});
+				}
+
+				writeBody.MarkLabel(nextField);
+			}
+
+			EmitWriteChar(writeBody, '}');
+
+			writeBody.Emit(OpCodes.Ret);
+
+			// Finish the type and instance it.
+			Type builtType = typeBuilder.CreateType();
+			var instance = Activator.CreateInstance(builtType) as TypeDocumentReaderWriter<T>;
+			return instance;
+		}
+
+		/// <summary>
+		/// Emits writer.WriteASCII(val);
+		/// </summary>
+		/// <param name="gen"></param>
+		/// <param name="val"></param>
+		public static void EmitWriteASCII(ILGenerator gen, string val)
+		{
+			gen.Emit(OpCodes.Ldarg_2); // writer.
+			var writeAscii = typeof(Writer).GetMethod("WriteASCII", BindingFlags.Public | BindingFlags.Instance);
+			gen.Emit(OpCodes.Ldstr, val);
+			gen.Emit(OpCodes.Callvirt, writeAscii);
+		}
+		
+		/// <summary>
+		/// Emits writer.Write(theChar);
+		/// </summary>
+		/// <param name="gen"></param>
+		/// <param name="val"></param>
+		public static void EmitWriteChar(ILGenerator gen, char val)
+		{
+			gen.Emit(OpCodes.Ldarg_2); // writer.
+			var writeByte = typeof(Writer).GetMethod("Write", BindingFlags.Public | BindingFlags.Instance, new Type[]{
+				typeof(byte)
+			});
+
+			gen.Emit(OpCodes.Ldc_I4, (int)((byte)val));
+			gen.Emit(OpCodes.Callvirt, writeByte);
+		}
+
+		/// <summary>
+		/// Emits JSON write of a given content field in to the given body. 
+		/// It must be a basic type or a nullable of one of those types.
 		/// </summary>
 		/// <param name="body"></param>
 		/// <param name="field"></param>
 		/// <param name="objLoader"></param>
 		/// <exception cref="Exception"></exception>
-		public static void EmitWriteField(ILGenerator body, ContentField field, Action<ILGenerator> objLoader)
+		public static void EmitWriteBasicField(ILGenerator body, ContentField field, Action<ILGenerator> objLoader)
 		{
 			// Check if it's a nullable:
 			var fieldType = field.FieldType;
@@ -226,7 +399,7 @@ namespace Api.Startup
 			if (!typeMap.TryGetValue(fieldType, out JsonFieldType jft))
 			{
 				// Can't serialise this here.
-				throw new Exception("Unable to serialise fields of this type.");
+				throw new Exception("Unable to serialise fields of this type (" + fieldType.Name + ").");
 			}
 
 			jft.EmitWrite(body, field, nullableType, objLoader);

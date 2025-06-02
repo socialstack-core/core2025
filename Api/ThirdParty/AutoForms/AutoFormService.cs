@@ -108,7 +108,6 @@ namespace Api.AutoForms
 			{
 				yield return new ContentType()
 				{
-					Id = kvp.Value.Id,
 					Name = kvp.Value.Name
 				};
 			}
@@ -127,9 +126,15 @@ namespace Api.AutoForms
 			// For each AutoService..
 			foreach (var serviceKvp in Services.All)
 			{
-				if (serviceKvp.Value.IsMapping || serviceKvp.Value.IsTypeProxy || serviceKvp.Value.InstanceType == null)
+				if (serviceKvp.Value.IsMapping || serviceKvp.Value.InstanceType == null)
 				{
-					// Omit mapping services and proxies (like revisions subservices)
+					// Omit mapping services
+					continue;
+				}
+
+				if (serviceKvp.Value.InstanceType.IsGenericType)
+				{
+					// Omit base classes and things like Revision<> services
 					continue;
 				}
 

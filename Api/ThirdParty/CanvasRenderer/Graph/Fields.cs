@@ -146,7 +146,7 @@ namespace Api.CanvasRenderer
 			}
 
 			// Write a singular field:
-			TypeIOEngine.EmitWriteField(compileEngine.CodeBody, fld, (ILGenerator body) => {
+			TypeIOEngine.EmitWriteBasicField(compileEngine.CodeBody, fld, (ILGenerator body) => {
 
 				// Load the input:
 				compileEngine.EmitLoadInput("object", this);

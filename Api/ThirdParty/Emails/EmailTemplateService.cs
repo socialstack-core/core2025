@@ -350,7 +350,7 @@ namespace Api.Emails
 			// Render the template now:
 			var state = "{\"po\": " + Newtonsoft.Json.JsonConvert.SerializeObject(recipient.CustomData, jsonSettings) + "}";
 
-			return await _canvasRendererService.Render(recipient.Context, template.BodyJson.Get(recipient.Context), state);
+			return await _canvasRendererService.Render(recipient.Context, template.BodyJson.Get(recipient.Context).ValueOf(), state);
 		}
 
 		private readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
@@ -381,7 +381,7 @@ namespace Api.Emails
 			builder.Build();
 
 			await Events.EmailTemplate.BeforeInstall.Dispatch(context, builder);
-			builder.EmailTemplate.BodyJson = new Localized<string>(builder.Body.ToJson());
+			builder.EmailTemplate.BodyJson = new Localized<JsonString>(new JsonString(builder.Body.ToJson()));
 
 			await Create(context, builder.EmailTemplate, DataOptions.IgnorePermissions);
 		}
@@ -549,7 +549,7 @@ namespace Api.Emails
 					// Render all. The results are in the exact same order as the recipients set.
 					var state = "{\"po\": " + Newtonsoft.Json.JsonConvert.SerializeObject(recipient.CustomData, jsonSettings) + "}";
 
-					var renderedResult = await _canvasRendererService.Render(recipient.Context, set.Template.BodyJson.Get(recipient.Context), state);
+					var renderedResult = await _canvasRendererService.Render(recipient.Context, set.Template.BodyJson.Get(recipient.Context).ValueOf(), state);
 
 					// Email to send to:
 					var targetEmail = recipient.EmailAddress == null ? recipient.User.Email : recipient.EmailAddress;

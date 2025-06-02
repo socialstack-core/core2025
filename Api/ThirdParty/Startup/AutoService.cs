@@ -1623,12 +1623,6 @@ public partial class AutoService
 	}
 
 	/// <summary>
-	/// Set this to true if this service is just a 'proxy' for the given type.
-	/// I.e. it does not truly own the ServicedType: it just manipulates it in some way.
-	/// </summary>
-	public virtual bool IsTypeProxy => false;
-
-	/// <summary>
 	/// Outputs a list of things from this service as JSON into the given writer.
 	/// Executes the given collector(s) whilst it happens, which can also be null.
 	/// Does not perform permission checks internally.

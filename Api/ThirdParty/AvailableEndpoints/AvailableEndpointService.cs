@@ -49,7 +49,6 @@ namespace Api.AvailableEndpoints
 			{
 				cTypes.Add(new ContentType()
 				{
-					Id = Database.ContentTypes.GetId(kvp.Key),
 					Name = kvp.Value.Name
 				});
 			}

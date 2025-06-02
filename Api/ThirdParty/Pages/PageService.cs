@@ -11,6 +11,7 @@ using System.Reflection.Metadata;
 using Api.Startup.Routing;
 using Api.Automations;
 using Api.Translate;
+using Api.Database;
 
 namespace Api.Pages
 {
@@ -377,7 +378,7 @@ namespace Api.Pages
 				builder.Build();
 
 				await Events.Page.BeforePageInstall.Dispatch(context, builder);
-				builder.Page.BodyJson = new Localized<string>(builder.Body.ToJson());
+				builder.Page.BodyJson = new Localized<JsonString>(new JsonString(builder.Body.ToJson()));
 
 				await Create(context, builder.Page, DataOptions.IgnorePermissions);
 			}

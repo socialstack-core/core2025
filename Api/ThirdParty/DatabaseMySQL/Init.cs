@@ -494,7 +494,7 @@ namespace Api.DatabaseMySQL
 
 			var existingSchema = await LoadSchema();
 			
-			if(existingSchema == null || service.IsTypeProxy)
+			if(existingSchema == null)
 			{
 				return;
 			}

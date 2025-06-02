@@ -1,5 +1,6 @@
 using Api.Contexts;
 using Api.Database;
+using Api.SocketServerLibrary;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,11 +10,24 @@ namespace Api.Translate;
 
 
 /// <summary>
+/// Base general interface for localized structs.
+/// </summary>
+public interface ILocalized
+{
+	/// <summary>
+	/// Gets the value as text from this Localized value for the given locale in the given context.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <returns></returns>
+	string GetStringValue(Context context);
+}
+
+/// <summary>
 /// Use this to declare a field of the specified type as localised.
 /// The type is often string but you can localise anything else - IDs etc.
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public struct Localized<T>
+public struct Localized<T> : ILocalized
 {
 	/// <summary>
 	/// Parses the given JSON as a Localized struct, then boxes it. 
@@ -71,6 +85,14 @@ public struct Localized<T>
 				var val = ParseJsonString(span, ref i);
 				value = (T)(object)val;
 			}
+			else if(typeof(T) == typeof(JsonString))
+			{
+				int valStart = i;
+				i = FindSubJsonEnd(span, i);
+				var valSpan = span.Slice(valStart, i - valStart).Trim();
+				var val = new JsonString(new string(valSpan));
+				value = (T)(object)val;
+			}
 			else
 			{
 				int valStart = i;
@@ -96,6 +118,67 @@ public struct Localized<T>
 		}
 
 		return result;
+	}
+
+	private static int FindSubJsonEnd(ReadOnlySpan<char> span, int i)
+	{
+		int depth = 0;
+		bool insideString = false;
+		bool escaped = false;
+
+		while (i < span.Length)
+		{
+			var current = span[i];
+
+			if (insideString)
+			{
+				if (escaped)
+				{
+					// Ignore this char.
+					escaped = false;
+				}
+				else if (current == '\\')
+				{
+					escaped = true;
+				}
+				else if (current == '"')
+				{
+					escaped = false;
+					insideString = false;
+				}
+			}
+			else if (depth == 0)
+			{
+				if (current == ',' || current == '}')
+				{
+					return i;
+				}
+				else if (current == '"')
+				{
+					insideString = true;
+				}
+				else if (current == '{' || current == '[')
+				{
+					depth++;
+				}
+			}
+			else if(current == '}' || current == ']')
+			{
+				depth--;
+			}
+			else if (current == '{' || current == '[')
+			{
+				depth++;
+			}
+			else if (current == '"')
+			{
+				insideString = true;
+			}
+
+			i++;
+		}
+
+		return i;
 	}
 
 	private static string ParseJsonString(ReadOnlySpan<char> span, ref int i)
@@ -435,6 +518,50 @@ public struct Localized<T>
 	}
 
 	/// <summary>
+	/// Builds this as a JSON string inside the given writer.
+	/// </summary>
+	/// <param name="writer"></param>
+	public void ToJson(Writer writer)
+	{
+		writer.Write((byte)'{');
+
+		if (_values != null)
+		{
+			bool first = true;
+			foreach (var kvp in _values)
+			{
+				if (first)
+				{
+					first = false;
+				}
+				else
+				{
+					writer.Write((byte)',');
+				}
+
+				writer.Write((byte)'"');
+				writer.WriteASCII(kvp.Key);
+				writer.WriteASCII("\":");
+
+				if (typeof(T) == typeof(string))
+				{
+					writer.WriteEscaped((string)((object)kvp.Value));
+				}
+				else if (typeof(T) == typeof(JsonString))
+				{
+					writer.Write((JsonString)((object)kvp.Value));
+				}
+				else
+				{
+					writer.WriteS(Convert.ToString(kvp.Value, CultureInfo.InvariantCulture));
+				}
+			}
+		}
+
+		writer.Write((byte)'}');
+	}
+
+	/// <summary>
 	/// Builds this as a JSON string.
 	/// </summary>
 	/// <returns></returns>
@@ -476,12 +603,23 @@ public struct Localized<T>
 			return;
 		}
 
-		Type type = typeof(T);
-		if (type == typeof(string))
+		if (typeof(T) == typeof(string))
 		{
 			sb.Append('"');
-			sb.Append(EscapeString(value.ToString()));
+			EscapeString(sb, value.ToString());
 			sb.Append('"');
+		}
+		else if (typeof(T) == typeof(JsonString))
+		{
+			var val = value.ToString();
+			if (val == null)
+			{
+				sb.Append("null");
+			}
+			else
+			{
+				sb.Append(val);
+			}
 		}
 		else
 		{
@@ -490,12 +628,11 @@ public struct Localized<T>
 		}
 	}
 
-	private static string EscapeString(string s)
+	private static void EscapeString(StringBuilder sb, string s)
 	{
 		if (string.IsNullOrEmpty(s))
-			return s;
+			return;
 
-		StringBuilder sb = new StringBuilder();
 		foreach (char c in s)
 		{
 			switch (c)
@@ -515,7 +652,6 @@ public struct Localized<T>
 					break;
 			}
 		}
-		return sb.ToString();
 	}
 
 	/// <summary>
@@ -525,5 +661,16 @@ public struct Localized<T>
 	public override string ToString()
 	{
 		return ToJson();
+	}
+
+	/// <summary>
+	/// Gets the value as text from this Localized value for the given locale in the given context.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <returns></returns>
+	public string GetStringValue(Context context)
+	{
+		var val = Get(context);
+		return val == null ? null : val.ToString();
 	}
 }

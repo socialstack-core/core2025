@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 
 
 namespace Api.Contexts
@@ -52,7 +53,7 @@ namespace Api.Contexts
 		/// <summary>
 		/// The content type ID of the content of this field.
 		/// </summary>
-		public int ContentTypeId;
+		public Type ContentType;
 
 		/// <summary>
 		/// The service for this field. Set on demand internally inside ContextService.

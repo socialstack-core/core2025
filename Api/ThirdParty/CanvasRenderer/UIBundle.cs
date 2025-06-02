@@ -1762,8 +1762,7 @@ namespace Api.CanvasRenderer
                             {
                                 Module = file.ModulePath.Replace($"/{file.FileName}", string.Empty),
                                 Original = value.Key,
-                                Translated = new Localized<string>(locale, value.Value),
-                                IsDraft = false
+                                Translated = new Localized<string>(locale, value.Value)
                             });
                         }
 

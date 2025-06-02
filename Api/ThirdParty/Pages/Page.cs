@@ -37,7 +37,7 @@ namespace Api.Pages
 		/// </summary>
 		[Data("groups", "*")]
 		[DatabaseField(Length = 9000000)]
-		public Localized<string> BodyJson;
+		public Localized<JsonString> BodyJson;
 
 		/// <summary>
 		/// The default description for this page.

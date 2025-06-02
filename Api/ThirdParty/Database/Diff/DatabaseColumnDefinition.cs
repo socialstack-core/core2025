@@ -21,11 +21,6 @@ namespace Api.Database
 		public string ColumnName;
 
 		/// <summary>
-		/// True if this field is a string type but JSON on the server.
-		/// </summary>
-		public bool IsJson;
-
-		/// <summary>
 		/// True if it's nullable.
 		/// </summary>
 		public bool IsNullable;
@@ -33,7 +28,7 @@ namespace Api.Database
 		/// <summary>
 		/// The type that 'owns' this column.
 		/// </summary>
-		public Type OwningType;
+		public Type OwningType { get; set; }
 
 		/// <summary>
 		/// True if this field should just be ignored.
@@ -48,7 +43,7 @@ namespace Api.Database
 		/// <summary>
 		/// Previous column names, if there are any.
 		/// </summary>
-		public string[] PreviousNames;
+		public string[] PreviousNames { get; set; }
 
 		/// <summary>
 		/// Create a new database column definition.
@@ -71,8 +66,7 @@ namespace Api.Database
 
 				if (genericDef == typeof(Localized<>))
 				{
-					fieldType = typeof(string);
-					IsJson = true;
+					fieldType = typeof(JsonString);
 					IsNullable = true;
 				}
 				else if (genericDef == typeof(Nullable<>))

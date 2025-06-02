@@ -301,7 +301,7 @@ namespace Api.Pages
 
 			if (terminal.Generator == null)
 			{
-				writer.WriteS(page.BodyJson.Get(context));
+				writer.WriteS(page.BodyJson.Get(context).ValueOf());
 			}
 			else
 			{
@@ -1062,8 +1062,10 @@ namespace Api.Pages
 						break;
 					}
 
+					var localized = value as ILocalized;
+
 					// We need to swap out the string with the value.
-					var strValue = value.ToString();
+					var strValue = (localized != null) ? localized.GetStringValue(context) : value.ToString();
 
 					if (strValue.StartsWith('{') && strValue.EndsWith('}'))
 					{

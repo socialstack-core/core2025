@@ -57,7 +57,7 @@ namespace Api.Templates
 		/// </summary>
 		[Data("groups", "*")]
 		[Data("withIds", "1")]
-		public string BodyJson;
+		public JsonString BodyJson;
 	}
 	
 }

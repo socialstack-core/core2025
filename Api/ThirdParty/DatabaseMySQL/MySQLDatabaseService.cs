@@ -386,6 +386,10 @@ namespace Api.Database
 					parameter.Value = val == null ? null : val.ToString();
 					parameter.MySqlDbType = MySqlDbType.JSON;
 				}
+				else if (field.Type == typeof(JsonString))
+				{
+					parameter.Value = val == null ? null : ((JsonString)val).ValueOf();
+				}
 				else
 				{
 					parameter.Value = val;
@@ -521,6 +525,10 @@ namespace Api.Database
 					{
 						field.TargetField.SetValue(result, field.ParseLocalized(value as string));
 					}
+					else if (field.Type == typeof(JsonString))
+					{
+						field.TargetField.SetValue(result, new JsonString(value as string));
+					}
 					else if (field.Type == typeof(bool) || field.Type == typeof(bool?))
 					{
 						// Set the value:
@@ -618,6 +626,10 @@ namespace Api.Database
 							{
 								field.TargetField.SetValue(result, field.ParseLocalized(value as string));
 							}
+							else if (field.Type == typeof(JsonString))
+							{
+								field.TargetField.SetValue(result, new JsonString(value as string));
+							}
 							else if (field.Type == typeof(bool) || field.Type == typeof(bool?))
 							{
 								// Set the value:
@@ -703,6 +715,10 @@ namespace Api.Database
 							if (field.IsLocalized)
 							{
 								field.TargetField.SetValue(result, field.ParseLocalized(value as string));
+							}
+							else if (field.Type == typeof(JsonString))
+							{
+								field.TargetField.SetValue(result, new JsonString(value as string));
 							}
 							else if (field.Type == typeof(bool))
 							{

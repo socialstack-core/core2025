@@ -29,7 +29,7 @@ namespace Api.Revisions
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <typeparam name="ID"></typeparam>
-	public class RevisionService<T, ID> : AutoService<T, ID>, RevisionService
+	public class RevisionService<T, ID> : AutoService<Revision<T, ID>, ID>, RevisionService
 		where T : Content<ID>, new()
 		where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 	{
@@ -42,7 +42,7 @@ namespace Api.Revisions
 		/// <summary>
 		/// Instances as revision service for a particular type. See also: aService.Revisions
 		/// </summary>
-		public RevisionService(AutoService<T, ID> parent) : base(new EventGroup<T, ID>(), null, parent.EntityName + "_revisions")
+		public RevisionService(AutoService<T, ID> parent) : base(new EventGroup<Revision<T, ID>, ID>(), null, parent.EntityName + "_revisions")
 		{
 			Parent = parent;
 		}
@@ -82,50 +82,37 @@ namespace Api.Revisions
 		}
 
 		/// <summary>
-		/// Publishes the given entity, which originated from a revision. The entity content ID may not exist at all.
+		/// Publishes the given revision. The entity content ID may not exist at all.
 		/// </summary>
-		public virtual async ValueTask<T> PublishRevision(Context context, T entity, DataOptions options = DataOptions.Default)
+		public virtual async ValueTask<T> PublishRevision(Context context, Revision<T, ID> rev, DataOptions options = DataOptions.Default)
 		{
-			var vc = entity as VersionedContent<ID>;
+			var val = Parent.FromStoredJson(rev.ContentJson);
 
-			if (vc == null)
+			if (val == null)
 			{
-				// ??
 				return null;
 			}
 
-			var revId = vc.RevisionId;
-
-			if (!revId.HasValue)
-			{
-				throw new Exception("Can't publish a non-revision row.");
-			}
-
-			if (vc.Id.Equals(default(ID)))
+			if (rev.ContentId.Equals(default(ID)))
 			{
 				// It has not been created at all yet.
-				return await Parent.Create(context, entity, options);
+				return await Parent.Create(context, val, options);
 			}
 			else
 			{
 				// This is actually an update on the row.
-				await Parent.UpdateExact(context, entity, options);
+				await Parent.UpdateExact(context, val, options);
 			}
 
 			// Mark the revision as no longer a draft and set its publish time.
-			await Update(context, revId.Value, (Context ctx, T toUpdate, T orig) => {
-				var vcUpdate = toUpdate as VersionedContent<ID>;
-				vcUpdate.PublishDraftDate = DateTime.UtcNow;
-				vcUpdate.IsDraft = false;
+			await Update(context, rev, (Context ctx, Revision<T, ID> toUpdate, Revision<T, ID> orig) => {
+				toUpdate.PublishDraftDate = DateTime.UtcNow;
+				toUpdate.IsDraft = false;
 			}, options);
 
 			return null;
 		}
 
-		/// <summary>
-		/// Revisions are type proxies: they are not the primary service for type T.
-		/// </summary>
-		public override bool IsTypeProxy => true;
 	}
 
 }

@@ -31,7 +31,7 @@ namespace Api.Emails
 		/// <summary>
 		/// The canvas JSON for this email. This also outputs the emails subject too (as the document title).
 		/// </summary>
-		public Localized<string> BodyJson;
+		public Localized<JsonString> BodyJson;
 
 		/// <summary>
 		/// The notes for this email.

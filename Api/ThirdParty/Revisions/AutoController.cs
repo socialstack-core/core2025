@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Api.Startup;
 using Api.Users;
+using Api.Revisions;
+using System.Text;
 
 /// <summary>
 /// A convenience controller for defining common endpoints like create, list, delete etc. Requires an AutoService of the same type to function.
@@ -19,7 +21,8 @@ public partial class AutoController<T, ID>
 	/// Returns the data for 1 entity revision.
 	/// </summary>
 	[HttpGet("revision/{id}")]
-	public virtual async ValueTask<T> LoadRevision(Context context, [FromRoute] ID id)
+	[OmitIfNoService]
+	public virtual async ValueTask<Revision<T,ID>> LoadRevision(Context context, [FromRoute] ID id)
 	{
 		var revisions = _service.Revisions;
 
@@ -37,7 +40,8 @@ public partial class AutoController<T, ID>
 	/// Deletes an entity
 	/// </summary>
 	[HttpDelete("revision/{id}")]
-	public virtual async ValueTask<T> DeleteRevision(Context context, [FromRoute] ID id)
+	[OmitIfNoService]
+	public virtual async ValueTask<Revision<T,ID>> DeleteRevision(Context context, [FromRoute] ID id)
 	{
 		var revisions = _service.Revisions;
 
@@ -63,7 +67,8 @@ public partial class AutoController<T, ID>
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("revision/list")]
-	public virtual ValueTask<ContentStream<T, ID>?> RevisionList(Context context)
+	[OmitIfNoService]
+	public virtual ValueTask<ContentStream<Revision<T, ID>, ID>?> RevisionList(Context context)
 	{
 		return RevisionList(context, null);
 	}
@@ -75,43 +80,25 @@ public partial class AutoController<T, ID>
 	/// </summary>
 	/// <returns></returns>
 	[HttpPost("revision/list")]
-	public virtual ValueTask<ContentStream<T, ID>?> RevisionList(Context context, [FromBody] ListFilter filters)
+	[OmitIfNoService]
+	public virtual ValueTask<ContentStream<Revision<T, ID>, ID>?> RevisionList(Context context, [FromBody] ListFilter filters)
 	{
 		var revisions = _service.Revisions;
 
 		if (revisions == null)
 		{
-			return new ValueTask<ContentStream<T, ID>?>((ContentStream<T, ID>?)null);
+			return new ValueTask<ContentStream<Revision<T, ID>, ID>?>((ContentStream<Revision<T, ID>, ID>?)null);
 		}
 
-		var filter = revisions.LoadFilter(filters) as Filter<T, ID>;
+		var filter = revisions.LoadFilter(filters) as Filter<Revision<T, ID>, ID>;
 		
 		if (filter == null)
 		{
 			// A handler rejected this request.
-			return new ValueTask<ContentStream<T, ID>?>((ContentStream<T, ID>?)null);
+			return new ValueTask<ContentStream<Revision<T, ID>, ID>?>((ContentStream<Revision<T, ID>, ID>?)null);
 		}
 
-		return new ValueTask<ContentStream<T, ID>?>(revisions.GetResults(filter));
-	}
-	
-	/// <summary>
-	/// POST /v1/entityTypeName/revision/1
-	/// Updates an entity revision with the given RevisionId.
-	/// </summary>
-	[HttpPost("revision/{id}")]
-	[Receives(typeof(PartialContent))]
-	public virtual async ValueTask<T> UpdateRevision(Context context, [FromRoute] ID id, [FromBody] JObject body)
-	{
-		var revisions = _service.Revisions;
-
-		if (revisions == null)
-		{
-			return null;
-		}
-
-		var entity = await UpdateInternal(revisions, context, id, body);
-		return entity;
+		return new ValueTask<ContentStream<Revision<T, ID>, ID>?>(revisions.GetResults(filter));
 	}
 	
 	/// <summary>
@@ -119,18 +106,8 @@ public partial class AutoController<T, ID>
 	/// Publishes the given revision as the new live entry.
 	/// </summary>
 	[HttpGet("publish/{id}")]
+	[OmitIfNoService]
 	public virtual async ValueTask<T> PublishRevision(Context context, [FromRoute] ID id)
-	{
-		return await PublishRevision(context, id, null);
-	}
-	
-	/// <summary>
-	/// POST /v1/entityTypeName/publish/1
-	/// Publishes the given posted object as an extension to the given revision (if body is not null).
-	/// </summary>
-	[HttpPost("publish/{id}")]
-	[Receives(typeof(PartialContent))]
-	public virtual async ValueTask<T> PublishRevision(Context context, [FromRoute] ID id, [FromBody] JObject body)
 	{
 		var revisions = _service.Revisions;
 
@@ -139,9 +116,8 @@ public partial class AutoController<T, ID>
 			return null;
 		}
 
-		var entity = await UpdateInternal(revisions, context, id, body);
-		entity = await revisions.PublishRevision(context, entity);
-		return entity;
+		var entity = await revisions.Get(context, id);
+		return await revisions.PublishRevision(context, entity);
 	}
 	
 	/// <summary>
@@ -149,8 +125,8 @@ public partial class AutoController<T, ID>
 	/// Creates a draft.
 	/// </summary>
 	[HttpPost("draft")]
-	[Receives(typeof(PartialContent))]
-	public virtual async ValueTask<T> CreateDraft(Context context, [FromBody] JObject body)
+	[OmitIfNoService]
+	public virtual async ValueTask<Revision<T,ID>> CreateDraft(Context context, [FromBody] JObject body)
 	{
 		var revisions = _service.Revisions;
 
@@ -159,13 +135,77 @@ public partial class AutoController<T, ID>
 			return null;
 		}
 
-		return await CreateInternal(revisions, context, body, (Context ctx, T entity) => {
-			var vc = entity as VersionedContent<ID>;
+		var str = new StringBuilder();
+		str.Append('{');
+		var first = true;
 
-			if (vc != null)
+		var availableFields = await _service.GetTypedJsonStructure(context);
+
+		foreach (var property in body.Properties())
+		{
+			if (property.Name == "on")
 			{
-				vc.IsDraft = true;
+				continue;
 			}
+
+			// Attempt to get the available field:
+			var field = availableFields.GetField(property.Name, JsonFieldGroup.Any);
+
+			if (field == null)
+			{
+				continue;
+			}
+
+			// Retain only FieldInfo and List virtual field values.
+			var val = property.Value;
+
+			if (
+				field.FieldInfo != null || 
+				(field.ContentField != null && field.ContentField.VirtualInfo != null && field.ContentField.VirtualInfo.IsList)
+			) {
+				if (first)
+				{
+					first = false;
+				}
+				else
+				{
+					str.Append(',');
+				}
+
+				str.Append('"');
+				str.Append(property.Name);
+				str.Append("\":");
+
+				if (val == null)
+				{
+					str.Append("null");
+				}
+				else
+				{
+					var valStr = val.ToString();
+
+					if (valStr == null)
+					{
+						str.Append("null");
+					}
+					else
+					{
+						str.Append(valStr);
+					}
+				}
+			}
+		}
+
+		str.Append('}');
+
+		var now = DateTime.UtcNow;
+
+		return await revisions.Create(context, new Revision<T, ID>() {
+			CreatedUtc = now,
+			EditedUtc = now,
+			ContentJson = str.ToString(),
+			IsDraft = true,
+			ActionType = 1
 		});
 	}
 }
