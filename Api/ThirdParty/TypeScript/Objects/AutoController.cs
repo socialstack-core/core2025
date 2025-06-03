@@ -39,29 +39,14 @@ namespace Api.TypeScript.Objects
         public AutoController(ESModule container)
         {
             // Ensure the generic controller type exists.
-            container.AddType(typeof(AutoController<,>));
+            // container.AddType(typeof(AutoController<,>));
             _container = container;
 
             // Scan for used WebApis and ensure they're available.
             foreach (var method in GetEndpointMethods())
             {
-                var isArrayType = method.IsApiList;
-
-                if (isArrayType)
-                {
-                    if (method.ReturnType.IsGenericParameter)
-                    {
-                        _container.RequireWebApi(WebApis.GetList);
-                    }
-                    else
-                    {
-                        _container.RequireWebApi(WebApis.GetJson);
-                    }
-                }
-                else
-                {
-                    _container.RequireWebApi(WebApis.GetOne);
-                }
+                TypeScriptService.EnsureApis(method, container, null);
+                TypeScriptService.EnsureParameterTypes(method.WebSafeParams, container);
             }
         }
 
@@ -101,6 +86,8 @@ namespace Api.TypeScript.Objects
                 builder.AppendLine("     * Generated from a .NET type.");
                 builder.AppendLine($"     * @see {{T}}::{{{method.Method.Name}}}");
                 builder.AppendLine($"     * @url '{method.RequestUrl}'");
+                builder.AppendLine($"     * @trueReturnType {method.TrueReturnType.Name}");
+                builder.AppendLine($"     * @passedReturnType {method.ReturnType.Name}");
                 builder.AppendLine("     */");
                 builder.Append($"    {TypeScriptService.LcFirst(method.Method.Name)} = (");
 
@@ -115,11 +102,13 @@ namespace Api.TypeScript.Objects
                 foreach (var param in method.WebSafeParams)
                 {
                     if (paramCount > 0)
+                    {
                         builder.Append(", ");
+                    }
 
                     string typeName = param.ParameterType == typeof(JObject)
                         ? "Partial<T>"
-                        : param.ParameterType.Name;
+                        : svc.GetGenericSignature(param.ParameterType);
 
                     if (TypeScriptService.IsEntityType(param.ParameterType))
                     {

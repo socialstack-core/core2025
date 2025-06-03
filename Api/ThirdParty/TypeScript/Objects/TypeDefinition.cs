@@ -15,10 +15,9 @@ namespace Api.TypeScript.Objects
     public class TypeDefinition : AbstractTypeScriptObject
     {
         private readonly List<Type> _resolvedTypes = new();
-        private readonly Dictionary<string, Type> _customFields = new();
-        private readonly Dictionary<string, string> _customProperties = new();
         private readonly Type _definedType;
         private readonly ESModule _container;
+        private List<TypeScriptField> _fields = [];
         
 
         /// <summary>
@@ -40,9 +39,11 @@ namespace Api.TypeScript.Objects
                 {
                     case FieldInfo field:
                         AddResolvedType(field.FieldType);
+                        AddField(field.Name, field.FieldType);
                         break;
                     case PropertyInfo property:
                         AddResolvedType(property.PropertyType);
+                        AddField(property.Name, property.PropertyType);
                         break;
                 }
             }
@@ -52,6 +53,15 @@ namespace Api.TypeScript.Objects
             {
                 ProcessResolvedType(type, referenceType);
             }
+        }
+
+        public void AddField(string fieldName, Type fieldType)
+        {
+            _fields.Add(new()
+            {
+                FieldName = fieldName,
+                FieldType = fieldType
+            });
         }
 
         private void AddResolvedType(Type type)
@@ -127,28 +137,6 @@ namespace Api.TypeScript.Objects
         public Type GetReferenceType() => _definedType;
 
         /// <summary>
-        /// Adds a custom field to the type definition with the specified name and type.
-        /// The field type is also registered as a dependency.
-        /// </summary>
-        /// <param name="fieldName">The name of the custom field.</param>
-        /// <param name="fieldType">The type of the custom field.</param>
-        public void AddField(string fieldName, Type fieldType)
-        {
-            _customFields[fieldName] = fieldType;
-            _resolvedTypes.Add(TypeScriptService.UnwrapTypeNesting(fieldType));
-        }
-
-        /// <summary>
-        /// Adds a custom property to the type definition with the specified name and type.
-        /// </summary>
-        /// <param name="propertyName">The name of the custom property.</param>
-        /// <param name="propertyType">The type of the custom property.</param>
-        public void AddCustomProperty(string propertyName, string propertyType)
-        {
-            _customProperties[propertyName] = propertyType;
-        }
-
-        /// <summary>
         /// Gets the list of all types that this type depends on (fields, properties, and added custom fields).
         /// </summary>
         /// <returns>A list of dependent <see cref="Type"/> objects.</returns>
@@ -183,62 +171,15 @@ namespace Api.TypeScript.Objects
             builder.AppendLine("{");
 
             // Process virtual fields and regular fields/properties
-            ProcessFieldsAndProperties(builder, svc);
-
+            foreach (var field in _fields)
+            {
+                field.ToSource(builder, svc);    
+            }
+            
             // Process virtual fields
             ProcessVirtualFields(builder, svc);
 
             builder.AppendLine("}");
-        }
-
-        private void ProcessFieldsAndProperties(StringBuilder builder, TypeScriptService svc)
-        {
-            var virtualFields = GetReferenceType().GetCustomAttributes<HasVirtualFieldAttribute>().ToList();
-
-            foreach (var member in GetReferenceType().GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
-            {
-                switch (member)
-                {
-                    case FieldInfo field:
-                        ProcessField(builder, svc, field, virtualFields);
-                        break;
-                    case PropertyInfo property:
-                        ProcessProperty(builder, svc, property, virtualFields);
-                        break;
-                }
-            }
-        }
-
-        private void ProcessField(StringBuilder builder, TypeScriptService svc, FieldInfo field, List<HasVirtualFieldAttribute> virtualFields)
-        {
-            var fieldType = TypeScriptService.UnwrapTypeNesting(field.FieldType);
-            if (virtualFields.Any(vf => vf.FieldName == field.Name))
-            {
-                return;
-            }
-
-            if (fieldType == typeof(void)) return;
-
-            var isFieldCollection = TypeScriptService.IsNestedCollection(field.FieldType);
-            var overwrite = svc.GetGenericSignature(fieldType);
-
-            builder.AppendLine($"    {TypeScriptService.LcFirst(field.Name)}{(TypeScriptService.IsNullable(fieldType) ? "?" : "")}: {overwrite ?? fieldType.Name}{(isFieldCollection ? "[]" : "")};".Replace("?;", ";"));
-        }
-
-        private void ProcessProperty(StringBuilder builder, TypeScriptService svc, PropertyInfo property, List<HasVirtualFieldAttribute> virtualFields)
-        {
-            if (virtualFields.Any(vf => vf.FieldName == property.Name))
-            {
-                return;
-            }
-
-            var type = TypeScriptService.UnwrapTypeNesting(property.PropertyType);
-            if (type == typeof(void)) return;
-
-            var isCollection = TypeScriptService.IsNestedCollection(property.PropertyType);
-            var overwrite = svc.GetGenericSignature(property.PropertyType);
-
-            builder.AppendLine($"    {TypeScriptService.LcFirst(property.Name)}{(TypeScriptService.IsNullable(type) ? "?" : "")}: {overwrite ?? type.Name}{(isCollection ? "[]" : "")};".Replace("?;", ";"));
         }
 
         private void ProcessVirtualFields(StringBuilder builder, TypeScriptService svc)

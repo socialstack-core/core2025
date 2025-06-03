@@ -149,13 +149,12 @@ namespace Api.TypeScript.Objects
         /// </summary>
         private static void EmitField(StringBuilder builder, TypeScriptService svc, string name, Type type)
         {
-            var unwrappedType = TypeScriptService.UnwrapTypeNesting(type);
-            if (unwrappedType == typeof(void)) return;
-
-            var isNullable = TypeScriptService.IsNullable(unwrappedType);
-            var tsName = svc.GetTypeOverwrite(unwrappedType) ?? unwrappedType.Name;
-
-            builder.AppendLine($"    {TypeScriptService.LcFirst(name)}{(isNullable ? "?" : "")}: {tsName};");
+           var tsField = new TypeScriptField
+           {
+               FieldName = name,
+               FieldType = type
+           };
+           tsField.ToSource(builder, svc);
         }
     }
 }

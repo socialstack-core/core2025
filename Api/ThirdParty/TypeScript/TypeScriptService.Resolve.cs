@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Api.Startup;
+using Api.Translate;
 
 namespace Api.TypeScript
 {
@@ -63,19 +65,23 @@ namespace Api.TypeScript
             
             if(baseNullable != null)
             {
-                return GetGenericSignature(baseNullable) + " | undefined";
+                return "(" + GetGenericSignature(baseNullable) + " | undefined)";
             }
 
             if(t.IsArray)
             {
                 var result = GetGenericSignature(t.GetElementType());
                 var arrayDepth = t.GetArrayRank();
-                
-                result += "[";
-                for(var dimension = 0;dimension < arrayDepth - 1; dimension++){
-                    result += ",";
+
+                if(arrayDepth > 1)
+                {
+                    if (Nullable.GetUnderlyingType(t) != null)
+                    {
+                        t = Nullable.GetUnderlyingType(t) ?? t;
+                    }
+                    throw new NotSupportedException("You can't return multidimensional arrays through the public API as they are not supported in Typescript. The type attempted was an Enumerable which holds a " + UnwrapTypeNesting(t.GetElementType()).Name);
                 }
-                return result + "]";
+                return result + "[]";
             }
 
             if(t.IsGenericType)
@@ -84,14 +90,15 @@ namespace Api.TypeScript
 
                 if (t.IsGenericTypeDefinition)
                 {
-                    var paramSet = t.GetGenericArguments();
                     var name = TidyGenericName(t.Name) + "<";
 
                     for (var i = 0; i < args.Length; i++)
                     {
                         if (i > 0)
+                        {
                             name += ", ";
-                        name += args[i].Name;
+                        }
+                        name += GetGenericSignature(args[i]);
                     }
 
                     return name + ">";
@@ -101,7 +108,7 @@ namespace Api.TypeScript
 
                 if(baseType == typeof(List<>))
                 {
-                    return GetGenericSignature(args[0]);
+                    return GetGenericSignature(args[0]) + "[]";
                 }
                 if(baseType == typeof(Dictionary<,>))
                 {
@@ -115,6 +122,17 @@ namespace Api.TypeScript
                 {
                     return "ApiList<" + GetGenericSignature(args[0]) + ">";
                 }
+                if (t.FullName is not null && TidyGenericName(t.FullName) == "Api.Translate.Localized")
+                {
+                    return GetGenericSignature(t.GetGenericArguments()[0]);
+                }
+                if (TryGetClass("Api.Revisions.Revision", out var type))
+                {
+                    if (t == type)
+                    {
+                        return GetGenericSignature(args[0]);
+                    }    
+                }
 
                 var overwrite = GetTypeOverwrite(t);
                 var sb = new StringBuilder();
@@ -125,25 +143,16 @@ namespace Api.TypeScript
                 }
                 else
                 {
-                    if (t.Name.Contains('`'))
-                    {
-                        sb.Append(t.Name[0..t.Name.IndexOf('`')] + "<");
-                    }
-                    else
-                    {
-                        sb.Append(t.Name + "<");
-                    }
+                    sb.Append(TidyGenericName(t.Name) + "<");
                 }
-                
-                
-                
-                
+
                 for (var i = 0; i < args.Length; i++)
                 {
                     if (i > 0)
                     {
                         sb.Append(", ");
                     }
+
                     sb.Append(GetGenericSignature(args[i]));
                 }
 
@@ -155,15 +164,18 @@ namespace Api.TypeScript
 
             var overwriteNonGeneric = GetTypeOverwrite(t);
 
-            return overwriteNonGeneric ?? t.Name;
+            return overwriteNonGeneric ?? (
+                string.IsNullOrEmpty(t.Name) ? "never" : t.Name
+            );
         }
 
+        
         /// <summary>
         /// Strips the backtick segment of generic type names.
         /// </summary>
         /// <param name="typeName"></param>
         /// <returns></returns>
-        private string TidyGenericName(string typeName)
+        public static string TidyGenericName(string typeName)
         {
             var backtick = typeName.IndexOf('`');
 
@@ -175,6 +187,25 @@ namespace Api.TypeScript
             return typeName;
 		}
 
+        private static readonly Dictionary<string, Type> _tryGetClassCache = [];
+        
+        private static bool TryGetClass(string typeName, out Type type)
+        {
+            if (_tryGetClassCache.TryGetValue(typeName, out type))
+            {
+                return true;
+            }
+            var assembly = typeof(TypeScriptService).Assembly;
 
+            type = assembly.GetTypes().FirstOrDefault(searchType => searchType.FullName is not null && TidyGenericName(searchType.FullName).Equals(typeName));
+
+            if (type is null)
+            {
+                return false;
+            }
+            _tryGetClassCache[typeName] = type;
+            return true;
+
+        }
     }
 }
