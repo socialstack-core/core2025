@@ -42,10 +42,10 @@ namespace Api.Payments
         public Localized<string> Description;
 
         /// <summary>
-        /// The target audience for the product category (web/internal/dev)
+        /// The target audience for the product category (0 = public web/1 = internal/2 = dev)
         /// </summary>
-        [DatabaseField(Length = 200)]
-        public string Target;
+        [Module("Admin/Payments/TargetAudiences")]
+        public uint TargetAudience;
 
         /// <summary>
         /// The category image ref
