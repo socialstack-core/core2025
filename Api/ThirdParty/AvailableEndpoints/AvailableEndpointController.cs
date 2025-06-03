@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Api.Contexts;
 using Api.Permissions;
+using Api.Startup;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,6 +42,7 @@ namespace Api.AvailableEndpoints
 		/// Gets the time (in both ticks and as a timestamp) that the service last started at.
 		/// </summary>
 		[HttpGet("uptime")]
+		[Returns(typeof(Context))]
 		public async ValueTask Uptime(HttpContext httpContext)
 		{
 			if (_upTime == null)
