@@ -474,7 +474,8 @@ namespace Api.Startup
 							MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual,
 							typeof(void),
 							new Type[] {
-								typeof(object)
+								typeof(object),
+								typeof(Context)
 							}
 						);
 
@@ -505,13 +506,40 @@ namespace Api.Startup
 					if (idSrc.FieldInfo != null)
 					{
 						body.Emit(OpCodes.Ldarg_1);
-						body.Emit(OpCodes.Ldfld, idSrc.FieldInfo);
+						var idFldType = idSrc.FieldInfo.FieldType;
+
+						// If it's a localized ID, resolve to the actual value.
+						if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
+						{
+							body.Emit(OpCodes.Ldflda, idSrc.FieldInfo);
+							body.Emit(OpCodes.Ldarg_2); // context
+							body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
+							var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[]{ typeof(Context), typeof(bool) });
+							body.Emit(OpCodes.Callvirt, localizedGetMethod);
+						}
+						else
+						{
+							body.Emit(OpCodes.Ldfld, idSrc.FieldInfo);
+						}
 					}
 					else
 					{
 						// Property
 						body.Emit(OpCodes.Ldarg_1);
 						body.Emit(OpCodes.Callvirt, idSrc.PropertyInfo.GetGetMethod());
+						var idFldType = idSrc.PropertyInfo.PropertyType;
+
+						if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
+						{
+							// Need an address - store as a local:
+							var localizedLocal = body.DeclareLocal(idFldType);
+							body.Emit(OpCodes.Stloc, localizedLocal);
+							body.Emit(OpCodes.Ldloca, localizedLocal);
+							body.Emit(OpCodes.Ldarg_2); // context
+							body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
+							var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
+							body.Emit(OpCodes.Callvirt, localizedGetMethod);
+						}
 					}
 
 					// Add to the collector:
@@ -523,11 +551,19 @@ namespace Api.Startup
 					continue;
 				}
 
+				var idFieldType = idField.FieldType;
+
+				// If it's localized, unwrap it. Must always happen before nullable check.
+				if (idFieldType.IsGenericType && idFieldType.GetGenericTypeDefinition() == typeof(Localized<>))
+				{
+					idFieldType = idFieldType.GetGenericArguments()[0];
+				}
+
 				// If the field type is nullable, use the base type here.
-				var nullableBaseType = Nullable.GetUnderlyingType(idField.FieldType);
+				var nullableBaseType = Nullable.GetUnderlyingType(idFieldType);
 
 				baseType = typeof(IDCollector<>).MakeGenericType(new Type[] {
-					nullableBaseType == null ? idField.FieldType : nullableBaseType
+					nullableBaseType == null ? idFieldType : nullableBaseType
 				});
 
 				// Get the Add method:
@@ -537,9 +573,14 @@ namespace Api.Startup
 				typeBuilder = moduleBuilder.DefineType("FieldWriter_" + idField.Name + "_" + counter, TypeAttributes.Public, baseType);
 				counter++;
 
-				collect = typeBuilder.DefineMethod("Collect", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), new Type[] {
-					typeof(object)
-				});
+				collect = typeBuilder.DefineMethod(
+					"Collect", 
+					MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, 
+					typeof(void), new Type[] {
+						typeof(object),
+						typeof(Context)
+					}
+				);
 
 				// "This" is the ID collector, with it's Add method.
 				// arg1 is the object to collect from.
@@ -551,24 +592,50 @@ namespace Api.Startup
 				if (idField.FieldInfo != null)
 				{
 					body.Emit(OpCodes.Ldarg_1);
-					body.Emit(OpCodes.Ldfld, idField.FieldInfo);
+
+					var idFldType = idField.FieldType;
+					if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
+					{
+						body.Emit(OpCodes.Ldflda, idField.FieldInfo);
+						body.Emit(OpCodes.Ldarg_2); // context
+						body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
+						var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
+						body.Emit(OpCodes.Callvirt, localizedGetMethod);
+					}
+					else
+					{
+						body.Emit(OpCodes.Ldfld, idField.FieldInfo);
+					}
 				}
 				else
 				{
 					// Property
 					body.Emit(OpCodes.Ldarg_1);
 					body.Emit(OpCodes.Callvirt, idField.PropertyInfo.GetGetMethod());
+
+					var idFldType = idField.PropertyInfo.PropertyType;
+					if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
+					{
+						// Need an address - store as a local:
+						var localizedLocal = body.DeclareLocal(idFldType);
+						body.Emit(OpCodes.Stloc, localizedLocal);
+						body.Emit(OpCodes.Ldloca, localizedLocal);
+						body.Emit(OpCodes.Ldarg_2); // context
+						body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
+						var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
+						body.Emit(OpCodes.Callvirt, localizedGetMethod);
+					}
 				}
 
 				if (nullableBaseType != null)
 				{
 					// If nullable, and it's null, do nothing. To check though, we need an address. We'll need to store it in a local for that:
-					var loc = body.DeclareLocal(idField.FieldType);
+					var loc = body.DeclareLocal(idFieldType);
 					var after = body.DefineLabel();
 					body.Emit(OpCodes.Stloc, loc);
 					body.Emit(OpCodes.Ldloca, 0);
 					body.Emit(OpCodes.Dup);
-					body.Emit(OpCodes.Callvirt, idField.FieldType.GetProperty("HasValue").GetGetMethod());
+					body.Emit(OpCodes.Callvirt, idFieldType.GetProperty("HasValue").GetGetMethod());
 					// The t/f is now on the stack. Check if it's null, and if so, ret.
 					body.Emit(OpCodes.Ldc_I4_0);
 					body.Emit(OpCodes.Ceq);
@@ -577,7 +644,7 @@ namespace Api.Startup
 					body.Emit(OpCodes.Pop);
 					body.Emit(OpCodes.Ret);
 					body.MarkLabel(after);
-					body.Emit(OpCodes.Callvirt, idField.FieldType.GetProperty("Value").GetGetMethod());
+					body.Emit(OpCodes.Callvirt, idFieldType.GetProperty("Value").GetGetMethod());
 				}
 
 				// Add:

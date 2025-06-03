@@ -43,10 +43,6 @@ namespace Api.Database
 		/// </summary>
 		public string OwningTypeName;
 		/// <summary>
-		/// The full name of this field, except it ends with an underscore. OwningType.Name.`Name_
-		/// </summary>
-		public string LocalisedName;
-		/// <summary>
 		/// Does this field have a price attribute? If so, do not use default locale value if null
 		/// </summary>
 		public bool IsPrice;
@@ -148,16 +144,6 @@ namespace Api.Database
 		public void SetFullName(string extension = null)
 		{
 			FullName = "`" + OwningTypeName + ((extension == null) ? "" : "_" + extension) + "`.`" + Name;
-
-			if (IsLocalized)
-			{
-				LocalisedName = FullName + "`.`";
-			}
-			else
-			{
-				LocalisedName = null;
-			}
-
 			FullName += "`";
 		}
 		
@@ -173,7 +159,7 @@ namespace Api.Database
 				TargetField = TargetField,
 				Name = Name,
 				FullName = FullName,
-				LocalisedName = LocalisedName
+				IsLocalized = IsLocalized
 			};
 		}
 

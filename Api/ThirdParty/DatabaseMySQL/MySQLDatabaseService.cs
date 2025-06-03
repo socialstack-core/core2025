@@ -389,6 +389,7 @@ namespace Api.Database
 				else if (field.Type == typeof(JsonString))
 				{
 					parameter.Value = val == null ? null : ((JsonString)val).ValueOf();
+					parameter.MySqlDbType = MySqlDbType.JSON;
 				}
 				else
 				{
@@ -574,6 +575,11 @@ namespace Api.Database
 				localeId = context.LocaleId;
 				var locale = (ContentTypes.Locales != null && localeId <= ContentTypes.Locales.Length ? ContentTypes.Locales[localeId - 1] : null);
 				localeCode = locale?.Code;
+			}
+
+			if (localeCode == null)
+			{
+				localeCode = "en";
 			}
 
 			var includeTotal = queryPair.QueryA == null ? false : queryPair.QueryA.IncludeTotal;

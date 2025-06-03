@@ -258,22 +258,24 @@ namespace Api.DatabaseMySQL
 					{
 						str.Append(", ");
 					}
-					if (localeCode == null || field.LocalisedName == null)
-					{
-						str.Append(field.FullName);
-					}
-					else
-					{
-						str.Append(field.LocalisedName);
-						str.Append(localeCode);
-						str.Append('`');
-					}
+					str.Append(field.FullName);
 					str.Append("=@p");
 					str.Append(paramIndex);
 
 					parameter = cmd.CreateParameter();
 					parameter.ParameterName = "p" + paramIndex;
-					parameter.Value = field.TargetField.GetValue(entity);
+					var chgValue = field.TargetField.GetValue(entity);
+
+					if (field.IsLocalized || field.Type == typeof(JsonString))
+					{
+						parameter.Value = chgValue.ToString();
+						parameter.MySqlDbType = MySqlDbType.JSON;
+					}
+					else
+					{
+						parameter.Value = chgValue;
+					}
+
 					cmd.Parameters.Add(parameter);
 					paramIndex++;
 				}

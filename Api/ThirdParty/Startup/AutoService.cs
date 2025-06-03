@@ -4,6 +4,7 @@ using Api.Eventing;
 using Api.Permissions;
 using Api.SocketServerLibrary;
 using Api.Startup;
+using Api.Translate;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -1237,8 +1238,9 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 
 			if (flds.Count > 64)
 			{
-				// You've ignored the other error for too long and it has become more severe.
-				// If you encounter this situation and having this many fields is required, ChangedFields needs to instead allocate a ulong array.
+				// This project has ignored the 50+ error for too long and it has become more severe.
+				// If you encounter this situation and having this many fields is required,
+				// ChangedFields needs to instead allocate a ulong array for larger types and a ulong (unchanged) for everything else.
 				throw new Exception("Too many fields");
 			}
 			else if (flds.Count >= 50)
@@ -1315,7 +1317,8 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 					generator.Emit(OpCodes.Ldfld, field.TargetField);
 				}
 				
-				if (mainType == typeof(DateTime) || mainType == typeof(string) || mainType == typeof(decimal))
+				if (mainType == typeof(DateTime) || mainType == typeof(string) || mainType == typeof(decimal) || 
+					(mainType.IsGenericType && mainType.GetGenericTypeDefinition() == typeof(Localized<>)))
 				{
 					var eq = mainType.GetMethod("Equals", new Type[] { mainType, mainType });
 					generator.Emit(OpCodes.Call, eq);

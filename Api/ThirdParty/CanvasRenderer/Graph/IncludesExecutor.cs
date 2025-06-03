@@ -130,7 +130,7 @@ public class IncludesExecutor<T, ID>
 
 				while (current != null)
 				{
-					current.Collect(entity);
+					current.Collect(entity, context);
 					current = current.NextCollector;
 				}
 

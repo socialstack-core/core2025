@@ -673,4 +673,55 @@ public struct Localized<T> : ILocalized
 		var val = Get(context);
 		return val == null ? null : val.ToString();
 	}
+
+	/// <summary>
+	/// True if this localized set is empty.
+	/// </summary>
+	public bool IsEmpty => _values == null || _values.Count == 0;
+	
+	/// <summary>
+	/// The number of entries in the set.
+	/// </summary>
+	public int Count => _values == null ? 0 : _values.Count;
+
+	/// <summary>
+	/// Compares the two given localized structs. Used by Diff.
+	/// </summary>
+	/// <param name="a"></param>
+	/// <param name="b"></param>
+	/// <returns></returns>
+	public static bool Equals(Localized<T> a, Localized<T> b)
+	{
+		if (a._values == b._values)
+		{
+			return true;
+		}
+
+		var aCount = a.Count;
+		var bCount = b.Count;
+
+		if (aCount != bCount)
+		{
+			// Different counts.
+			return false;
+		}
+
+		if (aCount == 0)
+		{
+			// They both must be empty.
+			return true;
+		}
+
+		// Both are not empty, but can still be different.
+		foreach (var kvp in a._values)
+		{
+			if (!b._values.TryGetValue(kvp.Key, out T bValue))
+				return false;
+
+			if (!object.Equals(kvp.Value, bValue))
+				return false;
+		}
+
+		return true;
+	}
 }

@@ -267,7 +267,7 @@ public partial class AutoService<T, ID>
 
 				while (current != null)
 				{
-					current.Collect(entity);
+					current.Collect(entity, context);
 					current = current.NextCollector;
 				}
 			}
@@ -500,7 +500,7 @@ public partial class AutoService<T, ID>
 
 				while (current != null)
 				{
-					current.Collect(entity);
+					current.Collect(entity, context);
 					current = current.NextCollector;
 				}
 
@@ -834,7 +834,7 @@ public partial class AutoService<T, ID>
 
 					while (col != null)
 					{
-						col.Collect(entity);
+						col.Collect(entity, context);
 						col = col.NextCollector;
 					}
 				}
@@ -865,14 +865,14 @@ public partial class AutoService<T, ID>
 					}
 
 					// Output the object:
-					await ToJsonWithIncludes(context, entity, _writer, functionalIncludes);
+					await ToJsonWithIncludes(ctx, entity, _writer, functionalIncludes);
 
 					// Collect:
 					var col = _col;
 
 					while (col != null)
 					{
-						col.Collect(entity);
+						col.Collect(entity, ctx);
 						col = col.NextCollector;
 					}
 
@@ -933,7 +933,7 @@ public partial class AutoService<T, ID>
 
 					while (col != null)
 					{
-						col.Collect(entity);
+						col.Collect(entity, context);
 						col = col.NextCollector;
 					}
 				}
@@ -970,7 +970,7 @@ public partial class AutoService<T, ID>
 
 					while (col != null)
 					{
-						col.Collect(entity);
+						col.Collect(entity, context);
 						col = col.NextCollector;
 					}
 				},
