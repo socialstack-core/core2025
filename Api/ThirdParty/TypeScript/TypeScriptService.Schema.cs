@@ -22,6 +22,7 @@ namespace Api.TypeScript
         {
             // kept in as to not break anything.
             ContextGenerator.SaveToFile("TypeScript/Config/Session.tsx");
+            GlobalGenerator.GenerateGlobals();
             
             var allContent = _aes.ListByModule();
 
