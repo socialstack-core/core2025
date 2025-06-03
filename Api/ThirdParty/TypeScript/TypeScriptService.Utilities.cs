@@ -119,6 +119,15 @@ namespace Api.TypeScript
                 {
                     continue;
                 }
+
+                if (type.BaseType is not null && type.BaseType.IsGenericTypeDefinition && type.BaseType.GetGenericTypeDefinition() == typeof(AutoService<>))
+                {
+                    continue;
+                }
+                if (type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == typeof(AutoService<>))
+                {
+                    continue;
+                }
                 
                 module.AddType(type);
             }

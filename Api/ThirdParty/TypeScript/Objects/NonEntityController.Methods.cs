@@ -37,6 +37,10 @@ namespace Api.TypeScript.Objects
 
             foreach (var method in _referenceType.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
             {
+                if (method.IsConstructor)
+                {
+                    continue;
+                }
                 var methodAttributes = method.GetCustomAttributes();
 
                 // Look for supported HTTP route attributes

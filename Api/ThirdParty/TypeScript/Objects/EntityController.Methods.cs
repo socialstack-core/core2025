@@ -46,6 +46,11 @@ namespace Api.TypeScript.Objects
                     continue;
                 }
 
+                if (method.IsConstructor)
+                {
+                    continue;
+                }
+
                 var methodAttributes = method.GetCustomAttributes();
 
                 // Look for supported HTTP route attributes

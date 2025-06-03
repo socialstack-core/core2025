@@ -1,16 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using Api.AvailableEndpoints;
 using Api.CanvasRenderer;
 using Api.Contexts;
 using Api.Database;
 using Api.Eventing;
-using Api.Startup;
-using Api.Startup.Routing;
-using Api.TypeScript.Objects;
-using Api.Users;
 
 namespace Api.TypeScript
 {
@@ -93,6 +88,7 @@ namespace Api.TypeScript
             IgnoreNamespace("MySql.Data");
             IgnoreNamespace("Nest");
             IgnoreNamespace("System");
+            IgnoreNamespace("Api.WebSockets");
 
             // Ignore specific types from Api.Database that are not relevant to TypeScript output
             IgnoreType(typeof(Field));

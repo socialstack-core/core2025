@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Api.Contexts;
 using Api.Database;
 using Newtonsoft.Json.Linq;
 
@@ -31,6 +30,23 @@ namespace Api.TypeScript.Objects
         private readonly List<Type> _virtualFieldImportSymbols = [];
         private readonly HashSet<Type> _typeRegistry = [];
         private bool _isEntityModule = false;
+
+        private static string[] IgnoreNamespaces =
+        [
+            "Api.Eventing", 
+            "Api.WebSockets",
+            "Microsoft.AspNetCore",
+            "Api.Database"
+        ];
+
+        private static string[] IgnoreTypes =
+        [
+            "Api.Startup.ContentStream`2",
+            "Api.Startup.ContentStreamSource`2",
+            "Api.Startup.ContentStream",
+            "Api.Startup.ContentStreamSource",
+            "Api.Startup.AutoService`2",
+        ];
 
         private EntityController _entityController;
 
@@ -65,14 +81,51 @@ namespace Api.TypeScript.Objects
         {
             type = TypeScriptService.UnwrapTypeNesting(type);
 
-            if (type == typeof(void) || type == typeof(ValueTask) || 
+            if (type == typeof(void) || type == typeof(ValueTask) ||
                 type == typeof(object) || type == typeof(JObject) ||
                 type.Namespace == "System")
-                return;
-
-            if (type == typeof(Context))
             {
                 return;
+            }
+            
+            if (type.IsGenericTypeDefinition)
+            {
+                if (type.GetGenericTypeDefinition() == typeof(AutoService<>))
+                {
+                    return;
+                }
+                if (type.GetGenericTypeDefinition() == typeof(AutoController<>))
+                {
+                    return;
+                }
+                if (type.GetGenericTypeDefinition() == typeof(AutoController<,>))
+                {
+                    return;
+                }
+                if (type.Name.Contains("Service"))
+                {
+                    return;
+                }
+            }
+
+            if (type.BaseType is not null && type.BaseType.IsGenericTypeDefinition)
+            {
+                if (type.BaseType.GetGenericTypeDefinition() == typeof(AutoService<>))
+                {
+                    return;
+                }
+                if (type.BaseType.GetGenericTypeDefinition() == typeof(AutoController<>))
+                {
+                    return;
+                }
+                if (type.BaseType.GetGenericTypeDefinition() == typeof(AutoController<,>))
+                {
+                    return;
+                }
+                if (type.BaseType.Name.Contains("Service"))
+                {
+                    return;
+                }
             }
 
             if (type == typeof(JsonString))
@@ -80,12 +133,37 @@ namespace Api.TypeScript.Objects
                 return;
             }
 
+            foreach (var ns in IgnoreNamespaces)
+            {
+                if (type.FullName is not null)
+                {
+                    if (type.FullName.StartsWith(ns))
+                    {
+                        return;
+                    }
+                }
+            }
+            
+            foreach (var ns in IgnoreTypes)
+            {
+                if (type.FullName is not null)
+                {
+                    if (type.FullName.StartsWith(ns))
+                    {
+                        return;
+                    }
+                }
+            }
+
             // Prevent recursive cycles
             if (!_typeRegistry.Add(type)) return;
 
             // Limit to one entity per module
-            if (TypeScriptService.IsEntityType(type) && _types.Any(t => TypeScriptService.IsEntityType(t.GetReferenceType())))
+            if (TypeScriptService.IsEntityType(type) &&
+                _types.Any(t => TypeScriptService.IsEntityType(t.GetReferenceType())))
+            {
                 return;
+            }
 
             _types.Add(new TypeDefinition(type, this));
         }

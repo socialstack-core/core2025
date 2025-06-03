@@ -51,6 +51,10 @@ namespace Api.TypeScript.Objects
             foreach (var method in typeof(AutoController<,>).GetMethods(
                          BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
             {
+                if (method.IsConstructor)
+                {
+                    continue;
+                }
                 // Skip if method overload with more parameters already exists
                 var existing = _methods.Find(m => m.Method.Name == method.Name);
                 if (existing is not null)
