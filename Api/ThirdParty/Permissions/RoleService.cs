@@ -101,15 +101,9 @@ namespace Api.Permissions
 					foreach (var role in all)
 					{
 						map[role.Id] = role;
-					}
 
-					// Apply the major roles such as Developer etc:
-					Roles.Developer = map[1];
-					Roles.Admin = map[2];
-					Roles.Guest = map[3];
-					Roles.Member = map[4];
-					Roles.Banned = map[5];
-					Roles.Public = map[6];
+						await Events.Role.Register.Dispatch(ctx, role);
+					}
 
 					// Construct the default grants:
 					await Events.CapabilityOnSetup.Dispatch(ctx, null);
@@ -126,12 +120,47 @@ namespace Api.Permissions
 				}
 			});
 
+			Events.Role.Register.AddEventListener((Context context, Role role) => {
+
+				if (role == null)
+				{
+					return new ValueTask<Role>(role);
+				}
+
+				// Apply the major roles such as Developer etc:
+				switch (role.Key)
+				{
+					case "developer":
+						Roles.Developer = role;
+					break;
+					case "admin":
+						Roles.Admin = role;
+					break;
+					case "guest":
+						Roles.Guest = role;
+						break;
+					case "member":
+						Roles.Member = role;
+						break;
+					case "banned":
+						Roles.Banned = role;
+						break;
+					case "public":
+						Roles.Public = role;
+						break;
+				}
+
+				return new ValueTask<Role>(role);
+			}, 1);
+
 			Events.Role.AfterCreate.AddEventListener(async (Context context, Role role) =>
 			{
 				if (role == null)
 				{
 					return null;
 				}
+
+				await Events.Role.Register.Dispatch(context, role);
 
 				Role inheritRole = null;
 
