@@ -38,10 +38,23 @@ namespace Api.TypeScript.Objects
                 switch (member)
                 {
                     case FieldInfo field:
+                        
+                        // due to there being 2 variants
+                        // of JsonIgnore attribute, just check
+                        // for either simply.
+                        if (field.GetCustomAttributes().Any(a => a.GetType().Name == "JsonIgnoreAttribute"))
+                        {
+                            continue;
+                        }
                         AddResolvedType(field.FieldType);
                         AddField(field.Name, field.FieldType);
                         break;
                     case PropertyInfo property:
+                        // same here.
+                        if (property.GetCustomAttributes().Any(a => a.GetType().Name == "JsonIgnoreAttribute"))
+                        {
+                            continue;
+                        }
                         AddResolvedType(property.PropertyType);
                         AddField(property.Name, property.PropertyType);
                         break;
