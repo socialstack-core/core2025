@@ -12,7 +12,7 @@ namespace Api.Components
 	/// <summary>
 	/// A ComponentGroup
 	/// </summary>
-	[HasVirtualField("Role", typeof(Role), "Id")]
+	[HasVirtualField("Role", typeof(Role), "RoleId")]
 	public partial class ComponentGroup : VersionedContent<uint>
 	{
         /// <summary>
@@ -30,7 +30,7 @@ namespace Api.Components
 		/// <summary>
 		/// The role this component group belongs to.
 		/// </summary>
-		public uint Role;
+		public uint RoleId;
 	}
 
 }
