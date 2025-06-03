@@ -1,206 +1,133 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Api.Contexts;
 using Api.Startup;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
-using Type = System.Type;
 
 namespace Api.TypeScript.Objects
 {
     public partial class EntityController : AbstractTypeScriptObject
     {
-        private List<ControllerMethod> _methods = null;
+        private List<ControllerMethod> _methods;
 
         /// <summary>
-        /// Collects and caches controller methods that should be exposed to the TypeScript API layer.
+        /// Scans the controller for non-standard API methods (excluding CRUD), and maps metadata
+        /// for TypeScript generation.
         /// </summary>
-        /// <returns>A list of <see cref="ControllerMethod"/> objects describing each API endpoint.</returns>
-        /// <remarks>
-        /// This method scans declared instance methods on the target .NET controller type and selects only those
-        /// that are decorated with HTTP route attributes and are not considered standard CRUD (Create, Read, Update, Delete, List).
-        ///
-        /// Each discovered method is parsed into a <see cref="ControllerMethod"/> structure, including route templates,
-        /// parameter mapping, return types, and other request metadata (e.g., body vs. query params).
-        /// </remarks>
+        /// <returns>A list of methods to expose to TypeScript.</returns>
         private List<ControllerMethod> GetEndpointMethods()
         {
-            if (_methods is not null)
-            {
+            if (_methods != null)
                 return _methods;
-            }
 
             var ts = Services.Get<TypeScriptService>();
+            var controllerType = _referenceTypes.Item1;
+            var knownCrudMethods = new HashSet<string> { "List", "Load", "Create", "Update", "Delete" };
 
-            _methods = [];
-            string[] crud = ["List", "Load", "Create", "Update", "Delete"];
+            _methods = new List<ControllerMethod>();
 
-            foreach (var method in _referenceTypes.Item1.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
+            foreach (var method in controllerType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
             {
-                // Skip known CRUD methods to avoid duplicates
-                if (crud.Contains(method.Name))
-                {
+                // Skip constructors and known CRUD methods
+                if (method.IsConstructor || knownCrudMethods.Contains(method.Name))
                     continue;
-                }
 
-                if (method.IsConstructor)
-                {
+                // Only consider methods with route attributes
+                var httpAttr = method.GetCustomAttributes().FirstOrDefault(attr => attr is RouteAttribute or HttpMethodAttribute);
+                if (httpAttr == null)
                     continue;
-                }
 
-                var methodAttributes = method.GetCustomAttributes();
-
-                // Look for supported HTTP route attributes
-                var httpAttribute = methodAttributes.FirstOrDefault(attr => attr is RouteAttribute 
-                    or HttpGetAttribute 
-                    or HttpPostAttribute 
-                    or HttpPutAttribute 
-                    or HttpDeleteAttribute 
-                    or HttpPatchAttribute);
-
-                if (httpAttribute is null)
-                {
-                    continue;
-                }
-
-                var returnsAttr = method.GetCustomAttribute<ReturnsAttribute>();
-                var returnType = returnsAttr != null 
-                    ? returnsAttr.ReturnType 
+                // Determine the effective return type
+                var returnAttr = method.GetCustomAttribute<ReturnsAttribute>();
+                var effectiveReturnType = returnAttr != null
+                    ? UnwrapValueTask(method.ReturnType)
                     : TypeScriptService.UnwrapTypeNesting(method.ReturnType);
 
-                var nonValueTaskReturnType = method.ReturnType;
-
-                if (nonValueTaskReturnType.IsGenericType &&
-                    nonValueTaskReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
-                {
-                    nonValueTaskReturnType = nonValueTaskReturnType.GetGenericArguments()[0];
-                }
-
-                var methodParams = method.GetParameters();
-                var webSafeParams = new List<ParameterInfo>();
-
+                // Create method representation
                 var controllerMethod = new ControllerMethod
                 {
-                    TrueReturnType = returnType,
                     Method = method,
-                    RequiresSessionSet = returnType == typeof(Context),
-                    RequiresIncludes = methodParams.Any(p => p.ParameterType == _referenceTypes.Item2) || returnType == _referenceTypes.Item2,
-                    IsApiList = TypeScriptService.IsNestedCollection(method.ReturnType),
-                    SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null),
-                    ReturnType = nonValueTaskReturnType
+                    RequestUrl = GetRouteTemplate(httpAttr),
+                    TrueReturnType = effectiveReturnType,
+                    ReturnType = UnwrapValueTask(method.ReturnType),
+                    IsApiList = TypeScriptService.IsNestedCollection(method.ReturnType)
                 };
 
-                controllerMethod.RequestUrl = httpAttribute switch
+                // Analyze method parameters
+                var webSafeParams = new List<ParameterInfo>();
+                foreach (var param in method.GetParameters())
                 {
-                    RouteAttribute routeAttr => routeAttr.Template,
-                    HttpMethodAttribute httpAttr => httpAttr.Template,
-                    _ => controllerMethod.RequestUrl ?? ""
-                };
+                    if (param.ParameterType == typeof(Context))
+                        continue;
 
-                // Parse method parameters
-                foreach (var param in methodParams)
-                {
-                    // Route-bound parameter
-                    if (controllerMethod.RequestUrl!.Contains($"{{{param.Name}}}") &&
-                        param.GetCustomAttribute<FromRouteAttribute>() is not null)
+                    bool isFromRoute = controllerMethod.RequestUrl?.Contains($"{{{param.Name}}}") == true &&
+                                       param.GetCustomAttribute<FromRouteAttribute>() != null;
+
+                    bool isFromQuery = param.GetCustomAttribute<FromQueryAttribute>() != null;
+                    bool isFromBody = param.GetCustomAttribute<FromBodyAttribute>() != null;
+
+                    if (isFromRoute || isFromQuery || isFromBody || ts.GetTypeOverwrite(param.ParameterType) != null)
                     {
                         webSafeParams.Add(param);
-                        continue;
                     }
 
-                    // Query-bound parameter
-                    if (param.GetCustomAttribute<FromQueryAttribute>() is not null)
+                    if (isFromBody)
                     {
-                        webSafeParams.Add(param);
-                        if (method.GetParameters().Any(c => TypeScriptService.IsEntityType(controllerMethod.TrueReturnType)))
-                        {
-                            controllerMethod.RequiresIncludes = true;
-                        }
-                        continue;
-                    }
-
-                    // Body-bound parameter
-                    if (param.GetCustomAttribute<FromBodyAttribute>() is not null)
-                    {
-                        webSafeParams.Add(param);
                         controllerMethod.SendsData = true;
                         controllerMethod.BodyParam = param;
-                        continue;
                     }
 
-                    if (param.ParameterType != typeof(Context) && ts.GetTypeOverwrite(param.ParameterType) is not null)
+                    if (isFromQuery || ts.GetTypeOverwrite(param.ParameterType) != null || effectiveReturnType == _referenceTypes.Item2)
                     {
-                        webSafeParams.Add(param);
                         controllerMethod.RequiresIncludes = true;
                     }
-                    
                 }
 
                 controllerMethod.WebSafeParams = webSafeParams;
+                controllerMethod.RequiresSessionSet = effectiveReturnType == typeof(Context);
 
                 _methods.Add(controllerMethod);
             }
 
             return _methods;
         }
+
+        private static Type UnwrapValueTask(Type returnType)
+        {
+            return returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>)
+                ? returnType.GetGenericArguments()[0]
+                : returnType;
+        }
+
+        private static string GetRouteTemplate(object attribute)
+        {
+            return attribute switch
+            {
+                RouteAttribute ra => ra.Template,
+                HttpMethodAttribute hma => hma.Template,
+                _ => string.Empty
+            };
+        }
     }
 
     /// <summary>
-    /// Represents a parsed controller method intended for TypeScript code generation.
+    /// Represents metadata about a controller method for TypeScript client generation.
     /// </summary>
     public class ControllerMethod
     {
-        /// <summary>
-        /// Indicates whether this method requires access to the user's session via a session setter function.
-        /// </summary>
-        public bool RequiresSessionSet = false;
-
-        /// <summary>
-        /// The final formatted route URL (including dynamic parameters replaced with JS expressions).
-        /// </summary>
-        public string RequestUrl;
-
-        /// <summary>
-        /// The parameter passed in the request body, if applicable.
-        /// </summary>
-        public ParameterInfo BodyParam;
-
-        /// <summary>
-        /// Whether the method makes use of the `includes` system (e.g. for virtual fields).
-        /// </summary>
-        public bool RequiresIncludes = false;
-
-        /// <summary>
-        /// Indicates whether the method sends a payload in the request body.
-        /// </summary>
-        public bool SendsData = false;
-
-        /// <summary>
-        /// The actual .NET <see cref="MethodInfo"/> this controller method maps to.
-        /// </summary>
-        public MethodInfo Method;
-
-        /// <summary>
-        /// The unwrapped return type of the method, considering any `ReturnsAttribute` override.
-        /// </summary>
-        public Type TrueReturnType;
-
-        /// <summary>
-        /// Indicates whether the return type is a list or collection.
-        /// </summary>
-        public bool IsApiList = false;
-
-        /// <summary>
-        /// A list of safe-to-expose parameters that can be passed from the frontend.
-        /// </summary>
-        public List<ParameterInfo> WebSafeParams;
-        
-        /// <summary>
-        /// The return type, without the ValueTask
-        /// </summary>
-        public Type ReturnType;
+        public MethodInfo Method { get; set; }
+        public string RequestUrl { get; set; }
+        public ParameterInfo BodyParam { get; set; }
+        public bool RequiresSessionSet { get; set; } = false;
+        public bool RequiresIncludes { get; set; } = false;
+        public bool SendsData { get; set; } = false;
+        public bool IsApiList { get; set; } = false;
+        public Type TrueReturnType { get; set; }
+        public Type ReturnType { get; set; }
+        public List<ParameterInfo> WebSafeParams { get; set; }
     }
 }

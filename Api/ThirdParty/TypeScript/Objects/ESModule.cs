@@ -279,6 +279,11 @@ namespace Api.TypeScript.Objects
                 builder.AppendLine($"import {{ {string.Join(", ", apis)} }} from 'UI/Functions/WebRequest';\n");
             }
 
+            if (IsEntityModule())
+            {
+                builder.AppendLine("import { ApiIncludes } from 'Api/Includes';");
+            }
+
             // Import requirements
             _types.ForEach(t => {
                 t.ImportVirtualFields(svc.modules);
