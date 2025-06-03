@@ -750,6 +750,15 @@ namespace Api.Startup {
 
 			foreach (var fieldMeta in virtualFields)
 			{
+				if (_nameMap.ContainsKey(fieldMeta.FieldName.ToLower()))
+				{
+					throw new Exception(
+						"Can't create a virtual field called '" + fieldMeta.FieldName + "' on '" + InstanceType.Name + "' " +
+						"because it already exists, probably as a regular field. Typically the usage is [HasVirtualField(\"ATypeName\", typeof(ATypeName), \"ATypeNameId\")], " +
+						"e.g. [HasVirtualField(\"Thing\", typeof(Thing), \"ThingId\")]"
+					);
+				}
+
 				var virtualFieldType = fieldMeta.Type;
 				string virtualFieldTypeName = null;
 				ContentField dynamicTypeField = null;
