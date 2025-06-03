@@ -215,7 +215,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	var basketCount = 0;
 	var basketTotal = 0;
 
-	let basketItems = loading ? [] : shoppingCart?.productQuantities;
+	let basketItems = loading || cartIsEmpty ? [] : shoppingCart?.productQuantities;
 
 	basketItems.forEach(cartInfo => {
 		var product = cartInfo.product;
