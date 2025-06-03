@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -103,19 +104,42 @@ namespace Api.TypeScript
                         // create includes
                         // step 4... free lollipops
 
-                        if (!module.HasTypeDefinition(entityType, out _))
+                        try
                         {
-                            module.AddType(entityType);   
+                            if (!module.HasTypeDefinition(entityType, out _))
+                            {
+                                module.AddType(entityType);
+                            }
+
+                            module.SetEntityController(type, entityType);
                         }
-                        module.SetEntityController(type, entityType);
+                        catch (NotSupportedException notSupported)
+                        {
+                            Log.Error("ts/unsupported", notSupported, notSupported.Message);
+                        }
+                        catch (NullReferenceException nre)
+                        {
+                            Log.Error("ts/core-error", nre, "An internal error has occured with TypeScript, this is not an error you caused, but one in the underlying typescript module");
+                        }
                     }
                     else
                     {
-                        if (type.BaseType == typeof(ControllerBase) || type.BaseType == typeof(AutoController))
+                        try
                         {
-                            var module = ESModule.Empty(type, modules);
-                            module.SetFileName(type.Name);
-                            module.AddNonEntityController(type);
+                            if (type.BaseType == typeof(ControllerBase) || type.BaseType == typeof(AutoController))
+                            {
+                                var module = ESModule.Empty(type, modules);
+                                module.SetFileName(type.Name);
+                                module.AddNonEntityController(type);
+                            }
+                        }
+                        catch (NotSupportedException notSupported)
+                        {
+                            Log.Error("ts/unsupported", notSupported, notSupported.Message);
+                        }
+                        catch (NullReferenceException nre)
+                        {
+                            Log.Error("ts/core-error", nre, "An internal error has occured with TypeScript, this is not an error you caused, but one in the underlying typescript module");
                         }
                     }
                 }
@@ -137,7 +161,18 @@ namespace Api.TypeScript
                 });
                 
                 var builder = new StringBuilder();
-                module.ToSource(builder, this);
+                try
+                {
+                    module.ToSource(builder, this);
+                }
+                catch (NotSupportedException notSupported)
+                {
+                    Log.Error("ts/unsupported", notSupported, $"Error creating typescript file: {module.GetFileName()}: {Environment.NewLine}{notSupported.Message}");
+                }
+                catch (NullReferenceException nre)
+                {
+                    Log.Error("ts/core-error", nre, "An internal error has occured with TypeScript, this is not an error you caused, but one in the underlying typescript module");
+                }
                 
                 container.Add(module.GetFileName(), builder.ToString());
                 File.WriteAllText(module.GetFileName(), builder.ToString());

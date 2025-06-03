@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Api.ThingieTest;
 
 /// <summary>
 /// The base of all controllers. Don't use ASP.NET controllers as they will not run!
@@ -85,6 +86,11 @@ public partial class AutoController<T,ID> : AutoController
 			);
 		}
 
+	}
+	[HttpPost("thingie")]
+	public async ValueTask<Thingie<T>> GetThingie([FromBody] Thingie<T> obj)
+	{
+		return obj;
 	}
 
 	/// <summary>

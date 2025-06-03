@@ -67,7 +67,7 @@ namespace Api.TypeScript.Objects
 
             if (type == typeof(void) || type == typeof(ValueTask) || 
                 type == typeof(object) || type == typeof(JObject) ||
-                type.Namespace == "System" || type.IsGenericType)
+                type.Namespace == "System")
                 return;
 
             if (type == typeof(Context))

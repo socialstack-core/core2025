@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Api.Translate;
+using Api.TypeScript.Objects;
 
 namespace Api.TypeScript
 {
@@ -25,21 +28,25 @@ namespace Api.TypeScript
 
         public static bool IsContentfulValueTask(Type type, out Type contentType)
         {
-            // Check if the type is generic and is a ValueTask<>
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ValueTask<>))
+            while (true)
             {
-                contentType = type.GetGenericArguments()[0];
-                return true;
-            }
+                // Check if the type is generic and is a ValueTask<>
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ValueTask<>))
+                {
+                    type = type.GetGenericArguments()[0];
+                    continue;
+                }
 
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Localized<>))
-            {
-                contentType = type.GetGenericArguments()[0];
-                return true;
-            }
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Localized<>))
+                {
+                    contentType = type.GetGenericArguments()[0];
+                    return true;
+                }
 
-            contentType = null;
-            return false;
+                contentType = null;
+                return false;
+                break;
+            }
         }
 
         public static Type UnwrapTypeNesting(Type type)
@@ -97,5 +104,43 @@ namespace Api.TypeScript
 
             return char.ToLower(input[0]) + input[1..];
         }
+
+        public static void EnsureParameterTypes(List<ParameterInfo> types, ESModule module)
+        {
+            foreach (var param in types)
+            {
+                var type = param.ParameterType;
+                
+                if (type.IsGenericParameter)
+                {
+                    continue;
+                }
+                if (type.IsPrimitive)
+                {
+                    continue;
+                }
+                
+                module.AddType(type);
+            }
+        }
+
+        public static void EnsureApis(ControllerMethod method, ESModule module, Type selfType)
+        {
+            var isArrayType = method.IsApiList;
+
+            if (isArrayType)
+            {
+                module.RequireWebApi(method.ReturnType == selfType
+                    ? WebApis.GetList
+                    : WebApis.GetJson);
+            }
+            else
+            {
+                module.RequireWebApi(IsEntityType(method.ReturnType)
+                    ? WebApis.GetOne
+                    : WebApis.GetJson);
+            }
+        }
+        
     }
 }

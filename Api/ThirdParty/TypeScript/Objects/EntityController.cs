@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Api.Startup;
@@ -48,39 +49,9 @@ namespace Api.TypeScript.Objects
                 {
                     container.AddType(method.ReturnType);
                 }
-
-                foreach (var param in method.WebSafeParams)
-                {
-                    if (!param.ParameterType.IsPrimitive)
-                    {
-                        container.AddType(param.ParameterType);
-                    }
-                }
-
-                var isArrayType = method.IsApiList;
-
-                if (isArrayType)
-                {
-                    if (method.ReturnType == _referenceTypes.entityType)
-                    {
-                        _container.RequireWebApi(WebApis.GetList);
-                    }
-                    else
-                    {
-                        _container.RequireWebApi(WebApis.GetJson);
-                    }
-                }
-                else
-                {
-                    if (TypeScriptService.IsEntityType(method.ReturnType))
-                    {
-                        _container.RequireWebApi(WebApis.GetOne);
-                    }
-                    else
-                    {
-                        _container.RequireWebApi(WebApis.GetJson);
-                    }
-                }
+                
+                TypeScriptService.EnsureParameterTypes(method.WebSafeParams, container);
+                TypeScriptService.EnsureApis(method, container, _referenceTypes.entityType);
             }
         }
 

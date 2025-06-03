@@ -43,46 +43,22 @@ namespace Api.TypeScript.Objects
 
             foreach (var method in GetEndpointMethods())
             {
-                
-                foreach (var param in method.WebSafeParams)
+                TypeScriptService.EnsureApis(method, container, null);
+                TypeScriptService.EnsureParameterTypes(method.WebSafeParams, container);
+
+                if (container.HasTypeDefinition(method.ReturnType, out _))
                 {
-                    if (!param.ParameterType.IsPrimitive)
-                    {
-                        container.AddType(param.ParameterType);
-                    }
+                    continue;
                 }
-
-                var isArrayType = method.IsApiList;
-
-                if (!container.HasTypeDefinition(method.ReturnType, out _))
+                if (TypeScriptService.IsEntityType(method.ReturnType))
                 {
-                    if (TypeScriptService.IsEntityType(method.ReturnType))
-                    {
-                        // import instead
-                        _requiredImports.Add(method.ReturnType);
-                    }
-                    else
-                    {
-                        container.AddType(method.ReturnType);
-                    };
-                }
-
-                if (isArrayType)
-                {
-                    _container.RequireWebApi(WebApis.GetJson);
+                    // import instead
+                    _requiredImports.Add(method.ReturnType);
                 }
                 else
                 {
-                    if (TypeScriptService.IsEntityType(method.ReturnType))
-                    {
-                        _container.RequireWebApi(WebApis.GetOne);
-                    }
-                    else
-                    {
-                        container.AddType(method.ReturnType);
-                        _container.RequireWebApi(WebApis.GetJson);
-                    }
-                }
+                    container.AddType(method.ReturnType);
+                };
             }
         }
 
@@ -202,29 +178,6 @@ namespace Api.TypeScript.Objects
             builder.AppendLine();
 
             builder.AppendLine($"export default new {svc.GetGenericSignature(_referenceType)}();");
-        }
-        
-        /// <summary>
-        /// Helper method to extract base type from a collection type (e.g., List StaticFileInfo or StaticFileInfo[]).
-        /// </summary>
-        /// <param name="type">The type to inspect.</param>
-        /// <returns>The element type of the collection, or the original type if it is not a collection.</returns>
-        public Type ExtractElementType(Type type)
-        {
-            // If it's an array type, get the element type
-            if (type.IsArray)
-            {
-                return type.GetElementType();
-            }
-
-            // If it's a generic collection type (e.g., List<T>), get the generic argument
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-            {
-                return type.GetGenericArguments()[0];
-            }
-
-            // Return the original type if it's neither an array nor a generic collection
-            return type;
         }
     }
 }
