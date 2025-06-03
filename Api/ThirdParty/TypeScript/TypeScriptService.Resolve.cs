@@ -110,6 +110,10 @@ namespace Api.TypeScript
                 {
                     return GetGenericSignature(args[0]) + "[]";
                 }
+                if(baseType == typeof(IEnumerable<>))
+                {
+                    return GetGenericSignature(args[0]) + "[]";
+                }
                 if(baseType == typeof(Dictionary<,>))
                 {
                     return "Record<" + GetGenericSignature(args[0]) + "," + GetGenericSignature(args[1]) + ">";
