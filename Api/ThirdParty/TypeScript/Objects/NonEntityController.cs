@@ -62,6 +62,10 @@ namespace Api.TypeScript.Objects
             }
         }
 
+        /// <summary>
+        /// Gets the set of imports required by this controller
+        /// </summary>
+        /// <returns></returns>
         public List<Type> GetRequiredImports()
         {
             return _requiredImports;

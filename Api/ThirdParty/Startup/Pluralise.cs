@@ -135,6 +135,11 @@ namespace Api.Startup
 				return lower + "s";
 			}
 		}
+		/// <summary>
+		/// Pluralises the given phrase
+		/// </summary>
+		/// <param name="phrase"></param>
+		/// <returns></returns>
 		public static string PluraliseWords(string phrase)
 		{
 			if (string.IsNullOrWhiteSpace(phrase))

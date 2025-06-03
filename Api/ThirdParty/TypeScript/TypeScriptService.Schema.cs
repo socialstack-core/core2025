@@ -18,6 +18,10 @@ namespace Api.TypeScript
     {
         internal List<ESModule> modules = [];
         
+        /// <summary>
+        /// Creates the schema in to the given container.
+        /// </summary>
+        /// <param name="container"></param>
         public void CreateApiSchema(SourceFileContainer container)
         {
             // kept in as to not break anything.

@@ -7,6 +7,11 @@ namespace Api.TypeScript
 {
     public partial class TypeScriptService : AutoService
     {
+        /// <summary>
+        /// True if the given type is an entity type.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
         public static bool IsEntityType(Type t)
         {
             while (t != null && t != typeof(object))
@@ -29,6 +34,11 @@ namespace Api.TypeScript
             return false;
         }
         
+        /// <summary>
+        /// True if the given type is any kind of AutoController.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
         public bool  IsControllerDescendant(Type t)
         {
             while (t != null && t != typeof(object))
@@ -54,6 +64,12 @@ namespace Api.TypeScript
             return false;
         }
 
+        /// <summary>
+        /// True if the given type is the autocontroller for an entity.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="entityType"></param>
+        /// <returns></returns>
         public bool IsEntityController(Type t, out Type entityType)
         {
             entityType = null;

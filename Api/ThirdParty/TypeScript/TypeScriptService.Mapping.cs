@@ -59,11 +59,20 @@ namespace Api.TypeScript
             return typeStr;
         }
 
+        /// <summary>
+        /// Ignores the given type
+        /// </summary>
+        /// <param name="type"></param>
         public void AddIgnoreType(Type type)
         {
             _ignoreTypes.Add(type);
         }
 
+        /// <summary>
+        /// True if the given type is ignored
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public bool IsIgnoreType(Type type)
         {
             return _ignoreTypes.Contains(type);

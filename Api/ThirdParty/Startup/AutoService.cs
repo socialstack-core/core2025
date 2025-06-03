@@ -1980,23 +1980,19 @@ public partial class AutoService
 			return;
 		}
 
-		Task.Run(async () =>
-		{
-			var installPages = pageService.GetType().GetMethod("InstallAdminPages");
+		var installPages = pageService.GetType().GetMethod("InstallAdminPages");
 			
-			if (installPages != null)
-			{
-				// InstallAdminPages(string typeName, string[] fields)
-				installPages.Invoke(pageService, [
-					ServicedType,
-					fields,
-					childAdminPage,
-					navMenuIconRef,
-					navMenuLabel
-				]);
-			}
-		});
-
+		if (installPages != null)
+		{
+			// InstallAdminPages(string typeName, string[] fields)
+			installPages.Invoke(pageService, [
+				ServicedType,
+				fields,
+				childAdminPage,
+				navMenuIconRef,
+				navMenuLabel
+			]);
+		}
 	}
 
 	/// <summary>

@@ -68,6 +68,11 @@ namespace Api.TypeScript.Objects
             }
         }
 
+        /// <summary>
+        /// Defines a new field on this type
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <param name="fieldType"></param>
         public void AddField(string fieldName, Type fieldType)
         {
             _fields.Add(new()

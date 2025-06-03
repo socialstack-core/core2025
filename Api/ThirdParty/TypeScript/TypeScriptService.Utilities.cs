@@ -26,6 +26,14 @@ namespace Api.TypeScript
             return Nullable.GetUnderlyingType(type) != null;
         }
 
+        /// <summary>
+        /// True if the given type is a localized one. Optionally can be inside a ValueTask too.
+        /// Returns the type inside Localized if so - note that the returned type can still be 
+        /// nullable and not necessarily an entity type.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="contentType"></param>
+        /// <returns></returns>
         public static bool IsContentfulValueTask(Type type, out Type contentType)
         {
             while (true)
@@ -48,6 +56,11 @@ namespace Api.TypeScript
             }
         }
 
+        /// <summary>
+        /// Unwraps the first type from enumerable, nullable, valueTask and Localized.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static Type UnwrapTypeNesting(Type type)
         {
             if (IsContentfulValueTask(type, out var resolved))
@@ -68,6 +81,11 @@ namespace Api.TypeScript
             return type;
         }
         
+        /// <summary>
+        /// True if the given type is enumerable. Can be nested in valuetask/ nullable.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static bool IsNestedCollection(Type type)
         {
             if (IsContentfulValueTask(type, out var resolved))
