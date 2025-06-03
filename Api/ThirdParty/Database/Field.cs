@@ -10,6 +10,12 @@ using System.Threading.Tasks;
 
 namespace Api.Database
 {
+	/// <summary>
+	/// Parse the given JSON string and returns a boxed Localized for a specific field. 
+	/// Note that the target method is a concrete type (Localized string etc).
+	/// </summary>
+	/// <param name="src"></param>
+	/// <returns></returns>
 	public delegate object LocalizeParseBoxed(string src);
 
 	/// <summary>

@@ -21,11 +21,11 @@ public class Init
 	{
 		var setupHandlersMethod = GetType().GetMethod(nameof(SetupService));
 
-		Events.Service.AfterCreate.AddEventListener(async (Context context, AutoService service) => {
+		Events.Service.AfterCreate.AddEventListener((Context context, AutoService service) => {
 
 			if (service == null || service.ServicedType == null)
 			{
-				return service;
+				return new ValueTask<AutoService>(service);
 			}
 
 			var servicedType = service.ServicedType;
@@ -43,7 +43,7 @@ public class Init
 				});
 			}
 
-			return service;
+			return new ValueTask<AutoService>(service);
 		}, 1);
 
 		Events.Service.AfterCreate.AddEventListener(async (Context context, AutoService service) => {
@@ -92,11 +92,11 @@ public class Init
 			return new ValueTask<T>(result);
 		}, 100);
 
-		service.EventGroup.Update.AddEventListener(async (Context context, T entity, ChangedFields changes, DataOptions opts) =>
+		service.EventGroup.Update.AddEventListener((Context context, T entity, ChangedFields changes, DataOptions opts) =>
 		{
 			if (entity == null)
 			{
-				return entity;
+				return new ValueTask<T>(entity);
 			}
 
 			// Cache update.
@@ -105,7 +105,7 @@ public class Init
 
 			if (cache == null)
 			{
-				return entity;
+				return new ValueTask<T>(entity);
 			}
 
 			// Future improvement: rather than copying all fields and
@@ -119,7 +119,7 @@ public class Init
 
 			cache.Add(context, orig);
 
-			return entity;
+			return new ValueTask<T>(entity);
 		}, 100);
 
 		service.EventGroup.Load.AddEventListener((Context context, T item, ID id) =>

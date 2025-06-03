@@ -2,8 +2,14 @@
 
 namespace Api.TypeScript
 {
+    /// <summary>
+    /// A generator for the globals.ts file where common types like int, uint etc are defined.
+    /// </summary>
     public static class GlobalGenerator
     {
+        /// <summary>
+        /// Generates the globals.ts file
+        /// </summary>
         public static void GenerateGlobals()
         {
             var content = """

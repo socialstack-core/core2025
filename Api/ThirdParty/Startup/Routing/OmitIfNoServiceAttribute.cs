@@ -12,7 +12,6 @@ namespace Api.Startup
 	{
         /// <summary>
         /// </summary>
-        /// <param name="hostType"></param>
         public OmitIfNoServiceAttribute()
         {
         }

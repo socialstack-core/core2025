@@ -45,7 +45,6 @@ namespace Api.TypeScript
 
                 contentType = null;
                 return false;
-                break;
             }
         }
 
@@ -105,6 +104,11 @@ namespace Api.TypeScript
             return char.ToLower(input[0]) + input[1..];
         }
 
+        /// <summary>
+        /// Ensures the types used by the given param set are imported
+        /// </summary>
+        /// <param name="types"></param>
+        /// <param name="module"></param>
         public static void EnsureParameterTypes(List<ParameterInfo> types, ESModule module)
         {
             foreach (var param in types)
@@ -133,6 +137,12 @@ namespace Api.TypeScript
             }
         }
 
+        /// <summary>
+        /// Ensures necessary web APIs (such as getList etc) are imported
+        /// </summary>
+        /// <param name="method"></param>
+        /// <param name="module"></param>
+        /// <param name="selfType"></param>
         public static void EnsureApis(ControllerMethod method, ESModule module, Type selfType)
         {
             var isArrayType = method.IsApiList;

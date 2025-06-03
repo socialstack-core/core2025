@@ -5,8 +5,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.TypeScript
 {
+    /// <summary>
+    /// Utilities for constructing call URLs
+    /// </summary>
     public static class URLBuilder
     {
+        /// <summary>
+        /// Builds a URL for the given controller method
+        /// </summary>
+        /// <param name="method"></param>
+        /// <returns></returns>
         public static string BuildUrl(ControllerMethod method)
         {
             string url = ("/" + method.RequestUrl).ToLower();

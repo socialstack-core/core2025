@@ -19,13 +19,11 @@ namespace Api.NavMenus
 	/// </summary>
 	public partial class AdminNavMenuItemService : AutoService<AdminNavMenuItem>
 	{
-		private readonly PageService _pageService;
-		
-		/// <summary>
-		/// Cache to avoid repeated expensive lookups of content types by key.
-		/// Key is case-insensitive to be resilient to case variations in page keys.
-		/// </summary>
-		private readonly ConcurrentDictionary<string, Type> _keyContentTypes = new(StringComparer.OrdinalIgnoreCase);
+		// <summary>
+		// Cache to avoid repeated expensive lookups of content types by key.
+		// Key is case-insensitive to be resilient to case variations in page keys.
+		// </summary>
+		// private readonly ConcurrentDictionary<string, Type> _keyContentTypes = new(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		/// Constructor injecting dependencies.
@@ -117,16 +115,6 @@ namespace Api.NavMenus
 			Cache();
 		}
 		
-		/// <summary>
-		/// Returns a list of admin navigation menu items accessible to the current user,
-		/// based on their granted capabilities and the content type of each item.
-		/// </summary>
-		/// <param name="context">Execution context containing role and user permission information.</param>
-		/// <returns>A list of <see cref="AdminNavMenuItem"/> objects that the user has access to.</returns>
-		/// <remarks>
-		/// This method assumes that capability data is cached and cheap to access. It optimizes permission checks
-		/// by grouping capabilities by content type for faster lookups.
-		/// </remarks>
 		/// <summary>
 		/// Retrieves a list of admin navigation menu items that the current user is authorized to access,
 		/// based on their granted capabilities for each item's content type.

@@ -57,8 +57,15 @@ namespace Api.TypeScript.Objects
         /// </summary>
         public void SetFileName(string fileName) => _fileName = fileName;
         
+        /// <summary>
+        /// Mark this as an entity module
+        /// </summary>
         public void MarkAsEntityModule() => _isEntityModule = true;
         
+        /// <summary>
+        /// True if this is an entity originating module
+        /// </summary>
+        /// <returns></returns>
         public bool IsEntityModule() => _isEntityModule;
 
         /// <summary>
@@ -229,17 +236,42 @@ namespace Api.TypeScript.Objects
 
         // === Module Composition ===
 
+        /// <summary>
+        /// Adds the given generic type info
+        /// </summary>
+        /// <param name="ctnt"></param>
         public void AddGenericTypes(GenericTypeList ctnt) => _contentTypes.Add(ctnt);
 
+        /// <summary>
+        /// Adds the given controller as a generic one
+        /// </summary>
+        /// <param name="ctrlr"></param>
         public void AddGenericController(AutoController ctrlr) => _autoControllers.Add(ctrlr);
 
+        /// <summary>
+        /// Adds an include
+        /// </summary>
+        /// <param name="include"></param>
         public void AddInclude(ApiIncludes include) => _apiIncludes.Add(include);
 
+        /// <summary>
+        /// Sets the given entity controller
+        /// </summary>
+        /// <param name="entityController"></param>
         public void SetEntityController(EntityController entityController) => _entityController = entityController;
 
+        /// <summary>
+        /// sets a controller for the given entity type
+        /// </summary>
+        /// <param name="controller"></param>
+        /// <param name="entity"></param>
         public void SetEntityController(Type controller, Type entity) =>
             SetEntityController(new EntityController(controller, entity, this));
 
+        /// <summary>
+        /// Gets the set of required imports
+        /// </summary>
+        /// <returns></returns>
         public List<Type> GetRequiredImports()
         {
             var required = new List<Type>();
@@ -375,9 +407,21 @@ namespace Api.TypeScript.Objects
     /// </summary>
     public enum WebApis
     {
+        /// <summary>
+        /// Get raw text.
+        /// </summary>
         GetText,
+        /// <summary>
+        /// Get text parsed as JSON. Cannot use includes.
+        /// </summary>
         GetJson,
+        /// <summary>
+        /// Get a singular content object which is JSON formatted and wrapped in {"result":x}. Can use includes.
+        /// </summary>
         GetOne,
-        GetList
-    }
+		/// <summary>
+		/// Get a list of content which is JSON formatted and wrapped in {"results":x}. Can use includes.
+		/// </summary>
+		GetList
+	}
 }

@@ -1927,12 +1927,14 @@ public partial class AutoService
     public List<MappingServiceGenerationMeta> GeneratedMappings;
 
 
-    /// <summary>
-    /// Installs generic admin pages for this service.
-    /// Does nothing if there isn't a page service installed, or if the admin pages already exist.
-    /// </summary>
-    /// <param name="fields"></param>
-    protected void InstallAdminPages(string navMenuLabel, string navMenuIconRef, string[] fields)
+	/// <summary>
+	/// Installs generic admin pages for this service.
+	/// Does nothing if there isn't a page service installed, or if the admin pages already exist.
+	/// </summary>
+	/// <param name="navMenuLabel"></param>
+	/// <param name="navMenuIconRef"></param>
+	/// <param name="fields"></param>
+	protected void InstallAdminPages(string navMenuLabel, string navMenuIconRef, string[] fields)
 	{
 		InstallAdminPages(navMenuLabel, navMenuIconRef, fields, null);
 	}
