@@ -10,6 +10,7 @@
         flex: 0 0 auto; // Prevents shrinking, ensures item sizing
         margin-right: 10px;
         max-width: 18%;
+        padding:10px;
         
         img {
             width: 100%;
@@ -18,12 +19,9 @@
 
         p {
             display: -webkit-box;
-            -webkit-line-clamp: 4; // Show only 2 lines
-            -webkit-box-orient: vertical;
-            overflow: hidden;
             text-overflow: ellipsis;
             width: 80%;
-            aspect-ratio: 3 / 1.5;
+            aspect-ratio:1;
         }
         
     }
