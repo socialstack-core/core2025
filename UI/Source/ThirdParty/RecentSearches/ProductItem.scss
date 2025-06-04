@@ -13,15 +13,21 @@
         padding:10px;
         
         img {
+            cursor:pointer;
             width: 100%;
             aspect-ratio: 1;
         }
 
         p {
+            cursor:pointer;
             display: -webkit-box;
             text-overflow: ellipsis;
             width: 80%;
             aspect-ratio:1;
+            
+            &:hover {
+                text-decoration: underline;
+            }
         }
         
     }
