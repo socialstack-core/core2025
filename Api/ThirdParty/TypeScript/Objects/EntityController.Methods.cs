@@ -57,6 +57,11 @@ namespace Api.TypeScript.Objects
                     IsApiList = TypeScriptService.IsNestedCollection(method.ReturnType)
                 };
 
+                if (TypeScriptService.IsEntityType(controllerMethod.ReturnType))
+                {
+                    controllerMethod.RequiresIncludes = true;
+                }
+
                 // Analyze method parameters
                 var webSafeParams = new List<ParameterInfo>();
                 foreach (var param in method.GetParameters())

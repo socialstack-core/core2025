@@ -82,6 +82,11 @@ namespace Api.TypeScript.Objects
                     SendsData = methodParams.Any(p => p.GetCustomAttribute<FromBodyAttribute>() is not null),
                     ReturnType = nonValueTaskReturnType
                 };
+                
+                if (TypeScriptService.IsEntityType(controllerMethod.ReturnType))
+                {
+                    controllerMethod.RequiresIncludes = true;
+                }
 
                 controllerMethod.RequestUrl = httpAttribute switch
                 {
