@@ -9,9 +9,7 @@ import { getUrl } from 'UI/FileRef';
 import containerQueryPolyfillJs from './static/container-query-polyfill.js';
 import popoverPolyfillJs from './static/popover.min.js';
 import { lazyLoad } from 'UI/Functions/WebRequest';
-//import productApi from 'Api/Product';
-//import productCategoryApi, { ProductCategory } from 'Api/ProductCategory';
-import productCategoryApi from 'Api/ProductCategory';
+import productCategoryApi, {ProductCategory} from 'Api/ProductCategory';
 import useApi from "UI/Functions/UseApi";
 import Loading from "UI/Loading";
 import BasketItem from 'UI/Product/Signpost';
@@ -91,11 +89,11 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading } = useCart();
 	const [categoryId, setCategoryId] = useState(PARENT_CATEGORY_ID);
 	//const [basketItems, setBasketItems] = useState(loading ? [] : shoppingCart?.productQuantities || []);
-	const [productCategory, setProductCategory] = useState();
-	const [productSubCategories, setProductSubCategories] = useState();
+	const [productCategory, setProductCategory] = useState<ProductCategory>();
+	const [productSubCategories, setProductSubCategories] = useState<ProductCategory[]>();
 
 	useApi(() => {
-		return productCategoryApi.load(categoryId, [
+		return productCategoryApi.load(categoryId as uint, [
 			productCategoryApi.includes!.primaryurl
 		]).then(results => {
 			setProductCategory(results);
@@ -105,7 +103,13 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	useApi(() => {
 		return productCategoryApi.list({
 			query: 'ParentId=?',
-			args: [categoryId]
+			args: [categoryId as uint],
+			pageSize: 10 as int,
+			pageIndex: 1 as int,
+			sort: {
+				field: "id",
+				direction: "desc"
+			}
 		}, [
 			productCategoryApi.includes!.primaryurl
 		]).then(results => {
@@ -136,7 +140,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 	}
 
-	const contactHref = getContactLink(contactNumber);
+	const contactHref = contactNumber ? getContactLink(contactNumber) : "";
 
 	const [primaryLinks, setPrimaryLinks] = useState<HeaderLinkProps[]>([]);
 	const { session } = useSession();
@@ -419,7 +423,9 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 							</>}
 							{productCategory?.parentId != null && <>
 								<button type="button" className="btn" onClick={() => {
-									setCategoryId(productCategory.parentId)
+									if (productCategory?.parentId) {
+										setCategoryId(productCategory.parentId!)
+									}
 								}}>
 									{productCategory.name}
 								</button>
@@ -477,7 +483,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 							</a>
 						</>}
 
-						{message?.length > 0 && <>
+						{message && message?.length > 0 && <>
 							<Html className="site-header__message">
 								{message}
 							</Html>

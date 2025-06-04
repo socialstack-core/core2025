@@ -6,6 +6,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 // addToCart({product: ProductIdOrObject, isSubscribing: true}); (adds a quantity of 1)
 // To remove either, just addToCart with a negative quantity.
 import store from 'UI/Functions/Store';
+import {ApiIncludes} from "Api/Includes";
 
 interface CartContext {
 }
@@ -18,10 +19,10 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
     const [shoppingCart, setShoppingCart] = useState<ShoppingCart | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const includeSet = [
+    const includeSet: ApiIncludes[] = [
         shoppingCartApi.includes.productquantities,
-        'productquantities.product',
-        'productquantities.product.price',
+        new ApiIncludes('', 'productquantities.product'),
+        new ApiIncludes('', 'productquantities.product.price')
     ];
 
     useEffect(() => {
