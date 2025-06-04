@@ -15,6 +15,7 @@ import Loading from "UI/Loading";
 import BasketItem from 'UI/Product/Signpost';
 import { useCart } from 'UI/Payments/CartSession';
 import { calculatePrice, recurrenceText } from 'UI/Functions/Payments';
+import RecentSearches from "UI/RecentSearches";
 
 // TODO: swap to 0 once "care-home-nursing-home-supplies-equipment" is no longer a thing
 const PARENT_CATEGORY_ID = 1;
@@ -91,6 +92,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	//const [basketItems, setBasketItems] = useState(loading ? [] : shoppingCart?.productQuantities || []);
 	const [productCategory, setProductCategory] = useState<ProductCategory>();
 	const [productSubCategories, setProductSubCategories] = useState<ProductCategory[]>();
+	const [query, setQuery] = useState('');
 
 	useApi(() => {
 		return productCategoryApi.load(categoryId as uint, [
@@ -255,7 +257,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 		<div className="site-header">
 			<div className="site-header__internal">
 				<a href="/" className="site-header__logo">
-					<Image fileRef={logoRef} />
+					{logoRef && <Image fileRef={logoRef} />}
 					{/*
 					<img src="https://assets.codepen.io/5477427/acticare_logo.png" alt="" />
 					*/}
@@ -268,24 +270,13 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 						</svg>
 					</button>
 					<div className="site-header__search-wrapper" popover="auto" id="search_popover">
-						<input type="search" placeholder={searchPlaceholder} />
+						<input type="search" onInput={(ev) => setQuery((ev.target as HTMLInputElement).value)} placeholder={searchPlaceholder} />
 					</div>
 					<div className="site-header__search-dropdown">
-					...
-						{/*
-						<h2>
-							Recent searches
-							<a href="#">
-								1
-							</a>
-							<a href="#">
-								2
-							</a>
-							<a href="#">
-								3
-							</a>
-						</h2>
-							*/}
+						{/*...*/}
+						{(!query || query.length == 0) && (
+							<RecentSearches />	
+						)}
 					</div>
 				</div>
 

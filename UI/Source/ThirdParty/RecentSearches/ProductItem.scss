@@ -1,0 +1,30 @@
+.recent-searches {
+    
+    .recent-searches-product-list {
+        display: flex;
+        max-width: 100%;
+        flex-wrap: nowrap; // Keeps items in a single row
+    }
+
+    .recent-searches-product-item {
+        flex: 0 0 auto; // Prevents shrinking, ensures item sizing
+        margin-right: 10px;
+        max-width: 18%;
+        
+        img {
+            width: 100%;
+            aspect-ratio: 1;
+        }
+
+        p {
+            display: -webkit-box;
+            -webkit-line-clamp: 4; // Show only 2 lines
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 80%;
+            aspect-ratio: 3 / 1.5;
+        }
+        
+    }
+}

@@ -20,7 +20,7 @@ interface ListProps {
  * The List React component.
  * @param props React props.
  */
-const List: React.FC<ListProps> = (props) => {
+const List: React.FC<ListProps> = (props: ListProps) => {
 	const { content, viewStyle } = props;
 
 	if (!content) {
