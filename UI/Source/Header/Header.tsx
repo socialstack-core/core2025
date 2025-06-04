@@ -16,6 +16,8 @@ import BasketItem from 'UI/Product/Signpost';
 import { useCart } from 'UI/Payments/CartSession';
 import { calculatePrice, recurrenceText } from 'UI/Functions/Payments';
 import RecentSearches from "UI/RecentSearches";
+import Loop from "UI/Loop";
+import Link from "UI/Link";
 
 // TODO: swap to 0 once "care-home-nursing-home-supplies-equipment" is no longer a thing
 const PARENT_CATEGORY_ID = 1;
@@ -253,6 +255,18 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 	const showContact = contactHref?.length || message?.length;
 
+	const highlightMatch = (text: string, query: string) => {
+		const regex = new RegExp(`(${query})`, 'gi');
+		const parts = text.split(regex);
+		return parts.map((part, index) =>
+			part.toLowerCase() === query.toLowerCase() ? (
+				<b key={index}>{part}</b>
+			) : (
+				<span key={index}>{part}</span>
+			)
+		);
+	};
+
 	return (
 		<div className="site-header">
 			<div className="site-header__internal">
@@ -276,6 +290,35 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 						{/*...*/}
 						{(!query || query.length == 0) && (
 							<RecentSearches />	
+						)}
+						{query && query.length != 0 && (
+							// this may need updating further
+							// but poses as a base result set
+							// when searching for a category
+							<div className={'search-listing'}>
+								<Loop
+									over={productCategoryApi}
+									filter={{
+										query: "name contains ?",
+										args: [query],
+										pageIndex: 1 as uint,
+										pageSize: 10 as uint
+									}}
+								>
+									{(category) => {
+										return (
+											<Link
+												href={"/category/" + category.slug}
+											>
+												<li className={'search-listing-category'}>
+													<i className={'fas fa-tag'}/>
+													<span>{highlightMatch(category.name, query)}</span>
+												</li>
+											</Link>
+										)
+									}}
+								</Loop>
+							</div>
 						)}
 					</div>
 				</div>

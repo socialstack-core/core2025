@@ -127,6 +127,37 @@
 			background: #fff;
 			box-shadow: 0 0 px_to_rem(16) 0 rgba(#210818, 25%);
 			z-index:1;
+			
+			.search-listing {
+				list-style: none;
+				
+				a {
+					text-decoration: none;
+					color: #636464;
+				}
+				li {
+					margin:5px;
+					height:30px;
+					line-height:30px;
+					
+					i {
+						width:30px;
+						text-align:center;
+					}
+					&> span {
+						color:#000;	
+						font-size:13px;
+						
+						b {
+							font-weight: bolder;
+						}
+					}
+				}
+				
+				.search-listing-category {
+					
+				}
+			}
 		}
 
 		&:focus-within:has(#{$site-header__search}-wrapper:popover-open) {
