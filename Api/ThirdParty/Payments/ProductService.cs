@@ -30,7 +30,7 @@ namespace Api.Payments
 
 			InstallAdminPages("Products", "fa:fa-shopping-basket", ["id", "name", "minQuantity"]);
 
-            HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" };
+            HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" , "CreatedByOGL", "ByPassOGLCheck" };
             HashSet<string> nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };
 
             Events.Product.BeforeSettable.AddEventListener((Context ctx, JsonField<Product, uint> field) =>
@@ -53,6 +53,16 @@ namespace Api.Payments
                 {
                     field.Writeable = false;
                     field.Hide = true;
+                }
+
+				if (field.Name == "attributes")
+				{
+					field.Module = "Admin/Payments/AttributeSelect";
+				}
+
+                if (field.Name == "ProductCategories")
+                {
+                    field.Module = "Admin/Payments/ProductCategorySelect";
                 }
 
                 return new ValueTask<JsonField<Product, uint>>(field);

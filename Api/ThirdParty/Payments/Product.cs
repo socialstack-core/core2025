@@ -73,7 +73,7 @@ namespace Api.Payments
 		/// </summary>
         [Data("type", "canvas")]
         [Data("main", "false")]
-        public Localized<string> DescriptionJson;
+        public Localized<JsonString> DescriptionJson;
 
 		/// <summary>
 		/// The feature image ref
