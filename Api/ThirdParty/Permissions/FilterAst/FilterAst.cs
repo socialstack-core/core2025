@@ -1,10 +1,8 @@
 using Api.Contexts;
 using Api.Database;
-using Api.SocketServerLibrary;
 using Api.Startup;
 using Api.Translate;
 using Api.Users;
-using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
