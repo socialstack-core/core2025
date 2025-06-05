@@ -16,7 +16,14 @@ public struct JsonString
 	/// <param name="val"></param>
 	public JsonString(string val)
 	{
-		_value = val;
+		if (string.IsNullOrEmpty(val))
+		{
+			_value = null;
+		}
+		else
+		{
+			_value = val;
+		}
 	}
 
 	/// <summary>

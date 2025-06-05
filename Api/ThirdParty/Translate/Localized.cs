@@ -530,30 +530,51 @@ public struct Localized<T> : ILocalized
 			bool first = true;
 			foreach (var kvp in _values)
 			{
-				if (first)
+				if (typeof(T) == typeof(JsonString))
 				{
-					first = false;
+					var val = (JsonString)((object)kvp.Value);
+					if (val.ValueOf() == null)
+					{
+						continue;
+					}
+
+					if (first)
+					{
+						first = false;
+					}
+					else
+					{
+						writer.Write((byte)',');
+					}
+
+					writer.Write((byte)'"');
+					writer.WriteASCII(kvp.Key);
+					writer.WriteASCII("\":");
+					writer.Write(val);
 				}
 				else
 				{
-					writer.Write((byte)',');
-				}
+					if (first)
+					{
+						first = false;
+					}
+					else
+					{
+						writer.Write((byte)',');
+					}
 
-				writer.Write((byte)'"');
-				writer.WriteASCII(kvp.Key);
-				writer.WriteASCII("\":");
+					writer.Write((byte)'"');
+					writer.WriteASCII(kvp.Key);
+					writer.WriteASCII("\":");
 
-				if (typeof(T) == typeof(string))
-				{
-					writer.WriteEscaped((string)((object)kvp.Value));
-				}
-				else if (typeof(T) == typeof(JsonString))
-				{
-					writer.Write((JsonString)((object)kvp.Value));
-				}
-				else
-				{
-					writer.WriteS(Convert.ToString(kvp.Value, CultureInfo.InvariantCulture));
+					if (typeof(T) == typeof(string))
+					{
+						writer.WriteEscaped((string)((object)kvp.Value));
+					}
+					else
+					{
+						writer.WriteS(Convert.ToString(kvp.Value, CultureInfo.InvariantCulture));
+					}
 				}
 			}
 		}
