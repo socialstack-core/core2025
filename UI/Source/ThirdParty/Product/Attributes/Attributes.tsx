@@ -5,60 +5,101 @@ import { Product } from 'Api/Product';
  */
 interface AttributesProps {
 	/**
-	 * associated title
+	 * Optional section title to display above the attributes.
 	 */
-	title?: string,
+	title?: string;
 
 	/**
-	 * The content to display
+	 * The product containing attributes to display.
 	 */
-	product: Product,
+	product: Product;
 }
 
 /**
- * The Attributes React component.
- * @param props React props.
+ * Represents a single attribute value with optional units and a reference.
  */
-const Attributes: React.FC<AttributesProps> = (props) => {
-	const { title, product } = props;
+type AttributeValue = {
+	value?: string;
+	featureRef?: string;
+	units?: string;
+};
 
-	// TODO: define attributes
-	const attributes = [
-		{
-			'key': `Dimensions`,
-			'value': `...`
-		},
-		{
-			'key': `Adjustable height`,
-			'value': `...`
+/**
+ * The Attributes React component.
+ * Renders a table of product attributes grouped by attribute name.
+ *
+ * @param props React component props.
+ */
+const Attributes: React.FC<AttributesProps> = ({ title, product }) => {
+	const { attributes } = product;
+
+	/**
+	 * Build a map of attribute names to their associated values.
+	 */
+	const attributeMap: Record<string, AttributeValue[]> = (attributes || []).reduce(function (
+		acc: Record<string, AttributeValue[]>,
+		attributeObj
+	) {
+		const { attribute, value, featureRef } = attributeObj;
+
+		// Defensive check in case attribute or name is undefined
+		if (!attribute || !attribute.name) {
+			return acc;
 		}
-	];
 
-	if (!attributes?.length) {
-		return;
-	}
+		const name = attribute.name;
 
-	return <>
-		{title?.length && <>
-			<h2 className="ui-product-view__subtitle">
-				{title}
-			</h2>
-		</>}
-		<table className="table table-bordered ui-product-view__attributes">
-			<tbody>
-				{attributes.map(attrib => {
-					return <tr>
-						<th scope="row">
-							{attrib.key}
-						</th>
-						<td>
-							{attrib.value}
-						</td>
-					</tr>;
+		if (!acc[name]) {
+			acc[name] = [];
+		}
+
+		acc[name].push({
+			value: value,
+			featureRef: featureRef,
+			units: attribute.units,
+		});
+
+		return acc;
+	}, {});
+
+	return (
+		<>
+			{/* Optional title header */}
+			{title && (
+				<h2 className="ui-product-view__subtitle">
+					{title}
+				</h2>
+			)}
+
+			{/* Attribute table */}
+			<table className="table table-bordered ui-product-view__attributes">
+				<tbody>
+				{Object.entries(attributeMap).map(function ([name, values]) {
+					return (
+						<tr key={name}>
+							<td>{name}</td>
+							<td>
+								{values
+									.map(function (attr) {
+										let displayValue = '';
+										if (attr.value) {
+											displayValue += attr.value;
+										}
+										if (attr.units) {
+											displayValue += ' ' + attr.units;
+										}
+										return displayValue;
+									})
+									.join(', ')
+								}
+							</td>
+						</tr>
+					);
 				})}
-			</tbody>
-		</table>
-	</>;
-}
+				</tbody>
+			</table>
+		</>
+	);
+};
 
 export default Attributes;
