@@ -32,9 +32,9 @@ namespace Api.CustomContentTypes
         /// </summary>
         /// <returns></returns>
         [HttpGet("allcustomtypesplus")]
-        public async ValueTask<List<TypeInfo>> GetAllTypesPlus(Context context)
+        public async ValueTask<List<CustomTypeInfo>> GetAllTypesPlus(Context context)
         {
-            var results = new List<TypeInfo>();
+            var results = new List<CustomTypeInfo>();
             
             var customTypes = await (_service as CustomContentTypeService).Where("Deleted=?", DataOptions.IgnorePermissions).Bind(false).ListAll(context);
 
@@ -42,7 +42,7 @@ namespace Api.CustomContentTypes
             {
                 foreach(var customType in customTypes)
                 {
-                    results.Add(new TypeInfo(customType.NickName, customType.Name));
+                    results.Add(new CustomTypeInfo(customType.NickName, customType.Name));
                 }
             }
 
@@ -54,7 +54,7 @@ namespace Api.CustomContentTypes
 
             if (types.Contains("Tag"))
             {
-                results.Add(new TypeInfo("Tag", "Tag"));
+                results.Add(new CustomTypeInfo("Tag", "Tag"));
             }
 
             return results;
@@ -63,7 +63,7 @@ namespace Api.CustomContentTypes
         /// <summary>
         /// Information about a type.
         /// </summary>
-        public class TypeInfo 
+        public class CustomTypeInfo 
         {
             /// <summary>
             /// The name of the type.
@@ -80,7 +80,7 @@ namespace Api.CustomContentTypes
             /// </summary>
             /// <param name="name"></param>
             /// <param name="value"></param>
-            public TypeInfo(string name, string value)
+            public CustomTypeInfo(string name, string value)
             {
                 Name = name;
                 Value = value; 
