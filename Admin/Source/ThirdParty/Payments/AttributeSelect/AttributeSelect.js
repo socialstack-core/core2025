@@ -26,8 +26,6 @@ export default class AttributeSelect extends React.Component {
 			mustLoad = true;
 		}
 		
-		console.log(initVal);
-
 		this.state = {
 			value: initVal,
 			mustLoad,
@@ -84,32 +82,7 @@ export default class AttributeSelect extends React.Component {
 		var fieldName = this.props.field;
 
 		if (!fieldName) {
-
-			if (this.state.value && this.state.value.length) {
-				let val = this.state.value[0];
-				let strings = Object.keys(val).filter(e => typeof val[e] === 'string' && e != 'type' && !e.endsWith('Ref') && e != 'media');
-
-				if (strings.length) {
-					var pref = ['name', 'description', 'title', 'summary','value'];
-
-					pref.every(check => {
-
-						if (strings.includes(check)) {
-							fieldName = check;
-							return false;
-						}
-
-						return true;
-					});
-
-				}
-
-			}
-
-		}
-		
-		if (!fieldName) {
-			fieldName = 'name';
+			fieldName = 'value';
 		}
 
 		var displayFieldName = this.props.displayField || fieldName;
@@ -118,45 +91,7 @@ export default class AttributeSelect extends React.Component {
 		}
 
 		// check to see if the object has a media ref
-		var mediaRefFieldName = '';
-
-		if (this.state.value != undefined && this.state.value.length > 0) {
-
-			this.state.value.map((entry, i) => {
-				Object.keys(entry).every(key => {
-
-					if (!entry[key]) {
-						return true;
-					}
-
-					let val = entry[key].toString();
-
-					if (fileRef.isRef(val)) {
-						mediaRefFieldName = key;
-						return false;
-					}
-
-					return true;
-				});
-			});
-
-        }
-
-		// check to see if the object has a date range
-		var metadataFields = [];
-
-		var showmetadataFields = ["startdate", "enddate"];
-		if (this.state.value != undefined && this.state.value.length > 0) {
-			var tempObject = this.state.value[0];
-
-			Object.keys(tempObject).forEach(function (key, index) {
-				if (tempObject[key] != null) {
-					if (showmetadataFields.includes(key.toLowerCase())){
-						metadataFields.push(key);
-					}
-				}
-			});
-		}
+		var mediaRefFieldName = 'featureRef';
 
 		var atMax = false;
 		
@@ -187,14 +122,6 @@ export default class AttributeSelect extends React.Component {
 									}
 									{entry.attribute ? entry.attribute.units : ''}
 								</div>
-
-								{metadataFields && metadataFields.length > 0 &&
-									<div className="admin-multiselect__metadata">
-										{metadataFields.map((metadataField) => (
-											<div>{isoConvert(entry[metadataField]).toUTCString()}</div>
-										))}
-									</div>
-								}
 
 								<div className="admin-multiselect__entry-options">
 									{mediaRefFieldName && mediaRefFieldName.length > 0 && entry[mediaRefFieldName] && entry[mediaRefFieldName].length > 0 && 

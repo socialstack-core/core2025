@@ -5,6 +5,9 @@ import Image from 'UI/Image';
 import * as fileRef from 'UI/FileRef';
 import { isoConvert } from 'UI/Functions/DateTools';
 
+import productCategoryApi from 'Api/ProductCategory';
+
+
 var AutoForm = null;
 
 /**
@@ -24,8 +27,6 @@ export default class ProductCategorySelect extends React.Component {
 			mustLoad = true;
 		}
 		
-		console.log(initVal);
-
 		this.state = {
 			value: initVal,
 			mustLoad,
@@ -44,10 +45,8 @@ export default class ProductCategorySelect extends React.Component {
 				query: "Id=[?]",
 				args: [this.state.value.map(e => e.id)]
 			}
-			
-			var api = require('Api/ProductCategory').default;
-			
-			api.list(filter).then(response => {
+		
+			productCategoryApi.list(filter).then(response => {
 				
 				console.log("ProductCategory", response);
 				
@@ -84,33 +83,6 @@ export default class ProductCategorySelect extends React.Component {
 		var fieldName = this.props.field;
 
 		if (!fieldName) {
-
-			if (this.state.value && this.state.value.length) {
-				let val = this.state.value[0];
-				let strings = Object.keys(val).filter(e => typeof val[e] === 'string' && e != 'type' && !e.endsWith('Ref') && e != 'media');
-
-				if (strings.length) {
-					var pref = ['name', 'description', 'title', 'summary','value'];
-
-					pref.every(check => {
-
-						if (strings.includes(check)) {
-							fieldName = check;
-							return false;
-						}
-
-						return true;
-					});
-
-				}
-
-			}
-
-		}
-		
-		var api = require('Api/' + this.props.contentType).default;
-		
-		if (!fieldName) {
 			fieldName = 'name';
 		}
 
@@ -120,46 +92,7 @@ export default class ProductCategorySelect extends React.Component {
 		}
 
 		// check to see if the object has a media ref
-		var mediaRefFieldName = '';
-
-		if (this.state.value != undefined && this.state.value.length > 0) {
-
-			this.state.value.map((entry, i) => {
-				Object.keys(entry).every(key => {
-
-					if (!entry[key]) {
-						return true;
-					}
-
-					let val = entry[key].toString();
-
-					if (fileRef.isRef(val)) {
-						mediaRefFieldName = key;
-						return false;
-					}
-
-					return true;
-				});
-			});
-
-        }
-
-		// check to see if the object has a date range
-		var metadataFields = [];
-		var showmetadataFields = ["startdate", "enddate"];
-		if (this.state.value != undefined && this.state.value.length > 0) {
-			var tempObject = this.state.value[0];
-
-			Object.keys(tempObject).forEach(function (key, index) {
-				if (tempObject[key] != null) {
-					if (showmetadataFields.includes(key.toLowerCase())){
-						metadataFields.push(key);
-					}
-				}
-			});
-		}
-
-		var contentTypeLower = this.props.contentType ? this.props.contentType.toLowerCase() : "";
+		var mediaRefFieldName = 'featureRef';
 
 		var atMax = false;
 		
@@ -185,14 +118,6 @@ export default class ProductCategorySelect extends React.Component {
 										displayFieldName.indexOf("Json") != -1 ? <Canvas>{entry[displayFieldName]}</Canvas> : entry[displayFieldName]
 									}
 								</div>
-
-								{metadataFields && metadataFields.length > 0 &&
-									<div className="admin-multiselect__metadata">
-										{metadataFields.map((metadataField) => (
-											<div>{isoConvert(entry[metadataField]).toUTCString()}</div>
-										))}
-									</div>
-								}
 
 								<div className="admin-multiselect__entry-options">
 									{mediaRefFieldName && mediaRefFieldName.length > 0 && entry[mediaRefFieldName] && entry[mediaRefFieldName].length > 0 && 
@@ -258,7 +183,7 @@ export default class ProductCategorySelect extends React.Component {
 							<span className="admin-multiselect__search-max">
 								<i>{`Max of ${this.props.max} added`}</i>
 							</span> :
-							<Search endpoint={api.list} exclude={excludeIds} field={fieldName} limit={5}
+							<Search endpoint={productCategoryApi.list} exclude={excludeIds} field={fieldName} limit={5}
 								placeholder={`Find ${this.props.label} to add..`} onFind={entry => {
 									if (!entry || this.state.value.some(entity => entity.id === entry.id)) {
 										return;
