@@ -113,7 +113,7 @@ export default class AttributeSelect extends React.Component {
 						this.state.value.map((entry, i) => (
 							<li key={entry.id} className="admin-multiselect__entry">
 								<div>
-									{entry.attribute ? entry.attribute.key : ''}
+									{entry.attribute ? entry.attribute.name : ''}
 								</div>
 
 								<div>
