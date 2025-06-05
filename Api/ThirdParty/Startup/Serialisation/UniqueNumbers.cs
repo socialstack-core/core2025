@@ -11,7 +11,7 @@ namespace Api.Startup
 	/// <summary>
 	/// ID Collector.
 	/// </summary>
-	public class IDCollector
+	public partial class IDCollector
 	{
 		/// <summary>
 		/// The fieldInfo for NextCollector.
@@ -257,7 +257,7 @@ namespace Api.Startup
 	/// Collects IDs of the given type. Uses a pool of buffers for fast, non-allocating performance.
 	/// The ID collector itself can also be pooled.
 	/// </summary>
-	public class IDCollector<T>: IDCollector, IEnumerable<T> where T:struct, IEquatable<T>, IComparable<T>
+	public partial class IDCollector<T>: IDCollector, IEnumerable<T> where T:struct, IEquatable<T>, IComparable<T>
 	{
 		/// <summary>
 		/// Generic pool lock
