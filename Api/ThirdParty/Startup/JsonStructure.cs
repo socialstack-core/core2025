@@ -916,7 +916,13 @@ namespace Api.Startup
 				// Unrecognised date format.
 				throw new PublicException("Unrecognised date format", "date_format");
 			}
-			
+
+			if (targetType == typeof(JsonString))
+			{
+				var str = src.Type == JTokenType.Null ? null : src.Value<string>();
+				return new JsonString(str);
+			}
+
 			if (src.Type == JTokenType.Null)
 			{
 				// Use the default targetValue:

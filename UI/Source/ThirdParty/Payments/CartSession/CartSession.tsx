@@ -1,4 +1,4 @@
-import shoppingCartApi, { ShoppingCart } from 'Api/ShoppingCart';
+import shoppingCartApi, { ShoppingCart, CartItemChange } from 'Api/ShoppingCart';
 import { createContext, useContext, useState, useEffect } from 'react';
 // import { useCart } from 'UI/Payments/CartSession';
 // var { addToCart, emptyCart, shoppingCart } = useCart();
@@ -73,19 +73,30 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
 
     let addToCart = (productId: uint, quantity: int, isDelta: boolean = false) => {
 
+        var items : CartItemChange[] = [
+            {
+                productId,
+                quantity: isDelta ? undefined : quantity,
+                deltaQuantity: isDelta ? quantity : undefined
+            }
+        ];
+
         return shoppingCartApi.changeItems({
-            shoppingCartId: shoppingCart?.id,
-            items: [
-                {
-                    productId,
-                    quantity: isDelta ? undefined : quantity,
-                    deltaQuantity: isDelta ? quantity : undefined
-                }
-            ]
+            shoppingCartId: shoppingCart?.id || (0 as uint),
+            items
         }, includeSet).then(cart => {
             store.set('shopping_cart_id', cart.id.toString());
             setShoppingCart(cart);
             return cart;
+        }).catch((e: PublicError) => {
+            if (e?.type && e.type == 'cart/not_found') {
+                console.log("Removing old cart reference - try adding again.");
+                store.remove('shopping_cart_id');
+                setShoppingCart(null);
+            } else {
+                // rethrow
+                throw e;
+            }
         });
     }
 	

@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Api.Contexts;
 using Api.Startup;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Type = System.Type;

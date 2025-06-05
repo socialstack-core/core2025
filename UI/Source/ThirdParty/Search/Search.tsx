@@ -129,7 +129,7 @@ const Search = <T extends Content<uint>,>(props: SearchProps<T>) => {
                                 className="btn suggestion"
                             >
                                 {/* Customize the display of the result here */}
-                                {result && (result as any).name}
+                                {result && ((result as any).name || (result as any)[props.field])}
                             </button>
                         ))
                     ) : (

@@ -648,7 +648,10 @@ namespace Api.Pages
 			writer.WriteASCII("<meta name=\"description\" content=\"");
 			writer.WriteEscaped(pageDescription);
 			writer.WriteASCII("\" /><title>");
-			writer.WriteASCII(pageTitle);
+			if (pageTitle != null)
+			{
+				writer.WriteASCII(pageTitle);
+			}
 			writer.WriteASCII("</title>");
 
 			if (page != null && (!page.CanIndex || page.NoFollow))

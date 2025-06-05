@@ -2,7 +2,6 @@ using Api.Contexts;
 using Api.Database;
 using Api.SocketServerLibrary;
 using Api.Startup;
-using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;

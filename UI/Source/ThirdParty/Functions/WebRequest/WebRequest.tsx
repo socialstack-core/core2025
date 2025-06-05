@@ -12,7 +12,7 @@ interface PublicException {
 	/**
 	 * The error type. Usually a two part general/specific combination such as "invalid/json".
 	 */
-	type: string;
+	code: string;
 
 	/**
 	 * A human friendly error message. Display this on the UI.
@@ -232,7 +232,7 @@ export function getJson<T>(origUrl: string, data?: any, opts?: WebRequestOptions
 			if (!rwt.response.ok) {
 				// json is null if it was a 404 typically
 				var fail = json as PublicException;
-				var type = fail?.type || `response/failed`;
+				var type = fail?.code || `response/failed`;
 				var message = fail?.message || `Invalid response from the server`;
 				throw new PublicError(type, message);
 			}

@@ -973,13 +973,15 @@ class CanvasEditorCore extends React.Component {
 				{this.renderRootNode(node, canvasState)}
 			</div>
 			<input ref={ir=>{
-				
-				ir = this.props.onInputRef && this.props.onInputRef(ir);
+				var res = this.props.onInputRef && this.props.onInputRef(ir);
+
+				if (res) {
+					ir = res;
+				}
 
 				this.mainIr=ir;
 				if(ir){
-					ir.onGetValue=(val, ele)=>{
-
+					ir.onGetValue = (val, ele) => {
 						this.props.onGetValue && this.props.onGetValue(val, ele);
 
 						if(ele == ir){

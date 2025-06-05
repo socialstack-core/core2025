@@ -2808,6 +2808,18 @@
             This event is the best place to the purchase with e.g. usage stats for the given product if the site is using a "use now pay later" mechanism.
             </summary>
         </member>
+        <member name="T:Api.Eventing.RoleEventGroup">
+            <summary>
+            Custom events for Role.
+            </summary>
+        </member>
+        <member name="F:Api.Eventing.RoleEventGroup.Register">
+            <summary>
+            Event used to register role objects in to Roles.X fields. 
+            It runs specifically after an event is either created or loaded in the cache but before its grants are loaded.
+            Note that it is possible for a role to pass through here more than once but it would be the same object.
+            </summary>
+        </member>
         <member name="T:Api.Eventing.MonitorEventGroup">
             <summary>
             Event group for the monitor service.
@@ -15299,6 +15311,13 @@
             <param name="text">The text to pluralize.</param>
             <returns>A string that consists of the given singular word in its pluralized form, in lowercase.</returns>
         </member>
+        <member name="M:Api.Startup.Pluralise.PluraliseWords(System.String)">
+            <summary>
+            Pluralises the given phrase
+            </summary>
+            <param name="phrase"></param>
+            <returns></returns>
+        </member>
         <member name="T:Api.Startup.PublicException">
             <summary>
             Used when an exception is ok to be displayed publicly. It's outputted as an ErrorResponse.
@@ -15402,7 +15421,6 @@
         <member name="M:Api.Startup.OmitIfNoServiceAttribute.#ctor">
             <summary>
             </summary>
-            <param name="hostType"></param>
         </member>
         <member name="T:Api.Startup.IncludeSet">
             <summary>
@@ -18798,7 +18816,7 @@
             a flat string[] json array of components a role is allowed to access
             </summary>
         </member>
-        <member name="F:Api.Components.ComponentGroup.Role">
+        <member name="F:Api.Components.ComponentGroup.RoleId">
             <summary>
             The role this component group belongs to.
             </summary>
@@ -20450,22 +20468,22 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="T:Api.CustomContentTypes.CustomContentTypeController.TypeInfo">
+        <member name="T:Api.CustomContentTypes.CustomContentTypeController.CustomTypeInfo">
             <summary>
             Information about a type.
             </summary>
         </member>
-        <member name="P:Api.CustomContentTypes.CustomContentTypeController.TypeInfo.Name">
+        <member name="P:Api.CustomContentTypes.CustomContentTypeController.CustomTypeInfo.Name">
             <summary>
             The name of the type.
             </summary>
         </member>
-        <member name="P:Api.CustomContentTypes.CustomContentTypeController.TypeInfo.Value">
+        <member name="P:Api.CustomContentTypes.CustomContentTypeController.CustomTypeInfo.Value">
             <summary>
             The value for the type.
             </summary>
         </member>
-        <member name="M:Api.CustomContentTypes.CustomContentTypeController.TypeInfo.#ctor(System.String,System.String)">
+        <member name="M:Api.CustomContentTypes.CustomContentTypeController.CustomTypeInfo.#ctor(System.String,System.String)">
             <summary>
             Create a TypeInfo with the type name and value.
             </summary>
@@ -21804,6 +21822,14 @@
             Removes the given column definition from this schema.
             </summary>
             <param name="column"></param>
+        </member>
+        <member name="T:Api.Database.LocalizeParseBoxed">
+            <summary>
+            Parse the given JSON string and returns a boxed Localized for a specific field. 
+            Note that the target method is a concrete type (Localized string etc).
+            </summary>
+            <param name="src"></param>
+            <returns></returns>
         </member>
         <member name="T:Api.Database.Field">
             <summary>
@@ -23764,12 +23790,6 @@
             Instanced automatically. Use injection to use this service, or Startup.Services.Get.
             </summary>
         </member>
-        <member name="F:Api.NavMenus.AdminNavMenuItemService._keyContentTypes">
-            <summary>
-            Cache to avoid repeated expensive lookups of content types by key.
-            Key is case-insensitive to be resilient to case variations in page keys.
-            </summary>
-        </member>
         <member name="M:Api.NavMenus.AdminNavMenuItemService.#ctor(Api.Pages.PageService)">
             <summary>
             Constructor injecting dependencies.
@@ -23778,16 +23798,6 @@
             </summary>
         </member>
         <member name="M:Api.NavMenus.AdminNavMenuItemService.ListUserAccessibleNavMenuItems(Api.Contexts.Context)">
-            <summary>
-            Returns a list of admin navigation menu items accessible to the current user,
-            based on their granted capabilities and the content type of each item.
-            </summary>
-            <param name="context">Execution context containing role and user permission information.</param>
-            <returns>A list of <see cref="T:Api.NavMenus.AdminNavMenuItem"/> objects that the user has access to.</returns>
-            <remarks>
-            This method assumes that capability data is cached and cheap to access. It optimizes permission checks
-            by grouping capabilities by content type for faster lookups.
-            </remarks>
             <summary>
             Retrieves a list of admin navigation menu items that the current user is authorized to access,
             based on their granted capabilities for each item's content type.
@@ -26474,9 +26484,9 @@
             The description of this product category.
             </summary>
         </member>
-        <member name="F:Api.Payments.ProductCategory.Target">
+        <member name="F:Api.Payments.ProductCategory.TargetAudience">
             <summary>
-            The target audience for the product category (web/internal/dev)
+            The target audience for the product category (0 = public web/1 = internal/2 = dev)
             </summary>
         </member>
         <member name="F:Api.Payments.ProductCategory.FeatureRef">
@@ -32206,71 +32216,65 @@
             </remarks>
         </member>
         <member name="M:Api.TypeScript.Objects.EntityController.GetEndpointMethods">
-             <summary>
-             Collects and caches controller methods that should be exposed to the TypeScript API layer.
-             </summary>
-             <returns>A list of <see cref="T:Api.TypeScript.Objects.ControllerMethod"/> objects describing each API endpoint.</returns>
-             <remarks>
-             This method scans declared instance methods on the target .NET controller type and selects only those
-             that are decorated with HTTP route attributes and are not considered standard CRUD (Create, Read, Update, Delete, List).
-            
-             Each discovered method is parsed into a <see cref="T:Api.TypeScript.Objects.ControllerMethod"/> structure, including route templates,
-             parameter mapping, return types, and other request metadata (e.g., body vs. query params).
-             </remarks>
+            <summary>
+            Scans the controller for non-standard API methods (excluding CRUD), and maps metadata
+            for TypeScript generation.
+            </summary>
+            <returns>A list of methods to expose to TypeScript.</returns>
         </member>
         <member name="T:Api.TypeScript.Objects.ControllerMethod">
             <summary>
-            Represents a parsed controller method intended for TypeScript code generation.
+            Represents metadata about a controller method for TypeScript client generation.
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.RequiresSessionSet">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.Method">
             <summary>
-            Indicates whether this method requires access to the user's session via a session setter function.
+            The method
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.RequestUrl">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.RequestUrl">
             <summary>
-            The final formatted route URL (including dynamic parameters replaced with JS expressions).
+            URL pattern
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.BodyParam">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.BodyParam">
             <summary>
-            The parameter passed in the request body, if applicable.
+            The body parameter if one is present.
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.RequiresIncludes">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.RequiresSessionSet">
             <summary>
-            Whether the method makes use of the `includes` system (e.g. for virtual fields).
+            True if it requires setSession being given to it.
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.SendsData">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.RequiresIncludes">
             <summary>
-            Indicates whether the method sends a payload in the request body.
+            True if the endpoint supports includes
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.Method">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.SendsData">
             <summary>
-            The actual .NET <see cref="T:System.Reflection.MethodInfo"/> this controller method maps to.
+            True if the endpoint sends anything
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.TrueReturnType">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.IsApiList">
             <summary>
-            The unwrapped return type of the method, considering any `ReturnsAttribute` override.
+            True if the endpoint returns a list
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.IsApiList">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.TrueReturnType">
             <summary>
-            Indicates whether the return type is a list or collection.
+            The actual stated return type
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.WebSafeParams">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.ReturnType">
             <summary>
-            A list of safe-to-expose parameters that can be passed from the frontend.
+            The resolved return type
             </summary>
         </member>
-        <member name="F:Api.TypeScript.Objects.ControllerMethod.ReturnType">
+        <member name="P:Api.TypeScript.Objects.ControllerMethod.WebSafeParams">
             <summary>
-            The return type, without the ValueTask
+            The set of usable parameters
             </summary>
         </member>
         <member name="T:Api.TypeScript.Objects.ESEnum">
@@ -32319,6 +32323,17 @@
             Sets the output file name for this module.
             </summary>
         </member>
+        <member name="M:Api.TypeScript.Objects.ESModule.MarkAsEntityModule">
+            <summary>
+            Mark this as an entity module
+            </summary>
+        </member>
+        <member name="M:Api.TypeScript.Objects.ESModule.IsEntityModule">
+            <summary>
+            True if this is an entity originating module
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:Api.TypeScript.Objects.ESModule.GetFileName">
             <summary>
             Gets the full TypeScript file path for this module.
@@ -32365,6 +32380,43 @@
             Marks a web API function as used so that it's imported during generation.
             </summary>
         </member>
+        <member name="M:Api.TypeScript.Objects.ESModule.AddGenericTypes(Api.TypeScript.Objects.GenericTypeList)">
+            <summary>
+            Adds the given generic type info
+            </summary>
+            <param name="ctnt"></param>
+        </member>
+        <member name="M:Api.TypeScript.Objects.ESModule.AddGenericController(Api.TypeScript.Objects.AutoController)">
+            <summary>
+            Adds the given controller as a generic one
+            </summary>
+            <param name="ctrlr"></param>
+        </member>
+        <member name="M:Api.TypeScript.Objects.ESModule.AddInclude(Api.TypeScript.Objects.ApiIncludes)">
+            <summary>
+            Adds an include
+            </summary>
+            <param name="include"></param>
+        </member>
+        <member name="M:Api.TypeScript.Objects.ESModule.SetEntityController(Api.TypeScript.Objects.EntityController)">
+            <summary>
+            Sets the given entity controller
+            </summary>
+            <param name="entityController"></param>
+        </member>
+        <member name="M:Api.TypeScript.Objects.ESModule.SetEntityController(System.Type,System.Type)">
+            <summary>
+            sets a controller for the given entity type
+            </summary>
+            <param name="controller"></param>
+            <param name="entity"></param>
+        </member>
+        <member name="M:Api.TypeScript.Objects.ESModule.GetRequiredImports">
+            <summary>
+            Gets the set of required imports
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:Api.TypeScript.Objects.ESModule.ToSource(System.Text.StringBuilder,Api.TypeScript.TypeScriptService)">
             <summary>
             Emits the TypeScript source content for this module.
@@ -32383,6 +32435,26 @@
         <member name="T:Api.TypeScript.Objects.WebApis">
             <summary>
             Represents the specific Web API utilities that a TypeScript module might need to import.
+            </summary>
+        </member>
+        <member name="F:Api.TypeScript.Objects.WebApis.GetText">
+            <summary>
+            Get raw text.
+            </summary>
+        </member>
+        <member name="F:Api.TypeScript.Objects.WebApis.GetJson">
+            <summary>
+            Get text parsed as JSON. Cannot use includes.
+            </summary>
+        </member>
+        <member name="F:Api.TypeScript.Objects.WebApis.GetOne">
+            <summary>
+            Get a singular content object which is JSON formatted and wrapped in {"result":x}. Can use includes.
+            </summary>
+        </member>
+        <member name="F:Api.TypeScript.Objects.WebApis.GetList">
+            <summary>
+            Get a list of content which is JSON formatted and wrapped in {"results":x}. Can use includes.
             </summary>
         </member>
         <member name="T:Api.TypeScript.Objects.Import">
@@ -32433,6 +32505,12 @@
             for TypeScript output.
             </remarks>
         </member>
+        <member name="M:Api.TypeScript.Objects.NonEntityController.GetRequiredImports">
+            <summary>
+            Gets the set of imports required by this controller
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:Api.TypeScript.Objects.NonEntityController.ToSource(System.Text.StringBuilder,Api.TypeScript.TypeScriptService)">
             <summary>
             Emits the TypeScript source code for the generated API class for the given controller/entity pair.
@@ -32444,13 +32522,6 @@
             Each method includes appropriate return types, parameters, and request bindings (e.g., <c>getJson</c>,
             <c>getList</c>, <c>getOne</c>).
             </remarks>
-        </member>
-        <member name="M:Api.TypeScript.Objects.NonEntityController.ExtractElementType(System.Type)">
-            <summary>
-            Helper method to extract base type from a collection type (e.g., List StaticFileInfo or StaticFileInfo[]).
-            </summary>
-            <param name="type">The type to inspect.</param>
-            <returns>The element type of the collection, or the original type if it is not a collection.</returns>
         </member>
         <member name="M:Api.TypeScript.Objects.NonEntityController.GetEndpointMethods">
              <summary>
@@ -32508,6 +32579,13 @@
             <param name="referenceType">The reference type to analyze and define.</param>
             <param name="container">The module in which it sits.</param>
         </member>
+        <member name="M:Api.TypeScript.Objects.TypeDefinition.AddField(System.String,System.Type)">
+            <summary>
+            Defines a new field on this type
+            </summary>
+            <param name="fieldName"></param>
+            <param name="fieldType"></param>
+        </member>
         <member name="M:Api.TypeScript.Objects.TypeDefinition.ImportVirtualFields(System.Collections.Generic.List{Api.TypeScript.Objects.ESModule})">
             <summary>
             Imports virtual fields from the reference type and resolves missing types.
@@ -32525,21 +32603,6 @@
             </summary>
             <returns>The unwrapped reference <see cref="T:System.Type"/>.</returns>
         </member>
-        <member name="M:Api.TypeScript.Objects.TypeDefinition.AddField(System.String,System.Type)">
-            <summary>
-            Adds a custom field to the type definition with the specified name and type.
-            The field type is also registered as a dependency.
-            </summary>
-            <param name="fieldName">The name of the custom field.</param>
-            <param name="fieldType">The type of the custom field.</param>
-        </member>
-        <member name="M:Api.TypeScript.Objects.TypeDefinition.AddCustomProperty(System.String,System.String)">
-            <summary>
-            Adds a custom property to the type definition with the specified name and type.
-            </summary>
-            <param name="propertyName">The name of the custom property.</param>
-            <param name="propertyType">The type of the custom property.</param>
-        </member>
         <member name="M:Api.TypeScript.Objects.TypeDefinition.GetDependencies">
             <summary>
             Gets the list of all types that this type depends on (fields, properties, and added custom fields).
@@ -32550,6 +32613,28 @@
             <summary>
             Generates the TypeScript source code for the type definition.
             </summary>
+        </member>
+        <member name="T:Api.TypeScript.Objects.TypeScriptField">
+            <summary>
+            A field definition in TS
+            </summary>
+        </member>
+        <member name="P:Api.TypeScript.Objects.TypeScriptField.FieldName">
+            <summary>
+            Name of the field
+            </summary>
+        </member>
+        <member name="P:Api.TypeScript.Objects.TypeScriptField.FieldType">
+            <summary>
+            The fields type
+            </summary>
+        </member>
+        <member name="M:Api.TypeScript.Objects.TypeScriptField.ToSource(System.Text.StringBuilder,Api.TypeScript.TypeScriptService)">
+            <summary>
+            Write out as typescript source
+            </summary>
+            <param name="builder"></param>
+            <param name="svc"></param>
         </member>
         <member name="T:Api.TypeScript.ContextGenerator">
             <summary>
@@ -32568,6 +32653,28 @@
             </summary>
             <param name="filename"></param>
         </member>
+        <member name="T:Api.TypeScript.GlobalGenerator">
+            <summary>
+            A generator for the globals.ts file where common types like int, uint etc are defined.
+            </summary>
+        </member>
+        <member name="M:Api.TypeScript.GlobalGenerator.GenerateGlobals">
+            <summary>
+            Generates the globals.ts file
+            </summary>
+        </member>
+        <member name="T:Api.TypeScript.URLBuilder">
+            <summary>
+            Utilities for constructing call URLs
+            </summary>
+        </member>
+        <member name="M:Api.TypeScript.URLBuilder.BuildUrl(Api.TypeScript.Objects.ControllerMethod)">
+            <summary>
+            Builds a URL for the given controller method
+            </summary>
+            <param name="method"></param>
+            <returns></returns>
+        </member>
         <member name="T:Api.TypeScript.TypeScriptService">
             <summary>
             Provides utility functions for resolving .NET types into TypeScript-compatible constructs.
@@ -32582,6 +32689,28 @@
             A service responsible for analyzing .NET types and their dependencies
             to generate metadata suitable for TypeScript transformation.
             </summary>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.IsEntityType(System.Type)">
+            <summary>
+            True if the given type is an entity type.
+            </summary>
+            <param name="t"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.IsControllerDescendant(System.Type)">
+            <summary>
+            True if the given type is any kind of AutoController.
+            </summary>
+            <param name="t"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.IsEntityController(System.Type,System.Type@)">
+            <summary>
+            True if the given type is the autocontroller for an entity.
+            </summary>
+            <param name="t"></param>
+            <param name="entityType"></param>
+            <returns></returns>
         </member>
         <member name="M:Api.TypeScript.TypeScriptService.IsEnumerable(System.Type)">
             <summary>
@@ -32691,6 +32820,19 @@
             <param name="type">The type to lookup.</param>
             <returns>The overwrite string if one exists; otherwise, null.</returns>
         </member>
+        <member name="M:Api.TypeScript.TypeScriptService.AddIgnoreType(System.Type)">
+            <summary>
+            Ignores the given type
+            </summary>
+            <param name="type"></param>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.IsIgnoreType(System.Type)">
+            <summary>
+            True if the given type is ignored
+            </summary>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
         <member name="M:Api.TypeScript.TypeScriptService.ResolveType(System.Type)">
             <summary>
             Resolves the actual underlying type of a given <see cref="T:System.Type"/> by:
@@ -32721,12 +32863,42 @@
             <param name="typeName"></param>
             <returns></returns>
         </member>
+        <member name="M:Api.TypeScript.TypeScriptService.CreateApiSchema(Api.CanvasRenderer.SourceFileContainer)">
+            <summary>
+            Creates the schema in to the given container.
+            </summary>
+            <param name="container"></param>
+        </member>
         <member name="M:Api.TypeScript.TypeScriptService.IsNullable(System.Type)">
             <summary>
             Checks whether the provided type is a nullable type (e.g., int?, DateTime?).
             </summary>
             <param name="type">The type to check.</param>
             <returns>True if the type is nullable; otherwise, false.</returns>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.IsContentfulValueTask(System.Type,System.Type@)">
+            <summary>
+            True if the given type is a localized one. Optionally can be inside a ValueTask too.
+            Returns the type inside Localized if so - note that the returned type can still be 
+            nullable and not necessarily an entity type.
+            </summary>
+            <param name="type"></param>
+            <param name="contentType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.UnwrapTypeNesting(System.Type)">
+            <summary>
+            Unwraps the first type from enumerable, nullable, valueTask and Localized.
+            </summary>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.IsNestedCollection(System.Type)">
+            <summary>
+            True if the given type is enumerable. Can be nested in valuetask/ nullable.
+            </summary>
+            <param name="type"></param>
+            <returns></returns>
         </member>
         <member name="M:Api.TypeScript.TypeScriptService.LcFirst(System.String)">
             <summary>
@@ -32735,6 +32907,21 @@
             </summary>
             <param name="input">The string to transform.</param>
             <returns>The string with its first character lowercased.</returns>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.EnsureParameterTypes(System.Collections.Generic.List{System.Reflection.ParameterInfo},Api.TypeScript.Objects.ESModule)">
+            <summary>
+            Ensures the types used by the given param set are imported
+            </summary>
+            <param name="types"></param>
+            <param name="module"></param>
+        </member>
+        <member name="M:Api.TypeScript.TypeScriptService.EnsureApis(Api.TypeScript.Objects.ControllerMethod,Api.TypeScript.Objects.ESModule,System.Type)">
+            <summary>
+            Ensures necessary web APIs (such as getList etc) are imported
+            </summary>
+            <param name="method"></param>
+            <param name="module"></param>
+            <param name="selfType"></param>
         </member>
         <member name="T:Api.UserLastVisited.UserLastVisitedConfig">
             <summary>
@@ -33980,6 +34167,8 @@
             Installs generic admin pages for this service.
             Does nothing if there isn't a page service installed, or if the admin pages already exist.
             </summary>
+            <param name="navMenuLabel"></param>
+            <param name="navMenuIconRef"></param>
             <param name="fields"></param>
         </member>
         <member name="M:AutoService.InstallAdminPages(System.String,System.String,System.String[],Api.Startup.AdminPageOptions,System.String)">
