@@ -14,6 +14,8 @@ import { useSession } from 'UI/Session';
 import { useRouter, routerCtx } from 'UI/Router';
 import pageApi from 'Api/Page';
 import localeApi from 'Api/Locale';
+import AutoFormExtensions from "Admin/AutoForm/AutoFormExtensions";
+import Link from "UI/Link";
 
 var locales = null;
 var defaultLocale = 1;
@@ -755,8 +757,41 @@ class AutoFormInternal extends React.Component {
 				)
 			}
 		</>;
+		
+		var extraButtonMapFunc = (button) => {
+			
+			if (button.href)
+			{
+				return (
+					<Link href={button.href}>
+						<button
+							type={'button'}
+							className={button.className}
+						>
+							{button.label}
+						</button>
+					</Link>
+				)	
+			}
+			
+			return (
+				<button 
+					type={'button'}
+					className={button.className}
+					onClick={() => button.onClick && button.onClick(this.props.content, setPage)}
+				>
+					{button.label}
+				</button>
+			);
+		}
 
 		var controls = <>
+			{
+				isEdit ? 
+					AutoFormExtensions.getAutoFormButtons(this.props.contentType, 'update').map(extraButtonMapFunc) :
+					AutoFormExtensions.getAutoFormButtons(this.props.contentType, 'create').map(extraButtonMapFunc)
+				
+			}
 			{isEdit && <>
 				<button className="btn btn-danger" type="button" onClick={e => {
 					e.preventDefault();
