@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using Api.CanvasRenderer;
 using Api.Pages;
 using System;
+using System.Linq;
+using Api.Startup;
 using Api.Startup.Routing;
 using static Api.Pages.PageController;
 using Api.Translate;
@@ -22,6 +24,14 @@ namespace Api.Payments
     {
 		private ProductAttributeGroupService _groups;
 		private ProductAttributeValueService _attributeValues;
+		private RoleService _roles;
+		
+		/// <summary>
+		/// Added in as a cached list to allow all roles to be loaded
+		/// and checks put against each one to decide who can edit
+		/// an attribute, and who can't 
+		/// </summary>
+		private readonly Dictionary<Role, bool> _canEditAttribute = []; 
 
 		/// <summary>
 		/// The cached attribute tree. Use GetTree to obtain one instead of this directly.
@@ -31,10 +41,11 @@ namespace Api.Payments
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public ProductAttributeService(ProductAttributeGroupService groups, ProductAttributeValueService attributeValues) : base(Events.ProductAttribute)
+		public ProductAttributeService(ProductAttributeGroupService groups, ProductAttributeValueService attributeValues, RoleService roles) : base(Events.ProductAttribute)
         {
 			_groups = groups;
 			_attributeValues = attributeValues;
+			_roles = roles;
 
 			// Example admin page install:
 			InstallAdminPages("Product Attributes", "fa:fa-tags", ["id", "name"]);
@@ -573,7 +584,7 @@ namespace Api.Payments
 
 			return newTree;
 		}
-
+		
 		/// <summary>
 		/// Build the flat database list into a nested group tree structure.
 		/// </summary>
@@ -583,6 +594,8 @@ namespace Api.Payments
 		private async Task<AttributeGroupTree> BuildAttributeGroupTree(Context ctx, bool includeAttributes = false)
 		{
 			Log.Info("productcategory", "Building attribute group structure");
+
+			await LoadRolesPermissions(ctx);
 
 			// get all groups 
 			var groups = await _groups.Where("", DataOptions.IgnorePermissions).ListAll(ctx);
@@ -646,6 +659,22 @@ namespace Api.Payments
 				KeyLookup = lookupBySlug,
 				Roots = roots
 			};
+		}
+
+		private async ValueTask LoadRolesPermissions(Context ctx)
+		{
+			var roles = await _roles.Where("CanViewAdmin = ?", DataOptions.IgnorePermissions).Bind(true).ListAll(ctx);
+			var capability = Capabilities.GetAllCurrent().FirstOrDefault(cap => cap.Name == "productattribute_update");
+
+			if (capability is null)
+			{
+				throw new PublicException("Cannot find correct capability", "product-attribute/capability");
+			}
+			
+			foreach (var role in roles)
+			{
+				_canEditAttribute[role] = await role.IsGranted(capability, new Context(1, 1, role.Id), new (), false);
+			}
 		}
 
 		/// <summary>
@@ -759,15 +788,26 @@ namespace Api.Payments
 		/// <returns></returns>
 		private RouterNodeMetadata ConvertNode(Context context, ProductAttributeNode node)
 		{
+			var canEdit = false;
+			_canEditAttribute.TryGetValue(context.Role, out canEdit);
+			
 			return new RouterNodeMetadata()
 			{
 				Type = "ProductAttribute",
-				EditUrl = "/en-admin/productattribute/" + node.Attribute.Id,
+				EditUrl = GetEditUrl(context, node) ,
 				ContentId = node.Attribute.Id,
 				Name = node.Attribute.Name.Get(context),
 				ChildKey = node.Attribute.Key,
-				HasChildren = false // It may have values but they don't appear as children in the tree.
+				HasChildren = false // It may have values, but they don't appear as children in the tree.
 			};
+		}
+
+		private string GetEditUrl(Context ctx, ProductAttributeNode node)
+		{
+			var canEdit = false;
+			_canEditAttribute.TryGetValue(ctx.Role, out canEdit);
+
+			return "/en-admin/productattribute/" + node.Attribute.Id + (!canEdit ? "/values" : string.Empty);
 		}
 
 		/// <summary>
