@@ -78,6 +78,15 @@ export default class AttributeSelect extends React.Component {
 		this.props.onChange && this.props.onChange({target: {value: value.map(e => e.id)}, fullValue: value});
 	}
 
+    renderResult(result) {
+
+		return (
+			<>
+				{result.attribute.name}{`:`}&nbsp;{result.value}{result.attribute.units?result.attribute.units:''}
+			</>
+			);
+    }
+
 	render() {
 		var fieldName = this.props.field;
 
@@ -99,7 +108,6 @@ export default class AttributeSelect extends React.Component {
 			atMax = (this.state.value.length >= this.props.max);
 		}
 
-		let renderFieldNames = ["attribute.name", displayFieldName, "attribute.units"];
 		let excludeIds = this.state.value.map(a => a.id);
 
 		return <>
@@ -188,7 +196,7 @@ export default class AttributeSelect extends React.Component {
 							<span className="admin-multiselect__search-max">
 								<i>{`Max of ${this.props.max} added`}</i>
 							</span> :
-							<Search endpoint={productAttributeValueApi.list} includes={[productAttributeValueApi.includes.attribute]} exclude={excludeIds} renderFields={renderFieldNames} field={fieldName} limit={5}
+							<Search endpoint={productAttributeValueApi.list} includes={[productAttributeValueApi.includes.attribute]} exclude={excludeIds} field={fieldName} limit={5}
 								placeholder={`Find ${this.props.label} to add..`} onFind={entry => {
 									if (!entry || this.state.value.some(entity => entity.id === entry.id)) {
 										return;
@@ -202,7 +210,11 @@ export default class AttributeSelect extends React.Component {
 									});
 
 									this.props.onChange && this.props.onChange({ target: { value: value.map(e => e.id) }, fullValue: value });
-								}} />
+								}} 
+								
+								onRender={result => this.renderResult(result)}
+
+								/>
 						}
 					</div>
 				</footer>

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { ApiIncludes } from 'Api/Includes';
 import { ListFilter, Content } from 'Api/Content'
 import { ApiList } from 'UI/Functions/WebRequest';
-import Canvas from 'UI/Canvas';
 
 export type SearchProps<T extends Content<uint>> = {
     startHidden?: boolean;
@@ -11,11 +10,11 @@ export type SearchProps<T extends Content<uint>> = {
     exclude?: uint[];
     includes?: ApiIncludes;
     field?: string;
-    renderFields? : string[];
     limit?: number;
     onResults?: (results: T[]) => void;
     onQuery?: (filter: ListFilter, query: string) => void;
     onFind?: (result: T) => void;
+    onRender?: (result: T) => void;
     placeholder?: string;
     searchText?: string;
     name?: string;
@@ -33,7 +32,7 @@ type NoFieldWhereQuery = {
  */
 const Search = <T extends Content<uint>,>(props: SearchProps<T>) => {
 
-    const { onFind, exclude ,renderFields} = props;
+    const { onFind, exclude} = props;
 
     const [loading, setLoading] = useState<boolean>(false);
     const [hidden, setHidden] = useState<boolean>(Boolean(props.startHidden));
@@ -43,32 +42,10 @@ const Search = <T extends Content<uint>,>(props: SearchProps<T>) => {
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     // render the search result expanding any fields as neccessary
-    const renderResult = (result:any): any => {
-        if (renderFields && renderFields.length > 0) {
-            return (
-                <>
-                    {renderFields.map((path, index) => {
-                        const value = getNestedValue(result, path);
-                        if (value != null) {
-                            return (
-                                <span>
-                                    {path.indexOf("Json") != -1 ? <Canvas>{value}</Canvas> : String(value)}
-                                    &nbsp;
-                                </span>
-                            );
-                        }
-                    })}
-                </>
-                );
-        } else {
-            return <>{((result as any).name || (result as any)[props.field])}</>;
-        }
-    }
-
-    // extract out nested values based on fielename such as name, attribute.name or attribute.units
-    const getNestedValue = (obj: any, path: string): any => {
-        return path.split('.').reduce((acc, key) => acc?.[key], obj);
-    }
+    const renderResult = props.onRender || ((result: any) => {
+        const key = props.field ? props.field[0].toLowerCase() + props.field.substring(1) : 'name';
+        return result[key];
+    });
 
     // Function to fetch search results from endpoint
     const fetchResults = (query: string) => {
