@@ -1232,10 +1232,22 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 
 			foreach (var field in InstanceType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
 			{
-				generator.Emit(OpCodes.Ldarg_1);
-				generator.Emit(OpCodes.Ldarg_0);
-				generator.Emit(OpCodes.Ldfld, field);
-				generator.Emit(OpCodes.Stfld, field);
+				if (field.FieldType == typeof(MappingData))
+				{
+					// A deep clone is required to avoid references to the same dictionary and list objects.
+					generator.Emit(OpCodes.Ldarg_1);
+					generator.Emit(OpCodes.Ldarg_0);
+					generator.Emit(OpCodes.Ldflda, field);
+					generator.Emit(OpCodes.Callvirt, typeof(MappingData).GetMethod(nameof(MappingData.Clone)));
+					generator.Emit(OpCodes.Stfld, field);
+				}
+				else
+				{
+					generator.Emit(OpCodes.Ldarg_1);
+					generator.Emit(OpCodes.Ldarg_0);
+					generator.Emit(OpCodes.Ldfld, field);
+					generator.Emit(OpCodes.Stfld, field);
+				}
 			}
 
 			// Return

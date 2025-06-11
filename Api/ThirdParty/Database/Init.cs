@@ -108,9 +108,6 @@ public class Init
 				return new ValueTask<T>(entity);
 			}
 
-			// Future improvement: rather than copying all fields and
-			// writing all fields, instead focus only on the ones which changed.
-
 			// Copy fields from entity -> orig.
 			var orig = cache.Get(entity.Id);
 

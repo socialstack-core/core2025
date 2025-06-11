@@ -520,6 +520,30 @@ public struct MappingData
 	}
 
 	/// <summary>
+	/// Makes a deep clone of this mapping data.
+	/// </summary>
+	/// <returns></returns>
+	public MappingData Clone()
+	{
+		var vals = _values;
+
+		if (vals == null)
+		{
+			// That was easy
+			return new MappingData();
+		}
+
+		var newVals = new Dictionary<string, List<ulong>>();
+
+		foreach (var kvp in vals)
+		{
+			newVals[kvp.Key] = new List<ulong>(kvp.Value);
+		}
+
+		return new MappingData() { _values = newVals };
+	}
+
+	/// <summary>
 	/// Set a specific mapping value.
 	/// </summary>
 	/// <param name="mappingName"></param>
