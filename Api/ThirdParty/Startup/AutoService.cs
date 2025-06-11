@@ -1173,7 +1173,8 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 					generator.Emit(OpCodes.Ldfld, field.TargetField);
 				}
 				
-				if (mainType == typeof(DateTime) || mainType == typeof(string) || mainType == typeof(decimal) || 
+				if (mainType == typeof(DateTime) || mainType == typeof(string) || 
+					mainType == typeof(decimal) || mainType == typeof(MappingData) ||
 					(mainType.IsGenericType && mainType.GetGenericTypeDefinition() == typeof(Localized<>)))
 				{
 					var eq = mainType.GetMethod("Equals", new Type[] { mainType, mainType });
