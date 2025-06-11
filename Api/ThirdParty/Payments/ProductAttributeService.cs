@@ -673,7 +673,7 @@ namespace Api.Payments
 			
 			foreach (var role in roles)
 			{
-				_canEditAttribute[role] = await role.IsGranted(capability, new Context(1, 1, role.Id), new (), false);
+				_canEditAttribute[role] = role.IsGranted(capability, new Context(1, 1, role.Id), new (), false);
 			}
 		}
 
