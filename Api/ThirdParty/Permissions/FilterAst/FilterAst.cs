@@ -582,15 +582,6 @@ namespace Api.Permissions{
 				fieldType = underlyingType;
 			}
 
-			if (fieldType == typeof(DateTime))
-			{
-				var dateTimeLocal = generator.DeclareLocal(fieldType);
-				generator.Emit(OpCodes.Stloc, dateTimeLocal);
-				generator.Emit(OpCodes.Ldloca, dateTimeLocal);
-				var ticksGetter = typeof(DateTime).GetProperty(nameof(DateTime.Ticks)).GetGetMethod();
-				generator.Emit(OpCodes.Callvirt, ticksGetter);
-			}
-
 			return fieldType;
 		}
 
@@ -1766,7 +1757,7 @@ namespace Api.Permissions{
 				// The inputs must be the same type here and they must be both numeric.
 				if (memberType != valueType)
 				{
-					throw new Exception("Unsupported >= usage: Inputs must be the same type and not arrays.");
+					throw new Exception("Unsupported > usage: Inputs must be the same type and not arrays.");
 				}
 
 				EmitGreaterThan(generator, valueType);
