@@ -1,5 +1,6 @@
 using Api.SocketServerLibrary;
 using Api.Startup;
+using Nest;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -452,6 +453,75 @@ public struct MappingData
 		}
 
 		set.Remove(id);
+	}
+
+	/// <summary>
+	/// Ensures the given set of item IDs are added to the specified map.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="ID"></typeparam>
+	/// <param name="mappingName"></param>
+	/// <param name="items"></param>
+	public void AddAll<T, ID>(string mappingName, IEnumerable<T> items)
+		where T : Content<ID>
+		where ID : struct, IEquatable<ID>, IConvertible, IComparable<ID>
+	{
+		if (items == null)
+		{
+			return;
+		}
+
+		foreach (var item in items)
+		{
+			Add(mappingName, item);
+		}
+	}
+	
+	/// <summary>
+	/// Ensures the given set of item IDs are added to the specified map.
+	/// </summary>
+	/// <typeparam name="ID"></typeparam>
+	/// <param name="mappingName"></param>
+	/// <param name="items"></param>
+	public void AddAll<ID>(string mappingName, IEnumerable<ID> items)
+		where ID : struct, IEquatable<ID>, IConvertible, IComparable<ID>
+	{
+		if (items == null)
+		{
+			return;
+		}
+
+		foreach (var item in items)
+		{
+			if (typeof(ID) == typeof(uint))
+			{
+				var uid = item as uint?;
+				Add(mappingName, (ulong)uid.Value);
+			}
+			else if (typeof(ID) == typeof(ulong))
+			{
+				var uid = item as ulong?;
+				Add(mappingName, (ulong)uid.Value);
+			}
+		}
+	}
+	
+	/// <summary>
+	/// Ensures the given set of item IDs are added to the specified map.
+	/// </summary>
+	/// <param name="mappingName"></param>
+	/// <param name="items"></param>
+	public void AddAll(string mappingName, IEnumerable<ulong> items)
+	{
+		if (items == null)
+		{
+			return;
+		}
+
+		foreach (var item in items)
+		{
+			Add(mappingName, item);
+		}
 	}
 
 	/// <summary>
