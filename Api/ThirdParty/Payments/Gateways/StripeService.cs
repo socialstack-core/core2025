@@ -30,7 +30,7 @@ namespace Api.Payments
 			_purchases = purchases;
 
 			// use a developer context:
-			_context = new Context(Roles.Developer);
+			_context = new Context(1, 1, 1);
 
 			// Get configuration:
 			var stripeConfig = GetConfig<StripeConfig>();

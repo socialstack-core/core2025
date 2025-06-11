@@ -141,8 +141,9 @@ namespace Api.DatabaseMySQL
 			var entityName = service.EntityName;
 			var isDbStored = service.DataIsPersistent;
 
-			if (!isDbStored)
+			if (!isDbStored || _database == null)
 			{
+				// _database is null if this is an xunit debug run.
 				return;
 			}
 
