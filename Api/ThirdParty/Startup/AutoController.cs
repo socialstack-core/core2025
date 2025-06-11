@@ -267,7 +267,7 @@ public partial class AutoController<T,ID> : AutoController
 			// Attempt to get the available field:
 			var field = availableFields.GetField(property.Name);
 
-			if (field == null)
+			if (field == null || !field.Writeable)
 			{
 				continue;
 			}
