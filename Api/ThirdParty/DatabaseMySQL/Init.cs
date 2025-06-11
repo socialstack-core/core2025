@@ -266,7 +266,7 @@ namespace Api.DatabaseMySQL
 					parameter.ParameterName = "p" + paramIndex;
 					var chgValue = field.TargetField.GetValue(entity);
 
-					if (field.IsLocalized || field.Type == typeof(JsonString))
+					if (field.IsLocalized || field.Type == typeof(JsonString) || field.Type == typeof(MappingData))
 					{
 						parameter.Value = chgValue.ToString();
 						parameter.MySqlDbType = MySqlDbType.JSON;
