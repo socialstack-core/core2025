@@ -96,13 +96,6 @@ namespace Api.Permissions
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 		{
-			// If it's a mapping type, no-op.
-			if (ContentTypes.IsAssignableToGenericType(typeof(T), typeof(Mapping<,>)))
-			{
-				// Mapping types don't get mounted by the permission system.
-				return;
-			}
-
 			var group = service.EventGroup;
 
 			var fields = group.GetType().GetFields();
@@ -269,13 +262,13 @@ namespace Api.Permissions
 			}
 
 			// Add an event handler at priority 1 (runs before others).
-			handler.AddEventListener(async (Context context, T content) =>
+			handler.AddEventListener((Context context, T content) =>
 			{
 				// Note: The following code is very similar to handler.TestCapability(context, content) which is used for manual mode.
 
 				if (context.IgnorePermissions || content == null)
 				{
-					return content;
+					return new ValueTask<T>(content);
 				}
 
 				// Check if the capability is granted.
@@ -290,10 +283,10 @@ namespace Api.Permissions
 					throw PermissionException.Create(capability.Name, context, "No role");
 				}
 
-				if (await role.IsGranted(capability, context, content, false))
+				if (role.IsGranted(capability, context, content, false))
 				{
 					// It's granted - return the first arg:
-					return content;
+					return new ValueTask<T>(content);
 				}
 
 				throw PermissionException.Create(capability.Name, context);
@@ -318,13 +311,13 @@ namespace Api.Permissions
 			}
 
 			// Add an event handler at priority 1 (runs before others).
-			handler.AddEventListener(async (Context context, T content, T orig) =>
+			handler.AddEventListener((Context context, T content, T orig) =>
 			{
 				// Note: The following code is very similar to handler.TestCapability(context, content) which is used for manual mode.
 
 				if (context.IgnorePermissions || content == null)
 				{
-					return content;
+					return new ValueTask<T>(content);
 				}
 
 				// Check if the capability is granted.
@@ -339,10 +332,10 @@ namespace Api.Permissions
 					throw PermissionException.Create(capability.Name, context, "No role");
 				}
 
-				if (await role.IsGranted(capability, context, content, false))
+				if (role.IsGranted(capability, context, content, false))
 				{
 					// It's granted - return the first arg:
-					return content;
+					return new ValueTask<T>(content);
 				}
 
 				throw PermissionException.Create(capability.Name, context);

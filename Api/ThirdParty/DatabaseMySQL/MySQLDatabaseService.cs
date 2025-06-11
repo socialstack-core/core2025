@@ -391,6 +391,11 @@ namespace Api.Database
 					parameter.Value = val == null ? null : ((JsonString)val).ValueOf();
 					parameter.MySqlDbType = MySqlDbType.JSON;
 				}
+				else if (field.Type == typeof(MappingData))
+				{
+					parameter.Value = val == null ? null : ((MappingData)val).ToJson();
+					parameter.MySqlDbType = MySqlDbType.JSON;
+				}
 				else
 				{
 					parameter.Value = val;
@@ -530,6 +535,10 @@ namespace Api.Database
 					{
 						field.TargetField.SetValue(result, new JsonString(value as string));
 					}
+					else if (field.Type == typeof(MappingData))
+					{
+						field.TargetField.SetValue(result, MappingData.Parse(value as string));
+					}
 					else if (field.Type == typeof(bool) || field.Type == typeof(bool?))
 					{
 						// Set the value:
@@ -636,6 +645,10 @@ namespace Api.Database
 							{
 								field.TargetField.SetValue(result, new JsonString(value as string));
 							}
+							else if (field.Type == typeof(MappingData))
+							{
+								field.TargetField.SetValue(result, MappingData.Parse(value as string));
+							}
 							else if (field.Type == typeof(bool) || field.Type == typeof(bool?))
 							{
 								// Set the value:
@@ -725,6 +738,10 @@ namespace Api.Database
 							else if (field.Type == typeof(JsonString))
 							{
 								field.TargetField.SetValue(result, new JsonString(value as string));
+							}
+							else if (field.Type == typeof(MappingData))
+							{
+								field.TargetField.SetValue(result, MappingData.Parse(value as string));
 							}
 							else if (field.Type == typeof(bool))
 							{

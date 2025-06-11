@@ -517,6 +517,7 @@ namespace Api.DatabaseMongoDB
 			}
 
 			BsonSerializer.RegisterSerializer(new JsonStringSerializer());
+			BsonSerializer.RegisterSerializer(new MappingDataSerializer());
 
 			BsonSerializer.RegisterGenericSerializerDefinition(
 				typeof(Localized<>),

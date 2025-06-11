@@ -149,7 +149,7 @@ public partial class AutoController<T, ID>
 			}
 
 			// Attempt to get the available field:
-			var field = availableFields.GetField(property.Name, JsonFieldGroup.Any);
+			var field = availableFields.GetField(property.Name);
 
 			if (field == null)
 			{

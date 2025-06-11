@@ -158,7 +158,7 @@ namespace Api.NavMenus
 				foreach (var capability in relevantCapabilities)
 				{
 					// Check if any single capability grants access — early exit on first match
-					if (!await context.Role.IsGranted(capability, context, null, false))
+					if (!context.Role.IsGranted(capability, context, null, false))
 					{
 						continue;
 					}

@@ -177,7 +177,7 @@ namespace Api.Payments
 				return null;
 			}
 
-			var tiers = await ListBySource(context, this, product.Id, "Tiers", DataOptions.IgnorePermissions);
+			var tiers = await ListBySource(context, product, "tiers", DataOptions.IgnorePermissions);
 
 			if (tiers != null && tiers.Count > 0)
 			{

@@ -213,8 +213,8 @@ public partial class AutoController<T,ID> : AutoController
 			userCreated.UserId = context.UserId;
 		}
 		
-		// Set the actual fields now:
-		await SetFieldsOnObject(service, entity, context, body, JsonFieldGroup.Default);
+		// Set the fields now:
+		await SetFieldsOnObject(service, entity, context, body);
 
 		// Set any additional fields if necessary:
 		if (setFields != null)
@@ -232,69 +232,6 @@ public partial class AutoController<T,ID> : AutoController
 			return null;
 		}
 		
-		// Set post ID fields:
-		await SetFieldsOnObject(service, entity, context, body, JsonFieldGroup.AfterId);
-
-		// If it has an on object, create the mapping entry now if we have read visibility of the target:
-		var on = body["on"];
-
-		if (on != null && on.Type == JTokenType.Object)
-		{
-			// Get relevant fields:
-			var type = on["type"];
-			var id = on["id"];
-			var map = on["map"];
-
-			// If map is null, we'll use the primary map. First though, attempt to get the actual content type:
-			var contentType = ContentTypes.GetType(type.Value<string>());
-
-			if (contentType != null)
-			{
-				var svc = Services.GetByContentType(contentType);
-
-				if (svc != null)
-				{
-					var srcObject = await svc.GetObject(context, "Id", id.Value<string>());
-
-					if (srcObject != null)
-					{
-						// Mapping permitted.
-						string mapName;
-
-						if (map == null)
-						{
-							// "this" service is the one which has a ListAs:
-							mapName = service.GetContentFields().PrimaryMapName;
-
-							if (string.IsNullOrEmpty(mapName))
-							{
-								throw new PublicException(
-									"This type '" + typeof(T).Name + "' doesn't have a primary map name so you'll need to specify a particular map: in your on:{}.",
-									"no_map"
-								);
-							}
-						}
-						else
-						{
-							mapName = map.Value<string>();
-
-							if (!ContentFields.GlobalVirtualFields.ContainsKey(mapName.ToLower()))
-							{
-								throw new PublicException(
-									"A map called '" + mapName + "' doesn't exist.",
-									"no_map"
-								);
-							}
-						}
-
-						// Create map from srcObject -> entity via the map called MapName. First though, get the mapping service:
-						var mappingService = await MappingTypeEngine.GetOrGenerate(svc, service, mapName);
-						await mappingService.CreateMapping(context, srcObject, entity, DataOptions.IgnorePermissions);
-					}
-				}
-			}
-		}
-
 		// Complete the call (runs AfterCreate):
 		entity = await service.CreatePartialComplete(context, entity);
 
@@ -315,8 +252,7 @@ public partial class AutoController<T,ID> : AutoController
 	/// <param name="target"></param>
 	/// <param name="context"></param>
 	/// <param name="body"></param>
-	/// <param name="fieldGroup"></param>
-	protected async ValueTask SetFieldsOnObject(AutoService<T, ID> service, T target, Context context, JObject body, JsonFieldGroup fieldGroup = JsonFieldGroup.Any)
+	protected async ValueTask SetFieldsOnObject(AutoService<T, ID> service, T target, Context context, JObject body)
 	{
 		// Get the JSON meta which will indicate exactly which fields are editable by this user (role):
 		var availableFields = await service.GetTypedJsonStructure(context);
@@ -329,7 +265,7 @@ public partial class AutoController<T,ID> : AutoController
 			}
 
 			// Attempt to get the available field:
-			var field = availableFields.GetField(property.Name, fieldGroup);
+			var field = availableFields.GetField(property.Name);
 
 			if (field == null)
 			{
@@ -370,7 +306,7 @@ public partial class AutoController<T,ID> : AutoController
 			return null;
 		}
 
-		var entityToUpdate = await service.StartUpdate(context, originalEntity);
+		var entityToUpdate = service.StartUpdate(context, originalEntity);
 
 		if (entityToUpdate == null)
 		{
@@ -378,8 +314,8 @@ public partial class AutoController<T,ID> : AutoController
 			return null;
 		}
 
-		// In this case the entity ID is definitely known, so we can run all fields at the same time:
-		await SetFieldsOnObject(service, entityToUpdate, context, body, JsonFieldGroup.Any);
+		// Set all the fields:
+		await SetFieldsOnObject(service, entityToUpdate, context, body);
 
 		// Make sure it's still the original ID:
 		entityToUpdate.SetId(id);

@@ -132,7 +132,7 @@ public partial class AutoService<T, ID>
 			}
 
 			// Set field from val.Value
-#warning Incomplete!
+			#warning loading stored documents such as revisions is incomplete here
 			throw new Exception("properties are not yet loaded from stored docs (revisions)");
 		}
 
@@ -207,7 +207,7 @@ public partial class AutoService<T, ID>
 		}
 
 		// Get the include set (can be null). Must happen first such that if it errors, nothing was written out to the stream.
-		var includeSet = await GetContentFields().GetIncludeSet(includes);
+		var includeSet = GetContentFields().GetIncludeSet(includes);
 
 		writer.Write(ResultsHeader, 0, 12);
 
@@ -260,16 +260,16 @@ public partial class AutoService<T, ID>
 					}
 				}
 
-				writer.Write((byte)'}');
-
 				// Collect IDs from it:
 				var current = firstCollector;
 
 				while (current != null)
 				{
-					current.Collect(entity, context);
+					current.WriteAndCollect(context, writer, entity);
 					current = current.NextCollector;
 				}
+
+				writer.Write((byte)'}');
 			}
 
 			if (targetStream != null)
@@ -426,12 +426,14 @@ public partial class AutoService<T, ID>
 		}
 
 		// Get the include set (can be null):
-		var includeSet = await GetContentFields().GetIncludeSet(includes);
+		var includeSet = GetContentFields().GetIncludeSet(includes);
 
 		if (addResultWrap)
 		{
 			writer.Write(ResultHeader, 0, 10);
 		}
+
+		IDCollector firstCollector = null;
 
 		if (entity == null)
 		{
@@ -459,6 +461,20 @@ public partial class AutoService<T, ID>
 						// value:
 						await valueGen.GetValue(context, entity, writer);
 					}
+				}
+			}
+
+			if (includeSet != null)
+			{
+				// First we need to obtain ID collectors, and then collect the IDs.
+				firstCollector = includeSet.RootInclude.GetCollectors();
+
+				var current = firstCollector;
+
+				while (current != null)
+				{
+					current.WriteAndCollect(context, writer, entity);
+					current = current.NextCollector;
 				}
 			}
 
@@ -490,20 +506,8 @@ public partial class AutoService<T, ID>
 				writer.Reset(null);
 			}
 
-			// First we need to obtain ID collectors, and then collect the IDs.
-			var firstCollector = includeSet.RootInclude.GetCollectors();
-
-			// Collect all IDs:
-			if (entity != null)
+			if (firstCollector != null)
 			{
-				var current = firstCollector;
-
-				while (current != null)
-				{
-					current.Collect(entity, context);
-					current = current.NextCollector;
-				}
-
 				await ExecuteIncludes(context, targetStream, writer, firstCollector, includeSet.RootInclude);
 			}
 
@@ -594,7 +598,7 @@ public partial class AutoService<T, ID>
 						// Load the sub-include set:
 						if (toExecute.DynamicChildIncludes != null)
 						{
-							var childIncludeSet = await cbt.Service.GetContentFields().GetIncludeSet(toExecute.DynamicChildIncludes);
+							var childIncludeSet = cbt.Service.GetContentFields().GetIncludeSet(toExecute.DynamicChildIncludes);
 
 							if (childIncludeSet != null)
 							{
@@ -643,48 +647,13 @@ public partial class AutoService<T, ID>
 				writer.Write(IncludesDynamicValueFooter, 0, 2);
 
 			}
-			else if (toExecute.MappingTargetField == null)
-			{
-				// Directly use IDs in collector with the service.
-				await toExecute.Service.OutputJsonList(context, childCollectors, collector, writer, true, toExecute.FunctionalIncludes); // Calls OutputJsonList on the service
-
-				// End of this include.
-				writer.Write(IncludesValueFooter, 0, 2);
-
-			}
-			else if (toExecute.MappingService == null)
-			{
-				// Write the values:
-				await toExecute.Service.OutputJsonList<ID>(context, childCollectors, collector, toExecute.MappingTargetFieldName, writer, true, toExecute.FunctionalIncludes); // Calls OutputJsonList on the service
-
-				// End of this include.
-				writer.Write(IncludesValueFooter, 0, 2);
-
-			}
 			else
 			{
-				// Write out a mapping of src->target IDs.
-				var mappingCollector = toExecute.MappingTargetField.RentCollector();
-
-				// Output the mapping array, whilst also collecting the IDs of the things it is mapping to.
-				await toExecute.MappingService.OutputMap(context, mappingCollector, collector, writer);
-
-				if (targetStream != null)
-				{
-					// Write out the mapping data to the target stream:
-					await writer.CopyToAsync(targetStream);
-					writer.Reset(null);
-				}
-
-				// Write the values:
-				await toExecute.Service.OutputJsonList(context, childCollectors, mappingCollector, writer, true, toExecute.FunctionalIncludes); // Calls OutputJsonList on the service
-
-				// Release mapping collector:
-				mappingCollector.Release();
+				// Directly use IDs in collector with the service.
+				await toExecute.Service.OutputJsonList(context, childCollectors, collector, writer, true, toExecute.FunctionalIncludes);
 
 				// End of this include.
 				writer.Write(IncludesValueFooter, 0, 2);
-
 			}
 
 			// Did it have any child nodes? If so, execute those as well.
@@ -772,117 +741,7 @@ public partial class AutoService<T, ID>
 		// Output it:
 		await ToJson(context, content, writer, null, includes);
 	}
-
-	/// <summary>
-	/// Outputs a list of things from this service as JSON into the given writer.
-	/// Executes the given collector(s) whilst it happens, which can also be null.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="collectors"></param>
-	/// <param name="idSet"></param>
-	/// <param name="setField"></param>
-	/// <param name="writer"></param>
-	/// <param name="viaIncludes"></param>
-	/// <param name="functionalIncludes"></param>
-	/// <returns></returns>
-	public override async ValueTask OutputJsonList<S_ID>(
-		Context context, IDCollector collectors, IDCollector idSet, 
-		string setField, Writer writer, bool viaIncludes,
-		FunctionalInclusionNode[] functionalIncludes = null
-	)
-	{
-		var collectedIds = idSet as IDCollector<S_ID>;
-
-		// If cached, directly enumerate over the IDs via the cache.
-		var cache = GetCache();
 		
-		if (cache != null)
-		{
-			var indexRef = cache.GetIndex<S_ID>(setField) as NonUniqueIndex<T, S_ID>;
-
-			// This mapping type is cached.
-			var _enum = collectedIds.GetNonAllocEnumerator();
-
-			var first = true;
-
-			while (_enum.HasMore())
-			{
-				// Get current value:
-				var valID = _enum.Current();
-
-				// Read that ID set from the cache:
-				var indexEnum = indexRef.GetEnumeratorFor(valID);
-
-				while (indexEnum.HasMore())
-				{
-					var entity = indexEnum.Current();
-
-					if (first)
-					{
-						first = false;
-					}
-					else
-					{
-						writer.Write((byte)',');
-					}
-
-					// Output the object:
-					await ToJsonWithIncludes(context, entity, writer, functionalIncludes);
-
-					// Collect:
-					var col = collectors;
-
-					while (col != null)
-					{
-						col.Collect(entity, context);
-						col = col.NextCollector;
-					}
-				}
-			}
-
-		}
-		else if (collectedIds.Count > 0)
-		{
-			// DB hit.
-			var f = Where(setField + "=[?]")
-			.Bind(collectedIds);
-			f.IsIncluded = viaIncludes;
-
-			await f
-			.ListAll(
-				context,
-				async (Context ctx, T entity, int index, object src, object src2) =>
-				{
-
-					// Passing these in avoids a delegate frame allocation.
-					// The casts are free because they're reference types.
-					var _writer = (Writer)src;
-					var _col = (IDCollector)src2;
-
-					if (index != 0)
-					{
-						_writer.Write((byte)',');
-					}
-
-					// Output the object:
-					await ToJsonWithIncludes(ctx, entity, _writer, functionalIncludes);
-
-					// Collect:
-					var col = _col;
-
-					while (col != null)
-					{
-						col.Collect(entity, ctx);
-						col = col.NextCollector;
-					}
-
-				},
-				writer,
-				collectors
-			);
-		}
-	}
-
 	/// <summary>
 	/// Outputs a list of things from this service as JSON into the given writer.
 	/// Executes the given collector(s) whilst it happens, which can also be null.
@@ -897,10 +756,10 @@ public partial class AutoService<T, ID>
 	public override async ValueTask OutputJsonList(Context context, IDCollector collectors, IDCollector idSet, Writer writer, bool viaIncludes,
 		FunctionalInclusionNode[] functionalIncludes = null)
 	{
-		var collectedIds = idSet as IDCollector<ID>;
+		var collectedIds = idSet as LongIDCollector;
 
 		var cache = GetCache();
-		
+
 		// If cached, directly enumerate over the IDs via the cache.
 		if (cache != null)
 		{
@@ -914,7 +773,7 @@ public partial class AutoService<T, ID>
 				// Get current value:
 				var valID = _enum.Current();
 				// Read that ID set from the cache:
-				if (idIndex.TryGetValue(valID, out T entity))
+				if (idIndex.TryGetValue(ConvertId(valID), out T entity))
 				{
 					if (first)
 					{
@@ -926,16 +785,7 @@ public partial class AutoService<T, ID>
 					}
 
 					// Output the object:
-					await ToJsonWithIncludes(context, entity, writer, functionalIncludes);
-
-					// Collect:
-					var col = collectors;
-
-					while (col != null)
-					{
-						col.Collect(entity, context);
-						col = col.NextCollector;
-					}
+					await ToJsonWithIncludes(context, entity, writer, functionalIncludes, collectors);
 				}
 			}
 
@@ -963,16 +813,7 @@ public partial class AutoService<T, ID>
 					}
 
 					// Output the object:
-					await ToJsonWithIncludes(context, entity, _writer, functionalIncludes);
-
-					// Collect:
-					var col = _cols;
-
-					while (col != null)
-					{
-						col.Collect(entity, context);
-						col = col.NextCollector;
-					}
+					await ToJsonWithIncludes(context, entity, _writer, functionalIncludes, _cols);
 				},
 				writer,
 				collectors
@@ -1004,12 +845,12 @@ public partial class AutoService<T, ID>
 			writer.Write((byte)'}');
 		}
 	}
-	
+
 	/// <summary>
 	/// Serialises the given object into the given writer. By using this method, it will consider the fields a user is permitted to see (based on the role in the context)
 	/// and also may use a per-object cache which contains string segments.
 	/// </summary>
-	public async ValueTask ToJsonWithIncludes(Context context, T entity, Writer writer, FunctionalInclusionNode[] functionalIncludes)
+	public async ValueTask ToJsonWithIncludes(Context context, T entity, Writer writer, FunctionalInclusionNode[] functionalIncludes, IDCollector collectors)
 	{
 		// Get the json structure:
 		var jsonStructure = await GetTypedJsonStructure(context);
@@ -1022,41 +863,38 @@ public partial class AutoService<T, ID>
 		if (entity == null)
 		{
 			writer.Write(NullText, 0, 4);
+			return;
 		}
-		else
+
+		jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer, context, false);
+
+		if (functionalIncludes != null)
 		{
-			jsonStructure.TypeIO.WriteJsonUnclosed(entity, writer, context, false);
-
-			if (functionalIncludes != null)
+			for (var i = 0; i < functionalIncludes.Length; i++)
 			{
-				for (var i = 0; i < functionalIncludes.Length; i++)
+				var fi = functionalIncludes[i];
+				var valueGen = fi.ValueGenerator as VirtualFieldValueGenerator<T, ID>;
+
+				if (valueGen != null)
 				{
-					var fi = functionalIncludes[i];
-					var valueGen = fi.ValueGenerator as VirtualFieldValueGenerator<T, ID>;
+					// ,"propertyName":
+					writer.Write(fi._jsonPropertyHeader, 0, fi._jsonPropertyHeader.Length);
 
-					if (valueGen != null)
-					{
-						// ,"propertyName":
-						writer.Write(fi._jsonPropertyHeader, 0, fi._jsonPropertyHeader.Length);
-
-						// value:
-						await valueGen.GetValue(context, entity, writer);
-					}
+					// value:
+					await valueGen.GetValue(context, entity, writer);
 				}
 			}
-
-			writer.Write((byte)'}');
 		}
-	}
 
-	/*
-	/// <summary>
-	/// Serialises the given object into the given writer. By using this method, it will consider the fields a user is permitted to see (based on the role in the context)
-	/// and also may use a per-object cache which contains string segments.
-	/// </summary>
-	public async ValueTask ToBolt(Context context, T entity, Writer writer)
-	{
-		
+		// Collect:
+		var col = collectors;
+
+		while (col != null)
+		{
+			col.WriteAndCollect(context, writer, entity);
+			col = col.NextCollector;
+		}
+
+		writer.Write((byte)'}');
 	}
-	*/
 }

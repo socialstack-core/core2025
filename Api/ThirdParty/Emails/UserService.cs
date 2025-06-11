@@ -137,7 +137,7 @@ namespace Api.Users
 		/// <returns>The user</returns>
 		public async ValueTask<User> VerifyEmail(Context context, User user, string newPassword)
 		{
-			var userToUpdate = await StartUpdate(context, user, DataOptions.IgnorePermissions);
+			var userToUpdate = StartUpdate(context, user, DataOptions.IgnorePermissions);
 
 			if(userToUpdate != null)
 			{

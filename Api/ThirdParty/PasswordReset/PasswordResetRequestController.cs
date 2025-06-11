@@ -114,7 +114,7 @@ namespace Api.PasswordResetRequests
 			
 			if (!updatedPassword)
 			{
-				var userToUpdate = await _users.StartUpdate(context, targetUser, DataOptions.IgnorePermissions);
+				var userToUpdate = _users.StartUpdate(context, targetUser, DataOptions.IgnorePermissions);
 
 				if (userToUpdate != null)
 				{
@@ -142,7 +142,7 @@ namespace Api.PasswordResetRequests
 			}
 			
 			// Burn the token:
-			var reqToUpdate = await _service.StartUpdate(context, request, DataOptions.IgnorePermissions);
+			var reqToUpdate = _service.StartUpdate(context, request, DataOptions.IgnorePermissions);
 
 			if (reqToUpdate != null)
 			{

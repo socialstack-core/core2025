@@ -3,13 +3,14 @@ using Api.Database;
 using Api.Startup;
 using Api.Translate;
 using Api.Users;
+using Karambolo.PO;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Api.Permissions{
 
@@ -82,6 +83,7 @@ namespace Api.Permissions{
 			return new IsIncludedFilterTreeNode<T,ID>();
 		}
 
+		/*
 		/// <summary>
 		/// True for rows that have a mapping to the given target object.
 		/// </summary>
@@ -110,6 +112,7 @@ namespace Api.Permissions{
 				MapName = node.Args.Count > 2 ? (node.Args[2] as StringFilterTreeNode<T, ID>).Value : null
 			}.Add(ast);
 		}
+		*/
 
 		/// <summary>
 		/// True if the given role object is a direct match, or it has a field called Role and matches.
@@ -230,17 +233,19 @@ namespace Api.Permissions{
 				throw new PublicException("HasUserPermit in a filter call takes 0 arguments", "filter_invalid");
 			}
 
-			return new MappingFilterTreeNode<T, ID>()
+			return new OpFilterTreeNode<T, ID>()
 			{
-				SourceMapping = false,
-				TypeName = "User",
-				Id = new MemberFilterTreeNode<T, ID>()
+				Operation = "contains",
+				A = new MemberFilterTreeNode<T, ID>()
+				{
+					Name = "UserPermits"
+				}.Resolve(ast),
+				B = new MemberFilterTreeNode<T, ID>()
 				{
 					Name = "UserId",
 					OnContext = true
-				}.Resolve(ast),
-				MapName = "UserPermits"
-			}.Add(ast);
+				}.Resolve(ast)
+			};
 		}
 
 		/// <summary>
@@ -259,17 +264,18 @@ namespace Api.Permissions{
 				throw new PublicException("HasRolePermit in a filter call takes 0 arguments", "filter_invalid");
 			}
 
-			return new MappingFilterTreeNode<T, ID>()
+			return new OpFilterTreeNode<T, ID>()
 			{
-				SourceMapping = false,
-				TypeName = "Role",
-				Id = new MemberFilterTreeNode<T, ID>()
+				Operation = "contains",
+				A = new MemberFilterTreeNode<T, ID>() {
+					Name = "RolePermits"
+				}.Resolve(ast),
+				B = new MemberFilterTreeNode<T, ID>()
 				{
 					Name = "RoleId",
 					OnContext = true
-				}.Resolve(ast),
-				MapName = "RolePermits"
-			}.Add(ast);
+				}.Resolve(ast)
+			};
 		}
 
 	}
@@ -279,11 +285,6 @@ namespace Api.Permissions{
 	/// </summary>
 	public static class FilterAst
 	{
-		/// <summary>
-		/// FilterBase.FirstCollector
-		/// </summary>
-		public static FieldInfo _firstCollector;
-		
 		/// <summary>
 		/// FilterBase.NullCheck
 		/// </summary>
@@ -299,11 +300,6 @@ namespace Api.Permissions{
 		/// </summary>
 		public static MethodInfo _tryParseDate;
 		
-		/// <summary>
-		/// The Type[] signature for generated Collect methods.
-		/// </summary>
-		public static Type[] _collectSignature;
-
 		/// <summary>
 		/// Performs a string.contains if both args are not null.
 		/// </summary>
@@ -415,44 +411,6 @@ namespace Api.Permissions{
 	}
 
 	/// <summary>
-	/// Raw mapping binding
-	/// </summary>
-	public class MappingBinding<T, ID>
-		where T : Content<ID>, new()
-		where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
-	{
-		/// <summary>
-		/// The underlying node.
-		/// </summary>
-		public MappingFilterTreeNode<T, ID> Node;
-
-		/// <summary>
-		/// The mapping service, if there is one. Doesn't exist if this is a field only mapping and really just translates to Field=x.
-		/// </summary>
-		public AutoService Map;
-		
-		/// <summary>
-		/// Resolves this node, collecting the mapping service to use.
-		/// </summary>
-		/// <returns></returns>
-		public async ValueTask Setup()
-		{
-			if (Map != null || Node.TargetField != null)
-			{
-				return;
-			}
-
-			// Because TargetField is null, this is definitely a "real" map.
-			// Must now load it up.
-
-			// Get the map info:
-			var relativeTo = (Node.SourceMapping ? Node.OtherService : Node.ThisService).GetContentFields();
-			Map = await Node.ListAsField.GetMappingService(relativeTo);
-		}
-		
-	}
-
-	/// <summary>
 	/// A tree of parsed filter nodes.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
@@ -461,11 +419,6 @@ namespace Api.Permissions{
 		where T : Content<ID>, new()
 		where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 	{
-		/// <summary>
-		/// Fields that will require ID collectors (if any - can be null).
-		/// </summary>
-		public List<ContentField> Collectors;
-
 		/// <summary>
 		/// Root node.
 		/// </summary>
@@ -517,85 +470,145 @@ namespace Api.Permissions{
 		private ILGenerator BindStringMethod;
 
 		/// <summary>
-		/// ValueTask Collect(Context context, AutoService mappingService, int collectorId, IDCollector collector)
-		/// </summary>
-		private ILGenerator CollectMethod;
-
-		/// <summary>
 		/// an array of just typeof(string)
 		/// </summary>
 		private static Type[] _strTypeInArray = new Type[] { typeof(string) };
 
 		/// <summary>
-		/// The set of mappings in this AST.
+		/// Reads the value from a member field. It can be localized or virtual. Nullables become default and Localized + JsonString are expanded.
 		/// </summary>
-		public List<MappingBinding<T, ID>> Mappings;
+		/// <param name="generator"></param>
+		/// <param name="member"></param>
+		/// <returns></returns>
+		/// <exception cref="Exception"></exception>
+		private Type ReadMemberValue(ILGenerator generator, MemberFilterTreeNode<T, ID> member)
+		{
+			if (member.ContextField != null)
+			{
+				// It's a context field.
+				generator.Emit(OpCodes.Ldarg_1);
+				var ctxGetMethod = member.ContextField.Property.GetGetMethod();
+				generator.Emit(OpCodes.Callvirt, ctxGetMethod);
+				return ctxGetMethod.ReturnType;
+			}
+
+			if (member.Field.VirtualInfo != null)
+			{
+				// Mapping fields are present on the .Mappings field.
+
+				var mappingsField = typeof(Content<ID>)
+					.GetField(
+						nameof(Content<ID>.Mappings),
+						BindingFlags.Public | BindingFlags.Instance
+					);
+
+				generator.Emit(OpCodes.Ldarg_2); // The object
+				generator.Emit(OpCodes.Ldflda, mappingsField); // The mappings field (a struct)
+				var getMethod = typeof(MappingData).GetMethod(nameof(MappingData.Get));
+				generator.Emit(OpCodes.Ldstr, member.Field.Name.ToLower());
+				generator.Emit(OpCodes.Callvirt, getMethod);
+				return getMethod.ReturnType; // List<ulong>
+			}
+			else if (member.Field.FieldInfo != null)
+			{
+				return ReadMemberFieldValue(generator, member.Field.FieldInfo);
+			}
+			else
+			{
+				throw new Exception("Invalid filter syntax");
+			}
+		}
+
+		/// <summary>
+		/// Reads a member field. Expands Localized and JsonString as well.
+		/// </summary>
+		private Type ReadMemberFieldValue(ILGenerator generator, FieldInfo fieldInfo)
+		{
+			Type fieldType = fieldInfo.FieldType;
+
+			var unwrapedType = fieldType;
+			
+			generator.Emit(OpCodes.Ldarg_2); // The object
+			generator.Emit(OpCodes.Ldfld, fieldInfo);
+
+			// Unwrap localized:
+			if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == typeof(Localized<>))
+			{
+				unwrapedType = fieldType.GetGenericArguments()[0];
+				
+				// .Get(context) => T
+				var localized = generator.DeclareLocal(fieldType);
+				generator.Emit(OpCodes.Stloc, localized);
+				generator.Emit(OpCodes.Ldloca, localized);
+				generator.Emit(OpCodes.Ldarg_1); // Context
+				generator.Emit(OpCodes.Ldc_I4_1); // With fallback (true)
+				generator.Emit(
+					OpCodes.Callvirt,
+					fieldType
+						.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] {
+							typeof(Context),
+							typeof(bool)
+						})
+				);
+
+				// Unwrap the localized attr:
+				fieldType = unwrapedType;
+			}
+
+			if (fieldType == typeof(JsonString))
+			{
+				// Unwrap JsonString as a regular string:
+				var jStr = generator.DeclareLocal(fieldType);
+				var valMethod = fieldType.GetMethod(nameof(JsonString.ValueOf), BindingFlags.Public | BindingFlags.Instance);
+				generator.Emit(OpCodes.Stloc, jStr);
+				generator.Emit(OpCodes.Ldloca, jStr);
+				generator.Emit(OpCodes.Callvirt, valMethod);
+				fieldType = typeof(string);
+			}
+
+			var underlyingType = Nullable.GetUnderlyingType(fieldType);
+
+			if (underlyingType != null)
+			{
+				// GetValueOrDefault call:
+				var valOrDefault = fieldType
+					.GetMethod("GetValueOrDefault", BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
+
+				var nulb = generator.DeclareLocal(fieldType);
+				generator.Emit(OpCodes.Stloc, nulb);
+				generator.Emit(OpCodes.Ldloca, nulb);
+				generator.Emit(OpCodes.Callvirt, valOrDefault);
+
+				fieldType = underlyingType;
+			}
+
+			if (fieldType == typeof(DateTime))
+			{
+				var dateTimeLocal = generator.DeclareLocal(fieldType);
+				generator.Emit(OpCodes.Stloc, dateTimeLocal);
+				generator.Emit(OpCodes.Ldloca, dateTimeLocal);
+				var ticksGetter = typeof(DateTime).GetProperty(nameof(DateTime.Ticks)).GetGetMethod();
+				generator.Emit(OpCodes.Callvirt, ticksGetter);
+			}
+
+			return fieldType;
+		}
 
 		/// <summary>
 		/// Emits a read field value for the given node into the given generator.
 		/// </summary>
 		/// <param name="generator"></param>
 		/// <param name="node"></param>
-		/// <param name="fieldType"></param>
-		/// <param name="unwrapNullables"></param>
-		public bool EmitReadValue(ILGenerator generator, FilterTreeNode<T, ID> node, Type fieldType, bool unwrapNullables = true)
+		/// <param name="idealType"></param>
+		public Type EmitReadValue(ILGenerator generator, FilterTreeNode<T, ID> node, Type idealType)
 		{
-			var isEnumerable = false;
-
-			var value = node as ConstFilterTreeNode<T, ID>; 
-			
-			if (value == null)
+			if (node is MemberFilterTreeNode<T, ID> member)
 			{
-				// Another member (e.g. CtxField = ObjectField)
-				var member2 = node as MemberFilterTreeNode<T, ID>;
-
-				if (member2.Field == null)
-				{
-					// Context field - never contains nullables.
-
-					// Arg 1 is ctx:
-					generator.Emit(OpCodes.Ldarg_1);
-					generator.Emit(OpCodes.Callvirt, member2.ContextField.Property.GetGetMethod());
-				}
-				else
-				{
-					// Field on object
-
-					// Arg 2 is the object being checked (Arg 1 is ctx):
-					generator.Emit(OpCodes.Ldarg_2);
-
-					// If it's nullable, unwrap it.
-					if (unwrapNullables)
-					{
-						var underlyingType = Nullable.GetUnderlyingType(fieldType);
-
-						if (underlyingType != null)
-						{
-							// GetValueOrDefault call:
-							var valOrDefault = fieldType.GetMethod("GetValueOrDefault", BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
-
-							if (valOrDefault != null)
-							{
-								generator.Emit(OpCodes.Ldflda, member2.Field.FieldInfo);
-								generator.Emit(OpCodes.Call, valOrDefault);
-							}
-							else
-							{
-								generator.Emit(OpCodes.Ldfld, member2.Field.FieldInfo);
-							}
-						}
-						else
-						{
-							generator.Emit(OpCodes.Ldfld, member2.Field.FieldInfo);
-						}
-					}
-					else
-					{
-						generator.Emit(OpCodes.Ldfld, member2.Field.FieldInfo);
-					}
-				}
+				// It's a member (e.g. CtxField = ObjectField)
+				return ReadMemberValue(generator, member);
 			}
-			else
+			
+			if (node is ConstFilterTreeNode<T, ID> value)
 			{
 				// The field's type dictates what we'll read the value as.
 
@@ -606,233 +619,88 @@ namespace Api.Permissions{
 				{
 					// Constant. Cooerce the constant to being of the same type as the field.
 
-					if (fieldType == typeof(string))
+					if (idealType == typeof(string))
 					{
 						generator.Emit(OpCodes.Ldstr, value.AsString());
 					}
-					else if (fieldType == typeof(float))
+					else if (idealType == typeof(float))
 					{
 						generator.Emit(OpCodes.Ldc_R4, (float)value.AsDecimal());
 					}
-					else if (fieldType == typeof(double))
+					else if (idealType == typeof(double))
 					{
 						generator.Emit(OpCodes.Ldc_R8, (double)value.AsDecimal());
 					}
-					else if (fieldType == typeof(uint) || fieldType == typeof(int) || fieldType == typeof(short) ||
-						fieldType == typeof(ushort) || fieldType == typeof(byte) || fieldType == typeof(sbyte))
+					else if (idealType == typeof(uint) || idealType == typeof(int) || idealType == typeof(short) ||
+						idealType == typeof(ushort) || idealType == typeof(byte) || idealType == typeof(sbyte))
 					{
 						generator.Emit(OpCodes.Ldc_I4, value.AsInt());
 					}
-					else if (fieldType == typeof(ulong) || fieldType == typeof(long))
+					else if (idealType == typeof(ulong) || idealType == typeof(long))
 					{
 						generator.Emit(OpCodes.Ldc_I8, value.AsInt());
 					}
-					else if (fieldType == typeof(bool))
+					else if (idealType == typeof(bool))
 					{
 						generator.Emit(OpCodes.Ldc_I4, value.AsBool() ? 1 : 0);
 					}
+
+					return idealType;
 				}
-				else
+
+				// Create the arg now:
+				var isEnumerable = argNode.Array;
+				Type argElementType = idealType;
+
+				if (argElementType.IsGenericType && argElementType.GetGenericTypeDefinition() == typeof(Localized<>))
 				{
-					// Create the arg now:
-					isEnumerable = argNode.Array;
-					Type argElementType = fieldType;
+					// Unwrap localized fields:
+					argElementType = argElementType.GetGenericArguments()[0];
+				}
 
-					if (argElementType.IsGenericType && argElementType.GetGenericTypeDefinition() == typeof(Localized<>))
+				// JsonString is an alias:
+				if (argElementType == typeof(JsonString))
+				{
+					argElementType = typeof(string);
+				}
+
+				var argType = argElementType;
+
+				if (argNode.Array)
+				{
+					argType = typeof(IEnumerable<>).MakeGenericType(argElementType);
+				}
+
+				var argField = DeclareArg(argNode.Id, argType);
+				argNode.Binding = argField;
+				generator.Emit(OpCodes.Ldarg_0);
+
+				// If it's nullable, unwrap it. Not available on the enumerable types.
+				var underlyingType = Nullable.GetUnderlyingType(argType);
+
+				if (underlyingType != null)
+				{
+					// GetValueOrDefault call:
+					var valOrDefault = argType.GetMethod("GetValueOrDefault", BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
+
+					if (valOrDefault != null)
 					{
-						// Unwrap localized fields:
-						argElementType = argElementType.GetGenericArguments()[0];
-					}
-
-					// JsonString is an alias:
-					if (argElementType == typeof(JsonString))
-					{
-						argElementType = typeof(string);
-					}
-
-					var argType = argElementType;
-
-					if (argNode.Array)
-					{
-						argType = typeof(IEnumerable<>).MakeGenericType(argElementType);
-					}
-
-					var argField = DeclareArg(argNode.Id, argType);
-					argNode.Binding = argField;
-					generator.Emit(OpCodes.Ldarg_0);
-
-					// If it's nullable, unwrap it.
-					if (unwrapNullables)
-					{
-						var underlyingType = Nullable.GetUnderlyingType(argElementType);
-
-						if (underlyingType != null)
-						{
-							// GetValueOrDefault call:
-							var valOrDefault = argElementType.GetMethod("GetValueOrDefault", BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
-
-							if (valOrDefault != null)
-							{
-								generator.Emit(OpCodes.Ldflda, argField.Builder);
-								generator.Emit(OpCodes.Call, valOrDefault);
-							}
-							else
-							{
-								generator.Emit(OpCodes.Ldfld, argField.Builder);
-							}
-						}
-						else
-						{
-							generator.Emit(OpCodes.Ldfld, argField.Builder);
-						}
+						generator.Emit(OpCodes.Ldflda, argField.Builder);
+						generator.Emit(OpCodes.Call, valOrDefault);
 					}
 					else
 					{
 						generator.Emit(OpCodes.Ldfld, argField.Builder);
 					}
+
+					return underlyingType;
 				}
+				
+				generator.Emit(OpCodes.Ldfld, argField.Builder);
+				return argType;
 			}
-
-			return isEnumerable;
-		}
-
-		/// <summary>
-		/// Adds a collector to the set. Field must be a virtual ListAs field.
-		/// </summary>
-		public void DeclareCollector(ContentField field, FilterTreeNode<T,ID> node, ILGenerator writerBody, string Operation)
-		{
-
-			if (Collectors == null)
-			{
-				Collectors = new List<ContentField>();
-			}
-
-			var currentIndex = Collectors.Count;
-			Collectors.Add(field);
-
-			if (currentIndex == 0)
-			{
-				// Load initial value:
-				// Create a var which ref's the current collector (always local 0):
-				writerBody.DeclareLocal(typeof(IDCollector));
-
-				// For the Ldfld (both load from same target object, this):
-				writerBody.Emit(OpCodes.Ldarg_0);
-				writerBody.Emit(OpCodes.Ldfld, FilterAst._firstCollector);
-				writerBody.Emit(OpCodes.Stloc_0);
-			}
-
-			if (CollectMethod == null)
-			{
-				if (FilterAst._collectSignature == null)
-				{
-					// ValueTask Collect(Context context, AutoService mappingService, int collectorId, IDCollector collector)
-					FilterAst._collectSignature = new Type[] {
-						typeof(Context), // Arg1
-						typeof(AutoService), // Arg2
-						typeof(int), // Arg3
-						typeof(IDCollector) // Arg4
-					};
-				}
-
-				var collectMethod = TypeBuilder.DefineMethod("Collect", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(ValueTask), FilterAst._collectSignature);
-				CollectMethod = collectMethod.GetILGenerator();
-			}
-
-			// if(indexToCollect == currentIndex)
-			// {
-			//      Note that "service" is being implicitly cast by simply using a strong-typed CollectSources method.
-			//      return service.CollectByTarget(context, collector, ID_VALUE);
-			//      OR, if it is a single value in the given value node
-			//      return service.CollectByTarget(context, collector, ID_VALUE);
-			// }
-
-			var afterBlock = CollectMethod.DefineLabel();
-			CollectMethod.Emit(OpCodes.Ldarg_3);
-			CollectMethod.Emit(OpCodes.Ldc_I4, currentIndex);
-			CollectMethod.Emit(OpCodes.Ceq);
-			CollectMethod.Emit(OpCodes.Brfalse, afterBlock);
-
-			// Inside the if statement
-
-			CollectMethod.Emit(OpCodes.Ldarg_2); // service.
-			CollectMethod.Emit(OpCodes.Ldarg_1); // (context,
-			CollectMethod.Emit(OpCodes.Ldarg, 4); // collector, 
-
-			var targetType = field.VirtualInfo.Type;
-
-			// Get the ID type of the field:
-			var idType = targetType.GetField("Id").FieldType;
 			
-			var isAnArray = EmitReadValue(CollectMethod, node, idType, false);
-
-			if (Operation == "containsany")
-			{
-				if (isAnArray)
-				{
-					// CollectByTargetSet(Context context, IDCollector<SRC_ID> collector, IEnumerable<TARG_ID> idSet)
-					var iEnumMethod = typeof(MappingService<,,,>)
-						.MakeGenericType(typeof(T), targetType, typeof(ID), idType)
-						.GetMethod("CollectByTargetSet");
-
-					CollectMethod.Emit(OpCodes.Callvirt, iEnumMethod);
-				}
-				else
-				{
-					// CollectByTarget(Context context, IDCollector<SRC_ID> collector, TARG_ID id)
-					var singleValueMethod = typeof(MappingService<,,,>)
-						.MakeGenericType(typeof(T), targetType, typeof(ID), idType)
-						.GetMethod("CollectByTarget");
-
-					CollectMethod.Emit(OpCodes.Callvirt, singleValueMethod);
-				}
-			}
-			else if (Operation == "contains" || Operation == "containsall" || Operation == "containsnone")
-			{
-				if (isAnArray)
-				{
-					var iEnumMethod = typeof(MappingService<,,,>)
-						.MakeGenericType(typeof(T), targetType, typeof(ID), idType)
-						.GetMethod("CollectByTargetSetContains");
-
-					CollectMethod.Emit(OpCodes.Callvirt, iEnumMethod);
-				}
-				else
-				{
-					// CollectByTarget(Context context, IDCollector<SRC_ID> collector, TARG_ID id)
-					var singleValueMethod = typeof(MappingService<,,,>)
-						.MakeGenericType(typeof(T), targetType, typeof(ID), idType)
-						.GetMethod("CollectByTarget");
-
-					CollectMethod.Emit(OpCodes.Callvirt, singleValueMethod);
-				}
-			}
-			else if (Operation == "=" || Operation == "!=")
-			{
-				if (isAnArray)
-				{
-					var iEnumMethod = typeof(MappingService<,,,>)
-						.MakeGenericType(typeof(T), targetType, typeof(ID), idType)
-						.GetMethod("CollectByTargetSetEquals");
-
-					CollectMethod.Emit(OpCodes.Callvirt, iEnumMethod);
-				}
-				else
-				{
-					// CollectByTarget(Context context, IDCollector<SRC_ID> collector, TARG_ID id)
-					var singleValueMethod = typeof(MappingService<,,,>)
-						.MakeGenericType(typeof(T), targetType, typeof(ID), idType)
-						.GetMethod("CollectByTargetEquals");
-
-					CollectMethod.Emit(OpCodes.Callvirt, singleValueMethod);
-				}
-			}
-
-			// Return the ValueTask
-			CollectMethod.Emit(OpCodes.Ret);
-			// End of if statement
-
-			CollectMethod.MarkLabel(afterBlock);
+			throw new Exception("Invalid filter - can't convert this node to a readable value.");
 		}
 
 		/// <summary>
@@ -1130,11 +998,6 @@ namespace Api.Permissions{
 				typeof(bool), new Type[] { typeof(Context), typeof(object), typeof(bool) }
 			);
 
-			if (FilterAst._firstCollector == null)
-			{
-				FilterAst._firstCollector = typeof(FilterBase).GetField(nameof(FilterBase.FirstCollector));
-			}
-
 			ILGenerator writerBody = matchMethod.GetILGenerator();
 
 			if (Root == null)
@@ -1150,7 +1013,6 @@ namespace Api.Permissions{
 			writerBody.Emit(OpCodes.Ret);
 
 			var baseFail = filterT.GetMethod(nameof(Filter<T, ID>.Fail));
-			var baseCollectFail = filterT.GetMethod(nameof(Filter<T, ID>.CollectFail));
 
 			if (_getTypeFromHandle == null)
 			{
@@ -1183,14 +1045,6 @@ namespace Api.Permissions{
 				BindStringMethod.Emit(OpCodes.Call, baseFail);
 				BindStringMethod.Emit(OpCodes.Ldarg_0);
 				BindStringMethod.Emit(OpCodes.Ret);
-			}
-
-			if (CollectMethod != null)
-			{
-				// At the bottom of the bind string method is a fail method which indicates current arg X is not of the current type.
-				CollectMethod.Emit(OpCodes.Ldarg_0);
-				CollectMethod.Emit(OpCodes.Call, baseCollectFail);
-				CollectMethod.Emit(OpCodes.Ret);
 			}
 
 			// Bake the type:
@@ -1814,7 +1668,9 @@ namespace Api.Permissions{
 		/// <param name="ast"></param>
 		public override void Emit(ILGenerator generator, FilterAst<T, ID> ast)
 		{
-			if (Operation == "and" || Operation == "&&")
+			var operation = Operation == null ? "" : Operation.Trim().ToLower();
+
+			if (operation == "and" || operation == "&&")
 			{
 				A.Emit(generator, ast);
 
@@ -1831,7 +1687,7 @@ namespace Api.Permissions{
 				generator.MarkLabel(afterFalse);
 				return;
 			}
-			else if (Operation == "or" || Operation == "||")
+			else if (operation == "or" || operation == "||")
 			{
 				var trueResult = generator.DefineLabel();
 				var afterTrue = generator.DefineLabel();
@@ -1846,7 +1702,7 @@ namespace Api.Permissions{
 				generator.MarkLabel(afterTrue);
 				return;
 			}
-			else if (Operation == "not")
+			else if (operation == "not")
 			{
 				A.Emit(generator, ast);
 				generator.Emit(OpCodes.Ldc_I4_0);
@@ -1854,369 +1710,483 @@ namespace Api.Permissions{
 				return;
 			}
 			
+			// All other operations require a member on the left hand side "Name=?" etc.
+
 			// Field=VALUE, FIELD>=VALUE etc.
 			var member = A as MemberFilterTreeNode<T, ID>;
 			
-			if (member == null)
+			if (member == null || member.Field == null || (member.Field.VirtualInfo == null && member.Field.FieldInfo == null))
 			{
-				throw new Exception("Invalid filter - operation '" + Operation + "' must be performed as Member=Value, not Value=Member.");
+				throw new Exception("Your filter has a syntax error - operation '" + Operation + "' must be performed as Member=Value, not Value=Member.");
 			}
 
-			// Is it a collector? This indicates it was a virtual listAs field.
-			if (member.Collect)
+			if (operation == "=")
 			{
-				// Test the current collector. The collector is:
-				ast.DeclareCollector(member.Field, B, generator, Operation);
+				EmitEquals(generator, ast, member, B);
+			}
+			else if (operation == "!=")
+			{
+				EmitEquals(generator, ast, member, B);
+				generator.Emit(OpCodes.Ldc_I4_0);
+				generator.Emit(OpCodes.Ceq);
+			}
+			else if (operation == ">=")
+			{
+				// A>=B is the same as !A<B
+				var memberType = ast.EmitReadValue(generator, member, null);
+				var valueType = ast.EmitReadValue(generator, B, memberType);
 
-				// loc0=loc0.NextCollector;
-				generator.Emit(OpCodes.Ldloc_0);
-				generator.Emit(OpCodes.Dup);
-				generator.Emit(OpCodes.Ldfld, IDCollector.NextCollectorFieldInfo);
-				generator.Emit(OpCodes.Stloc_0);
-
-				var matchAny = typeof(IDCollector<ID>).GetMethod(nameof(IDCollector<ID>.MatchAny));
-				var idField = typeof(T).GetField("Id");
-
-				// Collector is currently on the stack.
-
-				// Push ID field to stack:
-				generator.Emit(OpCodes.Ldarg_2);
-				generator.Emit(OpCodes.Ldfld, idField);
-
-				// collector.MatchAny(ID) => bool on stack
-				generator.Emit(OpCodes.Callvirt, matchAny);
-
-				if(Operation == "containsnone" || Operation == "!=")
-                {
-					// Invert:
-					generator.Emit(OpCodes.Ldc_I4_0);
-					generator.Emit(OpCodes.Ceq);
+				// The inputs must be the same type here and they must be both numeric.
+				if (memberType != valueType)
+				{
+					throw new Exception("Unsupported >= usage: Inputs must be the same type and not arrays.");
 				}
+
+				EmitLessThan(generator, valueType);
+
+				// Must use == 0 to invert them.
+				generator.Emit(OpCodes.Ldc_I4_0);
+				generator.Emit(OpCodes.Ceq);
+			}
+			else if (operation == "<=")
+			{
+				// A<=B is the same as !A>B
+				var memberType = ast.EmitReadValue(generator, member, null);
+				var valueType = ast.EmitReadValue(generator, B, memberType);
+
+				// The inputs must be the same type here and they must be both numeric.
+				if (memberType != valueType)
+				{
+					throw new Exception("Unsupported >= usage: Inputs must be the same type and not arrays.");
+				}
+				EmitGreaterThan(generator, valueType);
+
+				// Must use == 0 to invert them.
+				generator.Emit(OpCodes.Ldc_I4_0);
+				generator.Emit(OpCodes.Ceq);
+			}
+			else if (operation == ">")
+			{
+				var memberType = ast.EmitReadValue(generator, member, null);
+				var valueType = ast.EmitReadValue(generator, B, memberType);
+
+				// The inputs must be the same type here and they must be both numeric.
+				if (memberType != valueType)
+				{
+					throw new Exception("Unsupported >= usage: Inputs must be the same type and not arrays.");
+				}
+
+				EmitGreaterThan(generator, valueType);
+			}
+			else if (operation == "<")
+			{
+				var memberType = ast.EmitReadValue(generator, member, null);
+				var valueType = ast.EmitReadValue(generator, B, memberType);
+
+				// The inputs must be the same type here and they must be both numeric.
+				if (memberType != valueType)
+				{
+					throw new Exception("Unsupported >= usage: Inputs must be the same type and not arrays.");
+				}
+
+				EmitLessThan(generator, valueType);
+			}
+			else if (operation == "contains")
+			{
+				var memberType = ast.EmitReadValue(generator, member, null);
+				var valueType = ast.EmitReadValue(generator, B, memberType);
+				
+				if (memberType == typeof(string))
+				{
+					if (valueType != typeof(string))
+					{
+						throw new PublicException("As the field is a string, you can only use contains with a string value.", "filter_invalid");
+					}
+
+					if (_strContains == null)
+					{
+						_strContains = typeof(FilterAst)
+							.GetMethod(
+								nameof(FilterAst.GuardedContains), 
+								BindingFlags.Public | BindingFlags.Static, 
+								null, 
+								new Type[] { typeof(string), typeof(string) }, 
+								null
+							);
+					}
+
+					generator.Emit(OpCodes.Call, _strContains);
+					return;
+				}
+
+				// Check if memberType is enumerable
+				if (memberType != typeof(List<ulong>))
+				{
+					throw new PublicException("Contains can only be used on strings and array-like fields.", "filter_invalid");
+				}
+
+				if (IsEnumerable(valueType))
+				{
+					// Exact match. This assumes that valueArray is coerseable to IEnumerable of specifically ulong.
+					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContainsAll));
+					generator.Emit(OpCodes.Call, matchMethod);
+				}
+				else
+				{
+					// Contains (singular value).
+
+					// Convert the singular value to a ulong:
+					TypeIOEngine.CoerseToUlong(generator, valueType);
+
+					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContains));
+					generator.Emit(OpCodes.Call, matchMethod);
+				}
+			}
+			else if (operation == "containsany")
+			{
+				var memberType = ast.EmitReadValue(generator, member, null);
+				var valueType = ast.EmitReadValue(generator, B, memberType);
+
+				if (memberType == typeof(string))
+				{
+					if (valueType != typeof(string))
+					{
+						throw new PublicException("As the field is a string, you can only use ContainsAny with a string value.", "filter_invalid");
+					}
+
+					if (_strContains == null)
+					{
+						_strContains = typeof(FilterAst).GetMethod(nameof(FilterAst.GuardedContains), BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(string) }, null);
+					}
+
+					generator.Emit(OpCodes.Call, _strContains);
+					return;
+				}
+
+				// Check if memberType is enumerable
+				if (memberType != typeof(List<ulong>))
+				{
+					throw new PublicException("Contains can only be used on strings and array-like fields.", "filter_invalid");
+				}
+
+				if (IsEnumerable(valueType))
+				{
+					// Exact match. This assumes that valueArray is coerseable to IEnumerable of specifically ulong.
+					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContainsAny));
+					generator.Emit(OpCodes.Call, matchMethod);
+				}
+				else
+				{
+					// Contains (singular value).
+
+					// Convert the singular value to a ulong:
+					TypeIOEngine.CoerseToUlong(generator, valueType);
+
+					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContains));
+					generator.Emit(OpCodes.Call, matchMethod);
+				}
+			}
+			else if (operation == "startswith")
+			{
+				var memberType = ast.EmitReadValue(generator, member, null);
+				var valueType = ast.EmitReadValue(generator, B, memberType);
+
+				if (valueType != typeof(string) || memberType != typeof(string))
+				{
+					throw new PublicException("StartsWith can only be used on strings.", "filter_invalid");
+				}
+
+				if (_strStartsWith == null)
+				{
+					_strStartsWith = typeof(string)
+						.GetMethod("StartsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
+				}
+
+				generator.Emit(OpCodes.Call, _strStartsWith);
+			}
+			else if (operation == "endswith")
+			{
+				var memberType = ast.EmitReadValue(generator, member, null);
+				var valueType = ast.EmitReadValue(generator, B, memberType);
+
+				if (valueType != typeof(string) || memberType != typeof(string))
+				{
+					throw new PublicException("EndsWith can only be used on strings.", "filter_invalid");
+				}
+
+				if (_strEndsWith == null)
+				{
+					_strEndsWith = typeof(string).GetMethod("EndsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
+				}
+
+				generator.Emit(OpCodes.Call, _strEndsWith);
 			}
 			else
 			{
-				// It has an actual field. It can either be a context or a field on the target.
-				Type fieldType;
+				throw new Exception("Your filter has invalid syntax. Unrecognised operation: " + Operation);
+			}
+		}
 
-				if (member.Field == null)
+		private void EmitGreaterThan(ILGenerator generator, Type valueType)
+		{
+			var greaterThanMethod = valueType.GetMethod("op_GreaterThan", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
+					valueType,
+					valueType
+				}, null);
+
+			if (greaterThanMethod != null)
+			{
+				generator.Emit(OpCodes.Call, greaterThanMethod);
+				return;
+			}
+			
+			// Is unsigned?
+			if (valueType == typeof(ushort) || valueType == typeof(uint) || valueType == typeof(ulong) || valueType == typeof(byte))
+			{
+				generator.Emit(OpCodes.Cgt_Un);
+			}
+			else if(valueType == typeof(short) || valueType == typeof(int) || valueType == typeof(long) || valueType == typeof(byte))
+			{
+				generator.Emit(OpCodes.Cgt);
+			}
+			else
+			{
+				throw new PublicException("This filter operation can only be used on numeric types.", "filter/numeric_operator");
+			}
+		}
+
+		private void EmitLessThan(ILGenerator generator, Type valueType)
+		{
+			// If it has a dedicated LessThan method:
+			var lessThanMethod = valueType.GetMethod("op_LessThan", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
+				valueType,
+					valueType
+				}, null);
+
+			if (lessThanMethod != null)
+			{
+				generator.Emit(OpCodes.Call, lessThanMethod);
+				return;
+			}
+			
+			// Is unsigned?
+			if (valueType == typeof(ushort) || valueType == typeof(uint) || valueType == typeof(ulong) || valueType == typeof(byte))
+			{
+				generator.Emit(OpCodes.Clt_Un);
+			}
+			else if (valueType == typeof(short) || valueType == typeof(int) || valueType == typeof(long) || valueType == typeof(byte))
+			{
+				generator.Emit(OpCodes.Clt);
+			}
+			else
+			{
+				throw new PublicException("This filter operation can only be used on numeric types.", "filter/numeric_operator");
+			}
+
+		}
+
+		/// <summary>
+		/// True if the given type is enumerable/ array-like (but not a string)
+		/// </summary>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		private bool IsEnumerable(Type type)
+		{
+			return type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type);
+		}
+
+		private void EmitEquals(ILGenerator generator, FilterAst<T, ID> ast, MemberFilterTreeNode<T, ID> member, FilterTreeNode<T, ID> value)
+		{
+			var memberType = ast.EmitReadValue(generator, member, null);
+			var valueType = ast.EmitReadValue(generator, value, memberType);
+
+			var memberArray = IsEnumerable(memberType);
+			var valueArray = IsEnumerable(valueType);
+
+			// valueType can be an array, in which case it is equiv to IN(..).
+			// if memberType is also an array (a list field), then it is an exact match.
+			if (memberArray)
+			{
+				if (memberType != typeof(List<ulong>))
 				{
-					// Context field
-					fieldType = member.ContextField.PrivateFieldInfo.FieldType;
+					// Only supporting ulong lists (virtual ListAs field compatible) for now otherwise
+					// the permutations set is huge and 99% would never be used anyway!
+					throw new PublicException("This filter field is currently unsupported.", "filter/unsupported");
+				}
+
+				if (valueArray)
+				{
+					// Exact match. This assumes that valueArray is coerseable to IEnumerable of specifically ulong.
+					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetEquals));
+					generator.Emit(OpCodes.Call, matchMethod);
 				}
 				else
 				{
-					// Field on object
-					fieldType = member.Field.FieldInfo.FieldType;
+					// Contains.
+
+					// Convert the singular value to a ulong:
+					TypeIOEngine.CoerseToUlong(generator, valueType);
+
+					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContains));
+					generator.Emit(OpCodes.Call, matchMethod);
 				}
 
-				var unwrapedType = fieldType;
-				var isLocalized = false;
+				return;
+			}
+			else if (valueArray)
+			{
+				// IN(..) equiv. Get the IEnumerable<T> T:
+				var itemType = GetEnumerableType(valueType);
 
-				if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == typeof(Localized<>))
+				var matchMethod = typeof(Filter<T, ID>)
+					.GetMethod(nameof(Filter<T, ID>.MemberInSet))
+					.MakeGenericMethod(new Type[] {
+						itemType
+					});
+				generator.Emit(OpCodes.Call, matchMethod);
+
+				return;
+			}
+
+			// Source is a singular value.
+			if (memberType == typeof(string))
+			{
+				if (valueType != typeof(string))
 				{
-					unwrapedType = fieldType.GetGenericArguments()[0];
-					isLocalized = true;
-				}
+					// Convert the value to a string.
+					// The value is currently on the top of the stack so we can do so.
+					var toStr = valueType.GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance);
 
-				var nonNullable = Nullable.GetUnderlyingType(unwrapedType);
-				if (nonNullable == null)
-				{
-					nonNullable = unwrapedType;
-				}
-
-				ast.EmitReadValue(generator, member, fieldType);
-
-				if (isLocalized)
-				{
-					// .Get(context) => T
-					var localized = generator.DeclareLocal(fieldType);
-					generator.Emit(OpCodes.Stloc, localized);
-					generator.Emit(OpCodes.Ldloca, localized);
-					generator.Emit(OpCodes.Ldarg_1); // Context
-					generator.Emit(OpCodes.Ldc_I4_1); // With fallback (true)
-					generator.Emit(
-						OpCodes.Callvirt,
-						fieldType
-							.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] {
-								typeof(Context),
-								typeof(bool)
-							})
-					);
-
-					// Unwrap the localized attr:
-					fieldType = unwrapedType;
-				}
-
-				var isEnumerable = ast.EmitReadValue(generator, B, fieldType);
-
-				if (Operation == "=")
-				{
-					if (isEnumerable)
+					if (toStr == null)
 					{
-						var baseMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.HasAny));
-						var hasAny = baseMethod.MakeGenericMethod(fieldType);
-						// It's a static method so no "this" is needed. The two field values are also already on the stack.
-						generator.Emit(OpCodes.Call, hasAny);
+						throw new PublicException("Cannot convert value type to a string for checking if it equal to a string field.", "filter/invalid");
 					}
-					else if (fieldType == typeof(string))
-					{
-						// Must use .Equals as they're ref types:
-						if (_strEquals == null)
-						{
-							_strEquals = typeof(string).GetMethod("Equals", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(string) }, null);
-						}
 
-						generator.Emit(OpCodes.Call, _strEquals);
+					if (valueType.IsValueType)
+					{
+						// Store it in a local to call its toStr method.
+						var loc = generator.DeclareLocal(valueType);
+						generator.Emit(OpCodes.Stloc, loc);
+						generator.Emit(OpCodes.Ldloca, loc);
+						generator.Emit(OpCodes.Callvirt, toStr);
 					}
 					else
 					{
-						// If it has a dedicated equals method:
-						var equalsMethod = nonNullable.GetMethod("op_Equality", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
-						nonNullable,
-						nonNullable
-					}, null);
-
-						if (equalsMethod != null)
-						{
-							generator.Emit(OpCodes.Call, equalsMethod);
-						}
-						else
-						{
-							generator.Emit(OpCodes.Ceq);
-						}
+						// Directly call toStr:
+						generator.Emit(OpCodes.Callvirt, toStr);
 					}
 				}
-				else if (Operation == "!=")
+
+				if (_strEquals == null)
 				{
-					if (fieldType == typeof(string))
-					{
-						// Must use .Equals as they're ref types:
-						if (_strEquals == null)
-						{
-							_strEquals = typeof(string).GetMethod("Equals", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(string) }, null);
-						}
-
-						generator.Emit(OpCodes.Call, _strEquals);
-					}
-					else
-					{
-						// If it has a dedicated equals method:
-						var equalsMethod = nonNullable.GetMethod("op_Equality", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
-						nonNullable,
-						nonNullable
-					}, null);
-
-						if (equalsMethod != null)
-						{
-							generator.Emit(OpCodes.Call, equalsMethod);
-						}
-						else
-						{
-							generator.Emit(OpCodes.Ceq);
-						}
-					}
-					generator.Emit(OpCodes.Ldc_I4_0);
-					generator.Emit(OpCodes.Ceq);
+					_strEquals = typeof(string).GetMethod("Equals", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(string) }, null);
 				}
-				else if (Operation == ">=")
+
+				generator.Emit(OpCodes.Call, _strEquals);
+				return;
+			}
+
+			var equalsMethod = memberType.GetMethod("op_Equality", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
+				memberType,
+				valueType
+			}, null);
+
+			if (equalsMethod != null)
+			{
+				generator.Emit(OpCodes.Call, equalsMethod);
+				return;
+			}
+
+			if (memberType == valueType)
+			{
+				// Common situation. If the type is Ceq compatible then proceed with it.
+				if (memberType.IsValueType && !IsCeqCompatible(memberType))
 				{
-					// A>=B is the same as !A<B
-
-					// If it has a dedicated LessThan method:
-					var lessThanMethod = nonNullable.GetMethod("op_LessThan", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
-						nonNullable,
-						nonNullable
-					}, null);
-
-					if (lessThanMethod != null)
-					{
-						generator.Emit(OpCodes.Call, lessThanMethod);
-					}
-					else
-					{
-						// Is unsigned?
-						var unsigned = nonNullable == typeof(ushort) || nonNullable == typeof(uint) || nonNullable == typeof(ulong) || nonNullable == typeof(byte);
-
-						if (unsigned)
-						{
-							generator.Emit(OpCodes.Clt_Un);
-						}
-						else
-						{
-							generator.Emit(OpCodes.Clt);
-						}
-					}
-
-					// Must use == 0 to invert them.
-					generator.Emit(OpCodes.Ldc_I4_0);
-					generator.Emit(OpCodes.Ceq);
+					throw new PublicException("Invalid filter: unable to combine these field types during equality.", "filter/invalid");
 				}
-				else if (Operation == "<=")
+
+				generator.Emit(OpCodes.Ceq);
+			}
+			else
+			{
+				// Cast valueType towards being memberType.
+				throw new PublicException("Invalid filter: Field coersion is not supported at the moment.", "filter/invalid");
+			}
+		}
+
+		/// <summary>
+		/// Searches for the IEnumerable[T] interface description on the given type.
+		/// </summary>
+		/// <param name="valueType"></param>
+		/// <returns></returns>
+		private Type GetEnumerableType(Type valueType)
+		{
+			if (valueType.IsGenericType)
+			{
+				var def = valueType.GetGenericTypeDefinition();
+
+				if (def == typeof(IEnumerable<>))
 				{
-					// A<=B is the same as !A>B
-
-					var greaterThanMethod = nonNullable.GetMethod("op_GreaterThan", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
-						nonNullable,
-						nonNullable
-					}, null);
-
-					if (greaterThanMethod != null)
-					{
-						generator.Emit(OpCodes.Call, greaterThanMethod);
-					}
-					else
-					{
-						// Is unsigned?
-						var unsigned = nonNullable == typeof(ushort) || nonNullable == typeof(uint) || nonNullable == typeof(ulong) || nonNullable == typeof(byte);
-
-						if (unsigned)
-						{
-							generator.Emit(OpCodes.Cgt_Un);
-						}
-						else
-						{
-							generator.Emit(OpCodes.Cgt);
-						}
-					}
-
-					// Must use == 0 to invert them.
-					generator.Emit(OpCodes.Ldc_I4_0);
-					generator.Emit(OpCodes.Ceq);
+					return valueType.GetGenericArguments()[0];
 				}
-				else if (Operation == ">")
+			}
+
+			var interfaces = valueType.GetInterfaces();
+
+			foreach (var intf in interfaces)
+			{
+				if (intf.IsGenericType)
 				{
-					var greaterThanMethod = nonNullable.GetMethod("op_GreaterThan", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
-						nonNullable,
-						nonNullable
-					}, null);
+					var def = GetEnumerableType(intf);
 
-					if (greaterThanMethod != null)
+					if (def != null)
 					{
-						generator.Emit(OpCodes.Call, greaterThanMethod);
-					}
-					else
-					{
-						// Is unsigned?
-						var unsigned = nonNullable == typeof(ushort) || nonNullable == typeof(uint) || nonNullable == typeof(ulong) || nonNullable == typeof(byte);
-
-						if (unsigned)
-						{
-							generator.Emit(OpCodes.Cgt_Un);
-						}
-						else
-						{
-							generator.Emit(OpCodes.Cgt);
-						}
+						return def;
 					}
 				}
-				else if (Operation == "<")
-				{
-					var lessThanMethod = nonNullable.GetMethod("op_LessThan", BindingFlags.Static | BindingFlags.Public, null, new Type[] {
-						nonNullable,
-						nonNullable
-					}, null);
+			}
 
-					if (lessThanMethod != null)
-					{
-						generator.Emit(OpCodes.Call, lessThanMethod);
-					}
-					else
-					{
-						// Is unsigned?
-						var unsigned = nonNullable == typeof(ushort) || nonNullable == typeof(uint) || nonNullable == typeof(ulong) || nonNullable == typeof(byte);
+			// Try its base type otherwise.
+			var bt = valueType.BaseType;
 
-						if (unsigned)
-						{
-							generator.Emit(OpCodes.Clt_Un);
-						}
-						else
-						{
-							generator.Emit(OpCodes.Clt);
-						}
-					}
-				}
-				else if (Operation == "contains")
-				{
-					if (isEnumerable)
-					{
-						var baseMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.HasAny));
-						var hasAny = baseMethod.MakeGenericMethod(fieldType);
-						// It's a static method so no "this" is needed. The two field values are also already on the stack.
-						generator.Emit(OpCodes.Call, hasAny);
-					}
-					else if (fieldType == typeof(string))
-					{
-						if (_strContains == null)
-						{
-							_strContains = typeof(FilterAst).GetMethod(nameof(FilterAst.GuardedContains), BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(string) }, null);
-						}
+			if (bt == null || bt == typeof(object))
+			{
+				return null;
+			}
 
-						generator.Emit(OpCodes.Call, _strContains);
-					}
-					else
-					{
-						throw new PublicException("Contains can only be used on strings and array-like fields.", "filter_invalid");
-					}
-				}
-				else if (Operation == "containsAny")
-				{
-					if (isEnumerable)
-					{
-						var baseMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.HasAny));
-						var hasAny = baseMethod.MakeGenericMethod(fieldType);
-						// It's a static method so no "this" is needed. The two field values are also already on the stack.
-						generator.Emit(OpCodes.Call, hasAny);
-					}
-					else if (fieldType == typeof(string))
-					{
-						if (_strContains == null)
-						{
-							_strContains = typeof(FilterAst).GetMethod(nameof(FilterAst.GuardedContains), BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(string) }, null);
-						}
+			return GetEnumerableType(bt);
+		}
 
-						generator.Emit(OpCodes.Call, _strContains);
-					}
-					else
-					{
-						throw new PublicException("Contains can only be used on strings and array-like fields.", "filter_invalid");
-					}
-				}
-				else if (Operation == "startswith")
-				{
-					if (fieldType == typeof(string))
-					{
-						if (_strStartsWith == null)
-						{
-							_strStartsWith = typeof(string).GetMethod("StartsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
-						}
+		private bool IsCeqCompatible(Type type)
+		{
+			if (!type.IsValueType)
+			{
+				return true;
+			}
 
-						generator.Emit(OpCodes.Call, _strStartsWith);
-					}
-					else
-					{
-						throw new PublicException("StartsWith can only be used on strings.", "filter_invalid");
-					}
-				}
-				else if (Operation == "endswith")
-				{
-					if (fieldType == typeof(string))
-					{
-						if (_strEndsWith == null)
-						{
-							_strEndsWith = typeof(string).GetMethod("EndsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
-						}
+			if (type.IsEnum)
+			{
+				return true;
+			}
 
-						generator.Emit(OpCodes.Call, _strEndsWith);
-					}
-					else
-					{
-						throw new PublicException("EndsWith can only be used on strings.", "filter_invalid");
-					}
-				}
-				else
-				{
-					throw new Exception("Opcode not implemented yet: " + Operation);
-				}
+			switch (Type.GetTypeCode(type))
+			{
+				case TypeCode.Boolean:
+				case TypeCode.Char:
+				case TypeCode.SByte:
+				case TypeCode.Byte:
+				case TypeCode.Int16:
+				case TypeCode.UInt16:
+				case TypeCode.Int32:
+				case TypeCode.UInt32:
+				case TypeCode.Int64:
+				case TypeCode.UInt64:
+				case TypeCode.Single:
+				case TypeCode.Double:
+					return true;
+
+				default:
+					return false; // Structs and other unsupported value types
 			}
 		}
 
@@ -2383,11 +2353,6 @@ namespace Api.Permissions{
 		/// True if this is a context field.
 		/// </summary>
 		public bool OnContext;
-
-		/// <summary>
-		/// True if this field should be collected with an ID collector.
-		/// </summary>
-		public bool Collect;
 
 		/// <summary>
 		/// 
@@ -2604,34 +2569,27 @@ namespace Api.Permissions{
 				{
 					throw new PublicException("Couldn't find filter field '" + Name + "' on this type, or a global virtual field by the same name.", "filter_invalid");
 				}
-				else
+
+				// Some mappings are handled via ID fields on the actual target type.
+				// We can short those out and replace them with regular array fields instead.
+
+				// For example, imagine a virtual list field called CallToActions, and it is being used in a filter on a Video.
+				// "CallToActions=[?]"
+				// However the actual video only has a CallToActionId field, and only stores one.
+				// In this situation, a mapping is "not required" and the "local" field will be that CallToActionId one.
+				// Ultimately, that means the filter executes the same as this faster one:
+				// "CallToActionId=[?]"
+
+				var localMappedField = field.GetIdFieldIfMappingNotRequired(fields);
+
+				if (localMappedField != null)
 				{
-					// Some mappings are handled via ID fields on the actual target type.
-					// We can short those out and replace them with regular array fields instead.
-
-					// For example, imagine a virtual list field called CallToActions, and it is being used in a filter on a Video.
-					// "CallToActions=[?]"
-					// However the actual video only has a CallToActionId field, and only stores one.
-					// In this situation, a mapping is "not required" and the "local" field will be that CallToActionId one.
-					// Ultimately, that means the filter executes the same as this faster one:
-					// "CallToActionId=[?]"
-
-					var localMappedField = field.GetIdFieldIfMappingNotRequired(fields);
-
-					if (localMappedField != null)
-					{
-						// Nice! No mapping is required, because this type has the field on it.
-						field = localMappedField;
-					}
-					else
-					{
-						// Must use A->B mapping via collecting IDs from some map service.
-						Collect = true;
-					}
-
-					// Either way, it has an array node.
-					ast.HasArrayNodes = true;
+					// Nice! No mapping is required because this type has the field on it.
+					field = localMappedField;
 				}
+
+				// Either way, it has an array node.
+				ast.HasArrayNodes = true;
 			}
 			else if (field.PropertyInfo != null)
 			{
@@ -2643,278 +2601,6 @@ namespace Api.Permissions{
 			Field = field;
 
 			return this;
-		}
-	}
-
-	/// <summary>
-	/// A node which is true if a mapping exists. This node is why mappings are cached as it expects to resolve instantly.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <typeparam name="ID"></typeparam>
-	public partial class MappingFilterTreeNode<T, ID> : FilterTreeNode<T, ID>
-		where T : Content<ID>, new()
-		where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
-	{
-		/// <summary>
-		/// Index of this mapping in the Ast.Mappings set.
-		/// </summary>
-		public int Index;
-		
-		/// <summary>
-		/// True if the thing we are checking for a mapping with is the source object (meaning "this" is a target).
-		/// </summary>
-		public bool SourceMapping;
-
-		/// <summary>
-		/// The name of the type at the other end of the mapping, e.g. Video
-		/// </summary>
-		public string TypeName;
-
-		/// <summary>
-		/// The node where the ID will come from.
-		/// </summary>
-		public FilterTreeNode<T, ID> Id;
-
-		/// <summary>
-		/// Optional map name. If null, primary map is used.
-		/// </summary>
-		public string MapName;
-
-		/// <summary>
-		/// The service for type T.
-		/// </summary>
-		public AutoService<T, ID> ThisService;
-
-		/// <summary>
-		/// The other service (it'll either be target service, or source service, depending on SourceMapping).
-		/// </summary>
-		public AutoService OtherService;
-
-		/// <summary>
-		/// The mapping binding which stores the resolved map.
-		/// </summary>
-		public MappingBinding<T, ID> Binding;
-
-		/// <summary>
-		/// The underlying ListAsField to use. Set automatically.
-		/// </summary>
-		public ContentField ListAsField;
-		
-		/// <summary>
-		/// Set automatically. Exists if the ListAs field on this pair of types has a field shortcut (null if it is a full mapping).
-		/// </summary>
-		public ContentField TargetField;
-		
-		/// <summary>
-		/// True if this is an On(..) node
-		/// </summary>
-		public bool IsOn;
-
-		/// <summary>
-		/// True if the node has an on statement.
-		/// Most nodes return false - only and will accept one as a child.
-		/// </summary>
-		/// <returns></returns>
-		public override bool HasRootedOnStatement()
-		{
-			return IsOn;
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="generator"></param>
-		/// <param name="ast"></param>
-		public override void Emit(ILGenerator generator, FilterAst<T, ID> ast)
-		{
-			if (TargetField != null)
-			{
-				// Actually just a field=x regular emit.
-				var opNode = new OpFilterTreeNode<T, ID>();
-				opNode.Operation = "=";
-				var mem = new MemberFilterTreeNode<T, ID>();
-				mem.Field = TargetField;
-				opNode.A = mem;
-				opNode.B = Id;
-
-				opNode.Emit(generator, ast);
-				return;
-			}
-			else
-			{
-				// Code being emitted is approximately like this:
-				// var map = Filter<T,ID>.GetMap(Index); // Is a MappingService<SRC_ID, TARG_ID>
-				// if(SourceMapping){
-				// return map.ExistsInCache(Id, CurrentObjectId); // The provided ID is the source
-				// }else{
-				// return map.ExistsInCache(CurrentObjectId, Id); // The provided ID is the target
-				// }
-
-				// Grab the GetMap func:
-				var getMapMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.GetMap));
-
-				// thisFilter.GetMap(Index)
-				generator.Emit(OpCodes.Ldarg_0); // thisFilter
-				generator.Emit(OpCodes.Ldc_I4, Index); // (Index)
-				generator.Emit(OpCodes.Callvirt, getMapMethod);
-
-				// Stack now has the MappingService on it.
-
-				// What type actually is it?
-				Type mappingServiceType;
-
-				if (SourceMapping)
-				{
-					// "this" is the target.
-					mappingServiceType = typeof(MappingService<,>).MakeGenericType(OtherService.IdType, ThisService.IdType);
-				}
-				else
-				{
-					mappingServiceType = typeof(MappingService<,>).MakeGenericType(ThisService.IdType, OtherService.IdType);
-				}
-
-				// Get the existsInCache method:
-				var existsInCache = mappingServiceType.GetMethod("ExistsInCache");
-
-				if (SourceMapping)
-				{
-					// "this" (the actual object being tested) is the target.
-					ast.EmitReadValue(generator, Id, OtherService.IdType); // Emit source (other service) ID.
-
-					// Read the ID:
-					generator.Emit(OpCodes.Ldarg_2); // Emit source (this service) ID.
-					generator.Emit(OpCodes.Ldfld, ThisService.InstanceType.GetField("Id"));
-
-					generator.Emit(OpCodes.Callvirt, existsInCache);
-				}
-				else
-				{
-					generator.Emit(OpCodes.Ldarg_2); // Emit source (this service) ID.
-					generator.Emit(OpCodes.Ldfld, ThisService.InstanceType.GetField("Id"));
-
-					// Emit source (this service) ID.
-					ast.EmitReadValue(generator, Id, OtherService.IdType); // Emit target (other service) ID.
-					generator.Emit(OpCodes.Callvirt, existsInCache);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Add this node to the given AST.
-		/// </summary>
-		/// <param name="ast"></param>
-		/// <returns></returns>
-		public MappingFilterTreeNode<T, ID> Add(FilterAst<T, ID> ast)
-		{
-			if (ast.Mappings == null)
-			{
-				ast.Mappings = new List<MappingBinding<T, ID>>();
-			}
-
-			// Other type and its service:
-			var typeName = TypeName;
-			var otherContentType = ContentTypes.GetType(typeName);
-
-			if (otherContentType == null)
-			{
-				throw new PublicException("A content type called '" + typeName + "' doesn't exist.", "filter_invalid");
-			}
-
-			OtherService = Services.GetByContentType(otherContentType);
-
-			if (OtherService == null)
-			{
-				throw new PublicException("A content type called '" + typeName + "' can't be used via mappings.", "filter_invalid");
-			}
-
-			ThisService = ast.Service;
-			Index = ast.Mappings.Count;
-
-			// var thisContentType = typeof(T);
-			
-			var mapName = MapName;
-
-			if (mapName != null)
-			{
-				// Ensure this map name exists:
-				if (!ContentFields.GlobalVirtualFields.TryGetValue(mapName.ToLower(), out ListAsField))
-				{
-					throw new PublicException(
-						"A map called '" + mapName + "' doesn't exist (likely used by an On declaration in your filter).",
-						"no_map"
-					);
-				}
-			}
-			else
-			{
-				// Use the primary map name. Map is from the target service.
-				var cf = (SourceMapping ? ThisService : OtherService).GetContentFields();
-
-				if (cf.PrimaryMapName == null)
-				{
-					throw new PublicException(
-						"This type doesn't have a primary map, meaning you'll need to specify a map name via \"map\":\"name_here\" in your \"on\":{}. " +
-						"The map name is the name of a ListAs field. For example, ListAs(\"Tags\") on Tag means it has a map called 'Tags'. " +
-						"On Tag specifically however, ListAs(\"Tags\") is the primary map (because it's the most obvious name) and as a result you can omit the map name when using it.",
-						"no_primary_map"
-					);
-				}
-
-				MapName = cf.PrimaryMapName;
-				ListAsField = cf.PrimaryMap;
-			}
-
-			// Next, establish if this is a real mapping or just a field shortcut.
-			var relativeTo = (SourceMapping ? OtherService : ThisService).GetContentFields();
-
-			// Set target field if there is one:
-			var targetVirtualField = ListAsField.GetIdFieldIfMappingNotRequired(relativeTo);
-
-			if (targetVirtualField != null)
-			{
-				// get its ID source:
-				TargetField = targetVirtualField.VirtualInfo.IdSource;
-			}
-
-			Binding = new MappingBinding<T, ID>()
-			{
-				Node = this
-			};
-
-			ast.Mappings.Add(Binding);
-			return this;
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		public override void ToString(StringBuilder builder)
-		{
-			builder.Append("On(");
-			
-			if (string.IsNullOrWhiteSpace(MapName))
-			{
-				builder.Append("NO_TYPE_SPECIFIED");
-			}
-			else
-			{
-				builder.Append(TypeName);
-			}
-
-			builder.Append(',');
-			
-			if (Id != null)
-			{
-				Id.ToString(builder);
-			}
-
-			if (!string.IsNullOrWhiteSpace(MapName))
-			{
-				builder.Append(',');
-				builder.Append(MapName);
-			}
-
-			builder.Append(')');
 		}
 	}
 

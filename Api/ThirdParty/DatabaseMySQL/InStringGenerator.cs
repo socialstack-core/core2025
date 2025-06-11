@@ -54,14 +54,6 @@ namespace Api.Permissions{
 				// Got one - instance it now:
 				var gen = Activator.CreateInstance(typeInfo) as InStringGenerator;
 				map[enumType] = gen;
-
-				if (forBaseType.IsValueType && Nullable.GetUnderlyingType(forBaseType) == null)
-				{
-					// IDCollector is only available for value types - not nullables or e.g. string.
-					var collectorType = typeof(IDCollector<>).MakeGenericType(new Type[] { forBaseType });
-
-					map[collectorType] = gen;
-				}
 			}
 
 			_map = map;
@@ -91,16 +83,6 @@ namespace Api.Permissions{
 		public virtual bool Generate(Writer writer, object vals)
 		{
 			return false;
-		}
-		
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public virtual bool GenerateFromCollector(Writer writer, object vals)
-		{
-			throw new NotImplementedException();
 		}
 	}
 
@@ -148,24 +130,6 @@ namespace Api.Permissions{
 			}
 			return !first;
 		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<double>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while(it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
-			}
-			return !first;
-		}
 	}
 
 	/// <summary>
@@ -186,24 +150,6 @@ namespace Api.Permissions{
 			foreach(var v in values){
 				if(first){first=false;}else{writer.Write((byte)',');}
 				writer.WriteS(v);
-			}
-			return !first;
-		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<float>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
 			}
 			return !first;
 		}
@@ -230,24 +176,6 @@ namespace Api.Permissions{
 			}
 			return !first;
 		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<decimal>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
-			}
-			return !first;
-		}
 	}
 
 	/// <summary>
@@ -268,24 +196,6 @@ namespace Api.Permissions{
 			foreach(var v in values){
 				if(first){first=false;}else{writer.Write((byte)',');}
 				writer.Write(v ? (byte)'1' : '0');
-			}
-			return !first;
-		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<bool>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.Write(it.Current() ? (byte)'1' : '0');
 			}
 			return !first;
 		}
@@ -312,24 +222,6 @@ namespace Api.Permissions{
 			}
 			return !first;
 		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<ulong>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
-			}
-			return !first;
-		}
 	}
 
 	/// <summary>
@@ -350,24 +242,6 @@ namespace Api.Permissions{
 			foreach(var v in values){
 				if(first){first=false;}else{writer.Write((byte)',');}
 				writer.WriteS(v);
-			}
-			return !first;
-		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<long>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
 			}
 			return !first;
 		}
@@ -394,24 +268,6 @@ namespace Api.Permissions{
 			}
 			return !first;
 		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<uint>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
-			}
-			return !first;
-		}
 	}
 
 	/// <summary>
@@ -432,24 +288,6 @@ namespace Api.Permissions{
 			foreach(var v in values){
 				if(first){first=false;}else{writer.Write((byte)',');}
 				writer.WriteS(v);
-			}
-			return !first;
-		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<int>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
 			}
 			return !first;
 		}
@@ -476,24 +314,6 @@ namespace Api.Permissions{
 			}
 			return !first;
 		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<ushort>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
-			}
-			return !first;
-		}
 	}
 
 	/// <summary>
@@ -514,24 +334,6 @@ namespace Api.Permissions{
 			foreach(var v in values){
 				if(first){first=false;}else{writer.Write((byte)',');}
 				writer.WriteS(v);
-			}
-			return !first;
-		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<short>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
 			}
 			return !first;
 		}
@@ -558,24 +360,6 @@ namespace Api.Permissions{
 			}
 			return !first;
 		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<byte>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
-			}
-			return !first;
-		}
 	}
 
 	/// <summary>
@@ -596,24 +380,6 @@ namespace Api.Permissions{
 			foreach(var v in values){
 				if(first){first=false;}else{writer.Write((byte)',');}
 				writer.WriteS(v);
-			}
-			return !first;
-		}
-
-		/// <summary>
-		/// Generate the series of values for the given collector.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="vals"></param>
-		public override bool GenerateFromCollector(Writer writer, object vals)
-		{
-			var values = (IDCollector<sbyte>)vals;
-			bool first = true;
-			var it = values.GetNonAllocEnumerator();
-			while (it.HasMore())
-			{
-				if (first) { first = false; } else { writer.Write((byte)','); }
-				writer.WriteS(it.Current());
 			}
 			return !first;
 		}

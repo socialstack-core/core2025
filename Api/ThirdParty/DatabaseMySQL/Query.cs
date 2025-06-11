@@ -50,11 +50,6 @@ namespace Api.Database
 		public FieldMap Fields;
 
 		/// <summary>
-		/// Used when transferring fields between tables (typically a copy statement).
-		/// </summary>
-		public FieldTransferMap TransferMap;
-
-		/// <summary>
 		/// A custom WHERE .. part of this query.
 		/// </summary>
 		public string _where;
@@ -261,83 +256,6 @@ namespace Api.Database
 						return;
 					}
 					break;
-				case COPY:
-
-					// Insert..Select query.
-					str.WriteS("INSERT INTO ");
-					str.WriteS(MySQLSchema.TableName(TransferMap.TargetEntityName));
-					if (TransferMap.TargetTypeNameExtension != null)
-					{
-						str.WriteS(TransferMap.TargetTypeNameExtension);
-					}
-					str.Write((byte)'(');
-
-					// List of field names next!
-					for (var i = 0; i < TransferMap.Transfers.Count; i++)
-					{
-						if (i != 0)
-						{
-							str.WriteS(", ");
-						}
-						str.Write((byte)'`');
-						str.WriteS(TransferMap.Transfers[i].To.Name);
-						str.Write((byte)'`');
-					}
-
-					str.WriteS(") SELECT ");
-
-					// List of fields next!
-					for (var i = 0; i < TransferMap.Transfers.Count; i++)
-					{
-						var transfer = TransferMap.Transfers[i];
-
-						if (i != 0)
-						{
-							str.WriteS(", ");
-						}
-
-						if (transfer.IsConstant)
-						{
-							if (transfer.Constant == null)
-							{
-								str.WriteS("NULL");
-							}
-							else if (transfer.Constant is string)
-							{
-								str.Write((byte)'"');
-								str.WriteS(MySql.Data.MySqlClient.MySqlHelper.EscapeString((string)transfer.Constant));
-								str.Write((byte)'"');
-							}
-							else
-							{
-								// True, false, int etc.
-								str.WriteS(transfer.Constant.ToString());
-							}
-							str.WriteS(" AS `");
-							str.WriteS(transfer.To.Name);
-							str.Write((byte)'`');
-						}
-						else
-						{
-							str.Write((byte)'`');
-							str.WriteS(transfer.From.Name);
-							str.WriteS("` AS `");
-							str.WriteS(transfer.To.Name);
-							str.Write((byte)'`');
-						}
-					}
-
-					str.WriteS(" FROM ");
-					str.WriteS(MySQLSchema.TableName(TransferMap.SourceEntityName));
-					str.WriteS(" AS `");
-					str.WriteS(TransferMap.SourceEntityName);
-					str.Write((byte)'`');
-					if (TransferMap.SourceTypeNameExtension != null)
-					{
-						str.WriteS(TransferMap.SourceTypeNameExtension);
-					}
-
-					break;
 				case INSERT:
 					// Single or multiple row insert.
 					str.WriteS("INSERT INTO ");
@@ -383,8 +301,6 @@ namespace Api.Database
 
 			string result;
 
-			var firstCollector = qP.QueryA.FirstCollector;
-
 			if (includeCount)
 			{
 				// SELECT .. FROM .. WHERE .. first:
@@ -397,7 +313,7 @@ namespace Api.Database
 
 					if (!qP.QueryA.Empty)
 					{
-						qP.QueryA.BuildWhereQuery(cmd, str, firstCollector, localeCode, context, qP.QueryA);
+						qP.QueryA.BuildWhereQuery(cmd, str, localeCode, context, qP.QueryA);
 
 						if (!qP.QueryB.Empty)
 						{
@@ -407,7 +323,7 @@ namespace Api.Database
 
 					if (!qP.QueryB.Empty)
 					{
-						qP.QueryB.BuildWhereQuery(cmd, str, null, localeCode, context, qP.QueryA);
+						qP.QueryB.BuildWhereQuery(cmd, str, localeCode, context, qP.QueryA);
 					}
 				}
 
@@ -439,7 +355,7 @@ namespace Api.Database
 
 					if (!qP.QueryA.Empty)
 					{
-						qP.QueryA.BuildWhereQuery(cmd, str, firstCollector, localeCode, context, qP.QueryA);
+						qP.QueryA.BuildWhereQuery(cmd, str, localeCode, context, qP.QueryA);
 
 						if (!qP.QueryB.Empty)
 						{
@@ -449,7 +365,7 @@ namespace Api.Database
 
 					if (!qP.QueryB.Empty)
 					{
-						qP.QueryB.BuildWhereQuery(cmd, str, null, localeCode, context, qP.QueryA);
+						qP.QueryB.BuildWhereQuery(cmd, str, localeCode, context, qP.QueryA);
 					}
 
 					// Limit/ sort only comes from QueryA:
@@ -557,78 +473,6 @@ namespace Api.Database
 						return str.ToString();
 					}
 					break;
-				case COPY:
-
-					// Insert..Select query.
-					str.Append("INSERT INTO ");
-					str.Append(MySQLSchema.TableName(TransferMap.TargetEntityName));
-					if (TransferMap.TargetTypeNameExtension != null)
-					{
-						str.Append(TransferMap.TargetTypeNameExtension);
-					}
-					str.Append('(');
-
-					// List of field names next!
-					for (var i = 0; i < TransferMap.Transfers.Count; i++)
-					{
-						if (i != 0)
-						{
-							str.Append(", ");
-						}
-						str.Append('`');
-						str.Append(TransferMap.Transfers[i].To.Name);
-						str.Append('`');
-					}
-
-					str.Append(") SELECT ");
-
-					// List of fields next!
-					for (var i = 0; i < TransferMap.Transfers.Count; i++)
-					{
-						var transfer = TransferMap.Transfers[i];
-						
-						if (i != 0)
-						{
-							str.Append(", ");
-						}
-						
-						if(transfer.IsConstant)
-						{
-							if(transfer.Constant == null){
-								str.Append("NULL");
-							}else if(transfer.Constant is string){
-								str.Append('"');
-								str.Append(MySql.Data.MySqlClient.MySqlHelper.EscapeString((string)transfer.Constant));
-								str.Append('"');
-							}else{
-								// True, false, int etc.
-								str.Append(transfer.Constant.ToString());
-							}
-							str.Append(" AS `");
-							str.Append(transfer.To.Name);
-							str.Append('`');
-						}
-						else
-						{
-							str.Append('`');
-							str.Append(transfer.From.Name);
-							str.Append("` AS `");
-							str.Append(transfer.To.Name);
-							str.Append('`');
-						}
-					}
-
-					str.Append(" FROM ");
-					str.Append(MySQLSchema.TableName(TransferMap.SourceEntityName));
-					str.Append(" AS `");
-					str.Append(TransferMap.SourceEntityName);
-					str.Append('`');
-					if (TransferMap.SourceTypeNameExtension != null)
-					{
-						str.Append(TransferMap.SourceTypeNameExtension);
-					}
-
-					break;
 				case INSERT:
 					// Single or multiple row insert.
 					str.Append("INSERT INTO ");
@@ -707,19 +551,6 @@ namespace Api.Database
 				}
 			}
 
-			return result;
-		}
-
-		/// <summary>
-		/// Generates an insert into {target} {target fields from the map} select {mapped fields} from {source} query.
-		/// </summary>
-		public static Query Copy(FieldTransferMap map)
-		{
-			var result = new Query
-			{
-				Operation = COPY,
-				TransferMap = map
-			};
 			return result;
 		}
 

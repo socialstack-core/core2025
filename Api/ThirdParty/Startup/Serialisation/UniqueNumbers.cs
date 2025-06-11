@@ -1,5 +1,6 @@
-
 using Api.Contexts;
+using Api.Database;
+using Api.SocketServerLibrary;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -40,26 +41,23 @@ namespace Api.Startup
 		public IDCollector NextCollector;
 
 		/// <summary>
-		/// The field that pools collectors of this type.
-		/// </summary>
-		public ContentField Pool;
-
-		/// <summary>
-		/// Collects a field value from the given entity.
-		/// </summary>
-		/// <param name="entity"></param>
-		/// <param name="context"></param>
-		public virtual void Collect(object entity, Context context)
-		{
-			
-		}
-
-		/// <summary>
 		/// Release collector to pool.
 		/// </summary>
 		public virtual void Release()
 		{
 
+		}
+
+		/// <summary>
+		/// Writes an ID holding field plus its value, and collects the IDs from the given content in to this collector.
+		/// It is expected that the collector is configured to collect from a specific ID holding field.
+		/// </summary>
+		/// <param name="ctx"></param>
+		/// <param name="writer"></param>
+		/// <param name="c"></param>
+		public virtual void WriteAndCollect(Context ctx, Writer writer, Content c)
+		{
+			
 		}
 	}
 
@@ -92,26 +90,22 @@ namespace Api.Startup
 
 				// Release its buffers:
 				collector.Release();
-
-				// And put it in the relevant pool:
-				if (collector is IDCollector<uint> uintCollector)
-				{
-					IDCollector<uint>.ReleaseGenericCollector(uintCollector);
-				}
-				else
-				{
-					IDCollector<ulong>.ReleaseGenericCollector((IDCollector<ulong>)collector);
-				}
 			}
 
 			CollectorFill = 0;
+		}
 
-			// Re-add to this pool:
-			if (Pool != null)
-			{
-				Pool.AddToPool(this);
-			}
-
+		/// <summary>
+		/// Collects from the given content in to this collector.
+		/// It is expected that the collector is configured to collect from a specific ID holding field.
+		/// </summary>
+		/// <param name="ctx"></param>
+		/// <param name="writer"></param>
+		/// <param name="c"></param>
+		public override void WriteAndCollect(Context ctx, Writer writer, Content c)
+		{
+			#warning generic includes is currently unsupported
+			throw new NotSupportedException("MultiId collectors are currently WIP");
 		}
 
 		/// <summary>
@@ -122,7 +116,7 @@ namespace Api.Startup
 		public void Add(string type, ulong id)
 		{
 			// is the type already in here?
-			IDCollector collector = null;
+			LongIDCollector collector = null;
 			AutoService svc = null;
 
 			for (var i = 0; i < CollectorFill; i++)
@@ -154,14 +148,7 @@ namespace Api.Startup
 				}
 
 				// Rent a collector based on the service's ID type.
-				if (svc.IdType == typeof(uint))
-				{
-					collector = IDCollector<uint>.RentGenericCollector();
-				}
-				else if (svc.IdType == typeof(ulong))
-				{
-					collector = IDCollector<ulong>.RentGenericCollector();
-				}
+				collector = LongIDCollector.RentGenericCollector();
 
 				CollectorsByType[CollectorFill] = new IDCollectorWithType() {
 					Collector = collector,
@@ -174,11 +161,11 @@ namespace Api.Startup
 
 			if (svc.IdType == typeof(uint))
 			{
-				((IDCollector<uint>)collector).Add((uint)id);
+				collector.Add((uint)id);
 			}
 			else if (svc.IdType == typeof(ulong))
 			{
-				((IDCollector<ulong>)collector).Add(id);
+				collector.Add(id);
 			}
 		}
 
@@ -190,9 +177,9 @@ namespace Api.Startup
 	public struct IDCollectorWithType
 	{
 		/// <summary>
-		/// The collector. Will be an IDCollector[ID] where typeof(ID) == Service.IdType.
+		/// The collector.
 		/// </summary>
-		public IDCollector Collector;
+		public LongIDCollector Collector;
 		/// <summary>
 		/// The service being collected for.
 		/// </summary>
@@ -202,13 +189,12 @@ namespace Api.Startup
 	/// <summary>
 	/// ID collector enumeration cursor.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public struct IDCollectorEnum<T> where T : struct
+	public struct IDCollectorEnum
 	{
 		/// <summary>
 		/// Current block.
 		/// </summary>
-		public IDBlock<T> Block;
+		public IDBlock Block;
 
 		/// <summary>
 		/// Fill of the last block.
@@ -239,7 +225,7 @@ namespace Api.Startup
 		/// Reads the current value and advances by one.
 		/// </summary>
 		/// <returns></returns>
-		public T Current()
+		public ulong Current()
 		{
 			var result = Block.Entries[Index++];
 
@@ -257,7 +243,7 @@ namespace Api.Startup
 	/// Collects IDs of the given type. Uses a pool of buffers for fast, non-allocating performance.
 	/// The ID collector itself can also be pooled.
 	/// </summary>
-	public partial class IDCollector<T>: IDCollector, IEnumerable<T> where T:struct, IEquatable<T>, IComparable<T>
+	public partial class LongIDCollector: IDCollector, IEnumerable<ulong>
 	{
 		/// <summary>
 		/// Generic pool lock
@@ -267,15 +253,15 @@ namespace Api.Startup
 		/// <summary>
 		/// First ID collector in the pool for this field.
 		/// </summary>
-		private static IDCollector<T> FirstInGenericPool;
+		private static LongIDCollector FirstInGenericPool;
 
 		/// <summary>
 		/// Global pool of non-field specific uint collectors.
 		/// </summary>
 		/// <returns></returns>
-		public static IDCollector<T> RentGenericCollector()
+		public static LongIDCollector RentGenericCollector()
 		{
-			IDCollector<T> instance = null;
+			LongIDCollector instance = null;
 
 			lock (GenericCollectorPoolLock)
 			{
@@ -283,14 +269,14 @@ namespace Api.Startup
 				{
 					// Pop from the pool:
 					instance = FirstInGenericPool;
-					FirstInGenericPool = (IDCollector<T>)instance.NextCollector;
+					FirstInGenericPool = (LongIDCollector)instance.NextCollector;
 				}
 			}
 
 			if (instance == null)
 			{
 				// Instance one:
-				instance = new IDCollector<T>();
+				instance = new LongIDCollector();
 			}
 
 			instance.NextCollector = null;
@@ -301,7 +287,7 @@ namespace Api.Startup
 		/// Global pool of non-field specific ulong collectors.
 		/// </summary>
 		/// <returns></returns>
-		public static void ReleaseGenericCollector(IDCollector<T> collector)
+		public static void PoolGenericCollector(LongIDCollector collector)
 		{
 			lock (GenericCollectorPoolLock)
 			{
@@ -313,11 +299,22 @@ namespace Api.Startup
 		/// <summary>
 		/// Linked list of blocks in this collector.
 		/// </summary>
-		public IDBlock<T> First;
+		public IDBlock First;
 		/// <summary>
 		/// Linked list of blocks in this collector.
 		/// </summary>
-		public IDBlock<T> Last;
+		public IDBlock Last;
+
+		/// <summary>
+		/// The underlying delegate which collects from the given content in to this collector from a specific field.
+		/// Only present on IDCollectors which were rented for a specific field.
+		/// </summary>
+		public Action<IDCollector, Writer, Content, Context> OnCollect;
+
+		/// <summary>
+		/// ,"fieldName": - used when collecting for a specific includes field.
+		/// </summary>
+		public string JsonFieldHeading;
 
 		/// <summary>
 		/// Number of full blocks. Id count = (FullBlockCount * 64) + Count
@@ -348,18 +345,31 @@ namespace Api.Startup
 		}
 
 		/// <summary>
+		/// Collects from the given content in to this collector.
+		/// It is expected that the collector is configured to collect from a specific ID holding field.
+		/// </summary>
+		/// <param name="ctx"></param>
+		/// <param name="writer"></param>
+		/// <param name="c"></param>
+		public override void WriteAndCollect(Context ctx, Writer writer, Content c)
+		{
+			writer.WriteASCII(JsonFieldHeading);
+			OnCollect(this, writer, c, ctx);
+		}
+
+		/// <summary>
 		/// True if any value in the collector matches the given one.
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public bool MatchAny(T id)
+		public bool MatchAny(ulong id)
 		{
 			var en = GetNonAllocEnumerator();
 			while (en.HasMore())
 			{
 				var toCheck = en.Current();
 
-				if (id.Equals(toCheck))
+				if (id == toCheck)
 				{
 					return true;
 				}
@@ -372,9 +382,9 @@ namespace Api.Startup
 		/// Gets a non-alloc enumeration tracker. Only use this if 
 		/// </summary>
 		/// <returns></returns>
-		public IDCollectorEnum<T> GetNonAllocEnumerator()
+		public IDCollectorEnum GetNonAllocEnumerator()
 		{
-			return new IDCollectorEnum<T>()
+			return new IDCollectorEnum()
 			{
 				Block = First,
 				Index = 0,
@@ -385,7 +395,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Quick ref to prev value to avoid a very common situation of adding the same ID repeatedly.
 		/// </summary>
-		private T PrevValue;
+		private ulong PrevValue;
 
 		/// <summary>
 		/// Returns all ID blocks and the collector itself back to host pools.
@@ -398,11 +408,8 @@ namespace Api.Startup
 				return;
 			}
 
-			// Re-add to this pool:
-			if (Pool != null)
-			{
-				Pool.AddToPool(this);
-			}
+			// And put it in the relevant pool:
+			PoolGenericCollector(this);
 
 			ReleaseBlocks();
 
@@ -415,10 +422,10 @@ namespace Api.Startup
 		/// </summary>
 		public void ReleaseBlocks()
         {
-			lock (IDBlockPool<T>.PoolLock)
+			lock (IDBlockPool.PoolLock)
 			{
-				Last.Next = IDBlockPool<T>.First;
-				IDBlockPool<T>.First = First;
+				Last.Next = IDBlockPool.First;
+				IDBlockPool.First = First;
 				Last = null;
 				First = null;
 			}
@@ -427,27 +434,27 @@ namespace Api.Startup
 		/// <summary>
 		/// Release a single ID block
 		/// </summary>
-		public void ReleaseBlock(IDBlock<T> block)
+		public void ReleaseBlock(IDBlock block)
         {
-			lock (IDBlockPool<T>.PoolLock)
+			lock (IDBlockPool.PoolLock)
 			{
-				block.Next = IDBlockPool<T>.First;
-				IDBlockPool<T>.First = block;
+				block.Next = IDBlockPool.First;
+				IDBlockPool.First = block;
 			}
 		}
 
 		/// <summary>
 		/// Adds the given ID to the set.
 		/// </summary>
-		public void Add(T id)
+		public void Add(ulong id)
 		{
 			if (First == null)
 			{
-				First = Last = IDBlockPool<T>.Get();
+				First = Last = IDBlockPool.Get();
 			}
 			else
 			{
-				if (PrevValue.Equals(id) || id.Equals(default))
+				if (PrevValue == id || id == 0)
 				{
 					// Skip common scenario of everything being the same ID.
 					return;
@@ -456,7 +463,7 @@ namespace Api.Startup
 				if (CurrentFill == 64)
 				{
 					// Add new block:
-					var newBlock = IDBlockPool<T>.Get();
+					var newBlock = IDBlockPool.Get();
 					Last.Next = newBlock;
 					Last = newBlock;
 					CurrentFill = 0;
@@ -471,11 +478,11 @@ namespace Api.Startup
 		/// <summary>
 		/// Adds the given ID to the set and sorts it for you.
 		/// </summary>
-		public void AddSorted(T id)
+		public void AddSorted(ulong id)
 		{
 			if (First == null)
 			{
-				First = Last = IDBlockPool<T>.Get();
+				First = Last = IDBlockPool.Get();
 				var index = CurrentFill++;
 
 				Last.Entries[index] = id;
@@ -494,7 +501,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Sorts the value into the set.
 		/// </summary>
-		public bool Sort(IDBlock<T> currentBlock, T currentValue, int currentIndex = 0, bool notMainBlock = false, int fillCount = 0) // pass notMainBlock = true if you are not sorting into the main IDBLock list
+		public bool Sort(IDBlock currentBlock, ulong currentValue, int currentIndex = 0, bool notMainBlock = false, int fillCount = 0) // pass notMainBlock = true if you are not sorting into the main IDBLock list
 		{
 			var sorted = false;
 			// Let's iterate over the values of our currentBlock
@@ -540,7 +547,7 @@ namespace Api.Startup
 				// Is there a next block?
 				if(currentBlock.Next == null)
                 {
-					currentBlock.Next = IDBlockPool<T>.Get();
+					currentBlock.Next = IDBlockPool.Get();
 					
 					if (!notMainBlock) // can we increment?
 					{
@@ -570,7 +577,7 @@ namespace Api.Startup
 				return;
 			}
 
-			T currentValue = default;
+			ulong currentValue = default;
 			int currentValueCount = 0;
 			bool initialValueSet = false;
 			var uneliminatedBlock = First;
@@ -586,7 +593,7 @@ namespace Api.Startup
 				{
 					var curEntry = uneliminatedBlock.Entries[i];
 
-					if (initialValueSet && curEntry.Equals(currentValue))
+					if (initialValueSet && curEntry == currentValue)
 					{
 						// increment the count.
 						currentValueCount++;
@@ -651,12 +658,12 @@ namespace Api.Startup
 		/// </summary>
 		/// <param name="currentBlock"></param>
 		/// <param name="sb"></param>
-		public void PrintBlock(IDBlock<T> currentBlock, StringBuilder sb)
+		public void PrintBlock(IDBlock currentBlock, StringBuilder sb)
         {
 			sb.Append("[");
 			for (var i = 0; i < currentBlock.Entries.Length; i++)
 			{
-				if (currentBlock.Entries[i].Equals(0))
+				if (currentBlock.Entries[i] == 0)
                 {
 					// We hit the end. - no need to continue
 					sb.Append("]\r\n");
@@ -680,7 +687,7 @@ namespace Api.Startup
 		/// Gets an enumerator
 		/// </summary>
 		/// <returns></returns>
-		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		IEnumerator<ulong> IEnumerable<ulong>.GetEnumerator()
 		{
 			var enumerator  = GetNonAllocEnumerator();
 
@@ -708,28 +715,26 @@ namespace Api.Startup
 	}
 
 	/// <summary>
-	/// 
+	/// A block of ulong IDs.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public class IDBlock<T> where T : struct
+	public class IDBlock
 	{
 		/// <summary>
 		/// The IDs
 		/// </summary>
-		public T[] Entries = new T[64];
+		public ulong[] Entries = new ulong[64];
 
 		/// <summary>
 		/// Next in the chain.
 		/// </summary>
-		public IDBlock<T> Next;
+		public IDBlock Next;
 	}
 
 	/// <summary>
 	/// This pools the allocation of blocks of IDs.
 	/// </summary>
-	public static class IDBlockPool<T> where T: struct
+	public static class IDBlockPool
 	{
-
 		/// <summary>
 		/// A lock for thread safety.
 		/// </summary>
@@ -738,20 +743,20 @@ namespace Api.Startup
 		/// <summary>
 		/// The current front of the pool.
 		/// </summary>
-		public static IDBlock<T> First;
+		public static IDBlock First;
 
 		/// <summary>
 		/// Get a block from the pool, or instances once.
 		/// </summary>
-		public static IDBlock<T> Get()
+		public static IDBlock Get()
 		{
-			IDBlock<T> result;
+			IDBlock result;
 
 			lock (PoolLock)
 			{
 				if (First == null)
 				{
-					return new IDBlock<T>();
+					return new IDBlock();
 				}
 
 				result = First;

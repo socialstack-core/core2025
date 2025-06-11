@@ -666,7 +666,7 @@ namespace Api.Configuration
 				return set;
 			}
 
-			var keyIndex = cache.GetIndex<string>("Key") as NonUniqueIndex<Configuration, string>;
+			var keyIndex = cache.GetIndex("Key") as NonUniqueIndex<Configuration, string>;
 			var loop = keyIndex.GetEnumeratorFor(key);
 
 			while (loop.HasMore())

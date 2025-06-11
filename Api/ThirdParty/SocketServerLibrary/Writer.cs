@@ -951,6 +951,35 @@ namespace Api.SocketServerLibrary
 		}
 
 		/// <summary>
+		/// Writes the given MappingData as an escaped JSON string to the writer.
+		/// </summary>
+		/// <param name="mapData"></param>
+		public void WriteEscaped(MappingData mapData)
+		{
+			var val = mapData.ToJson();
+			WriteEscaped(val);
+		}
+
+		/// <summary>
+		/// Writes the given MappingData as-is to the writer.
+		/// </summary>
+		/// <param name="mapData"></param>
+		public void Write(MappingData mapData)
+		{
+			var val = mapData.ToJson();
+
+			if (val == null)
+			{
+				WriteASCII("null");
+			}
+			else
+			{
+				// As-is:
+				WriteS(val);
+			}
+		}
+
+		/// <summary>
 		/// Writes the given JsonString as an escaped string to the writer.
 		/// </summary>
 		/// <param name="jStr"></param>

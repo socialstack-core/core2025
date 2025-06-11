@@ -209,7 +209,7 @@ namespace Api.Payments
 				return null;
 			}
 
-			return await _productService.ListByTarget<ProductCategory, uint>(ctx, productCategory.Id, "ProductCategories");
+			return await _productService.Where("ProductCategories contains ?").Bind(id).ListAll(ctx);
 		}
 
 
@@ -226,7 +226,7 @@ namespace Api.Payments
 				return null;
 			}
 
-			return await ListBySource<Product, uint>(ctx, _productService, product.Id, "ProductCategories");
+			return await ListBySource(ctx, product, "ProductCategories");
 		}
 
 		/// <summary>
@@ -538,7 +538,7 @@ namespace Api.Payments
 				foreach (var product in products)
 				{
 
-					var listOfCategories = await ListBySource<Product, uint>(ctx, _productService, product.Id, "ProductCategories", DataOptions.IgnorePermissions);
+					var listOfCategories = await ListBySource(ctx, product, "ProductCategories", DataOptions.IgnorePermissions);
 					if (listOfCategories.Any())
 					{
 						foreach (var category in listOfCategories)

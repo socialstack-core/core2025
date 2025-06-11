@@ -37,7 +37,7 @@ namespace Api.TypeScript.Objects
                     if(virtualInfo.DynamicTypeField != null){
                         virtualType = typeof(object);
                     } else if(virtualInfo.ValueGeneratorType != null) {
-                        #warning this requires context of the specific type that it is occuring on, in short is an ugly assumption that happens to be about right atm!
+                        #warning return type assumption: this requires context of the specific type that it is occuring on
                         virtualType = typeof(string);
                     } else {
                         virtualType = virtualInfo.Type;

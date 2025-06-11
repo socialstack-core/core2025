@@ -221,8 +221,7 @@ namespace Api.Payments
                         if (purchase.MultiExecute)
                         {
                             // Get the list of subscriptions on the purchase and mark each as active. A multi-execute only occurs on initial purchase.
-                            var mappedSubscriptions = await ListBySource(context, _purchases, purchase.Id,
-                                "subscriptions", DataOptions.IgnorePermissions);
+                            var mappedSubscriptions = await ListBySource(context, purchase, "subscriptions", DataOptions.IgnorePermissions);
 
                             foreach (var subscription in mappedSubscriptions)
                             {
@@ -246,8 +245,7 @@ namespace Api.Payments
                         if (purchase.MultiExecute)
                         {
                             // Get the list of subscriptions on the purchase and mark each as active. A multi-execute only occurs on initial purchase.
-                            var mappedSubscriptions = await ListBySource(context, _purchases, purchase.Id,
-                                "subscriptions", DataOptions.IgnorePermissions);
+                            var mappedSubscriptions = await ListBySource(context, purchase, "subscriptions", DataOptions.IgnorePermissions);
 
                             foreach (var subscription in mappedSubscriptions)
                             {

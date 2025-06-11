@@ -2,6 +2,7 @@
 using Api.Contexts;
 using Api.Database;
 using Api.SocketServerLibrary;
+using Google.Protobuf.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,7 +38,7 @@ namespace Api.Startup
 		/// <summary>
 		/// An allocating call which builds the tree of includes.
 		/// </summary>
-		public async ValueTask Parse()
+		public void Parse()
 		{
 			RootInclude = new InclusionNode(RelativeTo, null);
 			RootInclude.Service = RelativeTo.Service;
@@ -50,14 +51,14 @@ namespace Api.Startup
 				var fieldName = IncludeString.Substring(start, comma - start);
 
 				// Add the given field:
-				await Add(fieldName);
+				Add(fieldName);
 
 				// Next comma:
 				start = comma + 1;
 				comma = IncludeString.IndexOf(',', start);
 			}
 
-			await Add(start == 0 ? IncludeString : IncludeString.Substring(start));
+			Add(start == 0 ? IncludeString : IncludeString.Substring(start));
 
 			// Bake the root:
 			int outputIndex = -1;
@@ -73,7 +74,7 @@ namespace Api.Startup
 		/// Adds a field to the set. It can contain a * (or be just "*"), but not after a mixed content type field.
 		/// </summary>
 		/// <param name="rootRelativeFieldName"></param>
-		private async ValueTask Add(string rootRelativeFieldName)
+		private void Add(string rootRelativeFieldName)
 		{
 			var pieces = rootRelativeFieldName.Split('.');
 
@@ -132,7 +133,7 @@ namespace Api.Startup
 					{
 						foreach (var field in current.RelativeTo.VirtualList)
 						{
-							await current.Add(field, rootRelativeFieldName);
+							current.Add(field, rootRelativeFieldName);
 						}
 					}
 
@@ -151,7 +152,7 @@ namespace Api.Startup
 							}
 						}
 
-						await current.Add(kvp.Value, rootRelativeFieldName);
+						current.Add(kvp.Value, rootRelativeFieldName);
 					}
 
 					// Can't continue (at least, not in this version) because 'current' is now a set of nodes.
@@ -163,7 +164,7 @@ namespace Api.Startup
 				{
 					// Yes! it's a global - these ones are available on all types. They're usually lists, like tags or categories.
 					// Service and type are required for these.
-					current = await current.Add(globalField, rootRelativeFieldName);
+					current = current.Add(globalField, rootRelativeFieldName);
 					continue;
 				}
 
@@ -176,11 +177,51 @@ namespace Api.Startup
 				}
 
 				// Add local field:
-				current = await current.Add(localField, rootRelativeFieldName);
+				current = current.Add(localField, rootRelativeFieldName);
 			}
 
 		}
 		
+	}
+
+	/// <summary>
+	/// A collectible include field.
+	/// </summary>
+	public struct CollectibleIncludeField
+	{
+		/// <summary>
+		/// The ID field itself.
+		/// </summary>
+		public ContentField IdField;
+
+		/// <summary>
+		/// ,"includeFieldName":
+		/// </summary>
+		public string JsonFieldHeading;
+
+
+		/// <summary>
+		/// Creates a new collectible field.
+		/// </summary>
+		/// <param name="idField"></param>
+		/// <param name="fieldName">The original virtual field name.</param>
+		public CollectibleIncludeField(ContentField idField, string fieldName)
+		{
+			IdField = idField;
+			var lcFieldName = char.ToLower(fieldName[0]) + fieldName.Substring(1);
+			JsonFieldHeading = ",\"" + lcFieldName + "\":";
+		}
+
+		/// <summary>
+		/// Rent an ID collector for this field.
+		/// </summary>
+		/// <returns></returns>
+		public IDCollector RentCollector()
+		{
+			var collector = IdField.RentCollector();
+			collector.JsonFieldHeading = JsonFieldHeading;
+			return collector;
+		}
 	}
 
 	/// <summary>
@@ -192,6 +233,12 @@ namespace Api.Startup
 		/// The field that sources data for this inclusion node.
 		/// </summary>
 		public ContentField HostField;
+
+		/// <summary>
+		/// The first character lowercased field name of the inclusion. Not to be confused with the inclusion name.
+		/// The inclusion name can be nested e.g. "tags.creatorUser" whilst the field name is just "creatorUser" or "tags".
+		/// </summary>
+		public string FieldName;
 
 		/// <summary>
 		/// The service to use to resolve the actual value of this node.
@@ -248,7 +295,7 @@ namespace Api.Startup
 		/// <summary>
 		/// Id fields to create collectors for whilst this include node is being executed.
 		/// </summary>
-		public ContentField[] IdFields;
+		public CollectibleIncludeField[] IdFields;
 
 		/// <summary>
 		/// The include header for this inclusion node.
@@ -281,16 +328,6 @@ namespace Api.Startup
 		public ContentField MappingTargetField;
 
 		/// <summary>
-		/// Mapping target field name
-		/// </summary>
-		public string MappingTargetFieldName;
-
-		/// <summary>
-		/// The mapping service for this list node.
-		/// </summary>
-		public AutoService MappingService;
-
-		/// <summary>
 		/// Create a new node
 		/// </summary>
 		/// <param name="relativeTo"></param>
@@ -305,16 +342,13 @@ namespace Api.Startup
 		/// Sets this include node as a ListAs with the given header info.
 		/// </summary>
 		/// <param name="includedAs">The raw text in the include string that this include node came from.</param>
-		/// <param name="listAs"></param>
-		public void SetHeader(string includedAs, string listAs)
+		/// <param name="fieldName"></param>
+		public void SetHeader(string includedAs, string fieldName)
 		{
-			if (string.IsNullOrEmpty(listAs))
+			if (string.IsNullOrEmpty(fieldName))
 			{
 				throw new Exception("Can't ListAs() a blank field name. It's required.");
 			}
-
-			// lc first:
-			var fieldName = char.ToLower(listAs[0]) + listAs.Substring(1);
 
 			var header = "{\"name\":\"" + includedAs + "\",\"field\":\"" + fieldName + "\"";
 
@@ -323,55 +357,7 @@ namespace Api.Startup
 				header += ",\"on\":" + Parent.InclusionOutputIndex;
 			}
 
-			if (MappingService == null)
-			{
-				var mapField = char.ToLower(MappingTargetFieldName[0]) + MappingTargetFieldName.Substring(1);
-				header += ",\"map\":\"" + mapField + "\",\"values\":[";
-			}
-			else
-			{
-				header += ",\"map\":[";
-			}
-
-			_includeHeader = System.Text.Encoding.UTF8.GetBytes(header);
-		}
-
-		/// <summary>
-		/// Sets this include node as a virtual field with the given header info.
-		/// </summary>
-		/// <param name="includedAs"></param>
-		/// <param name="fieldName"></param>
-		/// <param name="srcField"></param>
-		public void SetHeader(string includedAs, string fieldName, string srcField)
-		{
-			// lc first:
-			var fieldNameLC = char.ToLower(fieldName[0]) + fieldName.Substring(1);
-			var srcFieldLC = char.ToLower(srcField[0]) + srcField.Substring(1);
-
-			var header = "{\"name\":\"" + includedAs + "\",\"field\":\"" + fieldNameLC + "\",\"src\":\"" + srcFieldLC + "\"";
-
-			if (TypeSource != null)
-			{
-				var typeSourceLC = char.ToLower(TypeSource.Name[0]) + TypeSource.Name.Substring(1);
-				header += ",\"srcType\":\"" + typeSourceLC + "\"";
-
-				if (Parent.InclusionOutputIndex != -1)
-				{
-					header += ",\"on\":" + Parent.InclusionOutputIndex;
-				}
-
-				// values is an object on this one.
-				header += ",\"values\":{";
-				_includeHeader = System.Text.Encoding.UTF8.GetBytes(header);
-				return;
-			}
-			else if (Parent.InclusionOutputIndex != -1)
-			{
-				header += ",\"on\":" + Parent.InclusionOutputIndex;
-			}
-
 			header += ",\"values\":[";
-
 			_includeHeader = System.Text.Encoding.UTF8.GetBytes(header);
 		}
 
@@ -407,7 +393,7 @@ namespace Api.Startup
 		/// </summary>
 		/// <param name="field"></param>
 		/// <param name="includeName">The original name of the include (in the include string).</param>
-		public async ValueTask<InclusionNode> Add(ContentField field, string includeName)
+		public InclusionNode Add(ContentField field, string includeName)
 		{
 			if (UniqueChildNodes == null)
 			{
@@ -464,15 +450,7 @@ namespace Api.Startup
 			result.HostField = field;
 			result.IncludeName = includeName;
 			UniqueChildNodes[name] = result;
-
-			if (field.VirtualInfo.IsList)
-			{
-				var mapInfo = await field.GetOptionalMappingService(RelativeTo);
-				result.MappingService = mapInfo.Service;
-				result.MappingTargetField = mapInfo.TargetField;
-				result.MappingTargetFieldName = mapInfo.TargetFieldName;
-			}
-
+			
 			return result;
 		}
 
@@ -510,23 +488,12 @@ namespace Api.Startup
 
 			if (HostField != null)
 			{
-				if (HostField.VirtualInfo.IsList)
-				{
-					SetHeader(IncludeName, HostField.VirtualInfo.FieldName);
-				}
-				else
-				{
-					// Regular virtual field:
-					SetHeader(IncludeName, HostField.VirtualInfo.FieldName, HostField.VirtualInfo.IdSource.Name);
-				}
+				var listAs = HostField.VirtualInfo.FieldName;
+				FieldName = char.ToLower(listAs[0]) + listAs.Substring(1);
+				SetHeader(IncludeName, FieldName);
 			}
-			
-			// Next, we need to collect the unique set of fields from which IDs will be collected.
-			// This identifies how many ID collectors are required, and what type/ field they'll collect from.
-			// The ID collectors themselves form a stack style linked list to avoid 
-			// allocation of anything other than the collectors themselves (which are also pooled).
-			var idFields = new Dictionary<string, int>();
-			var idFieldList = new List<ContentField>();
+
+			var idFieldList = new List<CollectibleIncludeField>();
 
 			for (var n = 0; n < ChildNodes.Length; n++)
 			{
@@ -534,59 +501,54 @@ namespace Api.Startup
 
 				// The ID source field is:
 				var hostField = node.HostField;
-				var idSource = hostField.VirtualInfo.IdSource;
 
-				if (hostField.VirtualInfo.DynamicTypeField != null)
+				if (hostField.VirtualInfo.IsList)
 				{
-					// Dynamic includes. The ID source is actually a tuple - type and content ID fields.
-					// In this scenario, the host field *is* the ID source.
-					var fieldName = hostField.Name.ToLower();
+					// List fields.
 
-					if (!idFields.TryGetValue(fieldName, out int index))
+					var idMappingIfNotRequired = hostField.GetIdFieldIfMappingNotRequired(node.RelativeTo);
+
+					if (idMappingIfNotRequired != null)
 					{
-						index = idFieldList.Count;
-						idFields[fieldName] = index;
-						idFieldList.Add(hostField);
-					}
-
-					node.CollectorIndex = index;
-					continue;
-				}
-
-				if (idSource == null && hostField.VirtualInfo.IdSourceField != null)
-				{
-					// This is where the host field is e.g. a global one (such as Tags). It knows the id source field (simply "Id" for tags)
-					// but not the actual field, because they're global - they're on every type (multiple fields called Id).
-
-					// So, relativeTo ideally exists at this point such that we can pre-resolve the actual Id field to use.
-					// Note that it is null if the parent is a mixed content field.
-					if (RelativeTo == null)
-					{
-						// Not supported yet! E.g. ContentUser on the content of a story (which could be a video, or a photo, or just text - etc).
-						throw new PublicException("Unsupported include use case. If you would like it, please do ask!", "include_unsupported");
+						// The object's own ID is the thing to collect. It does not get emitted though.
+#warning unfinished!
 					}
 					else
 					{
-						RelativeTo.NameMap.TryGetValue(hostField.VirtualInfo.IdSourceField.ToLower(), out idSource);
+						// The host field itself is the thing to emit and collect.
+						node.CollectorIndex = idFieldList.Count;
+						idFieldList.Add(new CollectibleIncludeField(hostField, hostField.VirtualInfo.FieldName));
 					}
-				}
 
-				if (idSource != null)
+					continue;
+				}
+				
+				if (hostField.VirtualInfo.DynamicTypeField != null)
 				{
-					// Collecting an ID from this field.
-					// Multiple things might want an ID from the same field (It happens with e.g. Tags + Categories)
-					// so this one off dictionary makes sure IDs can be efficiently collected for all future requests.
-					var fieldName = idSource.Name.ToLower();
-
-					if (!idFields.TryGetValue(fieldName, out int index))
-					{
-						index = idFieldList.Count;
-						idFields[fieldName] = index;
-						idFieldList.Add(idSource);
-					}
-
-					node.CollectorIndex = index;
+					// Dynamic includes.
+					// The host field itself is the thing to emit and collect.
+					node.CollectorIndex = idFieldList.Count;
+					idFieldList.Add(new CollectibleIncludeField(hostField, hostField.VirtualInfo.FieldName));
+					continue;
 				}
+
+				var idSource = hostField.VirtualInfo.IdSource;
+
+				if (idSource == null)
+				{
+					throw new PublicException(
+						"Unable to use an include '" + node.IncludeName + "' as it appears to be configured incorrectly (missing an ID source)", 
+						"include/invalid"
+					);
+				}
+
+				// Collecting an ID from this field.
+				// Multiple things might want an ID from the same field (It happens with e.g. Tags + Categories)
+				// so this one off dictionary makes sure IDs can be efficiently collected for all future requests.
+				var fieldName = idSource.Name.ToLower();
+
+				node.CollectorIndex = idFieldList.Count;
+				idFieldList.Add(new CollectibleIncludeField(idSource, hostField.VirtualInfo.FieldName));
 			}
 
 			// We've now got the unique set of fields to collect IDs from.
@@ -595,22 +557,6 @@ namespace Api.Startup
 			// Note that here we just store a _description_ of the collectors - not actually create them.
 			// That's because include nodes just describe the structure, rather than actually directly execute the inclusions.
 			IdFields = idFieldList.ToArray();
-
-			if (MappingService != null)
-			{
-				// Also need 1 ID collector on the mapping service as well (it collects the target IDs).
-
-				// Note that it won't ever already be in there as the mapping type is something different.
-				idFieldList.Add(MappingTargetField);
-
-				// Resolve to concrete IDCollector<T> types for each of the ID fields.
-				TypeIOEngine.GenerateIDCollectors(idFieldList.ToArray());
-			}
-			else
-			{
-				// Resolve to concrete IDCollector<T> types for each of the ID fields.
-				TypeIOEngine.GenerateIDCollectors(IdFields);
-			}
 		}
 	}
 

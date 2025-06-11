@@ -264,7 +264,7 @@ public class Content : Executor
 		{
 			var includesEngine = new IncludesExecutor<T, ID>(svc, _fields, tio);
 			_includes = includesEngine;
-			_outputWriterFld = await includesEngine.Setup(incl, compileEngine);
+			_outputWriterFld = includesEngine.Setup(incl, compileEngine);
 			_setWriter = compileEngine.DefineSetter(_outputWriterFld);
 		}
 

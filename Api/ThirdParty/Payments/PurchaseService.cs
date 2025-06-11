@@ -428,17 +428,32 @@ namespace Api.Payments
 		/// <returns></returns>
 		public async ValueTask<PurchaseAndAction> MultiExecute(Context context, Purchase purchase, List<Subscription> subscriptions, PaymentMethod paymentMethod, Coupon coupon = null)
 		{
+			if (subscriptions != null)
+			{
+				if (_subscriptions == null)
+				{
+					_subscriptions = Services.Get<SubscriptionService>();
+				}
+			}
+
 			if (purchase == null)
 			{
 				// Create a purchase:
-				purchase = await Create(context, new Purchase()
+				purchase = new Purchase()
 				{
 					LocaleId = context.LocaleId,
 					MultiExecute = true,
 					PaymentGatewayId = paymentMethod.PaymentGatewayId,
 					PaymentMethodId = paymentMethod.Id,
 					UserId = context.UserId
-				}, DataOptions.IgnorePermissions);
+				};
+
+				if (subscriptions != null)
+				{
+					purchase.Mappings.Set("subscriptions", GetSubscriptionIds(subscriptions));
+				}
+
+				purchase = await Create(context, purchase, DataOptions.IgnorePermissions);
 			}
 			else
 			{
@@ -447,6 +462,12 @@ namespace Api.Payments
 				{
 					purchase = await Update(context, purchase, (Context c, Purchase p, Purchase orig) => {
 						p.MultiExecute = true;
+
+						if (subscriptions != null)
+						{
+							purchase.Mappings.Set("subscriptions", GetSubscriptionIds(subscriptions));
+						}
+
 					}, DataOptions.IgnorePermissions);
 				}
 			}
@@ -454,20 +475,12 @@ namespace Api.Payments
 			// Copy the items from the subs to the purchase:
 			if (subscriptions != null)
 			{
-				if (_subscriptions == null)
-				{
-					_subscriptions = Services.Get<SubscriptionService>();
-				}
-
 				foreach (var subscription in subscriptions)
 				{
 					if (subscription == null)
 					{
 						continue;
 					}
-
-					// Add the sub to the multi-execute purchase:
-					await CreateMappingIfNotExists(context, purchase.Id, _subscriptions, subscription.Id, "subscriptions");
 
 					// Get its items, clone to purchase:
 					var inSub = await _subscriptions.GetProducts(context, subscription);
@@ -478,7 +491,24 @@ namespace Api.Payments
 			// Attempt to fulfil the purchase now:
 			return await Execute(context, purchase, paymentMethod, coupon);
 		}
-			
+
+		/// <summary>
+		/// Gets the set of subscription IDs suitable for a mapping.
+		/// </summary>
+		/// <param name="subscriptions"></param>
+		/// <returns></returns>
+		private List<ulong> GetSubscriptionIds(List<Subscription> subscriptions)
+		{
+			var set = new List<ulong>();
+
+			foreach (var subscription in subscriptions)
+			{
+				set.Add(subscription.Id);
+			}
+
+			return set;
+		}
+
 		/// <summary>
 		/// Requests execution of the given payment. Internally calculates the total.
 		/// This is triggered by the frontend after the given purchase has had a payment method attached to it.

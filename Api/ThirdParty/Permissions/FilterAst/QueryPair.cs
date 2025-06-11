@@ -4,7 +4,9 @@ using Api.SocketServerLibrary;
 using Api.Startup;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -78,13 +80,6 @@ namespace Api.Permissions
 		public FilterAst<T, ID> Ast;
 
 		/// <summary>
-		/// Used when the filter has virtual field lists e.g. Tags=[?].
-		/// The execution plan will first collect all the IDs of content that has the given tag(s) into one of these collectors.
-		/// As this is just the metadata, this stores information about how to rent the collectors, rather than the collectors themselves.
-		/// </summary>
-		public ReverseMappingInfo[] CollectorMeta;
-
-		/// <summary>
 		/// True if the filter has a rooted On(..) statement. It can only be a child of an AND statement.
 		/// </summary>
 		public bool HasRootedOn;
@@ -109,85 +104,6 @@ namespace Api.Permissions
 		public List<ArgBinding> ArgTypes;
 
 		/// <summary>
-		/// Underlying mapping bindings (if any).
-		/// </summary>
-		public List<MappingBinding<T, ID>> MappingBindings;
-
-		/// <summary>
-		/// True if the mapping bindings have been setup.
-		/// </summary>
-		public bool MappingBindingsLoaded;
-
-		/// <summary>
-		/// Underlying loop setting up each one
-		/// </summary>
-		/// <returns></returns>
-		private async ValueTask SetupMappingBindingsRawTask()
-		{
-			for (var i = 0; i < MappingBindings.Count; i++)
-			{
-				await MappingBindings[i].Setup();
-			}
-		}
-
-		/// <summary>
-		/// Ensures the mapping bindings are setup and ready to go. Essentially makes sure the actual mapping services are loaded and their cache is warm.
-		/// </summary>
-		/// <returns></returns>
-		public async ValueTask SetupMappingBindings()
-		{
-			if (MappingBindings != null)
-			{
-				// Set them up now:
-				await SetupMappingBindingsRawTask();
-			}
-
-			// Mark as loaded:
-			MappingBindingsLoaded = true;
-		}
-
-		/// <summary>
-		/// Sets up collectors and their mappings.
-		/// </summary>
-		public async ValueTask SetupCollectors(AutoService serviceForFiltersType)
-		{
-			if (Ast == null || Ast.Collectors == null)
-			{
-				CollectorMeta = Array.Empty<ReverseMappingInfo>();
-				return;
-			}
-
-			var set = new ReverseMappingInfo[Ast.Collectors.Count];
-			var collectorFields = new ContentField[Ast.Collectors.Count];
-
-			for (var i = 0; i < Ast.Collectors.Count; i++)
-			{
-				var mappingService = await Ast.Collectors[i].GetMappingService(serviceForFiltersType.GetContentFields());
-
-				// Get the *source* field (as we're running backwards)
-				var mappingContentFields = mappingService.GetContentFields();
-
-				if (!mappingContentFields.TryGetValue("sourceid", out ContentField sourceField))
-				{
-					throw new Exception("Couldn't find source field on a mapping type. This indicates an issue with the mapping engine rather than your usage.");
-				}
-
-				collectorFields[i] = sourceField;
-				
-				set[i] = new ReverseMappingInfo()
-				{
-					Service = mappingService,
-					SourceField = sourceField
-				};
-			}
-
-			// Ensure the actual types are constructed and ready to go:
-			TypeIOEngine.GenerateIDCollectors(collectorFields);
-
-			CollectorMeta = set;
-		}
-		
-		/// <summary>
 		/// Parses the queries and constructs the filters now.
 		/// </summary>
 		public void Construct()
@@ -200,8 +116,6 @@ namespace Api.Permissions
 				// No actual filter. It's effectively just a base "list everything".
 				return;
 			}
-
-			MappingBindings = tree.Mappings;
 
 			// Build the type:
 			_constructedType = tree.ConstructType();
@@ -280,31 +194,6 @@ namespace Api.Permissions
 		/// True if this should sort ascending.
 		/// </summary>
 		public bool SortAscending = true;
-
-		/// <summary>
-		/// First IDcollector for filter A. Both chains are stored on filterA as it's user specific.
-		/// </summary>
-		public IDCollector FirstCollector;
-
-		/// <summary>
-		/// True if this filter requires Setup() to be called.
-		/// </summary>
-		/// <returns></returns>
-		public virtual bool RequiresSetup
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		/// <summary>
-		/// Call this to perform any async setup. Must ensure this has been done before attempting Match.
-		/// </summary>
-		public virtual ValueTask Setup()
-		{
-			return new ValueTask();
-		}
 
 		/// <summary>
 		/// Errors when a null is given for a non-nullable field.
@@ -468,37 +357,6 @@ namespace Api.Permissions
 		}
 
 		/// <summary>
-		/// True if this filter requires Setup() to be called.
-		/// </summary>
-		/// <returns></returns>
-		public override bool RequiresSetup
-		{
-			get
-			{
-				return Pool != null && !Pool.MappingBindingsLoaded;
-			}
-		}
-
-		/// <summary>
-		/// Call this to perform any async setup. Must ensure this has been done before attempting Match.
-		/// </summary>
-		public override async ValueTask Setup()
-		{
-			await Pool.SetupMappingBindings();
-		}
-	
-		/// <summary>
-		/// Gets the map at the given index. Is always a mappingservice, 
-		/// and is setup before this ever gets invoked provided GetResults is used with the filter.
-		/// </summary>
-		/// <param name="index"></param>
-		/// <returns></returns>
-		public AutoService GetMap(int index)
-		{
-			return Pool.MappingBindings[index].Map;
-		}
-
-		/// <summary>
 		/// True if every arg has been bound.
 		/// </summary>
 		/// <returns></returns>
@@ -509,65 +367,6 @@ namespace Api.Permissions
 				return _arg == 0;
 			}
 			return _arg == Pool.ArgTypes.Count;
-		}
-
-		/// <summary>
-		/// Collects using the given service and the given collectorId. The ID determines which field is read.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="mappingService"></param>
-		/// <param name="collectorId"></param>
-		/// <param name="collector"></param>
-		public virtual ValueTask Collect(Context context, AutoService mappingService, int collectorId, IDCollector collector)
-		{
-			return new ValueTask();
-		}
-
-		/// <summary>
-		/// Rents the set of ID collectors needed for handling various types of map.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="src"></param>
-		/// <returns></returns>
-		public async ValueTask<IDCollector> RentAndCollect(Context context, AutoService src)
-		{
-			if (RequiresSetup)
-			{
-				await Setup();
-			}
-
-			if (Pool.CollectorMeta == null)
-			{
-				// Construct collector metadata now from the AST:
-				await Pool.SetupCollectors(src);
-			}
-
-			IDCollector first = null;
-			IDCollector last = null;
-
-			for (var i = 0; i < Pool.CollectorMeta.Length; i++)
-			{
-				var meta = Pool.CollectorMeta[i];
-
-				// Rent the collector:
-				var collector = meta.SourceField.RentCollector();
-
-				// Collect now - for each value in the set, find all sources that relate to it.
-				// Add that ID to the collector.
-				await Collect(context, meta.Service, i, collector);
-
-				if (last == null)
-				{
-					first = collector;
-				}
-				else
-				{
-					last.NextCollector = collector;
-				}
-				last = collector;
-			}
-
-			return first;
 		}
 
 		/// <summary>
@@ -586,22 +385,97 @@ namespace Api.Permissions
 		/// <summary>
 		/// True if the given iterator has the given value in it
 		/// </summary>
-		/// <typeparam name="IT"></typeparam>
-		/// <param name="value"></param>
-		/// <param name="vals"></param>
 		/// <returns></returns>
-		public static bool HasAny<IT>(IT value, IEnumerable<IT> vals)
-			where IT:IEquatable<IT>
+		public static bool SetContains(List<ulong> values, ulong val)
 		{
-			foreach (var v in vals)
+			foreach (var v in values)
 			{
-				if (v.Equals(value))
+				if (val == v)
 				{
 					return true;
 				}
 			}
 
 			return false;
+		}
+		
+		/// <summary>
+		/// True if the given member value is present in the given enumerable.
+		/// </summary>
+		/// <returns></returns>
+		public static bool MemberInSet<MEM_TYPE>(MEM_TYPE val, IEnumerable<MEM_TYPE> values)
+			where MEM_TYPE : IEquatable<MEM_TYPE>
+		{
+			foreach (var v in values)
+			{
+				if (val.Equals(v))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+		
+		/// <summary>
+		/// True if the given iterator has any of the given values in it.
+		/// </summary>
+		/// <returns></returns>
+		public static bool SetContainsAny(List<ulong> values, IEnumerable<ulong> anyOf)
+		{
+			foreach (var v in anyOf)
+			{
+				if (values != null && values.Contains(v))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+		
+		/// <summary>
+		/// True if the given iterator has any of the given values in it.
+		/// </summary>
+		/// <returns></returns>
+		public static bool SetContainsAll(List<ulong> values, IEnumerable<ulong> anyOf)
+		{
+			foreach (var v in anyOf)
+			{
+				if (values == null || !values.Contains(v))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// True if the given iterator has the given value in it
+		/// </summary>
+		/// <returns></returns>
+		public static bool SetEquals(List<ulong> values, IEnumerable<ulong> vals)
+		{
+			var max = values == null ? 0 : values.Count;
+			var iterations = 0;
+
+			foreach (var v in vals)
+			{
+				if (iterations >= max)
+				{
+					return false;
+				}
+
+				if (values[iterations] != v)
+				{
+					return false;
+				}
+
+				iterations++;
+			}
+
+			return iterations == max;
 		}
 
 		/// <summary>
@@ -654,17 +528,6 @@ namespace Api.Permissions
 			IncludeTotal = false;
 			SortField = null;
 			SortAscending = true;
-		}
-
-		/// <summary>
-		/// Called when no collectors were able to answer a collect request.
-		/// </summary>
-		/// <returns></returns>
-		public ValueTask CollectFail()
-		{
-			throw new Exception("Internal IDCollector alignment failure. " +
-				"This happens when there is a mismatch between the number of declared collectors, and the number that it attempts to actually use. " +
-				"This error indicates a core issue with filter resolution of virtual list fields.");
 		}
 
 		/// <summary>
@@ -812,9 +675,96 @@ namespace Api.Permissions
 				var argType = argInfo.ArgType;
 				var nullableUnderlying = Nullable.GetUnderlyingType(argType);
 
+				if (argInfo.ArrayOf != null)
+				{
+					if (argType.IsAssignableFrom(t))
+					{
+						// The value is directly usable as argTypes specific array type.
+						argInfo.ConstructedField.SetValue(this, v);
+						_arg++;
+						return this;
+					}
+					else if (t == typeof(JArray))
+					{
+						var jArray = (JArray)v;
+
+						if (argInfo.ArrayOf == typeof(string))
+						{
+							var nl = new List<string>();
+
+							foreach (var item in jArray)
+							{
+								var token = item as JValue;
+
+								if (token == null || token.Type == JTokenType.Null)
+								{
+									nl.Add(null);
+								}
+								else if (token.Type == JTokenType.String)
+								{
+									nl.Add(token.Value<string>());
+								}
+								else if (token.Type == JTokenType.Boolean)
+								{
+									nl.Add(token.Value<bool>() ? "true" : "false");
+								}
+								else if (token.Type == JTokenType.Float)
+								{
+									nl.Add(token.Value<float>().ToString());
+								}
+								else if (token.Type == JTokenType.Integer)
+								{
+									nl.Add(token.Value<long>().ToString());
+								}
+							}
+
+							v = nl;
+						}
+						else if (argInfo.ArrayOf == typeof(uint))
+						{
+							v = ToLongIterator(jArray).Select(lon => (uint)lon);
+						}
+						else if (argInfo.ArrayOf == typeof(uint?))
+						{
+							v = ToLongIterator(jArray).Select(lon => (uint?)lon);
+						}
+						else if (argInfo.ArrayOf == typeof(long))
+						{
+							v = ToLongIterator(jArray);
+						}
+						else if (argInfo.ArrayOf == typeof(long?))
+						{
+							v = ToLongIterator(jArray).Select(lon => (long?)lon);
+						}
+						else
+						{
+							Fail(t);
+						}
+					}
+					else if(typeof(IEnumerable).IsAssignableFrom(t))
+					{
+						// The value is some sort of enumerable - just not strictly the one we require.
+						// Typically it's e.g. IEnumerable<ulong> being bound to a IEnumerable<uint> field.
+						// That is specifically a very common part of the includes system.
+
+						// We need to handle this more generically.
+						if (typeof(IEnumerable<ulong>).IsAssignableFrom(t) && argType == typeof(IEnumerable<uint>))
+						{
+							var val = (IEnumerable<ulong>)v;
+							argInfo.ConstructedField.SetValue(this, val.Select(n => (uint)n));
+							_arg++;
+							return this;
+						}
+						else
+						{
+							Fail(t);
+						}
+
+					}
+				}
 				// Common numeric conversion.
 				// This happens because the JSON parser exclusively outputs long and double.
-				if (t == typeof(long))
+				else if (t == typeof(long))
 				{
 					if (nullableUnderlying == null)
 					{
@@ -842,87 +792,6 @@ namespace Api.Permissions
 					_arg++;
 					return this;
 				}
-				else if (t == typeof(JArray))
-				{
-					if (argInfo.ArrayOf == null)
-					{
-						Fail(t);
-					}
-
-					var jArray = (JArray)v;
-
-					if (argType == typeof(IEnumerable<string>))
-					{
-						var nl = new List<string>();
-
-						foreach (var item in jArray)
-						{
-							var token = item as JValue;
-
-							if (token == null || token.Type == JTokenType.Null)
-							{
-								nl.Add(null);
-							}
-							else if (token.Type == JTokenType.String)
-							{
-								nl.Add(token.Value<string>());
-							}
-							else if (token.Type == JTokenType.Boolean)
-							{
-								nl.Add(token.Value<bool>() ? "true" : "false");
-							}
-							else if (token.Type == JTokenType.Float)
-							{
-								nl.Add(token.Value<float>().ToString());
-							}
-							else if (token.Type == JTokenType.Integer)
-							{
-								nl.Add(token.Value<long>().ToString());
-							}
-						}
-
-						v = nl;
-					}
-					else if (argType == typeof(IEnumerable<uint>))
-					{
-						var nl = new List<uint>();
-
-						foreach (var item in jArray)
-						{
-							var token = item as JValue;
-
-							if (token == null || token.Type == JTokenType.Null)
-							{
-								nl.Add(0);
-							}
-							else if (token.Type == JTokenType.String)
-							{
-								if (uint.TryParse(token.Value<string>(), out uint ui))
-								{
-									nl.Add(ui);
-								}
-								else
-								{
-									nl.Add(0);
-								}
-							}
-							else if (token.Type == JTokenType.Boolean)
-							{
-								nl.Add(token.Value<bool>() ? (uint)1 : 0);
-							}
-							else if (token.Type == JTokenType.Float)
-							{
-								nl.Add((uint)token.Value<float>());
-							}
-							else if (token.Type == JTokenType.Integer)
-							{
-								nl.Add((uint)token.Value<long>());
-							}
-						}
-
-						v = nl;
-					}
-				}
 				else if (!argType.IsAssignableFrom(t))
 				{
 					Fail(t);
@@ -932,6 +801,43 @@ namespace Api.Permissions
 			argInfo.ConstructedField.SetValue(this, v);
 			_arg++;
 			return this;
+		}
+
+		/// <summary>
+		/// Treats a JArray like a long iterator.
+		/// </summary>
+		/// <param name="jArray"></param>
+		/// <returns></returns>
+		private IEnumerable<long> ToLongIterator(JArray jArray)
+		{
+			return jArray.Select(token => {
+
+				if (token == null)
+				{
+					return 0;
+				}
+
+				switch (token.Type)
+				{
+					case JTokenType.Null:
+						return 0;
+					case JTokenType.String:
+						if (long.TryParse(token.Value<string>(), out long ui))
+						{
+							return ui;
+						}
+						
+						return 0;
+					case JTokenType.Boolean:
+						return token.Value<bool>() ? (long)1 : 0;
+					case JTokenType.Float:
+						return (long)token.Value<double>();
+					case JTokenType.Integer:
+						return token.Value<long>();
+					default:
+						return 0;
+				}
+			});
 		}
 
 		private void ConvertFromLong(long v, Type targetType, FieldInfo target)

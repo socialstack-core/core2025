@@ -81,6 +81,8 @@ public class IncludesExecutor<T, ID>
 	{
 		writer.Write(ResultHeader, 0, 10);
 
+		IDCollector firstCollector = null;
+
 		if (entity == null)
 		{
 			writer.Write(NullText, 0, 4);
@@ -107,6 +109,20 @@ public class IncludesExecutor<T, ID>
 				}
 			}
 
+			if (includeSet != null)
+			{
+				// First we need to obtain ID collectors, and then collect the IDs.
+				firstCollector = includeSet.RootInclude.GetCollectors();
+
+				var current = firstCollector;
+
+				while (current != null)
+				{
+					current.WriteAndCollect(context, writer, entity);
+					current = current.NextCollector;
+				}
+			}
+
 			writer.Write((byte)'}');
 		}
 
@@ -120,20 +136,9 @@ public class IncludesExecutor<T, ID>
 			// Write the includes header, then write out the data so far.
 			writer.Write(IncludesHeader, 0, 13);
 
-			// First we need to obtain ID collectors, and then collect the IDs.
-			var firstCollector = includeSet.RootInclude.GetCollectors();
-
 			// Collect all IDs:
-			if (entity != null)
+			if (firstCollector != null)
 			{
-				var current = firstCollector;
-
-				while (current != null)
-				{
-					current.Collect(entity, context);
-					current = current.NextCollector;
-				}
-
 				await _svc.ExecuteIncludes(context, null, writer, firstCollector, includeSet.RootInclude);
 			}
 
@@ -147,7 +152,7 @@ public class IncludesExecutor<T, ID>
 	/// <param name="incl"></param>
 	/// <param name="compileEngine"></param>
 	/// <returns></returns>
-	public async ValueTask<FieldBuilder> Setup(string incl, NodeLoader compileEngine)
+	public FieldBuilder Setup(string incl, NodeLoader compileEngine)
 	{
 		// Yes - processing includes is required. Create a writer field. This will store the includes output:
 		var outputWriterFld = compileEngine.DefineStateField(typeof(Writer));
@@ -156,7 +161,7 @@ public class IncludesExecutor<T, ID>
 		compileEngine.AddWriterField(outputWriterFld);
 
 		// Obtain the includes set now.
-		includeSet = await _fields.GetIncludeSet(incl);
+		includeSet = _fields.GetIncludeSet(incl);
 		functionalIncludes = (includeSet == null) ? null : includeSet.RootInclude.FunctionalIncludes;
 
 		return outputWriterFld;

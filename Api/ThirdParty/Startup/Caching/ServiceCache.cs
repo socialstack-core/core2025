@@ -309,7 +309,7 @@ namespace Api.Startup{
 		/// </summary>
 		/// <param name="name"></param>
 		/// <returns></returns>
-		public ServiceCacheIndex<T> GetIndex<U>(string name)
+		public ServiceCacheIndex<T> GetIndex(string name)
 		{
 			Indices.TryGetValue(name, out ServiceCacheIndex<T> value);
 			return value;

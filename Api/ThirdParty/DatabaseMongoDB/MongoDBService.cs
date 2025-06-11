@@ -174,20 +174,17 @@ public partial class MongoDBService : AutoService
 
 		// FilterA is the user filter. It provides things like the collector and some contextual args.
 		var filterA = queryPair.QueryA;
-		var firstCollector = filterA.FirstCollector;
 
 		// FilterB is the permission system filter. Like filterA it can be null.
 		var filterB = queryPair.QueryB;
 
 		FilterDefinition<INSTANCE_TYPE> filterDefA = filterA == null ? null : filterA.ToMongo<INSTANCE_TYPE>(
-			filterA.FirstCollector,
 			localeCode,
 			context,
 			filterA
 		);
 
 		FilterDefinition<INSTANCE_TYPE> filterDefB = filterB == null ? null : filterB.ToMongo<INSTANCE_TYPE>(
-			null, // Perm filter must not use the includes collector
 			localeCode,
 			context,
 			filterA // Contextual functionality originate from the user filter, not the permission one here. 
