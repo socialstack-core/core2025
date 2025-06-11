@@ -971,17 +971,11 @@ namespace Api.Permissions{
 		private static MethodInfo _getTypeFromHandle;
 
 		/// <summary>
-		/// True if there's any array args or Id collectors.
-		/// </summary>
-		public bool HasArrayNodes;
-
-		/// <summary>
 		/// 
 		/// </summary>
 		/// <returns>hasArrayNodes is true if there are any collector nodes or [?] args</returns>
 		public Type ConstructType()
 		{
-			HasArrayNodes = false;
 			Args = new List<ArgBinding>();
 			AssemblyName assemblyName = new AssemblyName("GeneratedFilter_" + counter);
 			counter++;
@@ -1359,7 +1353,6 @@ namespace Api.Permissions{
 				}
 
 				Index+=3;
-				HasArrayNodes = true;
 				return new ArgFilterTreeNode<T, ID>() { Id = ArgIndex++, Array=true };
 			}
 
@@ -2569,27 +2562,6 @@ namespace Api.Permissions{
 				{
 					throw new PublicException("Couldn't find filter field '" + Name + "' on this type, or a global virtual field by the same name.", "filter_invalid");
 				}
-
-				// Some mappings are handled via ID fields on the actual target type.
-				// We can short those out and replace them with regular array fields instead.
-
-				// For example, imagine a virtual list field called CallToActions, and it is being used in a filter on a Video.
-				// "CallToActions=[?]"
-				// However the actual video only has a CallToActionId field, and only stores one.
-				// In this situation, a mapping is "not required" and the "local" field will be that CallToActionId one.
-				// Ultimately, that means the filter executes the same as this faster one:
-				// "CallToActionId=[?]"
-
-				var localMappedField = field.GetIdFieldIfMappingNotRequired(fields);
-
-				if (localMappedField != null)
-				{
-					// Nice! No mapping is required because this type has the field on it.
-					field = localMappedField;
-				}
-
-				// Either way, it has an array node.
-				ast.HasArrayNodes = true;
 			}
 			else if (field.PropertyInfo != null)
 			{

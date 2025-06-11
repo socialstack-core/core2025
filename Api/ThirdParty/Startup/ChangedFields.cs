@@ -1254,20 +1254,6 @@ namespace Api.Startup {
 		}
 
 		/// <summary>
-		/// Gets the "local" field which will be matched instead.
-		/// </summary>
-		/// <param name="relativeTo"></param>
-		/// <returns></returns>
-		public ContentField GetIdFieldIfMappingNotRequired(ContentFields relativeTo)
-		{
-
-			// Do we need to map? Often yes, but occasionally not necessary.
-			// We don't if the target type has a virtual field of the source type, where the virtual field name is simply the same as the instance type
-			return VirtualInfo.Service.GetContentFields().GetVirtualField(relativeTo.InstanceType, relativeTo.InstanceType.Name);
-
-		}
-
-		/// <summary>
 		/// </summary>
 		public ContentField(FieldInfo info){
 			FieldInfo = info;

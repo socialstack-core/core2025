@@ -506,20 +506,9 @@ namespace Api.Startup
 				{
 					// List fields.
 
-					var idMappingIfNotRequired = hostField.GetIdFieldIfMappingNotRequired(node.RelativeTo);
-
-					if (idMappingIfNotRequired != null)
-					{
-						// The object's own ID is the thing to collect. It does not get emitted though.
-#warning unfinished!
-					}
-					else
-					{
-						// The host field itself is the thing to emit and collect.
-						node.CollectorIndex = idFieldList.Count;
-						idFieldList.Add(new CollectibleIncludeField(hostField, hostField.VirtualInfo.FieldName));
-					}
-
+					// The host field itself is the thing to emit and collect.
+					node.CollectorIndex = idFieldList.Count;
+					idFieldList.Add(new CollectibleIncludeField(hostField, hostField.VirtualInfo.FieldName));
 					continue;
 				}
 				

@@ -242,13 +242,15 @@ namespace Api.Payments
 				return;
 			}
 
+			var toAdd = new List<ProductQuantity>();
+
 			foreach (var pq in productQuantities)
 			{
+				// Must clone it:
 				var purchaseQuantity = new ProductQuantity()
 				{
 					ProductId = pq.ProductId,
 					Quantity = pq.Quantity,
-					PurchaseId = toPurchase.Id
 				};
 
 				// Inform that the given product quantity is being added to a purchase and is ready to be charged.
@@ -260,10 +262,24 @@ namespace Api.Payments
 					continue;
 				}
 
-				// Add it:
-				await _prodQuantities.Create(context, purchaseQuantity, DataOptions.IgnorePermissions);
-
+				var result = await _prodQuantities.Create(context, purchaseQuantity, DataOptions.IgnorePermissions);
+				toAdd.Add(result);
 			}
+
+			if (toAdd.Count == 0)
+			{
+				return;
+			}
+
+			await Update(context, toPurchase, (Context ctx, Purchase toUpdate, Purchase orig) =>
+			{
+
+				foreach (var entry in toAdd)
+				{
+					toUpdate.Mappings.Add("ProductQuantities", entry);
+				}
+
+			}, DataOptions.IgnorePermissions);
 		}
 		
 		/// <summary>

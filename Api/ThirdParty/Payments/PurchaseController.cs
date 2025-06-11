@@ -236,6 +236,8 @@ namespace Api.Payments
 					UserId = context.UserId
 				};
 
+				prodQuant = await productQuantities.Create(context, prodQuant, DataOptions.IgnorePermissions);
+
 				// Which bucket does this go into?
 				if (product.BillingFrequency == 0)
 				{
@@ -243,16 +245,16 @@ namespace Api.Payments
 					if (oneOff == null)
 					{
 						// Create it:
-						oneOff = await _service.Create(context, new Purchase()
+						oneOff = new Purchase()
 						{
 							LocaleId = context.LocaleId,
 							PaymentGatewayId = paymentMethod.PaymentGatewayId,
 							PaymentMethodId = paymentMethod.Id,
 							UserId = context.UserId
-						}, DataOptions.IgnorePermissions);
+						};
 					}
 
-					prodQuant.PurchaseId = oneOff.Id;
+					oneOff.Mappings.Add("PurchaseQuantities", prodQuant);
 				}
 				else
 				{
@@ -264,13 +266,13 @@ namespace Api.Payments
 							// Weekly
 							if (week == null)
 							{
-								week = await subscriptions.Create(context, new Subscription()
+								week = new Subscription()
 								{
 									PaymentMethodId = paymentMethod.Id,
 									TimeslotFrequency = 3, // Weeks
 									LocaleId = context.LocaleId,
 									UserId = context.UserId
-								}, DataOptions.IgnorePermissions);
+								};
 							}
 
 							subToUse = week;
@@ -281,13 +283,13 @@ namespace Api.Payments
 							
 							if (month == null)
 							{
-								month = await subscriptions.Create(context, new Subscription()
+								month = new Subscription()
 								{
 									PaymentMethodId = paymentMethod.Id,
 									TimeslotFrequency = 0, // Months
 									LocaleId = context.LocaleId,
 									UserId = context.UserId
-								}, DataOptions.IgnorePermissions);
+								};
 							}
 
 							subToUse = month;
@@ -298,13 +300,13 @@ namespace Api.Payments
 
 							if (quarter == null)
 							{
-								quarter = await subscriptions.Create(context, new Subscription()
+								quarter = new Subscription()
 								{
 									PaymentMethodId = paymentMethod.Id,
 									TimeslotFrequency = 1, // Quarters
 									LocaleId = context.LocaleId,
 									UserId = context.UserId
-								}, DataOptions.IgnorePermissions);
+								};
 							}
 
 							subToUse = quarter;
@@ -314,23 +316,22 @@ namespace Api.Payments
 
 							if (year == null)
 							{
-								year = await subscriptions.Create(context, new Subscription()
+								year = new Subscription()
 								{
 									PaymentMethodId = paymentMethod.Id,
 									TimeslotFrequency = 2, // Years
 									LocaleId = context.LocaleId,
 									UserId = context.UserId
-								}, DataOptions.IgnorePermissions);
+								};
 							}
 
 							subToUse = year;
 							break;
 					}
 
-					prodQuant.SubscriptionId = subToUse.Id;
+					subToUse.Mappings.Add("ProductQuantities", prodQuant);
 				}
 
-				await productQuantities.Create(context, prodQuant, DataOptions.IgnorePermissions);
 			}
 
 			// Next check if we need to do a singular execution or a multi execution.
@@ -338,26 +339,31 @@ namespace Api.Payments
 
 			if (oneOff != null)
 			{
+				oneOff = await _service.Create(context, oneOff, DataOptions.IgnorePermissions);
 				executeCount++;
 			}
 
 			if (week != null)
 			{
+				week = await subscriptions.Create(context, week, DataOptions.IgnorePermissions);
 				executeCount++;
 			}
 
 			if (month != null)
 			{
+				month = await subscriptions.Create(context, month, DataOptions.IgnorePermissions);
 				executeCount++;
 			}
 			
 			if (quarter != null)
 			{
+				quarter = await subscriptions.Create(context, quarter, DataOptions.IgnorePermissions);
 				executeCount++;
 			}
 			
 			if (year != null)
 			{
+				year = await subscriptions.Create(context, year, DataOptions.IgnorePermissions);
 				executeCount++;
 			}
 
