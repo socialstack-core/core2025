@@ -550,20 +550,41 @@ namespace Api.Permissions
 
 			var arg = Pool.ArgTypes[_arg];
 
-			var nullableBaseType = Nullable.GetUnderlyingType(arg.ArgType);
+			throw new PublicException(
+				"Argument #" + _arg + " must be a '" + NiceTypeName(arg.ArgType) + "', but you used Bind('" + NiceTypeName(type) + "') for it.",
+				"filter_invalid"
+			);
+		}
 
-			string typeName;
+		private string NiceTypeName(Type type)
+		{
 
-			if (nullableBaseType == null)
+			var nullableBaseType = Nullable.GetUnderlyingType(type);
+
+			if (nullableBaseType != null)
 			{
-				typeName = arg.ArgType.Name;
-			}
-			else
-			{
-				typeName = "nullable: " + nullableBaseType.Name + "?";
+				return NiceTypeName(nullableBaseType) + "?";
 			}
 
-			throw new PublicException("Argument #" + _arg + " must be a '" + typeName + "', but you used Bind('" + type.Name + "') for it.", "filter_invalid");
+			if (type.IsGenericType)
+			{
+				var args = type.GetGenericArguments();
+
+				var name = type.Name.Split('`')[0] + "<";
+
+				for (var i = 0; i < args.Length; i++)
+				{
+					if (i != 0)
+					{
+						name += ", ";
+					}
+					name += NiceTypeName(args[i]);
+				}
+
+				return name + ">";
+			}
+
+			return type.Name;
 		}
 
 		/// <summary>
