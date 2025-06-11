@@ -404,6 +404,8 @@ class AutoFormInternal extends React.Component {
 
 		var prom; // :Promise<WhateverTheContentTypeIs>
 
+		var api = this.props.api;
+
 		if (this.state.revisionId) {
 			prom = api.deleteRevision();
 		} else {
@@ -757,7 +759,7 @@ class AutoFormInternal extends React.Component {
 				)
 			}
 		</>;
-		
+
 		var extraButtonMapFunc = (button) => {
 			
 			if (button.href)
