@@ -336,6 +336,59 @@ namespace Api.Permissions{
 		}
 
 		/// <summary>
+		/// True if the given type is enumerable/ array-like (but not a string)
+		/// </summary>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		public static bool IsEnumerable(Type type)
+		{
+			return type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type);
+		}
+		
+		/// <summary>
+		/// Searches for the IEnumerable[T] interface description on the given type.
+		/// </summary>
+		/// <param name="valueType"></param>
+		/// <returns></returns>
+		public static Type GetEnumerableType(Type valueType)
+		{
+			if (valueType.IsGenericType)
+			{
+				var def = valueType.GetGenericTypeDefinition();
+
+				if (def == typeof(IEnumerable<>))
+				{
+					return valueType.GetGenericArguments()[0];
+				}
+			}
+
+			var interfaces = valueType.GetInterfaces();
+
+			foreach (var intf in interfaces)
+			{
+				if (intf.IsGenericType)
+				{
+					var def = GetEnumerableType(intf);
+
+					if (def != null)
+					{
+						return def;
+					}
+				}
+			}
+
+			// Try its base type otherwise.
+			var bt = valueType.BaseType;
+
+			if (bt == null || bt == typeof(object))
+			{
+				return null;
+			}
+
+			return GetEnumerableType(bt);
+		}
+		
+		/// <summary>
 		/// True if the given iterator has the given value in it
 		/// </summary>
 		/// <returns></returns>
@@ -861,6 +914,12 @@ namespace Api.Permissions{
 				// Create the arg now:
 				var isEnumerable = argNode.Array;
 				Type argElementType = idealType;
+
+				// If idealType is some sort of array, unwrap it.
+				if (FilterAst.IsEnumerable(argElementType))
+				{
+					argElementType = FilterAst.GetEnumerableType(argElementType);
+				}
 
 				if (argElementType.IsGenericType && argElementType.GetGenericTypeDefinition() == typeof(Localized<>))
 				{
@@ -1826,7 +1885,7 @@ namespace Api.Permissions{
 
 						generator.Emit(OpCodes.Call, _strContains);
 					}
-					else if (IsEnumerable(valueType) && GetEnumerableType(valueType) == typeof(string))
+					else if (FilterAst.IsEnumerable(valueType) && FilterAst.GetEnumerableType(valueType) == typeof(string))
 					{
 						generator.Emit(OpCodes.Call, typeof(FilterAst)
 								.GetMethod(nameof(FilterAst.GuardedContainsAny), BindingFlags.Public | BindingFlags.Static));
@@ -1844,7 +1903,7 @@ namespace Api.Permissions{
 					throw new PublicException("Contains can only be used on strings and array-like fields.", "filter_invalid");
 				}
 
-				if (IsEnumerable(valueType))
+				if (FilterAst.IsEnumerable(valueType))
 				{
 					// Exact match. This assumes that valueArray is coerseable to IEnumerable of specifically ulong.
 					var matchMethod = typeof(FilterAst).GetMethod(nameof(FilterAst.SetContainsAll));
@@ -1877,7 +1936,7 @@ namespace Api.Permissions{
 
 						generator.Emit(OpCodes.Call, _strContains);
 					}
-					else if (IsEnumerable(valueType) && GetEnumerableType(valueType) == typeof(string))
+					else if (FilterAst.IsEnumerable(valueType) && FilterAst.GetEnumerableType(valueType) == typeof(string))
 					{
 						generator.Emit(OpCodes.Call, typeof(FilterAst)
 								.GetMethod(nameof(FilterAst.GuardedContainsAny), BindingFlags.Public | BindingFlags.Static));
@@ -1895,7 +1954,7 @@ namespace Api.Permissions{
 					throw new PublicException("Contains can only be used on strings and array-like fields.", "filter_invalid");
 				}
 
-				if (IsEnumerable(valueType))
+				if (FilterAst.IsEnumerable(valueType))
 				{
 					// Exact match. This assumes that valueArray is coerseable to IEnumerable of specifically ulong.
 					var matchMethod = typeof(FilterAst).GetMethod(nameof(FilterAst.SetContainsAny));
@@ -1932,7 +1991,7 @@ namespace Api.Permissions{
 
 					generator.Emit(OpCodes.Call, _strStartsWith);
 				}
-				else if (IsEnumerable(valueType) && GetEnumerableType(valueType) == typeof(string))
+				else if (FilterAst.IsEnumerable(valueType) && FilterAst.GetEnumerableType(valueType) == typeof(string))
 				{
 					generator.Emit(OpCodes.Call, typeof(FilterAst)
 							.GetMethod(nameof(FilterAst.GuardedStartsWithAny), BindingFlags.Public | BindingFlags.Static));
@@ -1962,7 +2021,7 @@ namespace Api.Permissions{
 
 					generator.Emit(OpCodes.Call, _strEndsWith);
 				}
-				else if (IsEnumerable(valueType) && GetEnumerableType(valueType) == typeof(string))
+				else if (FilterAst.IsEnumerable(valueType) && FilterAst.GetEnumerableType(valueType) == typeof(string))
 				{
 					generator.Emit(OpCodes.Call, typeof(FilterAst)
 							.GetMethod(nameof(FilterAst.GuardedEndsWithAny), BindingFlags.Public | BindingFlags.Static));
@@ -2036,23 +2095,13 @@ namespace Api.Permissions{
 
 		}
 
-		/// <summary>
-		/// True if the given type is enumerable/ array-like (but not a string)
-		/// </summary>
-		/// <param name="type"></param>
-		/// <returns></returns>
-		private bool IsEnumerable(Type type)
-		{
-			return type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type);
-		}
-
 		private void EmitEquals(ILGenerator generator, FilterAst<T, ID> ast, MemberFilterTreeNode<T, ID> member, FilterTreeNode<T, ID> value)
 		{
 			var memberType = ast.EmitReadValue(generator, member, null);
 			var valueType = ast.EmitReadValue(generator, value, memberType);
 
-			var memberArray = IsEnumerable(memberType);
-			var valueArray = IsEnumerable(valueType);
+			var memberArray = FilterAst.IsEnumerable(memberType);
+			var valueArray = FilterAst.IsEnumerable(valueType);
 
 			// valueType can be an array, in which case it is equiv to IN(..).
 			// if memberType is also an array (a list field), then it is an exact match.
@@ -2087,7 +2136,7 @@ namespace Api.Permissions{
 			else if (valueArray)
 			{
 				// IN(..) equiv. Get the IEnumerable<T> T:
-				var itemType = GetEnumerableType(valueType);
+				var itemType = FilterAst.GetEnumerableType(valueType);
 
 				var matchMethod = typeof(FilterAst)
 					.GetMethod(nameof(FilterAst.MemberInSet))
@@ -2163,49 +2212,6 @@ namespace Api.Permissions{
 				// Cast valueType towards being memberType.
 				throw new PublicException("Invalid filter: Field coersion is not supported at the moment.", "filter/invalid");
 			}
-		}
-
-		/// <summary>
-		/// Searches for the IEnumerable[T] interface description on the given type.
-		/// </summary>
-		/// <param name="valueType"></param>
-		/// <returns></returns>
-		private Type GetEnumerableType(Type valueType)
-		{
-			if (valueType.IsGenericType)
-			{
-				var def = valueType.GetGenericTypeDefinition();
-
-				if (def == typeof(IEnumerable<>))
-				{
-					return valueType.GetGenericArguments()[0];
-				}
-			}
-
-			var interfaces = valueType.GetInterfaces();
-
-			foreach (var intf in interfaces)
-			{
-				if (intf.IsGenericType)
-				{
-					var def = GetEnumerableType(intf);
-
-					if (def != null)
-					{
-						return def;
-					}
-				}
-			}
-
-			// Try its base type otherwise.
-			var bt = valueType.BaseType;
-
-			if (bt == null || bt == typeof(object))
-			{
-				return null;
-			}
-
-			return GetEnumerableType(bt);
 		}
 
 		private bool IsCeqCompatible(Type type)

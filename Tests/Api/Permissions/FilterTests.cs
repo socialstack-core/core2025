@@ -488,6 +488,14 @@ public class FilterTests
 	}
 
 	[Fact]
+	public void VirtualListFieldFilter_ShouldBindArray()
+	{
+		var pgService = Services.Get<PageService>();
+
+		var filter1 = pgService.Where("Tags=[?]").Bind(new List<uint>() { 1 });
+	}
+
+	[Fact]
 	public void BasicIdEqualsFilter_ShouldNotBindArray()
 	{
 		var pgService = Services.Get<PageService>();

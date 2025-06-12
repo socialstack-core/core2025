@@ -500,7 +500,7 @@ namespace Api.Permissions
 				return true;
 			}
 
-			// The only array coersion that happens is any sort of ulong iterator to uint ones.
+			// The only array coersion that happens is any sort of ulong iterator involving ones.
 			if (typeof(IEnumerable<ulong>).IsAssignableFrom(valueType) && target.ArgType == typeof(IEnumerable<uint>))
 			{
 				target.InternalSetBoxedValue(
@@ -509,7 +509,55 @@ namespace Api.Permissions
 				_arg++;
 				return true;
 			}
-			
+
+			if (target.ArgType == typeof(IEnumerable<ulong>))
+			{
+				if (typeof(IEnumerable<int>).IsAssignableFrom(valueType))
+				{
+					target.InternalSetBoxedValue(
+						((IEnumerable<int>)value).Select(n => (ulong)n)
+					);
+					_arg++;
+					return true;
+				}
+
+				if (typeof(IEnumerable<uint>).IsAssignableFrom(valueType))
+				{
+					target.InternalSetBoxedValue(
+						((IEnumerable<uint>)value).Select(n => (ulong)n)
+					);
+					_arg++;
+					return true;
+				}
+
+				if (typeof(IEnumerable<short>).IsAssignableFrom(valueType))
+				{
+					target.InternalSetBoxedValue(
+						((IEnumerable<short>)value).Select(n => (ulong)n)
+					);
+					_arg++;
+					return true;
+				}
+
+				if (typeof(IEnumerable<ushort>).IsAssignableFrom(valueType))
+				{
+					target.InternalSetBoxedValue(
+						((IEnumerable<ushort>)value).Select(n => (ulong)n)
+					);
+					_arg++;
+					return true;
+				}
+
+				if (typeof(IEnumerable<long>).IsAssignableFrom(valueType))
+				{
+					target.InternalSetBoxedValue(
+						((IEnumerable<long>)value).Select(n => (ulong)n)
+					);
+					_arg++;
+					return true;
+				}
+			}
+
 			// We know the src is not null so if it is a nullable type we can 
 			// first pop it out of that nullable wrapper.
 			var baseSrcNull = Nullable.GetUnderlyingType(valueType);
