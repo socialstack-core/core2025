@@ -167,7 +167,7 @@ namespace Api.Permissions{
 					else
 					{
 						// Handle null special case:
-						var val = arg.Binding.ConstructedField.GetValue(filter);
+						var val = filter.Arguments[arg.Binding.Index].BoxedValue;
 
 						if (val == null)
 						{
@@ -208,7 +208,7 @@ namespace Api.Permissions{
 					else
 					{
 						// Handle null special case:
-						var val = arg.Binding.ConstructedField.GetValue(filter);
+						var val = filter.Arguments[arg.Binding.Index].BoxedValue;
 
 						if (val == null)
 						{
@@ -555,7 +555,7 @@ namespace Api.Permissions{
 					}
 				}
 
-				var val = Binding.ConstructedField.GetValue(filter);
+				var val = filter.Arguments[Binding.Index].BoxedValue;
 
 				writer.WriteASCII("IN(");
 
@@ -570,7 +570,7 @@ namespace Api.Permissions{
 			{
 				// output an arg. This occurs for args used by e.g. contains or startsWith, 
 				// where use of a null makes no sense and would (expectedly) return no results.
-				var val = Binding.ConstructedField.GetValue(filter);
+				var val = filter.Arguments[Binding.Index].BoxedValue;
 				var name = "@a" + cmd.Parameters.Count;
 				var parameter = cmd.CreateParameter();
 				parameter.ParameterName = name;

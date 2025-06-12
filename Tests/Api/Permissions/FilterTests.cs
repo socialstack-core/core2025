@@ -427,76 +427,43 @@ public class FilterTests
 	}
 
 	[Fact]
-	public void BasicIdEqualsFilter_ShouldNotBind()
+	public void BasicIdEqualsFilterWithCoersion_ShouldBind()
 	{
 		var pgService = Services.Get<PageService>();
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filter2 = pgService.Where("Id=?").Bind((int)1);
-		});
+		var filter2 = pgService.Where("Id=?").Bind((int)1);
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filter3 = pgService.Where("Id=?").Bind((long)1);
-		});
+		var filter3 = pgService.Where("Id=?").Bind((long)1);
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filter4 = pgService.Where("Id=?").Bind((ulong)1);
-		});
+		var filter4 = pgService.Where("Id=?").Bind((ulong)1);
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filterN1 = pgService.Where("Id=?").Bind((int?)1);
-		});
+		var filterN1 = pgService.Where("Id=?").Bind((int?)1);
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filterN2 = pgService.Where("Id=?").Bind((uint?)1);
-		});
+		var filterN2 = pgService.Where("Id=?").Bind((uint?)1);
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filterN3 = pgService.Where("Id=?").Bind((long?)1);
-		});
+		var filterN3 = pgService.Where("Id=?").Bind((long?)1);
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filterN4 = pgService.Where("Id=?").Bind((ulong?)1);
-		});
+		var filterN4 = pgService.Where("Id=?").Bind((ulong?)1);
+
+		var filterN5 = pgService.Where("Id=?").Bind("1");
 
 		// -boxed set-
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filter2 = pgService.Where("Id=?").Bind((object)((int)1));
-		});
+		var filterB2 = pgService.Where("Id=?").Bind((object)((int)1));
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filter4 = pgService.Where("Id=?").Bind((object)((ulong)1));
-		});
+		var filterB3 = pgService.Where("Id=?").Bind((object)(long)1);
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filterN1 = pgService.Where("Id=?").Bind((object)((int?)1));
-		});
+		var filterB4 = pgService.Where("Id=?").Bind((object)((ulong)1));
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filterN2 = pgService.Where("Id=?").Bind((object)((uint?)1));
-		});
+		var filterBN1 = pgService.Where("Id=?").Bind((object)((int?)1));
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filterN3 = pgService.Where("Id=?").Bind((object)((long?)1));
-		});
+		var filterBN2 = pgService.Where("Id=?").Bind((object)((uint?)1));
 
-		Assert.Throws<PublicException>(() =>
-		{
-			var filterN4 = pgService.Where("Id=?").Bind((object)((ulong?)1));
-		});
+		var filterBN3 = pgService.Where("Id=?").Bind((object)((long?)1));
+
+		var filterBN4 = pgService.Where("Id=?").Bind((object)((ulong?)1));
+
+		var filterBN5 = pgService.Where("Id=?").Bind((object)"1");
 	}
 
 	[Fact]

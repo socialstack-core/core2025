@@ -431,63 +431,7 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 
 			for (var i = 0; i < argSet.Count; i++)
 			{
-				var array = argSet[i] as JArray;
-
-				if (array != null)
-				{
-					// JArray is directly bindable and converts internally:
-					filter.Bind(array);
-				}
-				else
-				{
-					var value = argSet[i] as JValue;
-
-					if (value == null)
-					{
-						throw new PublicException(
-							"Arg #" + (i + 1) + " in the args set is invalid - it can't be an object, only a string or numeric/ bool value.",
-							"filter_invalid"
-						);
-					}
-
-					// The underlying JSON token is textual, so we'll use a general use bind from string method.
-					if (value.Type == JTokenType.Date)
-					{
-						var date = value.Value as DateTime?;
-
-						// The target value could be a nullable date, in which case we'd need to use Bind(DateTime?)
-						if (filter.NextBindType == typeof(DateTime?))
-						{
-							filter.Bind(date);
-						}
-						else
-						{
-							filter.Bind(date.Value);
-						}
-					}
-					else if (value.Type == JTokenType.Boolean)
-					{
-						var boolVal = value.Value as bool?;
-
-						// The target value could be a nullable bool, in which case we'd need to use Bind(bool?)
-						if (filter.NextBindType == typeof(bool?))
-						{
-							filter.Bind(boolVal);
-						}
-						else
-						{
-							filter.Bind(boolVal.Value);
-						}
-					}
-					else if(value.Type == JTokenType.Null)
-					{
-						filter.BindFromString(null);
-					}
-					else
-					{
-						filter.BindFromString(value.Value<string>());
-					}
-				}
+				filter.BindJToken(argSet[i]);
 			}
 
 		}
@@ -786,39 +730,6 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 		var total = queryPair.Total;
 
 		return total;
-	}
-
-	/// <summary>
-	/// Gets an object from this service which matches the given filter and values. If multiple match, it's only ever the first one.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="filter"></param>
-	/// <param name="filterValues"></param>
-	/// <param name="options"></param>
-	/// <returns></returns>
-	public override async ValueTask<object> GetObjectByFilter(Context context, string filter, List<string> filterValues, DataOptions options = DataOptions.Default)
-	{
-		var filterObject = Where(filter, options); // Region=? and Slug=? and Article=?
-
-		for (var i = 0; i < filterValues.Count; i++) // polar regions, svalbard, where-to-go
-		{
-			filterObject = filterObject.BindFromString(filterValues[i]);
-		}
-
-		return await filterObject.First(context);
-	}
-
-	/// <summary>
-	/// Gets an object from this service. Generally use Get instead with a fixed type.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="fieldName"></param>
-	/// <param name="fieldValue"></param>
-	/// <param name="options"></param>
-	/// <returns></returns>
-	public override async ValueTask<object> GetObject(Context context, string fieldName, string fieldValue, DataOptions options = DataOptions.Default)
-	{
-		return await Where(fieldName + "=?", options).BindFromString(fieldValue).First(context);
 	}
 
 	/// <summary>
@@ -1625,32 +1536,6 @@ public partial class AutoService
 	public virtual ValueTask<JsonStructure> GetJsonStructure(Context ctx)
 	{
 		throw new NotImplementedException();
-	}
-
-	/// <summary>
-	/// Gets an object from this service which matches the given particular field/value. If multiple match, it's only ever the first one.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="fieldName"></param>
-	/// <param name="fieldValue"></param>
-	/// <param name="options"></param>
-	/// <returns></returns>
-	public virtual ValueTask<object> GetObject(Context context, string fieldName, string fieldValue, DataOptions options = DataOptions.Default)
-	{
-		return new ValueTask<object>(null);
-	}
-
-	/// <summary>
-	/// Gets an object from this service which matches the given filter and values. If multiple match, it's only ever the first one.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="filter"></param>
-	/// <param name="filterValues"></param>
-	/// <param name="options"></param>
-	/// <returns></returns>
-	public virtual ValueTask<object> GetObjectByFilter(Context context, string filter, List<string> filterValues, DataOptions options = DataOptions.Default)
-	{
-		return new ValueTask<object>(null);
 	}
 
 	/// <summary>

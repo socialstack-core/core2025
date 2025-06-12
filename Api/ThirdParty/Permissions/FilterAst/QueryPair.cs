@@ -3,6 +3,7 @@ using Api.Database;
 using Api.SocketServerLibrary;
 using Api.Startup;
 using Newtonsoft.Json.Linq;
+using Stripe;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -70,9 +71,9 @@ namespace Api.Permissions
 		public AutoService<T, ID> Service;
 		private bool _allowConstants;
 		/// <summary>
-		/// The constructed filter type to use.
+		/// The constructed match delegate to use.
 		/// </summary>
-		private Type _constructedType;
+		public Func<FilterBase, Context, object, bool, bool> MatchDelegate;
 		
 		/// <summary>
 		/// The AST for this filter.
@@ -114,30 +115,20 @@ namespace Api.Permissions
 			if (tree == null)
 			{
 				// No actual filter. It's effectively just a base "list everything".
+				MatchDelegate = (FilterBase b, Context ctx, object val, bool inc) => true;
 				return;
 			}
 
 			// Build the type:
-			_constructedType = tree.ConstructType();
+			tree.Construct();
+			ArgTypes = tree.Args;
+			MatchDelegate = tree.MatchDelegate;
 
 			if (tree.Root != null)
 			{
 				HasRootedOn = tree.Root.HasRootedOnStatement();
 			}
 			
-			ArgTypes = tree.Args;
-
-			for (var i = 0; i < ArgTypes.Count; i++)
-			{
-				var argType = ArgTypes[i];
-				var field = _constructedType.GetField("Arg_" + i);
-				argType.ConstructedField = field;
-
-				if (field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-				{
-					argType.ArrayOf = field.FieldType.GetGenericArguments()[0];
-				}
-			}
 		}
 
 		/// <summary>
@@ -146,18 +137,21 @@ namespace Api.Permissions
 		/// <returns></returns>
 		public Filter<T,ID> GetPooled()
 		{
-			Filter<T, ID> f;
+			Filter<T, ID> f = new Filter<T, ID>();
 
-			if (_constructedType == null)
+			if (Ast == null)
 			{
-				// Just a base Filter<T, ID> - it has no args etc.
-				f = new Filter<T, ID>();
 				f.Empty = true;
 			}
-			else
+			else if(ArgTypes != null && ArgTypes.Count > 0)
 			{
-				f = Activator.CreateInstance(_constructedType) as Filter<T, ID>;
-				f.Empty = false;
+				// Instance the arg set now:
+				f.Arguments = new FilterArg[ArgTypes.Count];
+
+				for (var i = 0; i < ArgTypes.Count; i++)
+				{
+					f.Arguments[i] = (FilterArg)Activator.CreateInstance(ArgTypes[i].FilterArgGenericType);
+				}
 			}
 
 			f.IsIncluded = HasRootedOn;
@@ -307,8 +301,7 @@ namespace Api.Permissions
 		/// <returns></returns>
 		public virtual bool Match(Context context, object value, bool isIncluded)
 		{
-			// No filter - pass by default.
-			return true;
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -322,6 +315,9 @@ namespace Api.Permissions
 
 	}
 
+	/// <summary>
+	/// The base class for args for a filter. You will always have the generic instance actually.
+	/// </summary>
 	public class FilterArg
 	{
 
@@ -354,6 +350,10 @@ namespace Api.Permissions
 
 	}
 
+	/// <summary>
+	/// A specific argument value holder. Instanced once per filter instance: typically pooled.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	public class FilterArg<T> : FilterArg
 	{
 
@@ -418,12 +418,35 @@ namespace Api.Permissions
 		/// </summary>
 		public FilterArg[] Arguments;
 
+		/// <summary>
+		/// Test if the given object passes this filter.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="value"></param>
+		/// <param name="isIncluded">True if the match is taking place within an inclusion context.</param>
+		/// <returns></returns>
+		public override bool Match(Context context, object value, bool isIncluded)
+		{
+			return Pool.MatchDelegate(this, context, value, isIncluded);
+		}
 
-		public Filter<T, ID> BindGeneric<VALUE_TYPE>(VALUE_TYPE value)
+		/// <summary>
+		/// Bind an argument value to this filter.
+		/// </summary>
+		/// <typeparam name="VALUE_TYPE"></typeparam>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		/// <exception cref="PublicException"></exception>
+		public Filter<T, ID> Bind<VALUE_TYPE>(VALUE_TYPE value)
 		{
 			if (typeof(VALUE_TYPE) == typeof(object))
 			{
 				return BindObject(value);
+			}
+
+			if (typeof(VALUE_TYPE) == typeof(JToken))
+			{
+				return BindJToken((JToken)(object)value);
 			}
 
 			var max = Pool.ArgTypes == null ? 0 : Pool.ArgTypes.Count;
@@ -436,16 +459,32 @@ namespace Api.Permissions
 			var arg = Arguments[_arg];
 			var argType = arg.ArgType;
 
-			if (argType == typeof(VALUE_TYPE) || argType.IsAssignableFrom(typeof(VALUE_TYPE)))
+			if (
+				argType == typeof(VALUE_TYPE)
+			)
 			{
 				var specificArg = (FilterArg<VALUE_TYPE>)arg;
 				specificArg.Value = value;
+				_arg++;
+				return this;
+			}
+			else if (argType.IsAssignableFrom(typeof(VALUE_TYPE)) ||
+				Nullable.GetUnderlyingType(argType) == typeof(VALUE_TYPE) ||
+				Nullable.GetUnderlyingType(typeof(VALUE_TYPE)) == argType)
+			{
+				// It's typically a reference type in this scenario
+				// anyway (e.g. List being set on an IEnumerable field).
+				arg.InternalSetBoxedValue(value);
+				_arg++;
 				return this;
 			}
 
-			// Coersion time! We're looking for a mapping from whatever VALUE_TYPE is to argType.
-			// The most common ones are nullables and wider types such as long or double being bound 
-			// as wide types originate from the JSON parser.
+			// Attempt a coersion bind:
+			if (TryCoerseBind(value, typeof(VALUE_TYPE), arg))
+			{
+				_arg++;
+				return this;
+			}
 
 			// For now though:
 			Fail(typeof(VALUE_TYPE));
@@ -453,9 +492,291 @@ namespace Api.Permissions
 			return this;
 		}
 
+		private bool TryCoerseBind(object value, Type valueType, FilterArg target)
+		{
+			if (value == null)
+			{
+				target.SetDefault();
+				return true;
+			}
+
+			// The only array coersion that happens is any sort of ulong iterator to uint ones.
+			if (typeof(IEnumerable<ulong>).IsAssignableFrom(valueType) && target.ArgType == typeof(IEnumerable<uint>))
+			{
+				target.InternalSetBoxedValue(
+					((IEnumerable<ulong>)value).Select(n => (uint)n)
+				);
+				_arg++;
+				return true;
+			}
+			
+			// We know the src is not null so if it is a nullable type we can 
+			// first pop it out of that nullable wrapper.
+			var baseSrcNull = Nullable.GetUnderlyingType(valueType);
+
+			if (baseSrcNull != null)
+			{
+				valueType = baseSrcNull;
+				value = Convert.ChangeType(value, baseSrcNull);
+			}
+
+			var baseTargetNull = Nullable.GetUnderlyingType(target.ArgType);
+			var argType = baseTargetNull == null ? target.ArgType : baseTargetNull;
+
+			try
+			{
+				var converted = Convert.ChangeType(value, argType);
+
+				if (converted == null)
+				{
+					return false;
+				}
+
+				target.InternalSetBoxedValue(converted);
+
+				return true;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Binding from a raw textual value.
+		/// </summary>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		public Filter<T, ID> BindJToken(JToken token)
+		{
+			if (token == null)
+			{
+				return BindObject(null);
+			}
+
+			var array = token as JArray;
+
+			if (array != null)
+			{
+				var argInfo = Pool.ArgTypes[_arg];
+
+				// Is it an array arg?
+				var arrOf = argInfo.ArrayOf;
+
+				if (arrOf == null)
+				{
+					throw new PublicException(
+						"You provided an array to a non-array argument. To specify an array argument in a filter, use [?]", 
+						"filter_invalid"
+					);
+				}
+
+				if (argInfo.ArrayOf == typeof(string))
+				{
+					Bind(ToStringIterator(array));
+				}
+				else if (argInfo.ArrayOf == typeof(uint))
+				{
+					Bind(ToLongIterator(array).Select(lon => (uint)lon));
+				}
+				else if (argInfo.ArrayOf == typeof(uint?))
+				{
+					Bind(ToLongIterator(array).Select(lon => (uint?)lon));
+				}
+				else if (argInfo.ArrayOf == typeof(long))
+				{
+					Bind(ToLongIterator(array));
+				}
+				else if (argInfo.ArrayOf == typeof(long?))
+				{
+					Bind(ToLongIterator(array).Select(lon => (long?)lon));
+				}
+				else if (argInfo.ArrayOf == typeof(ushort))
+				{
+					Bind(ToLongIterator(array).Select(lon => (ushort)lon));
+				}
+				else if (argInfo.ArrayOf == typeof(ushort?))
+				{
+					Bind(ToLongIterator(array).Select(lon => (ushort?)lon));
+				}
+				else
+				{
+					Fail(typeof(JArray));
+				}
+			}
+			else
+			{
+				JValue value = token as JValue;
+
+				if (value == null)
+				{
+					throw new PublicException(
+						"Arg #" + (_arg + 1) + " in the args set is invalid - it can't be an object, only a string or numeric/ bool value.",
+						"filter_invalid"
+					);
+				}
+
+				// The underlying JSON token is textual, so we'll use a general use bind from string method.
+				if (value.Type == JTokenType.Date)
+				{
+					var date = value.Value as DateTime?;
+
+					// The target value could be a nullable date, in which case we'd need to use Bind(DateTime?)
+					if (NextBindType == typeof(DateTime?))
+					{
+						Bind(date);
+					}
+					else
+					{
+						Bind(date.Value);
+					}
+				}
+				else if (value.Type == JTokenType.Boolean)
+				{
+					var boolVal = value.Value as bool?;
+
+					// The target value could be a nullable bool, in which case we'd need to use Bind(bool?)
+					if (NextBindType == typeof(bool?))
+					{
+						Bind(boolVal);
+					}
+					else
+					{
+						Bind(boolVal.Value);
+					}
+				}
+				else if (value.Type == JTokenType.Null)
+				{
+					BindObject(null);
+				}
+				else if (value.Type == JTokenType.String)
+				{
+					var str = value.Value<string>();
+
+					if (str == null)
+					{
+						BindObject(null);
+					}
+					else
+					{
+						var argType = NextBindType;
+
+						if (argType == typeof(DateTime) || argType == typeof(DateTime?))
+						{
+							// Special case for dateTime:
+							if (!FilterAst.TryParseDate(str, out DateTime date))
+							{
+								throw new PublicException("Invalid date format provided '" + str + "'", "date/invalid");
+							}
+
+							Bind(date);
+						}
+						else
+						{
+							// Other general internal coersion occurs.
+							Bind(str);
+						}
+					}
+				}
+				else if (value.Type == JTokenType.Integer)
+				{
+					// Internal coersion occurs
+					Bind(value.Value<long>());
+				}
+				else if (value.Type == JTokenType.Float)
+				{
+					// Internal coersion occurs
+					Bind(value.Value<double>());
+				}
+			}
+
+			return this;
+		}
+
+		/// <summary>
+		/// Treats a JArray like a long iterator.
+		/// </summary>
+		/// <param name="jArray"></param>
+		/// <returns></returns>
+		private IEnumerable<long> ToLongIterator(JArray jArray)
+		{
+			return jArray.Select(token => {
+
+				if (token == null)
+				{
+					return 0;
+				}
+
+				switch (token.Type)
+				{
+					case JTokenType.Null:
+						return 0;
+					case JTokenType.String:
+						if (long.TryParse(token.Value<string>(), out long ui))
+						{
+							return ui;
+						}
+
+						return 0;
+					case JTokenType.Boolean:
+						return token.Value<bool>() ? (long)1 : 0;
+					case JTokenType.Float:
+						return (long)token.Value<double>();
+					case JTokenType.Integer:
+						return token.Value<long>();
+					default:
+						return 0;
+				}
+			});
+		}
+
+		/// <summary>
+		/// Treats a JArray like a string iterator.
+		/// </summary>
+		/// <param name="jArray"></param>
+		/// <returns></returns>
+		private IEnumerable<string> ToStringIterator(JArray jArray)
+		{
+			return jArray.Select(token => {
+
+				if (token == null)
+				{
+					return (string)null;
+				}
+
+				switch (token.Type)
+				{
+					case JTokenType.Null:
+						return (string)null;
+					case JTokenType.String:
+						return token.Value<string>();
+					case JTokenType.Boolean:
+						return token.Value<bool>() ? "true" : "false";
+					case JTokenType.Float:
+						return token.Value<double>().ToString();
+					case JTokenType.Integer:
+						return token.Value<long>().ToString();
+					default:
+						return (string)null;
+				}
+			});
+		}
+
+		/// <summary>
+		/// If you don't know the type you're binding, use this. 
+		/// You can safely use the generic Bind and it will also just fall through here first.
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		/// <exception cref="PublicException"></exception>
 		public Filter<T, ID> BindObject(object value)
 		{
-
+			var jToken = value as JToken;
+			if (jToken != null)
+			{
+				return BindJToken(jToken);
+			}
+			
 			var max = Pool.ArgTypes == null ? 0 : Pool.ArgTypes.Count;
 
 			if (_arg >= max)
@@ -469,20 +790,30 @@ namespace Api.Permissions
 			if (value == null)
 			{
 				arg.SetDefault();
+				_arg++;
 				return this;
 			}
 
 			var valType = value.GetType();
 
-			if (argType == valType || argType.IsAssignableFrom(valType))
+			if (
+				argType == valType || 
+				argType.IsAssignableFrom(valType) ||
+				Nullable.GetUnderlyingType(argType) == valType ||
+				Nullable.GetUnderlyingType(valType) == argType
+			)
 			{
 				arg.InternalSetBoxedValue(value);
+				_arg++;
 				return this;
 			}
 
-			// Coersion time! We're looking for a mapping from whatever VALUE_TYPE is to argType.
-			// The most common ones are nullables and wider types such as long or double being bound 
-			// as wide types originate from the JSON parser.
+			// Attempt a coersion bind:
+			if (TryCoerseBind(value, valType, arg))
+			{
+				_arg++;
+				return this;
+			}
 
 			// For now though:
 			Fail(valType);
@@ -528,85 +859,6 @@ namespace Api.Permissions
 		/// True if this filter will always be true.
 		/// </summary>
 		public bool Empty;
-
-		/// <summary>
-		/// True if the given iterator has the given value in it
-		/// </summary>
-		/// <returns></returns>
-		public static bool SetContains(List<ulong> values, ulong val)
-		{
-			foreach (var v in values)
-			{
-				if (val == v)
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-		
-		/// <summary>
-		/// True if the given member value is present in the given enumerable.
-		/// </summary>
-		/// <returns></returns>
-		public static bool MemberInSet<MEM_TYPE>(MEM_TYPE val, IEnumerable<MEM_TYPE> values)
-			where MEM_TYPE : IEquatable<MEM_TYPE>
-		{
-			foreach (var v in values)
-			{
-				if (val.Equals(v))
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-		
-		/// <summary>
-		/// True if the given iterator has any of the given values in it.
-		/// </summary>
-		/// <returns></returns>
-		public static bool SetContainsAll(List<ulong> values, IEnumerable<ulong> anyOf)
-		{
-			foreach (var v in anyOf)
-			{
-				if (values == null || !values.Contains(v))
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		/// <summary>
-		/// True if the given iterator has the given value in it
-		/// </summary>
-		/// <returns></returns>
-		public static bool SetEquals(List<ulong> values, IEnumerable<ulong> vals)
-		{
-			var max = values == null ? 0 : values.Count;
-			var iterations = 0;
-
-			foreach (var v in vals)
-			{
-				if (iterations >= max)
-				{
-					return false;
-				}
-
-				if (values[iterations] != v)
-				{
-					return false;
-				}
-
-				iterations++;
-			}
-
-			return iterations == max;
-		}
 
 		/// <summary>
 		/// Gets the set of argument types for this filter. Can be null if there are none.
@@ -798,404 +1050,6 @@ namespace Api.Permissions
 			}, results);
 			return results;
 		}
-		
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public Filter<T, ID> Bind(object v)
-		{
-			if (Pool.ArgTypes == null || _arg >= Pool.ArgTypes.Count)
-			{
-				Fail(v == null ? typeof(object) : v.GetType());
-				return this;
-			}
-
-			var argInfo = Pool.ArgTypes[_arg];
-
-			if (v == null)
-			{
-				// Is this field nullable?
-				if (!argInfo.IsNullable)
-				{
-					throw new PublicException("Can't use null as arg #" + (_arg+1) + " because it's not nullable", "filter_invalid");
-				}
-			}
-			else
-			{
-				var t = v.GetType();
-				var argType = argInfo.ArgType;
-				var nullableUnderlying = Nullable.GetUnderlyingType(argType);
-
-				if (argInfo.ArrayOf != null)
-				{
-					if (argType.IsAssignableFrom(t))
-					{
-						// The value is directly usable as argTypes specific array type.
-						argInfo.ConstructedField.SetValue(this, v);
-						_arg++;
-						return this;
-					}
-					else if (t == typeof(JArray))
-					{
-						var jArray = (JArray)v;
-
-						if (argInfo.ArrayOf == typeof(string))
-						{
-							var nl = new List<string>();
-
-							foreach (var item in jArray)
-							{
-								var token = item as JValue;
-
-								if (token == null || token.Type == JTokenType.Null)
-								{
-									nl.Add(null);
-								}
-								else if (token.Type == JTokenType.String)
-								{
-									nl.Add(token.Value<string>());
-								}
-								else if (token.Type == JTokenType.Boolean)
-								{
-									nl.Add(token.Value<bool>() ? "true" : "false");
-								}
-								else if (token.Type == JTokenType.Float)
-								{
-									nl.Add(token.Value<float>().ToString());
-								}
-								else if (token.Type == JTokenType.Integer)
-								{
-									nl.Add(token.Value<long>().ToString());
-								}
-							}
-
-							v = nl;
-						}
-						else if (argInfo.ArrayOf == typeof(uint))
-						{
-							v = ToLongIterator(jArray).Select(lon => (uint)lon);
-						}
-						else if (argInfo.ArrayOf == typeof(uint?))
-						{
-							v = ToLongIterator(jArray).Select(lon => (uint?)lon);
-						}
-						else if (argInfo.ArrayOf == typeof(long))
-						{
-							v = ToLongIterator(jArray);
-						}
-						else if (argInfo.ArrayOf == typeof(long?))
-						{
-							v = ToLongIterator(jArray).Select(lon => (long?)lon);
-						}
-						else
-						{
-							Fail(t);
-						}
-					}
-					else if(typeof(IEnumerable).IsAssignableFrom(t))
-					{
-						// The value is some sort of enumerable - just not strictly the one we require.
-						// Typically it's e.g. IEnumerable<ulong> being bound to a IEnumerable<uint> field.
-						// That is specifically a very common part of the includes system.
-
-						// We need to handle this more generically.
-						if (typeof(IEnumerable<ulong>).IsAssignableFrom(t) && argType == typeof(IEnumerable<uint>))
-						{
-							var val = (IEnumerable<ulong>)v;
-							argInfo.ConstructedField.SetValue(this, val.Select(n => (uint)n));
-							_arg++;
-							return this;
-						}
-						else
-						{
-							Fail(t);
-						}
-
-					}
-				}
-				// Common numeric conversion.
-				// This happens because the JSON parser exclusively outputs long and double.
-				else if (t == typeof(long))
-				{
-					if (nullableUnderlying == null)
-					{
-						ConvertFromLong((long)v, argType, argInfo.ConstructedField);
-					}
-					else
-					{
-						ConvertFromLongNullable((long)v, nullableUnderlying, argInfo.ConstructedField);
-					}
-
-					_arg++;
-					return this;
-				}
-				else if (t == typeof(double))
-				{
-					if (nullableUnderlying == null)
-					{
-						ConvertFromDouble((double)v, argType, argInfo.ConstructedField);
-					}
-					else
-					{
-						ConvertFromDoubleNullable((double)v, nullableUnderlying, argInfo.ConstructedField);
-					}
-
-					_arg++;
-					return this;
-				}
-				else if (!argType.IsAssignableFrom(t))
-				{
-					Fail(t);
-				}
-			}
-
-			argInfo.ConstructedField.SetValue(this, v);
-			_arg++;
-			return this;
-		}
-
-		/// <summary>
-		/// Treats a JArray like a long iterator.
-		/// </summary>
-		/// <param name="jArray"></param>
-		/// <returns></returns>
-		private IEnumerable<long> ToLongIterator(JArray jArray)
-		{
-			return jArray.Select(token => {
-
-				if (token == null)
-				{
-					return 0;
-				}
-
-				switch (token.Type)
-				{
-					case JTokenType.Null:
-						return 0;
-					case JTokenType.String:
-						if (long.TryParse(token.Value<string>(), out long ui))
-						{
-							return ui;
-						}
-						
-						return 0;
-					case JTokenType.Boolean:
-						return token.Value<bool>() ? (long)1 : 0;
-					case JTokenType.Float:
-						return (long)token.Value<double>();
-					case JTokenType.Integer:
-						return token.Value<long>();
-					default:
-						return 0;
-				}
-			});
-		}
-
-		private void ConvertFromLong(long v, Type targetType, FieldInfo target)
-		{
-			switch (Type.GetTypeCode(targetType))
-			{
-				case TypeCode.Boolean:
-					target.SetValue(this, (bool)(v != 0));
-					break;
-				case TypeCode.Char:
-					target.SetValue(this, (char)(v));
-					break;
-				case TypeCode.SByte:
-					target.SetValue(this, (sbyte)(v));
-					break;
-				case TypeCode.Byte:
-					target.SetValue(this, (byte)(v));
-					break;
-				case TypeCode.Int16:
-					target.SetValue(this, (short)(v));
-					break;
-				case TypeCode.UInt16:
-					target.SetValue(this, (ushort)(v));
-					break;
-				case TypeCode.Int32:
-					target.SetValue(this, (int)(v));
-					break;
-				case TypeCode.UInt32:
-					target.SetValue(this, (uint)(v));
-					break;
-				case TypeCode.Int64:
-					target.SetValue(this, v);
-					break;
-				case TypeCode.UInt64:
-					target.SetValue(this, (ulong)(v));
-					break;
-				case TypeCode.Single:
-					target.SetValue(this, (float)(v));
-					break;
-				case TypeCode.Double:
-					target.SetValue(this, (double)(v));
-					break;
-				case TypeCode.String:
-					target.SetValue(this, v.ToString());
-					break;
-				default:
-					Fail(targetType);
-					break;
-			}
-		}
-		
-		private void ConvertFromLongNullable(long v, Type targetType, FieldInfo target)
-		{
-			switch (Type.GetTypeCode(targetType))
-			{
-				case TypeCode.Boolean:
-					target.SetValue(this, (bool?)(v != 0));
-					break;
-				case TypeCode.Char:
-					target.SetValue(this, (char?)(v));
-					break;
-				case TypeCode.SByte:
-					target.SetValue(this, (sbyte?)(v));
-					break;
-				case TypeCode.Byte:
-					target.SetValue(this, (byte?)(v));
-					break;
-				case TypeCode.Int16:
-					target.SetValue(this, (short?)(v));
-					break;
-				case TypeCode.UInt16:
-					target.SetValue(this, (ushort?)(v));
-					break;
-				case TypeCode.Int32:
-					target.SetValue(this, (int?)(v));
-					break;
-				case TypeCode.UInt32:
-					target.SetValue(this, (uint?)(v));
-					break;
-				case TypeCode.Int64:
-					target.SetValue(this, (long?)(v));
-					break;
-				case TypeCode.UInt64:
-					target.SetValue(this, (ulong?)(v));
-					break;
-				case TypeCode.Single:
-					target.SetValue(this, (float?)(v));
-					break;
-				case TypeCode.Double:
-					target.SetValue(this, (double?)(v));
-					break;
-				case TypeCode.String:
-					target.SetValue(this, v.ToString());
-					break;
-				default:
-					Fail(targetType);
-					break;
-			}
-		}
-		
-		private void ConvertFromDouble(double v, Type targetType, FieldInfo target)
-		{
-			switch (Type.GetTypeCode(targetType))
-			{
-				case TypeCode.Boolean:
-					target.SetValue(this, (bool)(v != 0));
-					break;
-				case TypeCode.Char:
-					target.SetValue(this, (char)(v));
-					break;
-				case TypeCode.SByte:
-					target.SetValue(this, (sbyte)(v));
-					break;
-				case TypeCode.Byte:
-					target.SetValue(this, (byte)(v));
-					break;
-				case TypeCode.Int16:
-					target.SetValue(this, (short)(v));
-					break;
-				case TypeCode.UInt16:
-					target.SetValue(this, (ushort)(v));
-					break;
-				case TypeCode.Int32:
-					target.SetValue(this, (int)(v));
-					break;
-				case TypeCode.UInt32:
-					target.SetValue(this, (uint)(v));
-					break;
-				case TypeCode.Int64:
-					target.SetValue(this, v);
-					break;
-				case TypeCode.UInt64:
-					target.SetValue(this, (ulong)(v));
-					break;
-				case TypeCode.Single:
-					target.SetValue(this, (float)(v));
-					break;
-				case TypeCode.Double:
-					target.SetValue(this, (double)(v));
-					break;
-				case TypeCode.String:
-					target.SetValue(this, v.ToString());
-					break;
-				default:
-					Fail(targetType);
-					break;
-			}
-		}
-		
-		private void ConvertFromDoubleNullable(double v, Type targetType, FieldInfo target)
-		{
-			switch (Type.GetTypeCode(targetType))
-			{
-				case TypeCode.Boolean:
-					target.SetValue(this, (bool?)(v != 0));
-					break;
-				case TypeCode.Char:
-					target.SetValue(this, (char?)(v));
-					break;
-				case TypeCode.SByte:
-					target.SetValue(this, (sbyte?)(v));
-					break;
-				case TypeCode.Byte:
-					target.SetValue(this, (byte?)(v));
-					break;
-				case TypeCode.Int16:
-					target.SetValue(this, (short?)(v));
-					break;
-				case TypeCode.UInt16:
-					target.SetValue(this, (ushort?)(v));
-					break;
-				case TypeCode.Int32:
-					target.SetValue(this, (int?)(v));
-					break;
-				case TypeCode.UInt32:
-					target.SetValue(this, (uint?)(v));
-					break;
-				case TypeCode.Int64:
-					target.SetValue(this, (long?)(v));
-					break;
-				case TypeCode.UInt64:
-					target.SetValue(this, (ulong?)(v));
-					break;
-				case TypeCode.Single:
-					target.SetValue(this, (float?)(v));
-					break;
-				case TypeCode.Double:
-					target.SetValue(this, (double?)(v));
-					break;
-				case TypeCode.String:
-					target.SetValue(this, v.ToString());
-					break;
-				default:
-					Fail(targetType);
-					break;
-			}
-		}
-
-		/// <summary>
-		/// Binds the current arg using the given textual representation.
-		/// </summary>
-		/// <param name="str"></param>
-		public virtual Filter<T, ID> BindFromString(string str)
-		{
-			Fail(typeof(string));
-			return this;
-		}
 
 		/// <summary>
 		/// A convenience variant of SetPage which returns a stronger typed filter.
@@ -1206,251 +1060,6 @@ namespace Api.Permissions
 		public Filter<T, ID> Page(int offset, int size = 50)
 		{
 			SetPage(offset, size);
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(string v)
-		{
-			Fail(typeof(string));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(double v)
-		{
-			Fail(typeof(double));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(float v)
-		{
-			Fail(typeof(float));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(decimal v)
-		{
-			Fail(typeof(decimal));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(DateTime v)
-		{
-			Fail(typeof(DateTime));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(bool v)
-		{
-			Fail(typeof(bool));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(ulong v)
-		{
-			Fail(typeof(ulong));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(long v)
-		{
-			Fail(typeof(long));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(uint v)
-		{
-			Fail(typeof(uint));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(int v)
-		{
-			Fail(typeof(int));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(ushort v)
-		{
-			Fail(typeof(ushort));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(short v)
-		{
-			Fail(typeof(short));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(byte v)
-		{
-			Fail(typeof(byte));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(sbyte v)
-		{
-			Fail(typeof(sbyte));
-			return this;
-		}
-
-		// Nullables
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(double? v)
-		{
-			Fail(typeof(double?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(float? v)
-		{
-			Fail(typeof(float?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(decimal? v)
-		{
-			Fail(typeof(decimal?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(DateTime? v)
-		{
-			Fail(typeof(DateTime?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(bool? v)
-		{
-			Fail(typeof(bool?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(ulong? v)
-		{
-			Fail(typeof(ulong?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(long? v)
-		{
-			Fail(typeof(long?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(uint? v)
-		{
-			Fail(typeof(uint?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(int? v)
-		{
-			Fail(typeof(int?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(ushort? v)
-		{
-			Fail(typeof(ushort?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(short? v)
-		{
-			Fail(typeof(short?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(byte? v)
-		{
-			Fail(typeof(byte?));
-			return this;
-		}
-
-		/// <summary>
-		/// Binds given value to current argument.
-		/// </summary>
-		public virtual Filter<T, ID> Bind(sbyte? v)
-		{
-			Fail(typeof(sbyte?));
 			return this;
 		}
 

@@ -425,7 +425,8 @@ namespace Api.Permissions{
 		/// <param name="context"></param>
 		public override object ToMongoValue(string localeCode, Filter<T, ID> filter, Context context)
 		{
-			return Binding.ConstructedField.GetValue(filter);
+			var arg = filter.Arguments[Binding.Index];
+			return arg.BoxedValue;
 		}
 	}
 }

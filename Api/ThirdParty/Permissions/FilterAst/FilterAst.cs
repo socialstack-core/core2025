@@ -3,7 +3,6 @@ using Api.Database;
 using Api.Startup;
 using Api.Translate;
 using Api.Users;
-using Karambolo.PO;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -286,21 +285,6 @@ namespace Api.Permissions{
 	public static class FilterAst
 	{
 		/// <summary>
-		/// FilterBase.NullCheck
-		/// </summary>
-		public static MethodInfo _baseNullCheck;
-		
-		/// <summary>
-		/// FilterBase.CheckParseSuccess
-		/// </summary>
-		public static MethodInfo _checkParseSuccess;
-
-		/// <summary>
-		/// FilterAst.TryParseDate
-		/// </summary>
-		public static MethodInfo _tryParseDate;
-
-		/// <summary>
 		/// Performs a string.startsWith if both args are not null.
 		/// </summary>
 		/// <param name="a"></param>
@@ -350,7 +334,24 @@ namespace Api.Permissions{
 
 			return a.StartsWith(b, StringComparison.OrdinalIgnoreCase);
 		}
-		
+
+		/// <summary>
+		/// True if the given iterator has the given value in it
+		/// </summary>
+		/// <returns></returns>
+		public static bool SetContains(List<ulong> values, ulong val)
+		{
+			foreach (var v in values)
+			{
+				if (val == v)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		/// <summary>
 		/// Performs a string.startsWith if both args are not null.
 		/// </summary>
@@ -400,6 +401,23 @@ namespace Api.Permissions{
 			}
 
 			return false;
+		}
+
+		/// <summary>
+		/// True if the given iterator has any of the given values in it.
+		/// </summary>
+		/// <returns></returns>
+		public static bool SetContainsAll(List<ulong> values, IEnumerable<ulong> anyOf)
+		{
+			foreach (var v in anyOf)
+			{
+				if (values == null || !values.Contains(v))
+				{
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		/// <summary>
@@ -471,6 +489,51 @@ namespace Api.Permissions{
 		}
 
 		/// <summary>
+		/// True if the given member value is present in the given enumerable.
+		/// </summary>
+		/// <returns></returns>
+		public static bool MemberInSet<MEM_TYPE>(MEM_TYPE val, IEnumerable<MEM_TYPE> values)
+			where MEM_TYPE : IEquatable<MEM_TYPE>
+		{
+			foreach (var v in values)
+			{
+				if (val.Equals(v))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// True if the given iterator has the given value in it
+		/// </summary>
+		/// <returns></returns>
+		public static bool SetEquals(List<ulong> values, IEnumerable<ulong> vals)
+		{
+			var max = values == null ? 0 : values.Count;
+			var iterations = 0;
+
+			foreach (var v in vals)
+			{
+				if (iterations >= max)
+				{
+					return false;
+				}
+
+				if (values[iterations] != v)
+				{
+					return false;
+				}
+
+				iterations++;
+			}
+
+			return iterations == max;
+		}
+
+		/// <summary>
 		/// Date parsing. Supports numeric tick counts as well as actual date strings.
 		/// </summary>
 		/// <param name="s"></param>
@@ -535,29 +598,30 @@ namespace Api.Permissions{
 	public class ArgBinding
 	{
 		/// <summary>
+		/// The index of this arg.
+		/// </summary>
+		public int Index;
+
+		/// <summary>
 		/// True if this arg can be null. Either it is not a valuetype, or it is a generic Nullable
 		/// </summary>
 		public bool IsNullable;
+
 		/// <summary>
 		/// Field type
 		/// </summary>
 		public Type ArgType;
-		/// <summary>
-		/// Underlying builder
-		/// </summary>
-		public FieldBuilder Builder;
+
 		/// <summary>
 		/// If this is an array type, the element type inside it.
 		/// </summary>
 		public Type ArrayOf;
+
 		/// <summary>
-		/// Constructed field on target type
+		/// The specific FilterArg[T] type to instance.
 		/// </summary>
-		public FieldInfo ConstructedField;
-		/// <summary>
-		/// The Bind() method for args of this same type.
-		/// </summary>
-		public ILGenerator BindMethod;
+		public Type FilterArgGenericType;
+
 		/// <summary>
 		/// True if this binding was the one that created the bind method. It'll be up to it to add the Ret.
 		/// </summary>
@@ -615,13 +679,6 @@ namespace Api.Permissions{
 		{
 			Query = q;
 		}
-
-		private TypeBuilder TypeBuilder;
-
-		/// <summary>
-		/// The BindFromString method
-		/// </summary>
-		private ILGenerator BindStringMethod;
 
 		/// <summary>
 		/// an array of just typeof(string)
@@ -824,9 +881,14 @@ namespace Api.Permissions{
 					argType = typeof(IEnumerable<>).MakeGenericType(argElementType);
 				}
 
-				var argField = DeclareArg(argNode.Id, argType);
-				argNode.Binding = argField;
+				var binding = DeclareArg(argNode.Id, argType);
+				argNode.Binding = binding;
 				generator.Emit(OpCodes.Ldarg_0);
+				generator.Emit(OpCodes.Ldfld, typeof(Filter<T,ID>).GetField(nameof(Filter<T,ID>.Arguments)));
+				generator.Emit(OpCodes.Ldc_I4, binding.Index);
+				generator.Emit(OpCodes.Ldelem, binding.FilterArgGenericType);
+
+				var valueField = binding.FilterArgGenericType.GetField(nameof(FilterArg<T>.Value));
 
 				// If it's nullable, unwrap it. Not available on the enumerable types.
 				var underlyingType = Nullable.GetUnderlyingType(argType);
@@ -838,18 +900,18 @@ namespace Api.Permissions{
 
 					if (valOrDefault != null)
 					{
-						generator.Emit(OpCodes.Ldflda, argField.Builder);
+						generator.Emit(OpCodes.Ldflda, valueField);
 						generator.Emit(OpCodes.Call, valOrDefault);
 					}
 					else
 					{
-						generator.Emit(OpCodes.Ldfld, argField.Builder);
+						generator.Emit(OpCodes.Ldfld, valueField);
 					}
 
 					return underlyingType;
 				}
 				
-				generator.Emit(OpCodes.Ldfld, argField.Builder);
+				generator.Emit(OpCodes.Ldfld, valueField);
 				return argType;
 			}
 			
@@ -864,198 +926,21 @@ namespace Api.Permissions{
 		/// <returns></returns>
 		public ArgBinding DeclareArg(int index, Type argType)
 		{
-			var builder = TypeBuilder.DefineField("Arg_" + index, argType, System.Reflection.FieldAttributes.Public);
-
 			var nullableBaseType = Nullable.GetUnderlyingType(argType);
 
 			var binding = new ArgBinding() {
-				Builder = builder,
+				Index = Args.Count,
 				ArgType = argType,
+				FilterArgGenericType = typeof(FilterArg<>).MakeGenericType(argType),
 				IsNullable = !argType.IsValueType || nullableBaseType != null // Not a value type, OR is is a Nullable<>
 			};
 
-			for (var i = 0; i < Args.Count; i++)
+			if (argType.IsGenericType && argType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
 			{
-				var arg = Args[i];
-
-				if (arg.ArgType == argType && arg.BindMethod != null)
-				{
-					binding.BindMethod = arg.BindMethod;
-					break;
-				}
+				binding.ArrayOf = argType.GetGenericArguments()[0];
 			}
 
 			Args.Add(binding);
-
-			// If it's a valuetype or string, add a Bind method override plus also a string parse.
-			var isString = argType == typeof(string);
-
-			if (!argType.IsValueType && !isString)
-			{
-				// other objects, such as IEnumerables. These don't need special bind overrides.
-				return binding;
-			}
-
-			var filt = typeof(Filter<T, ID>);
-			var _argField = filt.GetField("_arg", BindingFlags.NonPublic | BindingFlags.Instance);
-
-			if (BindStringMethod == null) {
-				var bindMethod = TypeBuilder.DefineMethod("BindFromString", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, filt, _strTypeInArray);
-				BindStringMethod = bindMethod.GetILGenerator();
-
-				// Declare _arg as a local:
-				BindStringMethod.DeclareLocal(typeof(int));
-				BindStringMethod.Emit(OpCodes.Ldarg_0);
-				BindStringMethod.Emit(OpCodes.Ldfld, _argField);
-				BindStringMethod.Emit(OpCodes.Stloc_0);
-			}
-
-			if (binding.BindMethod == null)
-			{
-				// Create the bind method as well:
-				binding.FirstMethodUser = true;
-				var bindMethod = TypeBuilder.DefineMethod("Bind", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, filt, new Type[] { argType });
-				binding.BindMethod = bindMethod.GetILGenerator();
-
-				// Declare _arg as a local:
-				binding.BindMethod.DeclareLocal(typeof(int));
-				binding.BindMethod.Emit(OpCodes.Ldarg_0);
-				binding.BindMethod.Emit(OpCodes.Ldfld, _argField);
-				binding.BindMethod.Emit(OpCodes.Stloc_0);
-			}
-
-			// First, on the Bind method:
-
-			// If(_arg == index) {
-			//     Arg_INDEX = value;
-			//     _arg++;
-			// }
-
-			var label = binding.BindMethod.DefineLabel();
-			binding.BindMethod.Emit(OpCodes.Ldloc_0);
-			binding.BindMethod.Emit(OpCodes.Ldc_I4, index);
-			binding.BindMethod.Emit(OpCodes.Ceq);
-			binding.BindMethod.Emit(OpCodes.Brfalse, label);
-				// Set the value
-				binding.BindMethod.Emit(OpCodes.Ldarg_0);
-				binding.BindMethod.Emit(OpCodes.Ldarg_1);
-				binding.BindMethod.Emit(OpCodes.Stfld, builder);
-				// Increase _arg:
-				binding.BindMethod.Emit(OpCodes.Ldarg_0);
-				binding.BindMethod.Emit(OpCodes.Ldloc_0);
-				binding.BindMethod.Emit(OpCodes.Ldc_I4_1);
-				binding.BindMethod.Emit(OpCodes.Add);
-				binding.BindMethod.Emit(OpCodes.Stfld, _argField);
-			binding.BindMethod.Emit(OpCodes.Ldarg_0);
-			binding.BindMethod.Emit(OpCodes.Ret);
-			binding.BindMethod.MarkLabel(label);
-
-			// Next, on the BindFromString method. These are only ever valuetypes, which should mean they have a Parse method that we can use.
-
-			var parseType = (nullableBaseType != null ? nullableBaseType : argType);
-
-			MethodInfo parseMethod;
-
-			// Special case for date parsing, as we'd like to support either a date string or a numeric tick count.
-			if (parseType == typeof(DateTime))
-			{
-				if (FilterAst._tryParseDate == null)
-				{
-					FilterAst._tryParseDate = typeof(FilterAst).GetMethod(nameof(FilterAst.TryParseDate), BindingFlags.Static | BindingFlags.Public);
-				}
-
-				parseMethod = FilterAst._tryParseDate;
-			}
-			else
-			{
-				parseMethod = isString ? null : parseType.GetMethod("TryParse", BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(string), parseType.MakeByRefType() }, null);
-			}
-
-			if (FilterAst._baseNullCheck == null)
-			{
-				FilterAst._baseNullCheck = typeof(FilterBase).GetMethod(nameof(FilterBase.NullCheck));
-				FilterAst._checkParseSuccess = typeof(FilterAst)
-					.GetMethod(nameof(FilterAst.CheckParseSuccess), BindingFlags.Static | BindingFlags.Public);
-			}
-
-			if (isString || parseMethod != null)
-			{
-				// We've got a parse method that can be used (or it just is a string anyway).
-
-				label = BindStringMethod.DefineLabel();
-				BindStringMethod.Emit(OpCodes.Ldloc_0);
-				BindStringMethod.Emit(OpCodes.Ldc_I4, index);
-				BindStringMethod.Emit(OpCodes.Ceq);
-				BindStringMethod.Emit(OpCodes.Brfalse, label);
-					
-					if (argType.IsValueType)
-					{
-						if (nullableBaseType == null)
-						{
-							// Null is not permitted. If one is given, error:
-							BindStringMethod.Emit(OpCodes.Ldarg_0);
-							BindStringMethod.Emit(OpCodes.Ldarg_1);
-							BindStringMethod.Emit(OpCodes.Callvirt, FilterAst._baseNullCheck);
-						}
-						else
-						{
-							// Check if user provided a null. If they did, set the target field to null.
-							var nullLabel = BindStringMethod.DefineLabel();
-							BindStringMethod.Emit(OpCodes.Ldarg_1);
-							BindStringMethod.Emit(OpCodes.Ldnull);
-							BindStringMethod.Emit(OpCodes.Ceq);
-							BindStringMethod.Emit(OpCodes.Brfalse, nullLabel);
-							// The given value is a null. Set a nullable representation of null to the field.
-							BindStringMethod.Emit(OpCodes.Ldarg_0);
-							BindStringMethod.Emit(OpCodes.Ldflda, builder);
-							BindStringMethod.Emit(OpCodes.Initobj, argType);
-							// Increase _arg:
-							BindStringMethod.Emit(OpCodes.Ldarg_0);
-							BindStringMethod.Emit(OpCodes.Ldloc_0);
-							BindStringMethod.Emit(OpCodes.Ldc_I4_1);
-							BindStringMethod.Emit(OpCodes.Add);
-							BindStringMethod.Emit(OpCodes.Stfld, _argField);
-							BindStringMethod.Emit(OpCodes.Ldarg_0);
-							BindStringMethod.Emit(OpCodes.Ret);
-
-							BindStringMethod.MarkLabel(nullLabel);
-						}
-					}
-
-					// Set the value
-					BindStringMethod.Emit(OpCodes.Ldarg_0);
-					BindStringMethod.Emit(OpCodes.Ldarg_1);
-					if (parseMethod != null)
-					{
-						// TryParse. The string is on the stack at the moment, so we just need to push a temp local ref:
-						var tryParseScratchSpace = BindStringMethod.DeclareLocal(parseType);
-						BindStringMethod.Emit(OpCodes.Ldloca, tryParseScratchSpace);
-						BindStringMethod.Emit(OpCodes.Call, parseMethod);
-						BindStringMethod.Emit(OpCodes.Call, FilterAst._checkParseSuccess);
-
-						// CheckParse throws if it was invalid, so we can proceed to just put the parsed val straight onto the stack:
-						BindStringMethod.Emit(OpCodes.Ldloc, tryParseScratchSpace);
-
-						// If target type is nullable, the parseType isn't. Handle the new nullable struct:
-						if (nullableBaseType != null)
-						{
-							var ctor = argType.GetConstructors();
-							BindStringMethod.Emit(OpCodes.Newobj, ctor[0]);
-						}
-					}
-
-					BindStringMethod.Emit(OpCodes.Stfld, builder);
-					// Increase _arg:
-					BindStringMethod.Emit(OpCodes.Ldarg_0);
-					BindStringMethod.Emit(OpCodes.Ldloc_0);
-					BindStringMethod.Emit(OpCodes.Ldc_I4_1);
-					BindStringMethod.Emit(OpCodes.Add);
-					BindStringMethod.Emit(OpCodes.Stfld, _argField);
-				BindStringMethod.Emit(OpCodes.Ldarg_0);
-				BindStringMethod.Emit(OpCodes.Ret);
-				BindStringMethod.MarkLabel(label);
-			}
-
 			return binding;
 		}
 
@@ -1118,33 +1003,27 @@ namespace Api.Permissions{
 			return Root.GetIndexable();
 		}
 
-		private static int counter = 1;
-
-		// Type.GetTypeFromHandle
-		private static MethodInfo _getTypeFromHandle;
+		/// <summary>
+		/// The generated match delegate.
+		/// </summary>
+		public Func<FilterBase, Context, object, bool, bool>  MatchDelegate;
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <returns>hasArrayNodes is true if there are any collector nodes or [?] args</returns>
-		public Type ConstructType()
+		public void Construct()
 		{
 			Args = new List<ArgBinding>();
-			AssemblyName assemblyName = new AssemblyName("GeneratedFilter_" + counter);
-			counter++;
-			AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
-			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
-
-			// Create an inheriting type which reads the field as the key value:
-			var filterT = typeof(Filter<T, ID>);
-			TypeBuilder = moduleBuilder.DefineType("GeneratedFilter", TypeAttributes.Public, filterT);
-
-			var matchMethod = TypeBuilder.DefineMethod(
-				"Match",
-				MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual,
-				typeof(bool), new Type[] { typeof(Context), typeof(object), typeof(bool) }
+			DynamicMethod matchMethod = new DynamicMethod(
+				"FilterMatchGenerated",
+				typeof(bool),
+				[
+					typeof(FilterBase), typeof(Context), typeof(object), typeof(bool)
+				],
+				true
 			);
-
+			
 			ILGenerator writerBody = matchMethod.GetILGenerator();
 
 			if (Root == null)
@@ -1159,43 +1038,10 @@ namespace Api.Permissions{
 
 			writerBody.Emit(OpCodes.Ret);
 
-			var baseFail = filterT.GetMethod(nameof(Filter<T, ID>.Fail));
-
-			if (_getTypeFromHandle == null)
-			{
-				_getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle));
-			}
-
-			for (var i = 0; i < Args.Count; i++)
-			{
-				// Close them off:
-				var arg = Args[i];
-
-				if (arg.FirstMethodUser)
-				{
-					// At the bottom of the bind method is a fail method which indicates current arg X is not of the current type.
-					arg.BindMethod.Emit(OpCodes.Ldarg_0);
-					arg.BindMethod.Emit(OpCodes.Ldtoken, arg.ArgType);
-					arg.BindMethod.Emit(OpCodes.Call, _getTypeFromHandle);
-					arg.BindMethod.Emit(OpCodes.Call, baseFail);
-					arg.BindMethod.Emit(OpCodes.Ldarg_0);
-					arg.BindMethod.Emit(OpCodes.Ret);
-				}
-			}
-
-			if (BindStringMethod != null)
-			{
-				// At the bottom of the bind string method is a fail method which indicates current arg X is not of the current type.
-				BindStringMethod.Emit(OpCodes.Ldarg_0);
-				BindStringMethod.Emit(OpCodes.Ldtoken, typeof(string));
-				BindStringMethod.Emit(OpCodes.Call, _getTypeFromHandle);
-				BindStringMethod.Emit(OpCodes.Call, baseFail);
-				BindStringMethod.Emit(OpCodes.Ldarg_0);
-				BindStringMethod.Emit(OpCodes.Ret);
-			}
-
-			// Bake the type:
-			return TypeBuilder.CreateType();
+			// Bake the delegate:
+			MatchDelegate = (Func<FilterBase, Context, object, bool, bool>)matchMethod.CreateDelegate(
+				typeof(Func<FilterBase, Context, object, bool, bool>)
+			);
 		}
 
 		/// <summary>
@@ -2001,7 +1847,7 @@ namespace Api.Permissions{
 				if (IsEnumerable(valueType))
 				{
 					// Exact match. This assumes that valueArray is coerseable to IEnumerable of specifically ulong.
-					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContainsAll));
+					var matchMethod = typeof(FilterAst).GetMethod(nameof(FilterAst.SetContainsAll));
 					generator.Emit(OpCodes.Call, matchMethod);
 				}
 				else
@@ -2011,7 +1857,7 @@ namespace Api.Permissions{
 					// Convert the singular value to a ulong:
 					TypeIOEngine.CoerseToUlong(generator, valueType);
 
-					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContains));
+					var matchMethod = typeof(FilterAst).GetMethod(nameof(FilterAst.SetContains));
 					generator.Emit(OpCodes.Call, matchMethod);
 				}
 			}
@@ -2061,8 +1907,8 @@ namespace Api.Permissions{
 
 					// Convert the singular value to a ulong:
 					TypeIOEngine.CoerseToUlong(generator, valueType);
-
-					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContains));
+					
+					var matchMethod = typeof(FilterAst).GetMethod(nameof(FilterAst.SetContains));
 					generator.Emit(OpCodes.Call, matchMethod);
 				}
 			}
@@ -2222,7 +2068,7 @@ namespace Api.Permissions{
 				if (valueArray)
 				{
 					// Exact match. This assumes that valueArray is coerseable to IEnumerable of specifically ulong.
-					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetEquals));
+					var matchMethod = typeof(FilterAst).GetMethod(nameof(FilterAst.SetEquals));
 					generator.Emit(OpCodes.Call, matchMethod);
 				}
 				else
@@ -2232,7 +2078,7 @@ namespace Api.Permissions{
 					// Convert the singular value to a ulong:
 					TypeIOEngine.CoerseToUlong(generator, valueType);
 
-					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContains));
+					var matchMethod = typeof(FilterAst).GetMethod(nameof(FilterAst.SetContains));
 					generator.Emit(OpCodes.Call, matchMethod);
 				}
 
@@ -2243,8 +2089,8 @@ namespace Api.Permissions{
 				// IN(..) equiv. Get the IEnumerable<T> T:
 				var itemType = GetEnumerableType(valueType);
 
-				var matchMethod = typeof(Filter<T, ID>)
-					.GetMethod(nameof(Filter<T, ID>.MemberInSet))
+				var matchMethod = typeof(FilterAst)
+					.GetMethod(nameof(FilterAst.MemberInSet))
 					.MakeGenericMethod(new Type[] {
 						itemType
 					});
