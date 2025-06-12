@@ -322,6 +322,76 @@ namespace Api.Permissions
 
 	}
 
+	public class FilterArg
+	{
+
+		/// <summary>
+		/// The value type of the arg.
+		/// </summary>
+		public virtual Type ArgType => null;
+
+		/// <summary>
+		/// The boxed value of this arg.
+		/// </summary>
+		public virtual object BoxedValue => null;
+
+		/// <summary>
+		/// Clears the value of the arg to whatever its default value is.
+		/// </summary>
+		public virtual void SetDefault()
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Set the value of the arg to the given boxed value. You must identify that 
+		/// the value is settable before doing this.
+		/// </summary>
+		public virtual void InternalSetBoxedValue(object v)
+		{
+			throw new NotImplementedException();
+		}
+
+	}
+
+	public class FilterArg<T> : FilterArg
+	{
+
+		/// <summary>
+		/// The value type of the arg.
+		/// </summary>
+		public override Type ArgType => typeof(T);
+
+		/// <summary>
+		/// The value of this arg.
+		/// </summary>
+		public T Value;
+
+		/// <summary>
+		/// The boxed value of this arg.
+		/// </summary>
+		public override object BoxedValue => Value;
+
+
+		/// <summary>
+		/// Clears the value of the arg to whatever its default value is.
+		/// </summary>
+		public override void SetDefault()
+		{
+			Value = default;
+		}
+		
+		/// <summary>
+		/// Set the value of the arg to the given boxed value. You must identify that 
+		/// the value is settable before doing this.
+		/// </summary>
+		public override void InternalSetBoxedValue(object v)
+		{
+			Value = (T)v;
+		}
+
+	}
+
 	/// <summary>
 	/// Fast precompiled non-allocating filter engine.
 	/// </summary>
@@ -342,6 +412,83 @@ namespace Api.Permissions
 		/// Current arg offset.
 		/// </summary>
 		protected int _arg = 0;
+
+		/// <summary>
+		/// The filter arg set. The array of objects is preallocated once and then reused by the pool system.
+		/// </summary>
+		public FilterArg[] Arguments;
+
+
+		public Filter<T, ID> BindGeneric<VALUE_TYPE>(VALUE_TYPE value)
+		{
+			if (typeof(VALUE_TYPE) == typeof(object))
+			{
+				return BindObject(value);
+			}
+
+			var max = Pool.ArgTypes == null ? 0 : Pool.ArgTypes.Count;
+
+			if (_arg >= max)
+			{
+				throw new PublicException("Too many args being provided. This filter has " + max, "filter_invalid");
+			}
+
+			var arg = Arguments[_arg];
+			var argType = arg.ArgType;
+
+			if (argType == typeof(VALUE_TYPE) || argType.IsAssignableFrom(typeof(VALUE_TYPE)))
+			{
+				var specificArg = (FilterArg<VALUE_TYPE>)arg;
+				specificArg.Value = value;
+				return this;
+			}
+
+			// Coersion time! We're looking for a mapping from whatever VALUE_TYPE is to argType.
+			// The most common ones are nullables and wider types such as long or double being bound 
+			// as wide types originate from the JSON parser.
+
+			// For now though:
+			Fail(typeof(VALUE_TYPE));
+
+			return this;
+		}
+
+		public Filter<T, ID> BindObject(object value)
+		{
+
+			var max = Pool.ArgTypes == null ? 0 : Pool.ArgTypes.Count;
+
+			if (_arg >= max)
+			{
+				throw new PublicException("Too many args being provided. This filter has " + max, "filter_invalid");
+			}
+
+			var arg = Arguments[_arg];
+			var argType = arg.ArgType;
+
+			if (value == null)
+			{
+				arg.SetDefault();
+				return this;
+			}
+
+			var valType = value.GetType();
+
+			if (argType == valType || argType.IsAssignableFrom(valType))
+			{
+				arg.InternalSetBoxedValue(value);
+				return this;
+			}
+
+			// Coersion time! We're looking for a mapping from whatever VALUE_TYPE is to argType.
+			// The most common ones are nullables and wider types such as long or double being bound 
+			// as wide types originate from the JSON parser.
+
+			// For now though:
+			Fail(valType);
+
+			return this;
+		}
 
 		/// <summary>
 		/// The type of the next arg to bind. Null if there are no more args.
@@ -409,23 +556,6 @@ namespace Api.Permissions
 			foreach (var v in values)
 			{
 				if (val.Equals(v))
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-		
-		/// <summary>
-		/// True if the given iterator has any of the given values in it.
-		/// </summary>
-		/// <returns></returns>
-		public static bool SetContainsAny(List<ulong> values, IEnumerable<ulong> anyOf)
-		{
-			foreach (var v in anyOf)
-			{
-				if (values != null && values.Contains(v))
 				{
 					return true;
 				}

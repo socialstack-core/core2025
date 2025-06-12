@@ -156,7 +156,7 @@ namespace Api.Startup
 		{
 			if (!type.IsValueType)
 			{
-				generator.Emit(OpCodes.Ldnull, type);
+				generator.Emit(OpCodes.Ldnull);
 				return;
 			}
 

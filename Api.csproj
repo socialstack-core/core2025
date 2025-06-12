@@ -45,9 +45,13 @@
     <None Update="Api\ThirdParty\CanvasRenderer\renderer.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+	<Compile Remove="Tests\**\*" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Tests\**\*" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="appsettings.json">

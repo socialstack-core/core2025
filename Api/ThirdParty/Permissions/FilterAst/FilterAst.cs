@@ -299,7 +299,109 @@ namespace Api.Permissions{
 		/// FilterAst.TryParseDate
 		/// </summary>
 		public static MethodInfo _tryParseDate;
+
+		/// <summary>
+		/// Performs a string.startsWith if both args are not null.
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns></returns>
+		public static bool GuardedStartsWithAny(string a, IEnumerable<string> b)
+		{
+			if (a == null || b == null)
+			{
+				return false;
+			}
+
+			foreach (var str in b)
+			{
+				if (str == null)
+				{
+					return true;
+				}
+
+				if (a.StartsWith(str, StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
 		
+		/// <summary>
+		/// Performs a string.startsWith if both args are not null.
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns></returns>
+		public static bool GuardedStartsWith(string a, string b)
+		{
+			if (b == null)
+			{
+				// It's like an empty string.
+				return true;
+			}
+
+			if (a == null)
+			{
+				return false;
+			}
+
+			return a.StartsWith(b, StringComparison.OrdinalIgnoreCase);
+		}
+		
+		/// <summary>
+		/// Performs a string.startsWith if both args are not null.
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns></returns>
+		public static bool GuardedEndsWith(string a, string b)
+		{
+			if (b == null)
+			{
+				// It's like an empty string.
+				return true;
+			}
+
+			if (a == null)
+			{
+				return false;
+			}
+
+			return a.EndsWith(b, StringComparison.OrdinalIgnoreCase);
+		}
+
+		/// <summary>
+		/// Performs a string.endsWith if both args are not null.
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns></returns>
+		public static bool GuardedEndsWithAny(string a, IEnumerable<string> b)
+		{
+			if (a == null || b == null)
+			{
+				return false;
+			}
+
+			foreach (var str in b)
+			{
+				if (str == null)
+				{
+					return true;
+				}
+
+				if (a.EndsWith(str, StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		/// <summary>
 		/// Performs a string.contains if both args are not null.
 		/// </summary>
@@ -308,12 +410,64 @@ namespace Api.Permissions{
 		/// <returns></returns>
 		public static bool GuardedContains(string a, string b)
 		{
-			if (a == null || b == null)
+			if (b == null)
+			{
+				// It's like an empty string.
+				return true;
+			}
+
+			if (a == null)
 			{
 				return false;
 			}
 
 			return a.Contains(b, StringComparison.OrdinalIgnoreCase);
+		}
+
+		/// <summary>
+		/// Performs a string.endsWith if both args are not null.
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns></returns>
+		public static bool GuardedContainsAny(string a, IEnumerable<string> b)
+		{
+			if (a == null || b == null)
+			{
+				return false;
+			}
+
+			foreach (var str in b)
+			{
+				if (str == null)
+				{
+					return true;
+				}
+
+				if (a.Contains(str, StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// True if the given iterator has any of the given values in it.
+		/// </summary>
+		/// <returns></returns>
+		public static bool SetContainsAny(List<ulong> values, IEnumerable<ulong> anyOf)
+		{
+			foreach (var v in anyOf)
+			{
+				if (values != null && values.Contains(v))
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -515,7 +669,7 @@ namespace Api.Permissions{
 			}
 			else
 			{
-				throw new Exception("Invalid filter syntax");
+				throw new PublicException("Invalid filter syntax", "filter_invalid");
 			}
 		}
 
@@ -612,7 +766,15 @@ namespace Api.Permissions{
 
 					if (idealType == typeof(string))
 					{
-						generator.Emit(OpCodes.Ldstr, value.AsString());
+						var asStr = value.AsString();
+						if (asStr == null)
+						{
+							generator.Emit(OpCodes.Ldnull);
+						}
+						else
+						{
+							generator.Emit(OpCodes.Ldstr, asStr);
+						}
 					}
 					else if (idealType == typeof(float))
 					{
@@ -691,7 +853,7 @@ namespace Api.Permissions{
 				return argType;
 			}
 			
-			throw new Exception("Invalid filter - can't convert this node to a readable value.");
+			throw new PublicException("Invalid filter - can't convert this node to a readable value.", "filter_invalid");
 		}
 
 		/// <summary>
@@ -1275,7 +1437,7 @@ namespace Api.Permissions{
 				Index++;
 				if (Peek() != '=')
 				{
-					// == is invalid
+					// ! here is invalid
 					throw new PublicException("Expected != but only saw the !. Was encountered at index " + Index + " in " + Query, "filter_invalid");
 				}
 				Index++;
@@ -1286,8 +1448,28 @@ namespace Api.Permissions{
 				if (Peek() == '=')
 				{
 					// == is invalid
-					throw new PublicException("Don't use == in a filter query string. Was encountered at index " + Index + " in " + Query, "filter_invalid");
+					throw new PublicException("Don't use == in a filter string. Was encountered at index " + Index + " in " + Query, "filter_invalid");
 				}
+			}
+			else if (current == '&')
+			{
+				Index++;
+				if (Peek() != '&')
+				{
+					// only && is valid
+					throw new PublicException("Only && is valid in a filter string. Only one was encountered at index " + Index + " in " + Query, "filter_invalid");
+				}
+				Index++;
+			}
+			else if (current == '|')
+			{
+				Index++;
+				if (Peek() != '|')
+				{
+					// only && is valid
+					throw new PublicException("Only || is valid in a filter string. Only one was encountered at index " + Index + " in " + Query, "filter_invalid");
+				}
+				Index++;
 			}
 
 			// OpCode:
@@ -1701,7 +1883,7 @@ namespace Api.Permissions{
 			
 			if (member == null || member.Field == null || (member.Field.VirtualInfo == null && member.Field.FieldInfo == null))
 			{
-				throw new Exception("Your filter has a syntax error - operation '" + Operation + "' must be performed as Member=Value, not Value=Member.");
+				throw new PublicException("Your filter has a syntax error - operation '" + Operation + "' must be performed as Member=Value, not Value=Member.", "filter_invalid");
 			}
 
 			if (operation == "=")
@@ -1723,7 +1905,7 @@ namespace Api.Permissions{
 				// The inputs must be the same type here and they must be both numeric.
 				if (memberType != valueType)
 				{
-					throw new Exception("Unsupported >= usage: Inputs must be the same type and not arrays.");
+					throw new PublicException("Unsupported >= usage: Inputs must be the same type and not arrays.", "filter_invalid");
 				}
 
 				EmitLessThan(generator, valueType);
@@ -1741,7 +1923,7 @@ namespace Api.Permissions{
 				// The inputs must be the same type here and they must be both numeric.
 				if (memberType != valueType)
 				{
-					throw new Exception("Unsupported >= usage: Inputs must be the same type and not arrays.");
+					throw new PublicException("Unsupported <= usage: Inputs must be the same type and not arrays.", "filter_invalid");
 				}
 				EmitGreaterThan(generator, valueType);
 
@@ -1757,7 +1939,7 @@ namespace Api.Permissions{
 				// The inputs must be the same type here and they must be both numeric.
 				if (memberType != valueType)
 				{
-					throw new Exception("Unsupported > usage: Inputs must be the same type and not arrays.");
+					throw new PublicException("Unsupported > usage: Inputs must be the same type and not arrays.", "filter_invalid");
 				}
 
 				EmitGreaterThan(generator, valueType);
@@ -1770,7 +1952,7 @@ namespace Api.Permissions{
 				// The inputs must be the same type here and they must be both numeric.
 				if (memberType != valueType)
 				{
-					throw new Exception("Unsupported >= usage: Inputs must be the same type and not arrays.");
+					throw new PublicException("Unsupported >= usage: Inputs must be the same type and not arrays.", "filter_invalid");
 				}
 
 				EmitLessThan(generator, valueType);
@@ -1782,25 +1964,32 @@ namespace Api.Permissions{
 				
 				if (memberType == typeof(string))
 				{
-					if (valueType != typeof(string))
+					if (valueType == typeof(string))
+					{
+						if (_strContains == null)
+						{
+							_strContains = typeof(FilterAst)
+								.GetMethod(
+									nameof(FilterAst.GuardedContains),
+									BindingFlags.Public | BindingFlags.Static,
+									null,
+									new Type[] { typeof(string), typeof(string) },
+									null
+								);
+						}
+
+						generator.Emit(OpCodes.Call, _strContains);
+					}
+					else if (IsEnumerable(valueType) && GetEnumerableType(valueType) == typeof(string))
+					{
+						generator.Emit(OpCodes.Call, typeof(FilterAst)
+								.GetMethod(nameof(FilterAst.GuardedContainsAny), BindingFlags.Public | BindingFlags.Static));
+					}
+					else
 					{
 						throw new PublicException("As the field is a string, you can only use contains with a string value.", "filter_invalid");
 					}
-
-					if (_strContains == null)
-					{
-						_strContains = typeof(FilterAst)
-							.GetMethod(
-								nameof(FilterAst.GuardedContains), 
-								BindingFlags.Public | BindingFlags.Static, 
-								null, 
-								new Type[] { typeof(string), typeof(string) }, 
-								null
-							);
-					}
-
-					generator.Emit(OpCodes.Call, _strContains);
-					return;
+				return;
 				}
 
 				// Check if memberType is enumerable
@@ -1833,17 +2022,24 @@ namespace Api.Permissions{
 
 				if (memberType == typeof(string))
 				{
-					if (valueType != typeof(string))
+					if (valueType == typeof(string))
+					{
+						if (_strContains == null)
+						{
+							_strContains = typeof(FilterAst).GetMethod(nameof(FilterAst.GuardedContains), BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(string) }, null);
+						}
+
+						generator.Emit(OpCodes.Call, _strContains);
+					}
+					else if (IsEnumerable(valueType) && GetEnumerableType(valueType) == typeof(string))
+					{
+						generator.Emit(OpCodes.Call, typeof(FilterAst)
+								.GetMethod(nameof(FilterAst.GuardedContainsAny), BindingFlags.Public | BindingFlags.Static));
+					}
+					else
 					{
 						throw new PublicException("As the field is a string, you can only use ContainsAny with a string value.", "filter_invalid");
 					}
-
-					if (_strContains == null)
-					{
-						_strContains = typeof(FilterAst).GetMethod(nameof(FilterAst.GuardedContains), BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(string) }, null);
-					}
-
-					generator.Emit(OpCodes.Call, _strContains);
 					return;
 				}
 
@@ -1856,7 +2052,7 @@ namespace Api.Permissions{
 				if (IsEnumerable(valueType))
 				{
 					// Exact match. This assumes that valueArray is coerseable to IEnumerable of specifically ulong.
-					var matchMethod = typeof(Filter<T, ID>).GetMethod(nameof(Filter<T, ID>.SetContainsAny));
+					var matchMethod = typeof(FilterAst).GetMethod(nameof(FilterAst.SetContainsAny));
 					generator.Emit(OpCodes.Call, matchMethod);
 				}
 				else
@@ -1875,39 +2071,64 @@ namespace Api.Permissions{
 				var memberType = ast.EmitReadValue(generator, member, null);
 				var valueType = ast.EmitReadValue(generator, B, memberType);
 
-				if (valueType != typeof(string) || memberType != typeof(string))
+				if (memberType != typeof(string))
 				{
 					throw new PublicException("StartsWith can only be used on strings.", "filter_invalid");
 				}
 
-				if (_strStartsWith == null)
+				if (valueType == typeof(string))
 				{
-					_strStartsWith = typeof(string)
-						.GetMethod("StartsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
-				}
+					if (_strStartsWith == null)
+					{
+						_strStartsWith = typeof(FilterAst)
+							.GetMethod(nameof(FilterAst.GuardedStartsWith), BindingFlags.Public | BindingFlags.Static);
+					}
 
-				generator.Emit(OpCodes.Call, _strStartsWith);
+					generator.Emit(OpCodes.Call, _strStartsWith);
+				}
+				else if (IsEnumerable(valueType) && GetEnumerableType(valueType) == typeof(string))
+				{
+					generator.Emit(OpCodes.Call, typeof(FilterAst)
+							.GetMethod(nameof(FilterAst.GuardedStartsWithAny), BindingFlags.Public | BindingFlags.Static));
+				}
+				else
+				{
+					throw new PublicException("StartsWith can only be used on strings.", "filter_invalid");
+				}
 			}
 			else if (operation == "endswith")
 			{
 				var memberType = ast.EmitReadValue(generator, member, null);
 				var valueType = ast.EmitReadValue(generator, B, memberType);
 
-				if (valueType != typeof(string) || memberType != typeof(string))
+				if (memberType != typeof(string))
 				{
 					throw new PublicException("EndsWith can only be used on strings.", "filter_invalid");
 				}
 
-				if (_strEndsWith == null)
+				if (valueType == typeof(string))
 				{
-					_strEndsWith = typeof(string).GetMethod("EndsWith", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
-				}
+					if (_strEndsWith == null)
+					{
+						_strEndsWith = typeof(FilterAst)
+							.GetMethod(nameof(FilterAst.GuardedEndsWith), BindingFlags.Public | BindingFlags.Static);
+					}
 
-				generator.Emit(OpCodes.Call, _strEndsWith);
+					generator.Emit(OpCodes.Call, _strEndsWith);
+				}
+				else if (IsEnumerable(valueType) && GetEnumerableType(valueType) == typeof(string))
+				{
+					generator.Emit(OpCodes.Call, typeof(FilterAst)
+							.GetMethod(nameof(FilterAst.GuardedEndsWithAny), BindingFlags.Public | BindingFlags.Static));
+				}
+				else
+				{
+					throw new PublicException("EndsWith can only be used on strings.", "filter_invalid");
+				}
 			}
 			else
 			{
-				throw new Exception("Your filter has invalid syntax. Unrecognised operation: " + Operation);
+				throw new PublicException("Your filter has invalid syntax. Unrecognised operation: " + Operation, "filter_invalid");
 			}
 		}
 
@@ -2557,7 +2778,7 @@ namespace Api.Permissions{
 			else if (field.PropertyInfo != null)
 			{
 				// Can't use a filter on properties, as it isn't compatible with a remote database
-				throw new Exception("Can't use " + Name + " in a filter. Only fields are compatible, not properties.");
+				throw new PublicException("Can't use " + Name + " in a filter. Only fields are compatible, not properties.", "filter_invalid");
 			}
 
 			// Field is the field to use.
@@ -2707,7 +2928,14 @@ namespace Api.Permissions{
 		public override void Emit(ILGenerator generator, FilterAst<T, ID> ast)
 		{
 			// str
-			generator.Emit(OpCodes.Ldstr, Value);
+			if (Value == null)
+			{
+				generator.Emit(OpCodes.Ldnull);
+			}
+			else
+			{
+				generator.Emit(OpCodes.Ldstr, Value);
+			}
 		}
 	}
 
