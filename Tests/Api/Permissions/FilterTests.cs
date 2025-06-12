@@ -492,7 +492,14 @@ public class FilterTests
 	{
 		var pgService = Services.Get<PageService>();
 
-		var filter1 = pgService.Where("Tags=[?]").Bind(new List<uint>() { 1 });
+		var filter1 = pgService.Where("Tags=[?]").Bind(new List<ulong>() { 1 });
+
+		// Coersion is supported too
+		var filter2 = pgService.Where("Tags=[?]").Bind(new List<ushort>() { 1 });
+		var filter3 = pgService.Where("Tags=[?]").Bind(new List<short>() { 1 });
+		var filter4 = pgService.Where("Tags=[?]").Bind(new List<uint>() { 1 });
+		var filter5 = pgService.Where("Tags=[?]").Bind(new List<int>() { 1 });
+		var filter6 = pgService.Where("Tags=[?]").Bind(new List<long>() { 1 });
 	}
 
 	[Fact]

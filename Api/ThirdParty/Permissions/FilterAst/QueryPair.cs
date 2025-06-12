@@ -506,7 +506,6 @@ namespace Api.Permissions
 				target.InternalSetBoxedValue(
 					((IEnumerable<ulong>)value).Select(n => (uint)n)
 				);
-				_arg++;
 				return true;
 			}
 
@@ -517,7 +516,6 @@ namespace Api.Permissions
 					target.InternalSetBoxedValue(
 						((IEnumerable<int>)value).Select(n => (ulong)n)
 					);
-					_arg++;
 					return true;
 				}
 
@@ -526,7 +524,6 @@ namespace Api.Permissions
 					target.InternalSetBoxedValue(
 						((IEnumerable<uint>)value).Select(n => (ulong)n)
 					);
-					_arg++;
 					return true;
 				}
 
@@ -535,7 +532,6 @@ namespace Api.Permissions
 					target.InternalSetBoxedValue(
 						((IEnumerable<short>)value).Select(n => (ulong)n)
 					);
-					_arg++;
 					return true;
 				}
 
@@ -544,7 +540,6 @@ namespace Api.Permissions
 					target.InternalSetBoxedValue(
 						((IEnumerable<ushort>)value).Select(n => (ulong)n)
 					);
-					_arg++;
 					return true;
 				}
 
@@ -553,7 +548,6 @@ namespace Api.Permissions
 					target.InternalSetBoxedValue(
 						((IEnumerable<long>)value).Select(n => (ulong)n)
 					);
-					_arg++;
 					return true;
 				}
 			}
