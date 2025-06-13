@@ -321,20 +321,18 @@ namespace Api.Permissions{
 			{
 				if (field.VirtualInfo.IsList)
 				{
-#warning this will cause MySQL to quietly return no results when used
+					#warning this will cause MySQL to quietly return no results when used
 					writer.WriteASCII("`Mappings`->>'$.");
 					writer.WriteS(field.Name);
 					writer.Write((byte)'\'');
+					return;
 				}
 				else
 				{
-					// Just an alias for the IdSource. This is null if the field is 
-					// e.g. a dynamic or functional include which
-					// will then fall through to the error at the bottom.
-					field = field.VirtualInfo.IdSource;
+					// Invalid
+					field = null;
 				}
 			}
-			
 			
 			if (field != null && field.FieldInfo != null)
 			{

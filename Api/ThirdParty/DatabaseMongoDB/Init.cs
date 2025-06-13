@@ -44,7 +44,8 @@ namespace Api.DatabaseMongoDB
 		{
 			if (MongoDBService.GetConfiguredConnectionString() == null)
 			{
-				Log.Info("mongodb", "MongoDB is installed but has not started because it has no configured connection strings. (typically MongoConnectionStrings.DefaultConnection in appsettings.json).");
+				Log.Info("mongodb", "MongoDB is installed but has not started because it has no configured connection strings. " +
+					"(typically MongoConnectionStrings.DefaultConnection in appsettings.json).");
 				return;
 			}
 
@@ -109,7 +110,8 @@ namespace Api.DatabaseMongoDB
 					});
 
 					var task = (Task)setupType.Invoke(this, new object[] {
-						service
+						service,
+						service.GetEventGroup()
 					});
 
 					await task;
@@ -121,12 +123,14 @@ namespace Api.DatabaseMongoDB
 
 		/// <summary>
 		/// Sets up for the given type with its event group along with updating any DB tables.
+		/// The event group is passed separately such that the database migration mechanism can use this same method too.
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <typeparam name="ID"></typeparam>
 		/// <typeparam name="INSTANCE_TYPE"></typeparam>
 		/// <param name="service"></param>
-		public async Task SetupService<T, ID, INSTANCE_TYPE>(AutoService<T, ID> service)
+		/// <param name="eventGroup"></param>
+		public async Task SetupService<T, ID, INSTANCE_TYPE>(AutoService<T, ID> service, EventGroup<T,ID> eventGroup)
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 			where INSTANCE_TYPE : T
@@ -207,7 +211,7 @@ namespace Api.DatabaseMongoDB
 
 			var filters = Builders<INSTANCE_TYPE>.Filter;
 
-			service.EventGroup.AfterInstanceTypeUpdate.AddEventListener(async (Context context, AutoService s) => {
+			eventGroup.AfterInstanceTypeUpdate.AddEventListener(async (Context context, AutoService s) => {
 
 				if (s == null)
 				{
@@ -230,8 +234,8 @@ namespace Api.DatabaseMongoDB
 
 				return s;
 			});
-			
-			service.EventGroup.Delete.AddEventListener(async (Context context, T result) =>
+
+			eventGroup.Delete.AddEventListener(async (Context context, T result) =>
 			{
 				// Delete the entry:
 				var filter = filters.Eq("Id", result.Id);
@@ -246,7 +250,7 @@ namespace Api.DatabaseMongoDB
 				return result;
 			});
 
-			service.EventGroup.Create.AddEventListener(async (Context context, T entity) =>
+			eventGroup.Create.AddEventListener(async (Context context, T entity) =>
 			{
 				if (entity.Id.Equals(default))
 				{
@@ -264,8 +268,8 @@ namespace Api.DatabaseMongoDB
 				
 				return entity;
 			});
-			
-			service.EventGroup.CreateAll.AddEventListener(async (Context context, List<T> entities) =>
+
+			eventGroup.CreateAll.AddEventListener(async (Context context, List<T> entities) =>
 			{
 				// Ensure each one has an ID.
 				var idsToCollect = 0;
@@ -300,7 +304,7 @@ namespace Api.DatabaseMongoDB
 				return entities;
 			});
 
-			service.EventGroup.Update.AddEventListener(async (Context context, T entity, ChangedFields changes, DataOptions opts) => {
+			eventGroup.Update.AddEventListener(async (Context context, T entity, ChangedFields changes, DataOptions opts) => {
 
 				if (entity == null || changes.None)
 				{
@@ -367,7 +371,7 @@ namespace Api.DatabaseMongoDB
 				return null;
 			});
 
-			service.EventGroup.Load.AddEventListener(async (Context context, T item, ID id) => {
+			eventGroup.Load.AddEventListener(async (Context context, T item, ID id) => {
 
 				if (item != null)
 				{
@@ -379,7 +383,7 @@ namespace Api.DatabaseMongoDB
 				return findResult;
 			});
 
-			service.EventGroup.List.AddEventListener(async (Context context, QueryPair<T, ID> queryPair) => {
+			eventGroup.List.AddEventListener(async (Context context, QueryPair<T, ID> queryPair) => {
 
 				if (queryPair.Handled)
 				{

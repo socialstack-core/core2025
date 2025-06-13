@@ -36,23 +36,13 @@ namespace Api.Database
 		/// </summary>
 		public MySQLDatabaseService()
 		{
-			var envString = System.Environment.GetEnvironmentVariable("DatabaseConnectionString");
+			// Load from appsettings and add a change handler.
+			LoadFromAppSettings();
 
-			if (string.IsNullOrEmpty(envString))
+			AppSettings.OnChange += () =>
 			{
-				// Load from appsettings and add a change handler.
 				LoadFromAppSettings();
-
-				AppSettings.OnChange += () =>
-				{
-					LoadFromAppSettings();
-				};
-			}
-			else
-			{
-				ConnectionString = envString;
-			}
-
+			};
 		}
 
 		/// <summary>
@@ -60,11 +50,29 @@ namespace Api.Database
 		/// </summary>
 		private void LoadFromAppSettings()
 		{
+			var cs = GetConfiguredConnectionString();
+			ConnectionString = cs;
+		}
+
+		/// <summary>
+		/// Returns a connection string, or null, if it isn't configured.
+		/// </summary>
+		/// <returns></returns>
+		/// <exception cref="Exception"></exception>
+		public static string GetConfiguredConnectionString()
+		{
+			var envString = System.Environment.GetEnvironmentVariable("DatabaseConnectionString");
+
+			if (!string.IsNullOrEmpty(envString))
+			{
+				return envString;
+			}
+
 			var connectionStrings = AppSettings.GetSection("ConnectionStrings");
 
 			if (connectionStrings == null)
 			{
-				throw new Exception("Your appsettings file is missing the 'ConnectionStrings' block.");
+				return null;
 			}
 
 			string cStringName;
@@ -78,14 +86,11 @@ namespace Api.Database
 				cStringName = System.Environment.GetEnvironmentVariable("ConnectionStringName") ?? "DefaultConnection";
 			}
 
-			ConnectionString = connectionStrings[
+			var cs = connectionStrings[
 				cStringName
 			];
 
-			if (ConnectionString == null)
-			{
-				throw new Exception("Your appsettings file declares a ConnectionString block but is missing a connection string with the key '" + cStringName + "'");
-			}
+			return cs;
 		}
 
 		/// <summary>
@@ -106,8 +111,6 @@ namespace Api.Database
 		{
 			return MySql.Data.MySqlClient.MySqlHelper.EscapeString(text);
 		}
-
-
 
 		/// <summary>
 		/// Builds an IN(x,y,z) string using the given value enumerator.

@@ -45,6 +45,13 @@ namespace Api.DatabaseMySQL
 		/// </summary>
 		public Init()
 		{
+			if (MySQLDatabaseService.GetConfiguredConnectionString() == null)
+			{
+				Log.Info("mysql", "MySQL is installed but has not started because it has no configured connection strings. " +
+					"(typically ConnectionStrings.DefaultConnection in appsettings.json).");
+				return;
+			}
+
 			var setupHandlersMethod = GetType().GetMethod(nameof(SetupService));
 
 			// Add handler for the initial locale list:
@@ -113,7 +120,8 @@ namespace Api.DatabaseMySQL
 					});
 
 					var task = (Task)setupType.Invoke(this, new object[] {
-						service
+						service,
+						service.GetEventGroup()
 					});
 
 					await task;
@@ -126,17 +134,19 @@ namespace Api.DatabaseMySQL
 
 		/// <summary>
 		/// Sets up for the given type with its event group along with updating any DB tables.
+		/// The event group is passed separately such that the DB migration mechanism is able to use this same method.
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <typeparam name="ID"></typeparam>
 		/// <param name="service"></param>
-		public async Task SetupService<T, ID>(AutoService<T, ID> service)
+		/// <param name="eventGroup">eventGroup</param>
+		public async Task SetupService<T, ID>(AutoService<T, ID> service, EventGroup<T, ID> eventGroup)
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 		{
 			// Start preparing the queries. Doing this ahead of time leads to excellent performance savings, 
 			// whilst also using a high-level abstraction as another plugin entry point.
-	
+			
 			// Special case if it is a mapping type.
 			var entityName = service.EntityName;
 			var isDbStored = service.DataIsPersistent;
@@ -155,7 +165,7 @@ namespace Api.DatabaseMySQL
 			var selectQuery = Query.Select(service.InstanceType, entityName);
 			var listQuery = Query.List(service.InstanceType, entityName);
 
-			service.EventGroup.AfterInstanceTypeUpdate.AddEventListener(async (Context context, AutoService s) => {
+			eventGroup.AfterInstanceTypeUpdate.AddEventListener(async (Context context, AutoService s) => {
 
 				if (s == null)
 				{
@@ -178,7 +188,7 @@ namespace Api.DatabaseMySQL
 				return s;
 			});
 			
-			service.EventGroup.Delete.AddEventListener(async (Context context, T result) =>
+			eventGroup.Delete.AddEventListener(async (Context context, T result) =>
 			{
 				// Delete the entry:
 				if (!await _database.RunWithId(context, deleteQuery, result.Id))
@@ -190,7 +200,7 @@ namespace Api.DatabaseMySQL
 				return result;
 			});
 
-			service.EventGroup.Create.AddEventListener(async (Context context, T entity) =>
+			eventGroup.Create.AddEventListener(async (Context context, T entity) =>
 			{
 				if (!entity.GetId().Equals(default(ID)))
 				{
@@ -205,14 +215,14 @@ namespace Api.DatabaseMySQL
 				return entity;
 			});
 				
-			service.EventGroup.CreateAll.AddEventListener(async (Context context, List<T> entity) =>
+			eventGroup.CreateAll.AddEventListener(async (Context context, List<T> entity) =>
 			{
 				// Can't bulk create with IDs here
 				await _database.Run(context, createQuery, entity);
 				return entity;
 			});
 
-			service.EventGroup.Update.AddEventListener(async (Context context, T entity, ChangedFields changes, DataOptions opts) => {
+			eventGroup.Update.AddEventListener(async (Context context, T entity, ChangedFields changes, DataOptions opts) => {
 
 				if (entity == null || changes.None)
 				{
@@ -307,7 +317,7 @@ namespace Api.DatabaseMySQL
 				return null;
 			});
 
-			service.EventGroup.Load.AddEventListener(async (Context context, T item, ID id) => {
+			eventGroup.Load.AddEventListener(async (Context context, T item, ID id) => {
 
 				if (item != null)
 				{
@@ -318,7 +328,7 @@ namespace Api.DatabaseMySQL
 				return item;
 			});
 
-			service.EventGroup.List.AddEventListener(async (Context context, QueryPair<T, ID> queryPair) => {
+			eventGroup.List.AddEventListener(async (Context context, QueryPair<T, ID> queryPair) => {
 
 				if (queryPair.Handled)
 				{

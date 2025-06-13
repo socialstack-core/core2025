@@ -43,6 +43,13 @@ public partial class MongoDBService : AutoService
 	/// <exception cref="Exception"></exception>
 	public static string GetConfiguredConnectionString()
 	{
+		var envString = System.Environment.GetEnvironmentVariable("MongoConnectionString");
+
+		if (!string.IsNullOrEmpty(envString))
+		{
+			return envString;
+		}
+
 		var connectionStrings = AppSettings.GetSection("MongoConnectionStrings");
 
 		if (connectionStrings == null)
@@ -82,21 +89,12 @@ public partial class MongoDBService : AutoService
 	/// Create a new database connector with the given connection string.
 	/// </summary>
 	public MongoDBService() {
-		var envString = "mongodb://localhost:27017/ss2025?ssl=false";// System.Environment.GetEnvironmentVariable("MongoConnectionString");
+		// Load from appsettings and add a change handler.
+		LoadFromAppSettings();
 
-		if (string.IsNullOrEmpty(envString))
-		{
-			// Load from appsettings and add a change handler.
+		AppSettings.OnChange += () => {
 			LoadFromAppSettings();
-
-			AppSettings.OnChange += () => {
-				LoadFromAppSettings();
-			};
-		}
-		else
-		{
-			ConnectionString = envString;
-		}
+		};
 	}
 
 	/// <summary>
