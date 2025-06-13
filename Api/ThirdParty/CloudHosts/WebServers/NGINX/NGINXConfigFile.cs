@@ -1,4 +1,5 @@
 using Amazon.Runtime.Internal.Transform;
+using Api.Configuration;
 using Api.Startup;
 using System;
 using System.Collections.Generic;
@@ -70,7 +71,7 @@ public partial class NGINXConfigFile : NGINXContext
     /// </summary>
     public void SetupDefaults(string nginxConfigPath, Dictionary<string, DomainCertificateLocales> certInfo = null)
     {
-        var fileRootPath = $"/var/www/{Services.Environment}";
+        var fileRootPath = Path.GetFullPath("");
 
         // TODO: Does not handle www and root domain redirects yet.
         // What that means: Check the server's configured domains. If one of them is a subdomain of another, then we have a root domain redirect requirement.
@@ -78,16 +79,22 @@ public partial class NGINXConfigFile : NGINXContext
         // Part 1. Default port 80 (non https) redirect. On sites that do not have www, this is always the same:
         var httpToHttpsMain = AddServerContext();
 
-        // http->https doesn't actually care what the hostname was. There's only 1 of these regardless of the provided hostname set.
-        httpToHttpsMain
-            .AddDirective("listen", "80 default_server")       // Listen on IPv4 port 80 (http)
-            .AddDirective("listen", "[::]:80 default_server") // Listen on IPv6 port 80 (http)
-            .AddDirective("charset", "utf-8") // tell nginx we want http to be in utf-8 always
-            .AddDirective("index", "index.html index.php") // SS doesn't use this anymore, but is present for old site backwards compatibility
-            .AddDirective("error_log", "/dev/null") // Don't log errors in the http->https redirect. 
-            .AddDirective("access_log", "/dev/null") // Don't log each request in the http->https redirect.
-            .AddDirective("server_name", "_"); // Underscore is the NGINX "default" server name.
-                                               // It tells nginx that we don't actually care what the domain name is here - redirect any domain to https. Keeps us generic so far.
+		var publicUrls = AppSettings.GetRawPublicUrls();
+
+        foreach (var publicUrl in publicUrls)
+        {
+			var parsedUrl = new Uri(publicUrl);
+			var host = parsedUrl.Host;
+
+			httpToHttpsMain
+                .AddDirective("listen", "80")       // Listen on IPv4 port 80 (http)
+                .AddDirective("listen", "[::]:80") // Listen on IPv6 port 80 (http)
+                .AddDirective("charset", "utf-8") // tell nginx we want http to be in utf-8 always
+                .AddDirective("index", "index.html index.php") // SS doesn't use this anymore, but is present for old site backwards compatibility
+                .AddDirective("error_log", "/dev/null") // Don't log errors in the http->https redirect. 
+                .AddDirective("access_log", "/dev/null") // Don't log each request in the http->https redirect.
+                .AddDirective("server_name", host);
+        }
 
         // lets encrypt validation endpoint
         httpToHttpsMain
@@ -98,14 +105,12 @@ public partial class NGINXConfigFile : NGINXContext
                 .AddDirective("proxy_cache_bypass", "$http_upgrade")
                 .AddDirective("proxy_set_header", "Connection keep-alive");
 
-
         // On to the location contexts for http->https:
         httpToHttpsMain
             .AddLocationContext("/")
                  .AddDirective("return", "301 https://$http_host$request_uri"); // Permanent redirect to https. We're never going to change from https -> http,
 
         // Time for the HTTPS listeners (the actual workhorses) next.
-        var isFirst = true;
         foreach (var kvp in certInfo)
         {
             var hostname = kvp.Key;
@@ -117,14 +122,12 @@ public partial class NGINXConfigFile : NGINXContext
                 var httpsContext = AddServerContext();
 
                 httpsContext
-                    .AddDirective("listen", "443 ssl http2" + (isFirst ? " default_server" : ""))      // Listen on IPv4 port 443 (https) with HTTP/2 support
-                    .AddDirective("listen", "[::]:443 ssl http2" + (isFirst ? " default_server" : "")) // Listen on IPv6 port 443 (https) with HTTP/2 support
+                    .AddDirective("listen", "443 ssl http2")      // Listen on IPv4 port 443 (https) with HTTP/2 support
+                    .AddDirective("listen", "[::]:443 ssl http2") // Listen on IPv6 port 443 (https) with HTTP/2 support
                     .AddDirective("ssl_certificate", $"{nginxConfigPath}/{hostname}-fullchain.pem")    // Certificate to use.
                     .AddDirective("ssl_certificate_key", $"{nginxConfigPath}/{hostname}-privkey.pem")  // Its key
                     .AddDirective("server_name", hostname)
                     .AddDirective("include", $"{nginxConfigPath}/nginx-url-config.conf");
-
-                isFirst = false;
             }
         }
 
