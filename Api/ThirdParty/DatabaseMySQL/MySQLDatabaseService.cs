@@ -51,7 +51,7 @@ namespace Api.Database
 		private void LoadFromAppSettings()
 		{
 			var cs = GetConfiguredConnectionString();
-			ConnectionString = cs;
+			ConnectionString = cs == null ? null : cs.ConnectionConfig;
 		}
 
 		/// <summary>
@@ -59,38 +59,10 @@ namespace Api.Database
 		/// </summary>
 		/// <returns></returns>
 		/// <exception cref="Exception"></exception>
-		public static string GetConfiguredConnectionString()
+		public static ConnectionString GetConfiguredConnectionString()
 		{
-			var envString = System.Environment.GetEnvironmentVariable("DatabaseConnectionString");
-
-			if (!string.IsNullOrEmpty(envString))
-			{
-				return envString;
-			}
-
-			var connectionStrings = AppSettings.GetSection("ConnectionStrings");
-
-			if (connectionStrings == null)
-			{
-				return null;
-			}
-
-			string cStringName;
-
-			if (Services.BuildHost == "xunit")
-			{
-				cStringName = "TestingConnection";
-			}
-			else
-			{
-				cStringName = System.Environment.GetEnvironmentVariable("ConnectionStringName") ?? "DefaultConnection";
-			}
-
-			var cs = connectionStrings[
-				cStringName
-			];
-
-			return cs;
+			// MySQL has no prefix:
+			return Api.Database.ConnectionString.Get("");
 		}
 
 		/// <summary>

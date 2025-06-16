@@ -45,7 +45,9 @@ namespace Api.DatabaseMySQL
 		/// </summary>
 		public Init()
 		{
-			if (MySQLDatabaseService.GetConfiguredConnectionString() == null)
+			var cfg = MySQLDatabaseService.GetConfiguredConnectionString();
+
+			if (cfg == null)
 			{
 				Log.Info("mysql", "MySQL is installed but has not started because it has no configured connection strings. " +
 					"(typically ConnectionStrings.DefaultConnection in appsettings.json).");
@@ -53,6 +55,46 @@ namespace Api.DatabaseMySQL
 			}
 
 			var setupHandlersMethod = GetType().GetMethod(nameof(SetupService));
+
+			// Mount the migration event:
+			Events.DatabaseMigration.LoadService.AddEventListener(async (Context context, AutoService service, string engine, EventGroup events) =>
+			{
+				if (service == null || service.ServicedType == null || engine != "mysql")
+				{
+					return service;
+				}
+
+				if (_database == null)
+				{
+					_database = Services.Get<MySQLDatabaseService>();
+				}
+
+				var servicedType = service.ServicedType;
+
+				if (servicedType != null)
+				{
+					// Add data load events:
+					var setupType = setupHandlersMethod.MakeGenericMethod(new Type[] {
+						servicedType,
+						service.IdType
+					});
+
+					var task = (Task)setupType.Invoke(this, new object[] {
+						service,
+						events // use the given event group, not the one on the service.
+					});
+
+					await task;
+				}
+
+				return service;
+			});
+
+			if (!cfg.IsPrimaryDatabase)
+			{
+				Log.Info("mysql", "MySQL is installed and configured but not mounting as it is not the primary DBE.");
+				return;
+			}
 
 			// Add handler for the initial locale list:
 			Events.Locale.InitialList.AddEventListener(async (Context context, List<Locale> locales) => {

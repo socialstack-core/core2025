@@ -7,6 +7,8 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 
@@ -426,7 +428,37 @@ namespace Api.Permissions{
 		public override object ToMongoValue(string localeCode, Filter<T, ID> filter, Context context)
 		{
 			var arg = filter.Arguments[Binding.Index];
-			return arg.BoxedValue;
+			var val = arg.BoxedValue;
+
+			// Convert Linq selectors to lists (unfortunately the mongo driver doesn't know how to treat it as an arbritrary IEnumerable)
+			var iEnum = val as IEnumerable;
+
+			if (iEnum != null)
+			{
+				var type = val.GetType();
+
+				if (type.IsArray || type == typeof(LongIDCollector) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>)))
+				{
+					// It's a supported enumerable anyway.
+					return val;
+				}
+
+				var elementType = FilterAst.GetEnumerableType(type);
+
+				if (elementType == null)
+				{
+					throw new Exception(
+						"Cannot bind '" + type + "' on mongoDB as it is an enumerable type with no apparent element type. " +
+						"Consider making a custom BSON serializer for this type."
+					);
+				}
+
+				// Convert it to a list:
+				var listType = typeof(List<>).MakeGenericType(elementType);
+				return Activator.CreateInstance(listType, iEnum);
+			}
+
+			return val;
 		}
 	}
 }

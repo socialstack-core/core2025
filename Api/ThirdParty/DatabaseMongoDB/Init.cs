@@ -15,6 +15,8 @@ using System.Linq;
 using MongoDB.Bson.Serialization;
 using System.Reflection;
 using MongoDB.Bson.Serialization.Conventions;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.Metrics;
 
 namespace Api.DatabaseMongoDB
 {
@@ -42,7 +44,9 @@ namespace Api.DatabaseMongoDB
 		/// </summary>
 		public Init()
 		{
-			if (MongoDBService.GetConfiguredConnectionString() == null)
+			var cfg = MongoDBService.GetConfiguredConnectionString();
+
+			if (cfg == null)
 			{
 				Log.Info("mongodb", "MongoDB is installed but has not started because it has no configured connection strings. " +
 					"(typically MongoConnectionStrings.DefaultConnection in appsettings.json).");
@@ -50,6 +54,47 @@ namespace Api.DatabaseMongoDB
 			}
 
 			var setupHandlersMethod = GetType().GetMethod(nameof(SetupService));
+
+			// Mount the migration event:
+			Events.DatabaseMigration.LoadService.AddEventListener(async (Context context, AutoService service, string engine, EventGroup events) =>
+			{
+				if (service == null || service.ServicedType == null || engine != "mongodb")
+				{
+					return service;
+				}
+
+				if (_database == null)
+				{
+					_database = Services.Get<MongoDBService>();
+				}
+
+				var servicedType = service.ServicedType;
+
+				if (servicedType != null)
+				{
+					// Add data load events:
+					var setupType = setupHandlersMethod.MakeGenericMethod(new Type[] {
+						servicedType,
+						service.IdType,
+						service.InstanceType
+					});
+
+					var task = (Task)setupType.Invoke(this, new object[] {
+						service,
+						events // use the given event group, not the one on the service.
+					});
+
+					await task;
+				}
+
+				return service;
+			});
+
+			if (!cfg.IsPrimaryDatabase)
+			{
+				Log.Info("mongodb", "MongoDB is installed and configured but not mounting as it is not the primary DBE.");
+				return;
+			}
 
 			// Add handler for the initial locale list:
 			Events.Locale.InitialList.AddEventListener(async (Context context, List<Locale> locales) => {
@@ -262,7 +307,14 @@ namespace Api.DatabaseMongoDB
 					// Map this ID via the svc:
 					entity.Id = service.ConvertId((ulong)newId);
 				}
-				
+				else
+				{
+					// Make sure the counter is set to >= entity.Id
+					var numericId = service.ReverseId(entity.Id);
+					var update = counterUpdateBuilder.Max(c => c.AutoInc, (long)numericId);
+					await counters.UpdateOneAsync(counterFilter, update);
+				}
+
 				// Create it:
 				await collection.InsertOneAsync((INSTANCE_TYPE)entity);
 				
@@ -444,7 +496,10 @@ namespace Api.DatabaseMongoDB
 						BindingFlags.NonPublic | 
 						BindingFlags.Instance | 
 						BindingFlags.DeclaredOnly
-					);
+					)
+					// Omit property backing fields etc.
+					.Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false))
+					.ToArray();
 
 					foreach (var field in fields)
 					{

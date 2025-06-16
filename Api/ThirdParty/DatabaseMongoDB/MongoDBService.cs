@@ -41,38 +41,9 @@ public partial class MongoDBService : AutoService
 	/// </summary>
 	/// <returns></returns>
 	/// <exception cref="Exception"></exception>
-	public static string GetConfiguredConnectionString()
+	public static ConnectionString GetConfiguredConnectionString()
 	{
-		var envString = System.Environment.GetEnvironmentVariable("MongoConnectionString");
-
-		if (!string.IsNullOrEmpty(envString))
-		{
-			return envString;
-		}
-
-		var connectionStrings = AppSettings.GetSection("MongoConnectionStrings");
-
-		if (connectionStrings == null)
-		{
-			return null;
-		}
-
-		string cStringName;
-
-		if (Services.BuildHost == "xunit")
-		{
-			cStringName = "TestingConnection";
-		}
-		else
-		{
-			cStringName = System.Environment.GetEnvironmentVariable("MongoConnectionStringName") ?? "DefaultConnection";
-		}
-
-		var cs = connectionStrings[
-			cStringName
-		];
-
-		return cs;
+		return Api.Database.ConnectionString.Get("Mongo");
 	}
 
 	/// <summary>
@@ -103,7 +74,7 @@ public partial class MongoDBService : AutoService
 	private void LoadFromAppSettings()
 	{
 		var cs = GetConfiguredConnectionString();
-		ConnectionString = cs;
+		ConnectionString = cs == null ? null : cs.ConnectionConfig;
 
 		_client = null;
 		_database = null;

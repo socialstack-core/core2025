@@ -11,7 +11,12 @@ namespace Api.Eventing
 	/// </summary>
 	public partial class Events
 	{
+		/// <summary>
+		/// Migration related event group.
+		/// </summary>
+		public static DatabaseMigrationEventGroup DatabaseMigration;
 
+		
 		#region Service events
 
 		/// <summary>
@@ -28,5 +33,20 @@ namespace Api.Eventing
 		#endregion
 
 	}
-
+	
+	/// <summary>
+	/// Event handlers used specifically by the SS migration framework.
+	/// </summary>
+	public class DatabaseMigrationEventGroup : EventGroup
+	{
+		
+		/// <summary>
+		/// Called to mount a particular service in the migration system for a specific engine by lowercase name.
+		/// It should functionally be the same as mounting the service normally
+		/// except the event handlers are attached to the given group rather than the service itself.
+		/// </summary>
+		public EventHandler<AutoService, string, EventGroup> LoadService;
+		
+	}
+	
 }
