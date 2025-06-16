@@ -1,5 +1,5 @@
 // Define distinct types for each form mode
-import { Content } from "Api/Content";
+import {Content, ListFilter} from "Api/Content";
 
 /**
  * Represents the type of an auto form page.
@@ -29,6 +29,13 @@ export type AutoFormButtonExtension = {
     /** Optional class name for styling the button. */
     className?: string;
 };
+
+export type CustomSearchProviderProps = {
+    filters?: ListFilter,
+    onChange: (filters: ListFilter) => void
+}
+
+export type CustomSearchProvider = React.FC<CustomSearchProviderProps>;
 
 /**
  * Base structure shared across all form types that can have button extensions.
@@ -60,6 +67,7 @@ export type AutoFormUpdateItems = AutoFormSharedItems & {
  */
 export type AutoFormListItems = AutoFormSharedItems & {
     // Add any extensible items here
+    customSearch?: CustomSearchProvider;
 };
 
 /**
@@ -102,18 +110,7 @@ class AutoFormExtensions {
      * @param button The button extension to add.
      */
     public addAutoFormButton(contentType: string, pageType: AutoFormType, button: AutoFormButtonExtension) {
-        if (!this.extensions[contentType]) {
-            this.extensions[contentType] = {
-                list: {},
-                create: {},
-                update: {}
-            };
-        }
-
-        if (!Array.isArray(this.extensions[contentType][pageType].buttons)) {
-            this.extensions[contentType][pageType].buttons = [];
-        }
-
+        this.ensureContentTypeAndPageType(contentType, pageType);
         this.extensions[contentType][pageType].buttons!.push(button);
     }
 
@@ -125,6 +122,20 @@ class AutoFormExtensions {
      * @returns An array of button extensions for the specified form.
      */
     public getAutoFormButtons(contentType: string, pageType: AutoFormType): AutoFormButtonExtension[] {
+        this.ensureContentTypeAndPageType(contentType, pageType);
+        return this.extensions[contentType][pageType].buttons!;
+    }
+    
+    public setCustomSearchProvider(contentType: string, pageType: AutoFormType, searchComponent: CustomSearchProvider) {
+        this.ensureContentTypeAndPageType(contentType, pageType);
+        this.extensions[contentType]['list'].customSearch = searchComponent; 
+    }
+    
+    public getCustomSearchProvider(contentType: string, pageType: AutoFormType): CustomSearchProvider | undefined {
+        this.ensureContentTypeAndPageType(contentType, pageType);
+        return this.extensions[contentType].list.customSearch;
+    }
+    private ensureContentTypeAndPageType(contentType: string, pageType: AutoFormType) {
         if (!this.extensions[contentType]) {
             this.extensions[contentType] = {
                 list: {},
@@ -136,8 +147,6 @@ class AutoFormExtensions {
         if (!Array.isArray(this.extensions[contentType][pageType].buttons)) {
             this.extensions[contentType][pageType].buttons = [];
         }
-
-        return this.extensions[contentType][pageType].buttons!;
     }
 }
 
