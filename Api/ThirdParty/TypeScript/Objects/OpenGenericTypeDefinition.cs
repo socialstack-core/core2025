@@ -80,7 +80,7 @@ namespace Api.TypeScript.Objects
                 builder.Append($"export type {svc.GetGenericSignature(type)} = ");
 
                 // Extend base type if applicable
-                if (type.BaseType is not null && type.BaseType != typeof(object))
+                if (type.BaseType is not null && type.BaseType != typeof(object) && !type.BaseType.IsAbstract)
                 {
                     builder.Append($"{svc.GetGenericSignature(type.BaseType)} & ");
                 }
