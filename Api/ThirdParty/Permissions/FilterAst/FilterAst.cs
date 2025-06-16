@@ -1628,6 +1628,11 @@ namespace Api.Permissions{
 		where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 	{
 		/// <summary>
+		/// True if this is a field and is a list one (virtual mapping fields).
+		/// </summary>
+		public virtual bool IsListField => false;
+
+		/// <summary>
 		/// True if the node has an on statement.
 		/// Most nodes return false - only and will accept one as a child.
 		/// </summary>
@@ -2410,6 +2415,11 @@ namespace Api.Permissions{
 		/// True if this is a context field.
 		/// </summary>
 		public bool OnContext;
+
+		/// <summary>
+		/// True if this is a field and is a list one (virtual mapping fields).
+		/// </summary>
+		public override bool IsListField => !OnContext && Field.IsVirtual && Field.VirtualInfo.IsList;
 
 		/// <summary>
 		/// 

@@ -98,6 +98,42 @@ namespace Api.Permissions{
 		{
 			throw new NotImplementedException();
 		}
+		
+		/// <summary>
+		/// Constructs a typed mongo .In filter.
+		/// </summary>
+		/// <param name="member"></param>
+		/// <param name="localeCode"></param>
+		/// <param name="filter"></param>
+		/// <param name="context"></param>
+		public virtual FilterDefinition<INSTANCE_TYPE> ToMongoIn<INSTANCE_TYPE>(string member, string localeCode, Filter<T, ID> filter, Context context)
+		{
+			throw new NotImplementedException();
+		}
+		
+		/// <summary>
+		/// Constructs a typed mongo .AnyEq filter.
+		/// </summary>
+		/// <param name="member"></param>
+		/// <param name="localeCode"></param>
+		/// <param name="filter"></param>
+		/// <param name="context"></param>
+		public virtual FilterDefinition<INSTANCE_TYPE> ToMongoAny<INSTANCE_TYPE>(string member, string localeCode, Filter<T, ID> filter, Context context)
+		{
+			throw new NotImplementedException();
+		}
+		
+		/// <summary>
+		/// Constructs a typed Mongo .All filter.
+		/// </summary>
+		/// <param name="member"></param>
+		/// <param name="localeCode"></param>
+		/// <param name="filter"></param>
+		/// <param name="context"></param>
+		public virtual FilterDefinition<INSTANCE_TYPE> ToMongoAll<INSTANCE_TYPE>(string member, string localeCode, Filter<T, ID> filter, Context context)
+		{
+			throw new NotImplementedException();
+		}
 
 		/// <summary>
 		/// Converts this node to a value to send to Mongo. 
@@ -166,16 +202,41 @@ namespace Api.Permissions{
 			else if (operation == "=")
 			{
 				var mem = A.ToMongoMember(localeCode, filter, context);
-				var val = B.ToMongoValue(localeCode, filter, context);
-				return Builders<INSTANCE_TYPE>.Filter.Eq(mem, val);
+
+				// If A is a mapping field then always use Eq.
+				// Using Eq with a singular value naturally checks any matching element.
+				// Using Eq with an array is an exact match (in order), matching what the cache check does.
+
+				// Otherwise if it's an array being given to an ordinary field match, use In instead.
+				if (B is ArgFilterTreeNode<T, ID> argNode && argNode.Array && !A.IsListField)
+				{
+					return B.ToMongoIn<INSTANCE_TYPE>(mem, localeCode, filter, context);
+				}
+				else
+				{
+					var val = B.ToMongoValue(localeCode, filter, context);
+					return Builders<INSTANCE_TYPE>.Filter.Eq(mem, val);
+				}
 			}
 			else if (operation == "!=")
 			{
 				var mem = A.ToMongoMember(localeCode, filter, context);
-				var val = B.ToMongoValue(localeCode, filter, context);
-				return Builders<INSTANCE_TYPE>.Filter.Not(
-					Builders<INSTANCE_TYPE>.Filter.Eq(mem, val)
-				);
+
+				// If it's an array, use In instead.
+				if (B is ArgFilterTreeNode<T, ID> argNode && argNode.Array && !A.IsListField)
+				{
+					return Builders<INSTANCE_TYPE>.Filter.Not(
+						B.ToMongoIn<INSTANCE_TYPE>(mem, localeCode, filter, context)
+					);
+				}
+				else
+				{
+					var val = B.ToMongoValue(localeCode, filter, context);
+
+					return Builders<INSTANCE_TYPE>.Filter.Not(
+						Builders<INSTANCE_TYPE>.Filter.Eq(mem, val)
+					);
+				}
 			}
 			else if (operation == ">=")
 			{
@@ -218,9 +279,53 @@ namespace Api.Permissions{
 			else if (operation == "contains")
 			{
 				var mem = A.ToMongoMember(localeCode, filter, context);
-				var val = B.ToMongoValue(localeCode, filter, context);
-				var escaped = Regex.Escape(val == null ? "" : val.ToString());
-				return Builders<INSTANCE_TYPE>.Filter.Regex(mem, new BsonRegularExpression(escaped));
+
+				if (A.IsListField)
+				{
+					if (B is ArgFilterTreeNode<T, ID> argNode && argNode.Array)
+					{
+						// Contains all of these things
+						return B.ToMongoAll<INSTANCE_TYPE>(mem, localeCode, filter, context);
+					}
+					else
+					{
+						// Contains the given value (can have other stuff in there). Same as Eq:
+						var val = B.ToMongoValue(localeCode, filter, context);
+						return Builders<INSTANCE_TYPE>.Filter.Eq(mem, val);
+					}
+				}
+				else
+				{
+					var val = B.ToMongoValue(localeCode, filter, context);
+					var escaped = Regex.Escape(val == null ? "" : val.ToString());
+					return Builders<INSTANCE_TYPE>.Filter.Regex(mem, new BsonRegularExpression(escaped));
+				}
+			}
+			else if (operation == "containsany")
+			{
+				var mem = A.ToMongoMember(localeCode, filter, context);
+
+				if (A.IsListField)
+				{
+					if (B is ArgFilterTreeNode<T, ID> argNode && argNode.Array)
+					{
+						// Contains *any* of these things
+						return B.ToMongoAny<INSTANCE_TYPE>(mem, localeCode, filter, context);
+					}
+					else
+					{
+						// Contains the given value (can have other stuff in there). Same as Eq:
+						var val = B.ToMongoValue(localeCode, filter, context);
+						return Builders<INSTANCE_TYPE>.Filter.Eq(mem, val);
+					}
+				}
+				else
+				{
+					// Unchanged from contains for strings
+					var val = B.ToMongoValue(localeCode, filter, context);
+					var escaped = Regex.Escape(val == null ? "" : val.ToString());
+					return Builders<INSTANCE_TYPE>.Filter.Regex(mem, new BsonRegularExpression(escaped));
+				}
 			}
 			
 			throw new Exception("Operation not supported via MongoDB: " + Operation);
@@ -459,6 +564,165 @@ namespace Api.Permissions{
 			}
 
 			return val;
+		}
+
+		/// <summary>
+		/// Converts specifically to a typed mongo AnyEq(..) statement.
+		/// </summary>
+		/// <typeparam name="INSTANCE_TYPE"></typeparam>
+		/// <param name="member"></param>
+		/// <param name="localeCode"></param>
+		/// <param name="filter"></param>
+		/// <param name="context"></param>
+		/// <returns></returns>
+		/// <exception cref="Exception"></exception>
+		public override FilterDefinition<INSTANCE_TYPE> ToMongoAny<INSTANCE_TYPE>(string member, string localeCode, Filter<T, ID> filter, Context context)
+		{
+			var arg = filter.Arguments[Binding.Index];
+			var val = arg.BoxedValue;
+
+			if (val == null)
+			{
+				// Key in () - matches nothing.
+				// We don't know what the IEnumerable type would have been but it
+				// doesn't matter anyway as this will just emit an empty bson array.
+				return Builders<INSTANCE_TYPE>.Filter.AnyEq(member, System.Array.Empty<int>());
+			}
+
+			// Unfortunately reflection is required to bind this here.
+			var elementType = FilterAst.GetEnumerableType(val.GetType());
+			var genericMethod = typeof(ArgFilterTreeNode<T, ID>)
+				.GetMethod(nameof(ToTypedMongoAny))
+				.MakeGenericMethod(new Type[] {
+					typeof(INSTANCE_TYPE),
+					elementType
+				});
+
+			return (FilterDefinition<INSTANCE_TYPE>)genericMethod.Invoke(this, new object[] {
+				member,
+				val
+			});
+		}
+
+		/// <summary>
+		/// Converts specifically to a typed mongo All(..) statement.
+		/// </summary>
+		/// <typeparam name="INSTANCE_TYPE"></typeparam>
+		/// <param name="member"></param>
+		/// <param name="localeCode"></param>
+		/// <param name="filter"></param>
+		/// <param name="context"></param>
+		/// <returns></returns>
+		/// <exception cref="Exception"></exception>
+		public override FilterDefinition<INSTANCE_TYPE> ToMongoAll<INSTANCE_TYPE>(string member, string localeCode, Filter<T, ID> filter, Context context)
+		{
+			var arg = filter.Arguments[Binding.Index];
+			var val = arg.BoxedValue;
+
+			if (val == null)
+			{
+				// Key in () - matches nothing.
+				// We don't know what the IEnumerable type would have been but it
+				// doesn't matter anyway as this will just emit an empty bson array.
+				return Builders<INSTANCE_TYPE>.Filter.All(member, System.Array.Empty<int>());
+			}
+
+			// Unfortunately reflection is required to bind this here.
+			var elementType = FilterAst.GetEnumerableType(val.GetType());
+			var genericMethod = typeof(ArgFilterTreeNode<T, ID>)
+				.GetMethod(nameof(ToTypedMongoAll))
+				.MakeGenericMethod(new Type[] {
+					typeof(INSTANCE_TYPE),
+					elementType
+				});
+
+			return (FilterDefinition<INSTANCE_TYPE>)genericMethod.Invoke(this, new object[] {
+				member,
+				val
+			});
+		}
+
+		/// <summary>
+		/// Converts specifically to a typed mongo In(..) statement.
+		/// </summary>
+		/// <typeparam name="INSTANCE_TYPE"></typeparam>
+		/// <param name="member"></param>
+		/// <param name="localeCode"></param>
+		/// <param name="filter"></param>
+		/// <param name="context"></param>
+		/// <returns></returns>
+		/// <exception cref="Exception"></exception>
+		public override FilterDefinition<INSTANCE_TYPE> ToMongoIn<INSTANCE_TYPE>(string member, string localeCode, Filter<T, ID> filter, Context context)
+		{
+			var arg = filter.Arguments[Binding.Index];
+			var val = arg.BoxedValue;
+
+			if (val == null)
+			{
+				// Key in () - matches nothing.
+				// We don't know what the IEnumerable type would have been but it
+				// doesn't matter anyway as this will just emit an empty bson array.
+				return Builders<INSTANCE_TYPE>.Filter.In(member, System.Array.Empty<int>());
+			}
+
+			// Unfortunately reflection is required to bind this here.
+			var elementType = FilterAst.GetEnumerableType(val.GetType());
+			var genericMethod = typeof(ArgFilterTreeNode<T, ID>)
+				.GetMethod(nameof(ToTypedMongoIn))
+				.MakeGenericMethod(new Type[] { 
+					typeof(INSTANCE_TYPE),
+					elementType
+				});
+
+			return (FilterDefinition<INSTANCE_TYPE>)genericMethod.Invoke(this, new object[] {
+				member,
+				val
+			});
+		}
+
+		/// <summary>
+		/// Constructs a typed mongoDB .In filter.
+		/// </summary>
+		/// <typeparam name="INSTANCE_TYPE"></typeparam>
+		/// <typeparam name="ENUM_T"></typeparam>
+		/// <param name="member"></param>
+		/// <param name="val"></param>
+		/// <returns></returns>
+		public FilterDefinition<INSTANCE_TYPE> ToTypedMongoIn<INSTANCE_TYPE, ENUM_T>(string member, IEnumerable<ENUM_T> val)
+		{
+			// Unlike the other mechanism though this does *not* require
+			// conversion to List from various Linq internal types.
+			return Builders<INSTANCE_TYPE>.Filter.In(member, val);
+		}
+
+		/// <summary>
+		/// Constructs a typed mongoDB .All filter.
+		/// </summary>
+		/// <typeparam name="INSTANCE_TYPE"></typeparam>
+		/// <typeparam name="ENUM_T"></typeparam>
+		/// <param name="member"></param>
+		/// <param name="val"></param>
+		/// <returns></returns>
+		public FilterDefinition<INSTANCE_TYPE> ToTypedMongoAll<INSTANCE_TYPE, ENUM_T>(string member, IEnumerable<ENUM_T> val)
+		{
+			// Unlike the other mechanism though this does *not* require
+			// conversion to List from various Linq internal types.
+			return Builders<INSTANCE_TYPE>.Filter.All(member, val);
+		}
+
+		/// <summary>
+		/// Constructs a typed mongoDB .AnyEq filter.
+		/// </summary>
+		/// <typeparam name="INSTANCE_TYPE"></typeparam>
+		/// <typeparam name="ENUM_T"></typeparam>
+		/// <param name="member"></param>
+		/// <param name="val"></param>
+		/// <returns></returns>
+		public FilterDefinition<INSTANCE_TYPE> ToTypedMongoAny<INSTANCE_TYPE, ENUM_T>(string member, IEnumerable<ENUM_T> val)
+		{
+			// Unlike the other mechanism though this does *not* require
+			// conversion to List from various Linq internal types.
+			return Builders<INSTANCE_TYPE>.Filter.AnyEq(member, val);
 		}
 	}
 }
