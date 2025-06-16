@@ -80,7 +80,7 @@ namespace Api.TypeScript.Objects
                 builder.Append($"export type {svc.GetGenericSignature(type)} = ");
 
                 // Extend base type if applicable
-                if (type.BaseType is not null && type.BaseType != typeof(object) && !type.BaseType.IsAbstract)
+                if (type.BaseType is not null && type.BaseType != typeof(object) && type.BaseType != typeof(Content))
                 {
                     builder.Append($"{svc.GetGenericSignature(type.BaseType)} & ");
                 }
@@ -117,6 +117,7 @@ namespace Api.TypeScript.Objects
                             if(virtualInfo.DynamicTypeField != null){
                                 virtualType = typeof(object);
                             } else if(virtualInfo.ValueGeneratorType != null) {
+                                #warning return type assumption: this requires context of the specific type that it is occuring on
                                 // this one kinda requires context of the specific type that it is occuring on, in short
                                 virtualType = typeof(string); // ..is an ugly assumption that happens to be about right atm
                             } else {
