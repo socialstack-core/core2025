@@ -94,14 +94,7 @@ export function expandIncludes<T>(response : any){
 			var inc = includes[i];
 			var targetValues = inc.on === undefined ? (results || [result]) : includes[inc.on].values;
 			
-			if(inc.src){
-				// Source field in the original object has the ID. Use that:
-				var byIdMap : Record<number, any> = {};
-				inc.values.forEach((v : any) => byIdMap[v.id] = v);
-				targetValues.forEach((val: any) => {
-					val[inc.field] = byIdMap[val[inc.src]];
-				});
-			}else if(typeof inc.map == 'string'){
+			if(typeof inc.map == 'string'){
 				// Each object in values has a field of the given name, which contains an ID that maps to an object in _targetValues_.
 				var targetIdMap: Record<number, any> = {};
 				targetValues.forEach((v: any) => {
@@ -114,26 +107,26 @@ export function expandIncludes<T>(response : any){
 						target[inc.field].push(v);
 					}
 				});
-			}else if(inc.map){
-				// It's an array of tuples. The first is a source ID, second is target ID.
-				var srcIdMap: Record<number, any> = {};
-				targetValues.forEach((v: any) => {
-					srcIdMap[v.id] = v;
-					v[inc.field] = [];
-				});
-				var targetIdMap: Record<number, any> = {};
-				inc.values.forEach((v:any) => targetIdMap[v.id] = v);
-				for(var n=0;n<inc.map.length;n+=3){
-					// var id = inc.map[n]; // the mapping entry ID.
-					var a = srcIdMap[inc.map[n+1]];
-					var b = targetIdMap[inc.map[n + 2]];
-
-					if(a && b){
-						// todo: only push a if id not already in set.
-						// where should id be stored though? (it's not the same thing as a.id - it's the actual mapping row's id).
-						a[inc.field].push(b);
+			}else{
+				// Each value has a field named the same as this include (or inc.src if it is set).
+				var srcField = inc.src || inc.field;
+				
+				var byIdMap : Record<number, any> = {};
+				inc.values.forEach((v : any) => byIdMap[v.id] = v);
+				targetValues.forEach((val: any) => {
+					if(Array.isArray(val[srcField])){
+						val[inc.field] = val[srcField].map(id => {
+							if(id.id){
+								// Already loaded - skip.
+								return id;
+							}
+							
+							return byIdMap[id];
+						});
+					}else{
+						val[inc.field] = byIdMap[val[srcField]];
 					}
-				}
+				});
 			}
 		}
 	}

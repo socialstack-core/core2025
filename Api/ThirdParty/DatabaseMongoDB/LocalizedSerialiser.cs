@@ -29,10 +29,15 @@ public class LocalizedSerializer<T> : IBsonSerializer<Localized<T>>
         var writer = context.Writer;
         writer.WriteStartDocument();
 
-        foreach (var kvp in value.Values)
+        var vals = value.Values;
+
+        if (vals != null)
         {
-            writer.WriteName(kvp.Key);
-            BsonSerializer.Serialize(writer, kvp.Value);
+            foreach (var kvp in vals)
+            {
+                writer.WriteName(kvp.Key);
+                BsonSerializer.Serialize(writer, kvp.Value);
+            }
         }
 
         writer.WriteEndDocument();

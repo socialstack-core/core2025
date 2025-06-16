@@ -6,6 +6,7 @@ using Api.Contexts;
 using Api.Eventing;
 using Api.PasswordResetRequests;
 using System;
+using Api.Addresses;
 
 namespace Api.Payments
 {

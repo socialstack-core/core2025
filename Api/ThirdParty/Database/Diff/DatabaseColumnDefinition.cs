@@ -80,6 +80,10 @@ namespace Api.Database
 					}
 				}
 			}
+			else if (fieldType == typeof(JsonString) || fieldType == typeof(MappingData))
+			{
+				IsNullable = true;
+			}
 			else if (!fieldType.IsValueType)
 			{
 				IsNullable = true;

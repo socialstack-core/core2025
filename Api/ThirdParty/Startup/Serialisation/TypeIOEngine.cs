@@ -3,7 +3,6 @@ using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
 using Api.Translate;
-using Stripe;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -24,7 +23,242 @@ namespace Api.Startup
 		/// Ensures unique names for assemblies generated during this session.
 		/// </summary>
 		private static int counter = 1;
-		
+
+		/// <summary>
+		/// If the given field is localized, nullable, or both, then this will 
+		/// unpack it and place either the raw value or its default (e.g. 0) on the stack.
+		/// </summary>
+		/// <param name="generator"></param>
+		/// <param name="contentObjArg"></param>
+		/// <param name="field"></param>
+		/// <param name="ctxArg"></param>
+		/// <returns></returns>
+		public static Type UnpackLocalisedNullable(ILGenerator generator, int contentObjArg, FieldInfo field, int ctxArg)
+		{
+			var fieldType = field.FieldType;
+			Type localisedType = null;
+
+			if (fieldType.IsGenericType)
+			{
+				var typeDef = fieldType.GetGenericTypeDefinition();
+
+				if (typeDef == typeof(Localized<>))
+				{
+					localisedType = fieldType;
+					fieldType = fieldType.GetGenericArguments()[0];
+				}
+			}
+
+			// Check if it's a nullable:
+			var origNullable = fieldType;
+			Type nullableType = Nullable.GetUnderlyingType(fieldType);
+
+			if (nullableType != null)
+			{
+				fieldType = nullableType;
+			}
+
+			if (localisedType != null)
+			{
+				// It's localised but can also be nullable.
+				generator.Emit(OpCodes.Ldarg, contentObjArg);
+				generator.Emit(OpCodes.Ldflda, field);
+
+				// Push the context and a constant 'true'
+				generator.Emit(OpCodes.Ldarg, ctxArg); // context
+				generator.Emit(OpCodes.Ldc_I4_1); // fallback = true
+
+				// Can now call Get:
+				var localisedGetMethod = localisedType.GetMethod(
+					"Get", BindingFlags.Public | BindingFlags.Instance,
+					new Type[] {
+					typeof(Context),
+					typeof(bool)
+				});
+
+				generator.Emit(OpCodes.Callvirt, localisedGetMethod);
+
+				if (nullableType == null)
+				{
+					// The value is on the stack - stop there.
+					return fieldType;
+				}
+
+				// It's also nullable - we'll now need to unpack it by storing it in a local.
+				var nullableLoc = generator.DeclareLocal(origNullable);
+				generator.Emit(OpCodes.Stloc, nullableLoc);
+
+				UnpackNullable(generator, origNullable, fieldType, (ILGenerator gen) => {
+					gen.Emit(OpCodes.Ldloca, nullableLoc);
+				});
+			}
+			else if (nullableType == null)
+			{
+				// It is just a regular field value.
+
+				generator.Emit(OpCodes.Ldarg, contentObjArg); // the content obj 
+				generator.Emit(OpCodes.Ldfld, field); // the value 
+
+				// The value is now on the stack.
+				return fieldType;
+			}
+			else
+			{
+				UnpackNullable(generator, origNullable, fieldType, (ILGenerator gen) => {
+					gen.Emit(OpCodes.Ldarg, contentObjArg);
+					gen.Emit(OpCodes.Ldflda, field);
+				});
+			}
+			
+			return fieldType;
+		}
+
+		private static void UnpackNullable(ILGenerator generator, Type fullType, Type innerType, Action<ILGenerator> pushAddress)
+		{
+			// Put address on to stack:
+			pushAddress(generator);
+
+			// Check if it is null (and if so, put the default value on the stack)
+			var hasValueMethod = fullType.GetProperty("HasValue").GetGetMethod();
+
+			generator.Emit(OpCodes.Callvirt, hasValueMethod);
+
+			Label notNullLabel = generator.DefineLabel();
+			Label endOfStatementLabel = generator.DefineLabel();
+
+			generator.Emit(OpCodes.Brtrue, notNullLabel);
+
+			// It's null here - emit whatever the default of fieldType is.
+			EmitDefault(generator, innerType);
+
+			generator.Emit(OpCodes.Br, endOfStatementLabel);
+			generator.MarkLabel(notNullLabel);
+
+			// It's not null here - read the value.
+
+			// Put address on to stack again:
+			pushAddress(generator);
+
+			var valueMethod = fullType.GetProperty("Value").GetGetMethod();
+			generator.Emit(OpCodes.Callvirt, valueMethod);
+
+			// The value is now on the stack.
+
+			generator.MarkLabel(endOfStatementLabel);
+		}
+
+		/// <summary>
+		/// Emits a default value for the given target type.
+		/// </summary>
+		/// <param name="generator"></param>
+		/// <param name="type"></param>
+		public static void EmitDefault(ILGenerator generator, Type type)
+		{
+			if (!type.IsValueType)
+			{
+				generator.Emit(OpCodes.Ldnull);
+				return;
+			}
+
+			if (type == typeof(bool) || type == typeof(byte) || type == typeof(sbyte) ||
+				type == typeof(ushort) || type == typeof(short) ||
+				type == typeof(uint) || type == typeof(int))
+			{
+				generator.Emit(OpCodes.Ldc_I4_0);
+				return;
+			}
+
+			if (type == typeof(float))
+			{
+				generator.Emit(OpCodes.Ldc_R4, 0f);
+				return;
+			}
+
+			if (type == typeof(double))
+			{
+				generator.Emit(OpCodes.Ldc_R8, 0d);
+				return;
+			}
+
+			if (type == typeof(ulong) || type == typeof(long))
+			{
+				generator.Emit(OpCodes.Ldc_I8, 0);
+				return;
+			}
+
+			// Other structs - call its default ctor:
+			var addr = generator.DeclareLocal(type);
+			generator.Emit(OpCodes.Ldloca, addr);
+			generator.Emit(OpCodes.Initobj, type);
+			generator.Emit(OpCodes.Ldloc, addr);
+		}
+
+		/// <summary>
+		/// Coerses the given value of the given type to a ulong, erroring if it is otherwise not possible.
+		/// </summary>
+		/// <param name="gen"></param>
+		/// <param name="type"></param>
+		public static void CoerseToUlong(ILGenerator gen, Type type)
+		{
+			if (type == typeof(ulong))
+			{
+				// Already ulong, no conversion needed
+				return;
+			}
+
+			if (type.IsEnum)
+			{
+				// Use the underlying numeric type of the enum
+				type = Enum.GetUnderlyingType(type);
+			}
+
+			if (!type.IsValueType)
+			{
+				if (type == typeof(string))
+				{
+					var tryParseMethod = typeof(ulong).GetMethod(
+						nameof(ulong.TryParse),
+						new[] { typeof(string), typeof(ulong).MakeByRefType() });
+
+					// Declare a local to hold the parsed ulong result
+					var resultLocal = gen.DeclareLocal(typeof(ulong));
+
+					// (the string is already on the stack)
+					gen.Emit(OpCodes.Ldloca, resultLocal);
+					gen.Emit(OpCodes.Call, tryParseMethod);
+					gen.Emit(OpCodes.Pop); // pop the bool
+
+					// Push the parsed ulong value onto the stack
+					gen.Emit(OpCodes.Ldloc, resultLocal);
+					return;
+				}
+
+				// Reference type: treat as zero
+				gen.Emit(OpCodes.Ldc_I4_0);   // Push 0
+				gen.Emit(OpCodes.Conv_U8);    // Convert to ulong
+				return;
+			}
+
+			switch (Type.GetTypeCode(type))
+			{
+				case TypeCode.Byte:
+				case TypeCode.SByte:
+				case TypeCode.Int16:
+				case TypeCode.UInt16:
+				case TypeCode.Int32:
+				case TypeCode.UInt32:
+				case TypeCode.Int64:
+				case TypeCode.UInt64:
+				case TypeCode.Single:  // float
+				case TypeCode.Double:  // double
+					gen.Emit(OpCodes.Conv_U8);
+					break;
+
+				default:
+					throw new InvalidOperationException($"Cannot coerce type {type} to ulong.");
+			}
+		}
+
 		/// <summary>
 		/// Generates a system native write for the given structure.
 		/// </summary>
@@ -94,6 +328,8 @@ namespace Api.Startup
 			var writeJsonString = typeof(Writer).GetMethod("Write", new Type[] { typeof(JsonString) });
 			var writeEscapedJsonString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(JsonString) });
 			var writeEscapedString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(string) });
+			var writeMapDataString = typeof(Writer).GetMethod("Write", new Type[] { typeof(MappingData) });
+			var writeEscapedMapDataString = typeof(Writer).GetMethod("WriteEscaped", new Type[] { typeof(MappingData) });
 
 			AddTo(map, typeof(uint), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
 			{
@@ -183,6 +419,20 @@ namespace Api.Startup
 				else
 				{
 					code.Emit(OpCodes.Callvirt, writeEscapedJsonString);
+				}
+			});
+
+			AddTo(map, typeof(MappingData), (ILGenerator code, Action emitValue, bool isDocumentFormat) =>
+			{
+				code.Emit(OpCodes.Ldarg_2); // Writer
+				emitValue();
+				if (isDocumentFormat)
+				{
+					code.Emit(OpCodes.Callvirt, writeMapDataString);
+				}
+				else
+				{
+					code.Emit(OpCodes.Callvirt, writeEscapedMapDataString);
 				}
 			});
 
@@ -414,249 +664,6 @@ namespace Api.Startup
 			jft.EmitWrite(body, field, nullableType, objLoader, isDocumentFormat);
 		}
 
-		/// <summary>
-		/// Generates ID collectors for the given fields.
-		/// </summary>
-		/// <param name="idFields"></param>
-		/// <returns></returns>
-		public static void GenerateIDCollectors(ContentField[] idFields)
-		{
-			var atLeastOne = false;
-
-			for (var i = 0; i < idFields.Length; i++)
-			{
-				if (idFields[i].IDCollectorType == null)
-				{
-					atLeastOne = true;
-					break;
-				}
-			}
-
-			if (!atLeastOne)
-			{
-				return;
-			}
-
-			AssemblyName assemblyName = new AssemblyName("GeneratedTypesID_" + counter);
-			counter++;
-			AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
-			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
-
-			for (var i = 0; i < idFields.Length; i++)
-			{
-				var idField = idFields[i];
-
-				if (idField.IDCollectorType != null)
-				{
-					continue;
-				}
-
-				Type baseType;
-				MethodInfo addMethod;
-				TypeBuilder typeBuilder;
-				MethodBuilder collect;
-				ILGenerator body;
-
-				if (idField.VirtualInfo != null && idField.VirtualInfo.DynamicTypeField != null)
-				{
-					// Virtual field which requires collecting both type and ID.
-					// In this scenario, DynType is a string and ID source is a ulong always.
-					baseType = typeof(MultiIdCollector);
-					addMethod = baseType.GetMethod("Add");
-
-
-					// Build the type:
-					typeBuilder = moduleBuilder.DefineType("FieldWriter_" + idField.Name + "_" + counter, TypeAttributes.Public, baseType);
-					counter++;
-
-					collect = typeBuilder
-						.DefineMethod("Collect",
-							MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual,
-							typeof(void),
-							new Type[] {
-								typeof(object),
-								typeof(Context)
-							}
-						);
-
-					// "This" is the ID collector, with it's Add method.
-					// arg1 is the object to collect from.
-					body = collect.GetILGenerator();
-
-					body.Emit(OpCodes.Ldarg_0);
-
-					// Put the type field (or property) value on the stack:
-					var typeSrc = idField.VirtualInfo.DynamicTypeField;
-
-					if (typeSrc.FieldInfo != null)
-					{
-						body.Emit(OpCodes.Ldarg_1);
-						body.Emit(OpCodes.Ldfld, typeSrc.FieldInfo);
-					}
-					else
-					{
-						// Property
-						body.Emit(OpCodes.Ldarg_1);
-						body.Emit(OpCodes.Callvirt, typeSrc.PropertyInfo.GetGetMethod());
-					}
-
-					// Next, put the ID field (or property) on the stack:
-					var idSrc = idField.VirtualInfo.IdSource;
-
-					if (idSrc.FieldInfo != null)
-					{
-						body.Emit(OpCodes.Ldarg_1);
-						var idFldType = idSrc.FieldInfo.FieldType;
-
-						// If it's a localized ID, resolve to the actual value.
-						if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
-						{
-							body.Emit(OpCodes.Ldflda, idSrc.FieldInfo);
-							body.Emit(OpCodes.Ldarg_2); // context
-							body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
-							var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[]{ typeof(Context), typeof(bool) });
-							body.Emit(OpCodes.Callvirt, localizedGetMethod);
-						}
-						else
-						{
-							body.Emit(OpCodes.Ldfld, idSrc.FieldInfo);
-						}
-					}
-					else
-					{
-						// Property
-						body.Emit(OpCodes.Ldarg_1);
-						body.Emit(OpCodes.Callvirt, idSrc.PropertyInfo.GetGetMethod());
-						var idFldType = idSrc.PropertyInfo.PropertyType;
-
-						if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
-						{
-							// Need an address - store as a local:
-							var localizedLocal = body.DeclareLocal(idFldType);
-							body.Emit(OpCodes.Stloc, localizedLocal);
-							body.Emit(OpCodes.Ldloca, localizedLocal);
-							body.Emit(OpCodes.Ldarg_2); // context
-							body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
-							var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
-							body.Emit(OpCodes.Callvirt, localizedGetMethod);
-						}
-					}
-
-					// Add to the collector:
-					body.Emit(OpCodes.Callvirt, addMethod);
-					body.Emit(OpCodes.Ret);
-
-					// Lock the type:
-					idField.SetIDCollectorType(typeBuilder.CreateType());
-					continue;
-				}
-
-				var idFieldType = idField.FieldType;
-
-				// If it's localized, unwrap it. Must always happen before nullable check.
-				if (idFieldType.IsGenericType && idFieldType.GetGenericTypeDefinition() == typeof(Localized<>))
-				{
-					idFieldType = idFieldType.GetGenericArguments()[0];
-				}
-
-				// If the field type is nullable, use the base type here.
-				var nullableBaseType = Nullable.GetUnderlyingType(idFieldType);
-
-				baseType = typeof(IDCollector<>).MakeGenericType(new Type[] {
-					nullableBaseType == null ? idFieldType : nullableBaseType
-				});
-
-				// Get the Add method:
-				addMethod = baseType.GetMethod("Add");
-
-				// Build the type:
-				typeBuilder = moduleBuilder.DefineType("FieldWriter_" + idField.Name + "_" + counter, TypeAttributes.Public, baseType);
-				counter++;
-
-				collect = typeBuilder.DefineMethod(
-					"Collect", 
-					MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, 
-					typeof(void), new Type[] {
-						typeof(object),
-						typeof(Context)
-					}
-				);
-
-				// "This" is the ID collector, with it's Add method.
-				// arg1 is the object to collect from.
-				body = collect.GetILGenerator();
-
-				body.Emit(OpCodes.Ldarg_0);
-
-				// Put the field (or property) value on the stack:
-				if (idField.FieldInfo != null)
-				{
-					body.Emit(OpCodes.Ldarg_1);
-
-					var idFldType = idField.FieldType;
-					if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
-					{
-						body.Emit(OpCodes.Ldflda, idField.FieldInfo);
-						body.Emit(OpCodes.Ldarg_2); // context
-						body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
-						var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
-						body.Emit(OpCodes.Callvirt, localizedGetMethod);
-					}
-					else
-					{
-						body.Emit(OpCodes.Ldfld, idField.FieldInfo);
-					}
-				}
-				else
-				{
-					// Property
-					body.Emit(OpCodes.Ldarg_1);
-					body.Emit(OpCodes.Callvirt, idField.PropertyInfo.GetGetMethod());
-
-					var idFldType = idField.PropertyInfo.PropertyType;
-					if (idFldType.IsGenericType && idFldType.GetGenericTypeDefinition() == typeof(Localized<>))
-					{
-						// Need an address - store as a local:
-						var localizedLocal = body.DeclareLocal(idFldType);
-						body.Emit(OpCodes.Stloc, localizedLocal);
-						body.Emit(OpCodes.Ldloca, localizedLocal);
-						body.Emit(OpCodes.Ldarg_2); // context
-						body.Emit(OpCodes.Ldc_I4_1); // fallback (true)
-						var localizedGetMethod = idFldType.GetMethod("Get", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(Context), typeof(bool) });
-						body.Emit(OpCodes.Callvirt, localizedGetMethod);
-					}
-				}
-
-				if (nullableBaseType != null)
-				{
-					// If nullable, and it's null, do nothing. To check though, we need an address. We'll need to store it in a local for that:
-					var loc = body.DeclareLocal(idFieldType);
-					var after = body.DefineLabel();
-					body.Emit(OpCodes.Stloc, loc);
-					body.Emit(OpCodes.Ldloca, 0);
-					body.Emit(OpCodes.Dup);
-					body.Emit(OpCodes.Callvirt, idFieldType.GetProperty("HasValue").GetGetMethod());
-					// The t/f is now on the stack. Check if it's null, and if so, ret.
-					body.Emit(OpCodes.Ldc_I4_0);
-					body.Emit(OpCodes.Ceq);
-					body.Emit(OpCodes.Brfalse, after);
-					body.Emit(OpCodes.Pop); // Remove the Ldarg_0 and the val (which we duped above to read HasValue) from the stack.
-					body.Emit(OpCodes.Pop);
-					body.Emit(OpCodes.Ret);
-					body.MarkLabel(after);
-					body.Emit(OpCodes.Callvirt, idFieldType.GetProperty("Value").GetGetMethod());
-				}
-
-				// Add:
-				body.Emit(OpCodes.Callvirt, addMethod);
-				body.Emit(OpCodes.Ret);
-
-				// Lock the type:
-				idField.SetIDCollectorType(typeBuilder.CreateType());
-			}
-
-		}
-
 		private static JsonFieldType AddTo(ConcurrentDictionary<Type, JsonFieldType> map, Type type, Action<ILGenerator, Action, bool> onWriteValue)
 		{
 			var fieldType = new JsonFieldType(type, onWriteValue);
@@ -733,7 +740,7 @@ namespace Api.Startup
 				var typeMap = GetTypeMap();
 
 				// The ID:
-				var idField = set.GetField("id", JsonFieldGroup.Any);
+				var idField = set.GetField("id");
 
 				if (typeMap.TryGetValue(idField.FieldInfo.FieldType, out JsonFieldType idJft))
 				{

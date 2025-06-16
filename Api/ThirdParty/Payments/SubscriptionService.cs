@@ -9,6 +9,7 @@ using System;
 using Api.Emails;
 using Api.Users;
 using Api.CanvasRenderer;
+using System.Linq;
 
 namespace Api.Payments
 {
@@ -221,8 +222,7 @@ namespace Api.Payments
                         if (purchase.MultiExecute)
                         {
                             // Get the list of subscriptions on the purchase and mark each as active. A multi-execute only occurs on initial purchase.
-                            var mappedSubscriptions = await ListBySource(context, _purchases, purchase.Id,
-                                "subscriptions", DataOptions.IgnorePermissions);
+                            var mappedSubscriptions = await ListBySource(context, purchase, "subscriptions", DataOptions.IgnorePermissions);
 
                             foreach (var subscription in mappedSubscriptions)
                             {
@@ -246,8 +246,7 @@ namespace Api.Payments
                         if (purchase.MultiExecute)
                         {
                             // Get the list of subscriptions on the purchase and mark each as active. A multi-execute only occurs on initial purchase.
-                            var mappedSubscriptions = await ListBySource(context, _purchases, purchase.Id,
-                                "subscriptions", DataOptions.IgnorePermissions);
+                            var mappedSubscriptions = await ListBySource(context, purchase, "subscriptions", DataOptions.IgnorePermissions);
 
                             foreach (var subscription in mappedSubscriptions)
                             {
@@ -708,34 +707,55 @@ namespace Api.Payments
         public async ValueTask<ProductQuantity> AddToSubscription(Context context, Subscription subscription,
             Product product, uint quantity = 1)
         {
-            // Check if this product is already in this cart:
-            var pQuantity = await _productQuantities
-                .Where("ProductId=? and SubscriptionId=?", DataOptions.IgnorePermissions)
-                .Bind(product.Id)
-                .Bind(subscription.Id)
-                .First(context);
+            // Check if this product is already in this sub:
+            ProductQuantity toRemove = null;
+			var inSub = await _productQuantities.ListBySource(context, subscription, "ProductQuantities");
+            var pQuantity = inSub.FirstOrDefault(entry => entry.ProductId == product.Id);
 
-            if (pQuantity == null)
+			if (pQuantity == null)
             {
                 // Create a new one:
                 pQuantity = await _productQuantities.Create(context, new ProductQuantity()
                 {
                     ProductId = product.Id,
-                    SubscriptionId = subscription.Id,
                     Quantity = quantity
                 }, DataOptions.IgnorePermissions);
             }
             else
             {
                 // Add to the existing one:
-                await _productQuantities.Update(context, pQuantity,
-                    (Context ctx, ProductQuantity toUpdate, ProductQuantity orig) =>
-                    {
-                        toUpdate.Quantity += quantity;
-                    });
+                var newQty = pQuantity.Quantity + quantity;
+
+                if (newQty <= 0)
+                {
+                    toRemove = pQuantity;
+					await _productQuantities.Delete(context, pQuantity);
+				}
+                else
+                {
+                    await _productQuantities.Update(context, pQuantity,
+                        (Context ctx, ProductQuantity toUpdate, ProductQuantity orig) =>
+                        {
+                            toUpdate.Quantity = newQty;
+                        });
+                }
             }
 
-            return pQuantity;
+			await Update(context, subscription, (Context ctx, Subscription toUpdate, Subscription orig) => {
+
+				// Ensure the qty entry itself is updated:
+				if (toRemove != null)
+				{
+					toUpdate.Mappings.Remove("ProductQuantities", toRemove);
+				}
+				else
+				{
+					toUpdate.Mappings.Add("ProductQuantities", pQuantity);
+				}
+
+			}, DataOptions.IgnorePermissions);
+
+			return pQuantity;
         }
     }
 }

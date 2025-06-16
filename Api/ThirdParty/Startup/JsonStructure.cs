@@ -18,25 +18,6 @@ namespace Api.Startup
 {
 
 	/// <summary>
-	/// Used when searching for a field.
-	/// </summary>
-	public enum JsonFieldGroup : int
-	{
-		/// <summary>
-		/// The default group is set regardless of if the entity ID is known yet.
-		/// </summary>
-		Default = 1,
-		/// <summary>
-		/// Fields in this group are only set after an entity ID is known.
-		/// </summary>
-		AfterId = 2,
-		/// <summary>
-		/// Either the default or after ID group.
-		/// </summary>
-		Any = 3
-	}
-
-	/// <summary>
 	/// Describes the available fields on a particular type.
 	/// This exists so we can, for example, role restrict setting particular fields.
 	/// </summary>
@@ -108,14 +89,6 @@ namespace Api.Startup
 		/// All meta fields in this structure. Common ones are e.g. "title" and "description".
 		/// </summary>
 		public Dictionary<string, JsonField<T, ID>> MetaFields;
-		/// <summary>
-		/// The after ID fields in this structure.
-		/// </summary>
-		public Dictionary<string, JsonField<T, ID>> AfterIdFields;
-		/// <summary>
-		/// The before ID fields in this structure.
-		/// </summary>
-		public Dictionary<string, JsonField<T, ID>> BeforeIdFields;
 
 		
 		/// <summary>
@@ -127,8 +100,6 @@ namespace Api.Startup
 			ForRole = forRole;
 			Fields = new Dictionary<string, JsonField<T, ID>>();
 			MetaFields = new Dictionary<string, JsonField<T, ID>>();
-			AfterIdFields = new Dictionary<string, JsonField<T, ID>>();
-			BeforeIdFields = new Dictionary<string, JsonField<T, ID>>();
 		}
 
 		/// <summary>
@@ -506,18 +477,6 @@ namespace Api.Startup
 			
 			var lowerName = field.Name.ToLower();
 
-			if (field.Writeable)
-			{
-				if (field.AfterId)
-				{
-					AfterIdFields[lowerName] = field;
-				}
-				else
-				{
-					BeforeIdFields[lowerName] = field;
-				}
-			}
-
 			Fields[lowerName] = field;
 		}
 
@@ -525,25 +484,10 @@ namespace Api.Startup
 		/// Attempts to get a given case insensitive field.
 		/// </summary>
 		/// <param name="name"></param>
-		/// <param name="fieldGroup"></param>
-		public JsonField<T, ID> GetField(string name, JsonFieldGroup fieldGroup)
+		public JsonField<T, ID> GetField(string name)
 		{
 			JsonField<T, ID> result;
-
-			switch (fieldGroup)
-			{
-				default:
-				case JsonFieldGroup.Default:
-					BeforeIdFields.TryGetValue(name.ToLower(), out result);
-				break;
-				case JsonFieldGroup.AfterId:
-					AfterIdFields.TryGetValue(name.ToLower(), out result);
-				break;
-				case JsonFieldGroup.Any:
-					Fields.TryGetValue(name.ToLower(), out result);
-				break;
-			}
-			
+			Fields.TryGetValue(name.ToLower(), out result);
 			return result;
 		}
 
@@ -1235,7 +1179,14 @@ namespace Api.Startup
 					// Create mappings from onObject -> entry.Id
 					// * We have write access to the "source" object because we're in SetIfChanged.
 					// * We have read access to the "target" because we just got it successfully.
-					await Structure.Service.EnsureMapping(context, onObject, targetService, idSet, ContentField.VirtualInfo.FieldName);
+
+					var idList = new List<ulong>();
+					foreach (var id in idSet)
+					{
+						idList.Add(id);
+					}
+
+					onObject.Mappings.Set(ContentField.VirtualInfo.FieldName, idList);
 				}
 			}
 		}

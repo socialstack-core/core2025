@@ -15,6 +15,8 @@ using System.Linq;
 using MongoDB.Bson.Serialization;
 using System.Reflection;
 using MongoDB.Bson.Serialization.Conventions;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.Metrics;
 
 namespace Api.DatabaseMongoDB
 {
@@ -42,13 +44,57 @@ namespace Api.DatabaseMongoDB
 		/// </summary>
 		public Init()
 		{
-			if (MongoDBService.GetConfiguredConnectionString() == null)
+			var cfg = MongoDBService.GetConfiguredConnectionString();
+
+			if (cfg == null)
 			{
-				Log.Info("mongodb", "MongoDB is installed but has not started because it has no configured connection strings. (typically MongoConnectionStrings.DefaultConnection in appsettings.json).");
+				Log.Info("mongodb", "MongoDB is installed but has not started because it has no configured connection strings. " +
+					"(typically MongoConnectionStrings.DefaultConnection in appsettings.json).");
 				return;
 			}
 
 			var setupHandlersMethod = GetType().GetMethod(nameof(SetupService));
+
+			// Mount the migration event:
+			Events.DatabaseMigration.LoadService.AddEventListener(async (Context context, AutoService service, string engine, EventGroup events) =>
+			{
+				if (service == null || service.ServicedType == null || engine != "mongodb")
+				{
+					return service;
+				}
+
+				if (_database == null)
+				{
+					_database = Services.Get<MongoDBService>();
+				}
+
+				var servicedType = service.ServicedType;
+
+				if (servicedType != null)
+				{
+					// Add data load events:
+					var setupType = setupHandlersMethod.MakeGenericMethod(new Type[] {
+						servicedType,
+						service.IdType,
+						service.InstanceType
+					});
+
+					var task = (Task)setupType.Invoke(this, new object[] {
+						service,
+						events // use the given event group, not the one on the service.
+					});
+
+					await task;
+				}
+
+				return service;
+			});
+
+			if (!cfg.IsPrimaryDatabase)
+			{
+				Log.Info("mongodb", "MongoDB is installed and configured but not mounting as it is not the primary DBE.");
+				return;
+			}
 
 			// Add handler for the initial locale list:
 			Events.Locale.InitialList.AddEventListener(async (Context context, List<Locale> locales) => {
@@ -109,7 +155,8 @@ namespace Api.DatabaseMongoDB
 					});
 
 					var task = (Task)setupType.Invoke(this, new object[] {
-						service
+						service,
+						service.GetEventGroup()
 					});
 
 					await task;
@@ -121,12 +168,14 @@ namespace Api.DatabaseMongoDB
 
 		/// <summary>
 		/// Sets up for the given type with its event group along with updating any DB tables.
+		/// The event group is passed separately such that the database migration mechanism can use this same method too.
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <typeparam name="ID"></typeparam>
 		/// <typeparam name="INSTANCE_TYPE"></typeparam>
 		/// <param name="service"></param>
-		public async Task SetupService<T, ID, INSTANCE_TYPE>(AutoService<T, ID> service)
+		/// <param name="eventGroup"></param>
+		public async Task SetupService<T, ID, INSTANCE_TYPE>(AutoService<T, ID> service, EventGroup<T,ID> eventGroup)
 			where T : Content<ID>, new()
 			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 			where INSTANCE_TYPE : T
@@ -207,7 +256,7 @@ namespace Api.DatabaseMongoDB
 
 			var filters = Builders<INSTANCE_TYPE>.Filter;
 
-			service.EventGroup.AfterInstanceTypeUpdate.AddEventListener(async (Context context, AutoService s) => {
+			eventGroup.AfterInstanceTypeUpdate.AddEventListener(async (Context context, AutoService s) => {
 
 				if (s == null)
 				{
@@ -230,8 +279,8 @@ namespace Api.DatabaseMongoDB
 
 				return s;
 			});
-			
-			service.EventGroup.Delete.AddEventListener(async (Context context, T result) =>
+
+			eventGroup.Delete.AddEventListener(async (Context context, T result) =>
 			{
 				// Delete the entry:
 				var filter = filters.Eq("Id", result.Id);
@@ -246,7 +295,7 @@ namespace Api.DatabaseMongoDB
 				return result;
 			});
 
-			service.EventGroup.Create.AddEventListener(async (Context context, T entity) =>
+			eventGroup.Create.AddEventListener(async (Context context, T entity) =>
 			{
 				if (entity.Id.Equals(default))
 				{
@@ -258,14 +307,21 @@ namespace Api.DatabaseMongoDB
 					// Map this ID via the svc:
 					entity.Id = service.ConvertId((ulong)newId);
 				}
-				
+				else
+				{
+					// Make sure the counter is set to >= entity.Id
+					var numericId = service.ReverseId(entity.Id);
+					var update = counterUpdateBuilder.Max(c => c.AutoInc, (long)numericId);
+					await counters.UpdateOneAsync(counterFilter, update);
+				}
+
 				// Create it:
 				await collection.InsertOneAsync((INSTANCE_TYPE)entity);
 				
 				return entity;
 			});
-			
-			service.EventGroup.CreateAll.AddEventListener(async (Context context, List<T> entities) =>
+
+			eventGroup.CreateAll.AddEventListener(async (Context context, List<T> entities) =>
 			{
 				// Ensure each one has an ID.
 				var idsToCollect = 0;
@@ -300,7 +356,7 @@ namespace Api.DatabaseMongoDB
 				return entities;
 			});
 
-			service.EventGroup.Update.AddEventListener(async (Context context, T entity, ChangedFields changes, DataOptions opts) => {
+			eventGroup.Update.AddEventListener(async (Context context, T entity, ChangedFields changes, DataOptions opts) => {
 
 				if (entity == null || changes.None)
 				{
@@ -367,7 +423,7 @@ namespace Api.DatabaseMongoDB
 				return null;
 			});
 
-			service.EventGroup.Load.AddEventListener(async (Context context, T item, ID id) => {
+			eventGroup.Load.AddEventListener(async (Context context, T item, ID id) => {
 
 				if (item != null)
 				{
@@ -379,7 +435,7 @@ namespace Api.DatabaseMongoDB
 				return findResult;
 			});
 
-			service.EventGroup.List.AddEventListener(async (Context context, QueryPair<T, ID> queryPair) => {
+			eventGroup.List.AddEventListener(async (Context context, QueryPair<T, ID> queryPair) => {
 
 				if (queryPair.Handled)
 				{
@@ -440,7 +496,10 @@ namespace Api.DatabaseMongoDB
 						BindingFlags.NonPublic | 
 						BindingFlags.Instance | 
 						BindingFlags.DeclaredOnly
-					);
+					)
+					// Omit property backing fields etc.
+					.Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false))
+					.ToArray();
 
 					foreach (var field in fields)
 					{
@@ -517,6 +576,7 @@ namespace Api.DatabaseMongoDB
 			}
 
 			BsonSerializer.RegisterSerializer(new JsonStringSerializer());
+			BsonSerializer.RegisterSerializer(new MappingDataSerializer());
 
 			BsonSerializer.RegisterGenericSerializerDefinition(
 				typeof(Localized<>),

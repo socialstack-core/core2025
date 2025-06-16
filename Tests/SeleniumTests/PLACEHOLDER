@@ -1,0 +1,42 @@
+{
+  "id": "2cb0e0db-69ff-418c-a511-293563e625f7",
+  "version": "2.0",
+  "name": "socialstack",
+  "url": "https://stage.socialstack.dev/",
+  "tests": [{
+    "id": "ec937a8c-16d6-42bf-ac80-45754e78d792",
+    "name": "Open stage site",
+    "commands": [{
+      "id": "55e0e939-580f-42be-9b06-2f20ed81a927",
+      "comment": "",
+      "command": "open",
+      "target": "https://stage.socialstack.dev/",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "c8a4510d-5fa4-4571-b6cb-533e32ef5432",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x988",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "ea6d3b8c-8022-4136-98e9-2f27b6401786",
+      "comment": "",
+      "command": "assertTitle",
+      "target": "SocialstackCore",
+      "targets": [],
+      "value": ""
+    }]
+  }],
+  "suites": [{
+    "id": "ede85217-5ffb-4ddf-944a-f7866261d60a",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["ec937a8c-16d6-42bf-ac80-45754e78d792"]
+  }],
+  "urls": ["https://stage.socialstack.dev/"],
+  "plugins": []
+}

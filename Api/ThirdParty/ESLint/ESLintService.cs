@@ -19,6 +19,13 @@ namespace Api.ESLint
         public ESLintService()
         {
 #if DEBUG
+			var cfg = GetConfig<ESLintConfig>();
+			
+			if(cfg.Disabled){
+				Log.Info(LogTag, "ESLint module disabled by configuration.");
+				return;
+			}
+			
             Events.Compiler.BeforeCompile.AddEventListener((context, container) =>
             {
                 _ = RunESLint();
@@ -33,9 +40,9 @@ namespace Api.ESLint
 #endif
         }
 
-        private static async Task RunESLint()
+        private async Task RunESLint()
         {
-            Log.Info("ESLINT", "Checking JS/TS for validity");
+            Log.Info(LogTag, "Checking JS/TS for validity");
             string fileName;
             string arguments;
 
@@ -94,11 +101,11 @@ namespace Api.ESLint
                 // If the process is successful, parse and log the output
                 if (process.ExitCode == 0)
                 {
-                    Log.Info("ESLINT", "[ESLint] All checks passed");
+                    Log.Info(LogTag, "[ESLint] All checks passed");
                 }
                 else if (process.ExitCode == 2)
                 {
-                    Log.Error("ESLINT", stderr);
+                    Log.Error(LogTag, stderr);
                 }
 
                 // Parse and log the formatted output
@@ -106,14 +113,14 @@ namespace Api.ESLint
             }
             catch (Exception ex)
             {
-                Log.Error("ESLINT", $"[ESLint] failed to run: {ex.Message}");
+                Log.Error(LogTag, $"[ESLint] failed to run: {ex.Message}");
             }
         }
 
         /// <summary>
         /// Parses and prints ESLint JSON output, associating errors with the correct file.
         /// </summary>
-        private static void PrintFormattedOutput(string rawOutput)
+        private void PrintFormattedOutput(string rawOutput)
         {
             try
             {
@@ -122,7 +129,7 @@ namespace Api.ESLint
 
                 if (eslintResults == null || eslintResults.Count == 0)
                 {
-                    Log.Info("ESLINT", "No issues found.");
+                    Log.Info(LogTag, "No issues found.");
                     return;
                 }
 
@@ -156,11 +163,11 @@ namespace Api.ESLint
 
                             if (severity == "ERROR")
                             {
-                                Log.Error("ESLINT", formatted);
+                                Log.Error(LogTag, formatted);
                             }
                             else
                             {
-                                Log.Warn("ESLINT", formatted);
+                                Log.Warn(LogTag, formatted);
                             }
                         }
                     }
@@ -168,7 +175,7 @@ namespace Api.ESLint
             }
             catch (JsonException ex)
             {
-                Log.Error("ESLINT", $"Error parsing ESLint output: {ex.Message}");
+                Log.Error(LogTag, $"Error parsing ESLint output: {ex.Message}");
             }
         }
     }

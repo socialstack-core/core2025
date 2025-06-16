@@ -6,6 +6,7 @@ using Api.Contexts;
 using Api.Eventing;
 using Api.Startup;
 using System;
+using System.Linq;
 
 namespace Api.Payments
 {
@@ -157,11 +158,10 @@ namespace Api.Payments
 			}
 
 			// Check if this product is already in this cart:
-			var pQuantity = await _productQuantities
-				.Where("ProductId=? and ShoppingCartId=?", DataOptions.IgnorePermissions)
-				.Bind(product.Id)
-				.Bind(cart.Id)
-			.First(context);
+			var inCart = await _productQuantities.ListBySource(context, cart, "ProductQuantities");
+			var pQuantity = inCart.FirstOrDefault(item => item.ProductId == product.Id);
+
+			ProductQuantity toRemove = null;
 
 			if (pQuantity == null)
 			{
@@ -187,7 +187,6 @@ namespace Api.Payments
 				pQuantity = await _productQuantities.Create(context, new ProductQuantity()
 				{
 					ProductId = product.Id,
-					ShoppingCartId = cart.Id,
 					Quantity = (uint)currentQuantity
 				}, DataOptions.IgnorePermissions);
 			}
@@ -198,6 +197,7 @@ namespace Api.Payments
 
 				if (newQty <= 0)
 				{
+					toRemove = pQuantity;
 					await _productQuantities.Delete(context, pQuantity, DataOptions.IgnorePermissions);
 				}
 				else
@@ -218,11 +218,22 @@ namespace Api.Payments
 				}
 			}
 
-			// Update the carts editedUtc such that other checkout features are aware that the cart has changed.
 			await Update(context, cart, (Context ctx, ShoppingCart toUpdate, ShoppingCart orig) => {
 
+				// Update the carts editedUtc such that other checkout
+				// features are aware that the cart has changed.
 				toUpdate.EditedUtc = DateTime.UtcNow;
 				toUpdate.DeliveryOptionId = 0;
+
+				// Ensure the qty entry itself is updated:
+				if (toRemove != null)
+				{
+					toUpdate.Mappings.Remove("ProductQuantities", toRemove);
+				}
+				else
+				{
+					toUpdate.Mappings.Add("ProductQuantities", pQuantity);
+				}
 
 			}, DataOptions.IgnorePermissions);
 

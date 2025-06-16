@@ -332,7 +332,7 @@ namespace Api.Permissions
 		/// </param>
 		/// <param name="isIncluded">True if we're currently evaluating from within an included context.</param>
 		/// <returns></returns>
-		public async ValueTask<bool> IsGranted(Capability capability, Context context, object extraArg, bool isIncluded)
+		public bool IsGranted(Capability capability, Context context, object extraArg, bool isIncluded)
 		{
 			CheckForNewCapabilities();
 			var handler = CapabilityLookup[capability.InternalId];
@@ -340,12 +340,6 @@ namespace Api.Permissions
 			if (handler == null)
             {
 				return false;
-			}
-
-			// Ensure perm filter is prepped:
-			if (handler.RequiresSetup)
-			{
-				await handler.Setup();
 			}
 
 			// Ask the handler:

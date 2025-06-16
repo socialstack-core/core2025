@@ -15,9 +15,6 @@ namespace Api.Payments
 	[ImplicitFor("ProductQuantities", typeof(ShoppingCart))]
 	[ImplicitFor("ProductQuantities", typeof(Subscription))]
 	[ImplicitFor("ProductQuantities", typeof(Purchase))]
-	[HasVirtualField("Subscription", typeof(Subscription), "SubscriptionId")]
-	[HasVirtualField("Purchase", typeof(Purchase), "PurchaseId")]
-	[HasVirtualField("ShoppingCart", typeof(ShoppingCart), "ShoppingCartId")]
 	[HasVirtualField("Product", typeof(Product), "ProductId")]
 	public partial class ProductQuantity : VersionedContent<uint>
 	{
@@ -30,22 +27,6 @@ namespace Api.Payments
 		/// The quantity.
 		/// </summary>
 		public ulong Quantity;
-
-		/// <summary>
-		/// Shopping cart ID, if in a cart.
-		/// </summary>
-		public uint ShoppingCartId;
-
-		/// <summary>
-		/// Subscription ID, if in a subscription.
-		/// </summary>
-		public uint SubscriptionId;
-
-		/// <summary>
-		/// Purchase ID, if has been purchased.
-		/// A purchase will always clone the rows from a subscription or cart to "lock in" the things bought.
-		/// </summary>
-		public uint PurchaseId;
 	}
 
 }

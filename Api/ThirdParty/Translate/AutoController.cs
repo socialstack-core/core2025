@@ -87,7 +87,7 @@ public partial class AutoController<T, ID>
                 }
 
                 // Get the field metadata:
-                var fieldMeta = availableFields.GetField(po.FieldName, JsonFieldGroup.Any);
+                var fieldMeta = availableFields.GetField(po.FieldName);
                 if (fieldMeta == null)
                 {
                     // Content field called 'contentField' does not exist on this content type.

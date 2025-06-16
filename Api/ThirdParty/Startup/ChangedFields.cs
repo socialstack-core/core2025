@@ -1,5 +1,7 @@
 
+using Api.Contexts;
 using Api.Database;
+using Api.SocketServerLibrary;
 using Api.Translate;
 using System;
 using System.Collections;
@@ -352,7 +354,7 @@ namespace Api.Startup {
 		/// </summary>
 		/// <param name="includeString"></param>
 		/// <returns></returns>
-		public async ValueTask<IncludeSet> GetIncludeSet(string includeString)
+		public IncludeSet GetIncludeSet(string includeString)
 		{
 			if (string.IsNullOrEmpty(includeString))
 			{
@@ -364,7 +366,7 @@ namespace Api.Startup {
 			if (!includeSets.TryGetValue(lowerIncludes, out IncludeSet result))
 			{
 				result = new IncludeSet(lowerIncludes, this);
-				await result.Parse();
+				result.Parse();
 				includeSets[lowerIncludes] = result;
 			}
 
@@ -969,15 +971,6 @@ namespace Api.Startup {
 		}
 
 		/// <summary>
-		/// The type an ID collector uses. This is generated.
-		/// </summary>
-		public Type IDCollectorType
-		{
-			get {
-				return _idCollectorType;
-			}
-		}
-		/// <summary>
 		/// Converts a set of attribute data from the given type (including any it inherits) into an attribute list.
 		/// </summary>
 		/// <param name="type"></param>
@@ -1098,71 +1091,112 @@ namespace Api.Startup {
 		}
 
 		/// <summary>
-		/// IDCollector concrete type for this field, if it represents some kind of ID. 
-		/// This collector type is generated and reads the value of this field from a given object.
+		/// A generated action which collects one or more IDs from this field in to the given collector, writing it/them to the given writer as a string.
+		/// The ID type is either a uint or ulong.
 		/// </summary>
-		private Type _idCollectorType;
+		private Action<IDCollector, Writer, Content, Context> _collect;
 
 		/// <summary>
-		/// First ID collector in the pool for this field.
-		/// </summary>
-		private IDCollector FirstInPool;
-
-		/// <summary>
-		/// ID collector pool lock.
-		/// </summary>
-		private object IDCollectorPoolLock = new object();
-
-		/// <summary>
-		/// Gets an ID collector from a pool.
+		/// Rents an ID collector from the global pool.
 		/// </summary>
 		/// <returns></returns>
-		public IDCollector RentCollector()
+		public LongIDCollector RentCollector()
 		{
-			IDCollector instance = null;
+			var gen = LongIDCollector.RentGenericCollector();
 
-			lock (IDCollectorPoolLock)
+			if (_collect == null)
 			{
-				if (FirstInPool != null)
+				if (VirtualInfo != null)
 				{
-					// Pop from the pool:
-					instance = FirstInPool;
-					FirstInPool = instance.NextCollector;
+					if (VirtualInfo.IsList)
+					{
+						DynamicMethod compareMethod = new DynamicMethod(
+						"IdListFieldCollector",
+						typeof(void),
+						[
+							typeof(IDCollector), typeof(Writer), typeof(Content), typeof(Context)
+						],
+						true
+					);
+						ILGenerator generator = compareMethod.GetILGenerator();
+
+						// Read the field:
+						generator.Emit(OpCodes.Ldarg_2); // the obj 
+						generator.Emit(OpCodes.Ldflda, typeof(Content).GetField(nameof(Content.Mappings))); // the .mappings field address
+
+						// The IDCollector arg:
+						generator.Emit(OpCodes.Ldarg_0);
+
+						// The field name:
+						generator.Emit(OpCodes.Ldstr, VirtualInfo.FieldName.ToLower());
+
+						// Writer:
+						generator.Emit(OpCodes.Ldarg_1);
+
+						// The actual collect part:
+						generator.Emit(OpCodes.Callvirt, typeof(MappingData).GetMethod(nameof(MappingData.WriteAndCollect)));
+
+						generator.Emit(OpCodes.Ret);
+						_collect = (Action<IDCollector, Writer, Content, Context>)compareMethod.CreateDelegate(
+							typeof(Action<IDCollector, Writer, Content, Context>)
+						);
+					}
+					else
+					{
+						throw new Exception("This field is not collectible - you need to collect the underlying ID field instead.");
+					}
+				}
+				else if (FieldInfo != null)
+				{
+					DynamicMethod compareMethod = new DynamicMethod(
+						"IdFieldCollector", 
+						typeof(void),
+						[
+							typeof(IDCollector), typeof(Writer), typeof(Content), typeof(Context)
+						],
+						true
+					);
+					ILGenerator generator = compareMethod.GetILGenerator();
+
+					var valueLoc = generator.DeclareLocal(typeof(ulong));
+
+					// Read the field, unpacking it from nullable and/or localized if necessary:
+					var type = TypeIOEngine.UnpackLocalisedNullable(generator, 2, FieldInfo, 3);
+
+					// conv if necessary to ulong (throws if it can't):
+					TypeIOEngine.CoerseToUlong(generator, type);
+
+					generator.Emit(OpCodes.Stloc, valueLoc);
+
+					// The IDCollector for the Add call:
+					generator.Emit(OpCodes.Ldarg_0);
+
+					// Load the ulong val:
+					generator.Emit(OpCodes.Ldloc, valueLoc);
+
+					// The actual collect part - add the ID to the collector:
+					generator.Emit(OpCodes.Callvirt, typeof(LongIDCollector).GetMethod(nameof(LongIDCollector.Add)));
+
+					// Next, write the value to the writer as a singular ID string too.
+					var writeSMethod = typeof(Writer).GetMethod("WriteS", BindingFlags.Public | BindingFlags.Instance, [typeof(ulong)]);
+
+					generator.Emit(OpCodes.Ldarg_1); // Writer
+					generator.Emit(OpCodes.Ldloc, valueLoc); // the ID
+					generator.Emit(OpCodes.Callvirt, writeSMethod); // write now
+
+					generator.Emit(OpCodes.Ret);
+					_collect = (Action<IDCollector, Writer, Content, Context>)compareMethod.CreateDelegate(
+						typeof(Action<IDCollector, Writer, Content, Context>)
+					);
+				}
+				else
+				{
+					throw new Exception("This field is not collectible - you need to collect the underlying ID field instead.");
 				}
 			}
 
-			if (instance == null)
-			{
-				// Instance one:
-				instance = Activator.CreateInstance(IDCollectorType) as IDCollector;
-				instance.Pool = this;
-			}
-
-			instance.NextCollector = null;
-			return instance;
-		}
-
-		/// <summary>
-		/// Returns the given collector to the pool. This also internally releases the collector's buffers.
-		/// </summary>
-		/// <param name="collector"></param>
-		public void AddToPool(IDCollector collector)
-		{
-			// Re-add to this pool:
-			lock (IDCollectorPoolLock)
-			{
-				collector.NextCollector = FirstInPool;
-				FirstInPool = collector;
-			}
-		}
-
-		/// <summary>
-		/// Sets the ID collector type.
-		/// </summary>
-		/// <param name="type"></param>
-		public void SetIDCollectorType(Type type)
-		{
-			_idCollectorType = type;
+			gen.OnCollect = _collect;
+			return gen;
 		}
 
 		/// <summary>
@@ -1217,69 +1251,6 @@ namespace Api.Startup {
 			}
 
 			UsedByIndices.Add(index);
-		}
-
-		/// <summary>
-		/// Gets the "local"
-		/// </summary>
-		/// <param name="relativeTo"></param>
-		/// <returns></returns>
-		public ContentField GetIdFieldIfMappingNotRequired(ContentFields relativeTo)
-		{
-
-			// Do we need to map? Often yes, but occasionally not necessary.
-			// We don't if the target type has a virtual field of the source type, where the virtual field name is simply the same as the instance type
-			return VirtualInfo.Service.GetContentFields().GetVirtualField(relativeTo.InstanceType, relativeTo.InstanceType.Name);
-
-		}
-
-		/// <summary>
-		/// Gets the mapping service for a virtual list field. Can be null if one isn't actually necessary.
-		/// </summary>
-		/// <returns></returns>
-		public async ValueTask<MappingInfo> GetOptionalMappingService(ContentFields relativeTo)
-		{
-			var fieldOfType = GetIdFieldIfMappingNotRequired(relativeTo);
-
-			if (fieldOfType != null)
-			{
-				// No mapping needed - the mapping is instead to use this virtual field.
-				return new MappingInfo {
-					Service = null,
-					TargetField = fieldOfType,
-					TargetFieldName = fieldOfType.VirtualInfo.IdSource.Name
-				};
-			}
-
-			var mappingService = await GetMappingService(relativeTo);
-
-			// We need to know what the target field is as we'll need a collector on it.
-			var mappingContentFields = mappingService.GetContentFields();
-
-			// Try to get target field (e.g. TagId):
-			if (!mappingContentFields.TryGetValue("targetid", out ContentField targetField))
-			{
-				throw new Exception("Couldn't find target field on a mapping type. This indicates an issue with the mapping engine rather than your usage.");
-			}
-
-			return new MappingInfo
-			{
-				Service = mappingService,
-				TargetField = targetField,
-				TargetFieldName = targetField.Name
-			};
-		}
-
-		/// <summary>
-		/// Gets a mapping service but doesn't consider if it is optional.
-		/// It would be optional if the mapped from type has an ID field that relates to the mapped to type.
-		/// </summary>
-		/// <param name="relativeTo"></param>
-		/// <returns></returns>
-		public async ValueTask<AutoService> GetMappingService(ContentFields relativeTo)
-		{
-			var svc = VirtualInfo.Service;
-			return await MappingTypeEngine.GetOrGenerate(relativeTo.Service, svc, VirtualInfo.FieldName);
 		}
 
 		/// <summary>
@@ -1405,41 +1376,6 @@ namespace Api.Startup {
 				return null;
 			}
 		}
-	}
-
-
-	/// <summary>
-	/// Meta about a particular map to use (in reverse, target->source)
-	/// </summary>
-	public struct ReverseMappingInfo
-	{
-		/// <summary>
-		/// The service. Will always exist.
-		/// </summary>
-		public AutoService Service;
-		/// <summary>
-		/// The source ID field.
-		/// </summary>
-		public ContentField SourceField;
-	}
-	
-	/// <summary>
-	/// Meta about a particular map to use.
-	/// </summary>
-	public struct MappingInfo
-	{
-		/// <summary>
-		/// The service, if there is one. This is a MappingService.
-		/// </summary>
-		public AutoService Service;
-		/// <summary>
-		/// The target ID field.
-		/// </summary>
-		public ContentField TargetField;
-		/// <summary>
-		/// The name of the target field.
-		/// </summary>
-		public string TargetFieldName;
 	}
 
 	/// <summary>

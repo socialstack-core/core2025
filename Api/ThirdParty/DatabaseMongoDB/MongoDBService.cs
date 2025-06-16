@@ -41,31 +41,9 @@ public partial class MongoDBService : AutoService
 	/// </summary>
 	/// <returns></returns>
 	/// <exception cref="Exception"></exception>
-	public static string GetConfiguredConnectionString()
+	public static ConnectionString GetConfiguredConnectionString()
 	{
-		var connectionStrings = AppSettings.GetSection("MongoConnectionStrings");
-
-		if (connectionStrings == null)
-		{
-			return null;
-		}
-
-		string cStringName;
-
-		if (Services.BuildHost == "xunit")
-		{
-			cStringName = "TestingConnection";
-		}
-		else
-		{
-			cStringName = System.Environment.GetEnvironmentVariable("MongoConnectionStringName") ?? "DefaultConnection";
-		}
-
-		var cs = connectionStrings[
-			cStringName
-		];
-
-		return cs;
+		return Api.Database.ConnectionString.Get("Mongo");
 	}
 
 	/// <summary>
@@ -82,21 +60,12 @@ public partial class MongoDBService : AutoService
 	/// Create a new database connector with the given connection string.
 	/// </summary>
 	public MongoDBService() {
-		var envString = "mongodb://localhost:27017/ss2025?ssl=false";// System.Environment.GetEnvironmentVariable("MongoConnectionString");
+		// Load from appsettings and add a change handler.
+		LoadFromAppSettings();
 
-		if (string.IsNullOrEmpty(envString))
-		{
-			// Load from appsettings and add a change handler.
+		AppSettings.OnChange += () => {
 			LoadFromAppSettings();
-
-			AppSettings.OnChange += () => {
-				LoadFromAppSettings();
-			};
-		}
-		else
-		{
-			ConnectionString = envString;
-		}
+		};
 	}
 
 	/// <summary>
@@ -105,7 +74,7 @@ public partial class MongoDBService : AutoService
 	private void LoadFromAppSettings()
 	{
 		var cs = GetConfiguredConnectionString();
-		ConnectionString = cs;
+		ConnectionString = cs == null ? null : cs.ConnectionConfig;
 
 		_client = null;
 		_database = null;
@@ -174,20 +143,17 @@ public partial class MongoDBService : AutoService
 
 		// FilterA is the user filter. It provides things like the collector and some contextual args.
 		var filterA = queryPair.QueryA;
-		var firstCollector = filterA.FirstCollector;
 
 		// FilterB is the permission system filter. Like filterA it can be null.
 		var filterB = queryPair.QueryB;
 
 		FilterDefinition<INSTANCE_TYPE> filterDefA = filterA == null ? null : filterA.ToMongo<INSTANCE_TYPE>(
-			filterA.FirstCollector,
 			localeCode,
 			context,
 			filterA
 		);
 
 		FilterDefinition<INSTANCE_TYPE> filterDefB = filterB == null ? null : filterB.ToMongo<INSTANCE_TYPE>(
-			null, // Perm filter must not use the includes collector
 			localeCode,
 			context,
 			filterA // Contextual functionality originate from the user filter, not the permission one here. 

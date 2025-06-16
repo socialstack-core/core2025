@@ -44,23 +44,17 @@ namespace Api.ContentSync
 		private ContentSyncServiceConfig _configuration;
 		private ClusteredServerService _clusteredServerService;
 
-		/// <summary>
-		/// Network room type service.
-		/// </summary>
-		private readonly NetworkRoomTypeService _nrts;
-
 		private readonly WebSocketService _websocketService;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public ContentSyncService(ClusteredServerService clusteredServerService, NetworkRoomTypeService nrts, WebSocketService websocketService)
+		public ContentSyncService(ClusteredServerService clusteredServerService, WebSocketService websocketService)
 		{
 			// The content sync service is used to keep content created by multiple instances in sync.
 			// (which can be a cluster of servers, or a group of developers)
 			// It does this by setting up 'stripes' of IDs which are assigned to particular users.
 			// A user is identified by the computer hostname.
-			_nrts = nrts;
 			_websocketService = websocketService;
 			_clusteredServerService = clusteredServerService;
 

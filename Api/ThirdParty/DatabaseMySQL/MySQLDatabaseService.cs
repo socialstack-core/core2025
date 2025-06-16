@@ -36,23 +36,13 @@ namespace Api.Database
 		/// </summary>
 		public MySQLDatabaseService()
 		{
-			var envString = System.Environment.GetEnvironmentVariable("DatabaseConnectionString");
+			// Load from appsettings and add a change handler.
+			LoadFromAppSettings();
 
-			if (string.IsNullOrEmpty(envString))
+			AppSettings.OnChange += () =>
 			{
-				// Load from appsettings and add a change handler.
 				LoadFromAppSettings();
-
-				AppSettings.OnChange += () =>
-				{
-					LoadFromAppSettings();
-				};
-			}
-			else
-			{
-				ConnectionString = envString;
-			}
-
+			};
 		}
 
 		/// <summary>
@@ -60,32 +50,19 @@ namespace Api.Database
 		/// </summary>
 		private void LoadFromAppSettings()
 		{
-			var connectionStrings = AppSettings.GetSection("ConnectionStrings");
+			var cs = GetConfiguredConnectionString();
+			ConnectionString = cs == null ? null : cs.ConnectionConfig;
+		}
 
-			if (connectionStrings == null)
-			{
-				throw new Exception("Your appsettings file is missing the 'ConnectionStrings' block.");
-			}
-
-			string cStringName;
-
-			if (Services.BuildHost == "xunit")
-			{
-				cStringName = "TestingConnection";
-			}
-			else
-			{
-				cStringName = System.Environment.GetEnvironmentVariable("ConnectionStringName") ?? "DefaultConnection";
-			}
-
-			ConnectionString = connectionStrings[
-				cStringName
-			];
-
-			if (ConnectionString == null)
-			{
-				throw new Exception("Your appsettings file declares a ConnectionString block but is missing a connection string with the key '" + cStringName + "'");
-			}
+		/// <summary>
+		/// Returns a connection string, or null, if it isn't configured.
+		/// </summary>
+		/// <returns></returns>
+		/// <exception cref="Exception"></exception>
+		public static ConnectionString GetConfiguredConnectionString()
+		{
+			// MySQL has no prefix:
+			return Api.Database.ConnectionString.Get("");
 		}
 
 		/// <summary>
@@ -106,8 +83,6 @@ namespace Api.Database
 		{
 			return MySql.Data.MySqlClient.MySqlHelper.EscapeString(text);
 		}
-
-
 
 		/// <summary>
 		/// Builds an IN(x,y,z) string using the given value enumerator.
@@ -391,6 +366,11 @@ namespace Api.Database
 					parameter.Value = val == null ? null : ((JsonString)val).ValueOf();
 					parameter.MySqlDbType = MySqlDbType.JSON;
 				}
+				else if (field.Type == typeof(MappingData))
+				{
+					parameter.Value = val == null ? null : ((MappingData)val).ToJson();
+					parameter.MySqlDbType = MySqlDbType.JSON;
+				}
 				else
 				{
 					parameter.Value = val;
@@ -530,6 +510,10 @@ namespace Api.Database
 					{
 						field.TargetField.SetValue(result, new JsonString(value as string));
 					}
+					else if (field.Type == typeof(MappingData))
+					{
+						field.TargetField.SetValue(result, MappingData.Parse(value as string));
+					}
 					else if (field.Type == typeof(bool) || field.Type == typeof(bool?))
 					{
 						// Set the value:
@@ -636,6 +620,10 @@ namespace Api.Database
 							{
 								field.TargetField.SetValue(result, new JsonString(value as string));
 							}
+							else if (field.Type == typeof(MappingData))
+							{
+								field.TargetField.SetValue(result, MappingData.Parse(value as string));
+							}
 							else if (field.Type == typeof(bool) || field.Type == typeof(bool?))
 							{
 								// Set the value:
@@ -725,6 +713,10 @@ namespace Api.Database
 							else if (field.Type == typeof(JsonString))
 							{
 								field.TargetField.SetValue(result, new JsonString(value as string));
+							}
+							else if (field.Type == typeof(MappingData))
+							{
+								field.TargetField.SetValue(result, MappingData.Parse(value as string));
 							}
 							else if (field.Type == typeof(bool))
 							{
