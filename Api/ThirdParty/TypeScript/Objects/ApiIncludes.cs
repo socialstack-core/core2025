@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Api.Startup;
@@ -79,9 +80,31 @@ namespace Api.TypeScript.Objects
             // Generate virtual field accessors from global virtual fields.
             foreach (var kvp in ContentFields.GlobalVirtualFields)
             {
-                builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
-                builder.AppendLine($"        return new ApiIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
-                builder.AppendLine("    }");
+                var virtualInfo = kvp.Value.VirtualInfo;
+
+                Type virtualType = null;
+
+                if(virtualInfo.DynamicTypeField != null){
+                    virtualType = typeof(object);
+                } else if(virtualInfo.ValueGeneratorType != null) {
+                    #warning return type assumption: this requires context of the specific type that it is occuring on
+                    virtualType = typeof(string);
+                } else {
+                    virtualType = virtualInfo.Type;
+                }
+
+                if (virtualType == typeof(string))
+                {
+                    builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
+                    builder.AppendLine($"        return new ApiIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
+                    builder.AppendLine("    }");
+                }
+                else
+                {
+                    builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
+                    builder.AppendLine($"        return new {virtualType.Name}Includes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
+                    builder.AppendLine("    }");
+                }
             }
 
             builder.AppendLine("}");
