@@ -519,6 +519,11 @@ namespace Api.Payments
 				};
 
 				lookup[category.Id] = node;
+
+				if (string.IsNullOrEmpty(category.Slug))
+				{
+					continue;
+				}
 				lookupBySlug[category.Slug] = node;
 			}
 
