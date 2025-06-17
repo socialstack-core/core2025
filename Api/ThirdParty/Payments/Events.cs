@@ -83,7 +83,7 @@ namespace Api.Eventing
 		/// <summary>
 		/// Set of events for a product.
 		/// </summary>
-		public static EventGroup<Product> Product;
+		public static ProductEventGroup Product;
 	}
 
 	/// <summary>
@@ -96,6 +96,19 @@ namespace Api.Eventing
 		/// Called when collecting delivery estimates.
 		/// </summary>
 		public EventHandler<DeliveryEstimates> Estimate;
+
+	}
+	
+	/// <summary>
+	/// Specialised event group for the Product event type.
+	/// </summary>
+	public partial class ProductEventGroup : EventGroup<Product>
+	{
+
+		/// <summary>
+		/// Called when running a search for products.
+		/// </summary>
+		public EventHandler<ProductSearch> Search;
 
 	}
 	
