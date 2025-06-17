@@ -132,8 +132,42 @@ namespace Api.Payments
 
 				return product;
 			});
+			
+			Events.Product.BeforeCreate.AddEventListener(async (ctx, product) => await ValidateProduct(ctx, product));
+			Events.Product.BeforeUpdate.AddEventListener(ValidateProduct);
 
 			Cache();
+		}
+		
+		/// <summary>
+		/// Adds a validation layer to <c>Product</c> only,
+		/// this checks fields strictly on the product.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="product"></param>
+		/// <param name="original"></param>
+		/// <returns></returns>
+		/// <exception cref="PublicException"></exception>
+		private ValueTask<Product> ValidateProduct(Context context, Product product, Product original = null)
+		{
+
+			if (product.Name.IsEmpty)
+			{
+				throw new PublicException("The product name cannot be empty.", "product-validation/no-name");
+			}
+
+			if (string.IsNullOrEmpty(product.Sku))
+			{
+				throw new PublicException("The product SKU cannot be empty.", "product-validation/no-sku");
+			}
+			
+			if (string.IsNullOrEmpty(product.Slug))
+			{
+				throw new PublicException("The product slug cannot be empty.", "product-validation/no-slug");
+			}
+			
+			
+			return ValueTask.FromResult(product);
 		}
 
 		/// <summary>
