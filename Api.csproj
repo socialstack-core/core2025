@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <AssemblyName>SocialStack.Api</AssemblyName>
 	<TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+	<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -44,13 +45,10 @@
     <None Update="Api\ThirdParty\CanvasRenderer\renderer.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-	<Compile Remove="Tests\**\*" />
+    <Compile Include="Api\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="Tests\**\*" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="appsettings.json">
