@@ -300,9 +300,13 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 	];
 
 	return <>
-		<SubHeader title={props.title} breadcrumbs={breadcrumbs} onQuery={(where, query : string) => {
-			setSearchText(query);
-		}} />
+		<SubHeader 
+			title={props.title} 
+			breadcrumbs={breadcrumbs}
+			contentType={props.contentType}
+			onQuery={(where, query : string) => {
+				setSearchText(query);
+			}} />
 		<div className="admin-page__content">
 			<div className="admin-page__internal">
 				{props.beforeList}

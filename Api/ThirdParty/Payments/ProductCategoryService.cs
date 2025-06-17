@@ -88,6 +88,8 @@ namespace Api.Payments
 					return null;
 				}
 
+				_categoryTree = null;
+
 				// Ensure a slug is generated and is unique.
 				if (string.IsNullOrEmpty(category.Slug))
 				{
@@ -104,6 +106,8 @@ namespace Api.Payments
 				{
 					return null;
 				}
+
+				_categoryTree = null;
 
 				return update;
 			});

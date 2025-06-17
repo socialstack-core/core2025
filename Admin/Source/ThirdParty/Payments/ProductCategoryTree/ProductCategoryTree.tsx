@@ -1,10 +1,14 @@
 import TreeView, { buildBreadcrumbs } from 'Admin/TreeView';
 import SubHeader from 'Admin/SubHeader';
 import { useRouter } from 'UI/Router';
-import { useState, useEffect } from 'react';
-import productCategoryApi, { ProductCategory } from 'Api/ProductCategory';
+import productCategoryApi from 'Api/ProductCategory';
+import {ListFilter} from "Api/Content";
 
-export default function ProductCategoryTree(props) {
+export type ProductCategoryTreeProps = {
+	noCreate: boolean
+}
+
+export default function ProductCategoryTree(props: ProductCategoryTreeProps) {
 	var addProductUrl = '/en-admin/product/add';
 	var addCategoryUrl = '/en-admin/productcategory/add';
 	const { pageState } = useRouter();
@@ -20,7 +24,15 @@ export default function ProductCategoryTree(props) {
 
 	return (
 		<>
-			<SubHeader title={`Edit Products`} breadcrumbs={breadcrumbs} />
+			<SubHeader 
+				title={`Edit Products`} 
+				breadcrumbs={breadcrumbs} 
+				contentType={'product'}
+				pageType={'list'}
+				onQuery={(filter: ListFilter, query: string) => {
+					console.log({ filter, query })
+				}}
+			/>
 			<div className="sitemap__wrapper">
 				<div className="sitemap__internal">
 					<TreeView onLoadData={(path) => {

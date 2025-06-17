@@ -65,6 +65,10 @@ namespace Api.Payments
 			
 			Events.ProductAttribute.BeforeCreate.AddEventListener(async (ctx, attr) => await ValidateAttribute(ctx, attr));
 			Events.ProductAttribute.BeforeUpdate.AddEventListener(ValidateAttribute);
+			
+			Events.ProductCategory.AfterCreate.AddEventListener(async (ctx, attr) => await ClearCache(ctx, attr));
+			Events.ProductCategory.AfterUpdate.AddEventListener(ClearCache);
+			Events.ProductCategory.AfterDelete.AddEventListener(ClearCache);
 
 			// Install some default content.
 			Events.Service.AfterStart.AddEventListener(async (Context context, object svc) => {
@@ -565,7 +569,13 @@ namespace Api.Payments
 
 			Cache();
 		}
-		
+
+		private ValueTask<ProductCategory> ClearCache(Context ctx, ProductCategory category)
+		{
+			_attributeTree = null;
+			return ValueTask.FromResult(category);
+		}
+
 		/// <summary>
 		/// Adds a validation layer to the <c>ProductAttribute</c> entity,
 		/// makes sure the name and the key aren't empty.
