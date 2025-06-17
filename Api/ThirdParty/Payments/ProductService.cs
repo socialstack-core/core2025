@@ -30,23 +30,8 @@ namespace Api.Payments
 
 			InstallAdminPages("Products", "fa:fa-shopping-basket", ["id", "name", "minQuantity"]);
 
-			Events.Product.BeforeCreate.AddEventListener(async (Context context, Product product) => {
-				if (product == null)
-				{
-					return null;
-				}
-
-				// Ensure a slug is generated and is unique.
-				if (string.IsNullOrEmpty(product.Slug))
-				{
-					product.Slug = await SlugGenerator.GenerateUniqueSlug(this, context, product.Name.Get(context));
-				}
-
-				return product;
-			});
-
-			HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" };
-            HashSet<string> nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };
+			var excludeFields = new HashSet<string>() { "Categories", "Tags" };
+            var nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };
 
             Events.Product.BeforeSettable.AddEventListener((Context ctx, JsonField<Product, uint> field) =>
             {
@@ -151,7 +136,7 @@ namespace Api.Payments
 		private ValueTask<Product> ValidateProduct(Context context, Product product, Product original = null)
 		{
 
-			if (string.IsNullOrEmpty(product.Name.Get(context)))
+			if (product.Name.IsEmpty)
 			{
 				throw new PublicException("The product name cannot be empty.", "product-validation/no-name");
 			}

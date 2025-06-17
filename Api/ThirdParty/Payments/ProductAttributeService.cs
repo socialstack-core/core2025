@@ -579,7 +579,7 @@ namespace Api.Payments
 			ProductAttribute original = null)
 		{
 
-			if (string.IsNullOrEmpty(attrib.Name.Get(context)))
+			if (attrib.Name.IsEmpty)
 			{
 				throw new PublicException("The attribute name cannot be empty.", "attribute-validation/no-name");
 			}
