@@ -151,7 +151,7 @@ namespace Api.Payments
 		private ValueTask<Product> ValidateProduct(Context context, Product product, Product original = null)
 		{
 
-			if (product.Name.IsEmpty)
+			if (string.IsNullOrEmpty(product.Name.Get(context)))
 			{
 				throw new PublicException("The product name cannot be empty.", "product-validation/no-name");
 			}

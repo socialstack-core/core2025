@@ -34,7 +34,7 @@ namespace Api.Payments
 			ProductAttributeGroup original = null)
 		{
 		
-			if (prodAttrGrp.Name.IsEmpty)
+			if (string.IsNullOrEmpty(prodAttrGrp.Name.Get(ctx)))
 			{
 				throw new PublicException("The attribute group name cannot be empty.", "attribute-group-validation/no-name");
 			}
