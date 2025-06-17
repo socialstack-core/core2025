@@ -13,6 +13,7 @@ using Api.Startup;
 using Api.Startup.Routing;
 using static Api.Pages.PageController;
 using Api.Translate;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace Api.Payments
 {
@@ -61,6 +62,9 @@ namespace Api.Payments
 
 				return new ValueTask<PageBuilder>(builder);
 			});
+			
+			Events.ProductAttribute.BeforeCreate.AddEventListener(async (ctx, attr) => await ValidateAttribute(ctx, attr));
+			Events.ProductAttribute.BeforeUpdate.AddEventListener(ValidateAttribute);
 
 			// Install some default content.
 			Events.Service.AfterStart.AddEventListener(async (Context context, object svc) => {
@@ -560,6 +564,32 @@ namespace Api.Payments
 			});
 
 			Cache();
+		}
+		
+		/// <summary>
+		/// Adds a validation layer to the <c>ProductAttribute</c> entity,
+		/// makes sure the name and the key aren't empty.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="attrib"></param>
+		/// <param name="original"></param>
+		/// <returns></returns>
+		/// <exception cref="PublicException"></exception>
+		private ValueTask<ProductAttribute> ValidateAttribute(Context context, ProductAttribute attrib,
+			ProductAttribute original = null)
+		{
+
+			if (attrib.Name.IsEmpty)
+			{
+				throw new PublicException("The attribute name cannot be empty.", "attribute-validation/no-name");
+			}
+
+			if (string.IsNullOrEmpty(attrib.Key))
+			{
+				throw new PublicException("The attribute key cannot be empty.", "attribute-validation/no-key");
+			}
+			
+			return ValueTask.FromResult(attrib);
 		}
 
 		/// <summary>

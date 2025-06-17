@@ -39,8 +39,22 @@ namespace Api.Payments
 					}
 				}
 			);
-
+			
+			Events.ProductAttributeValue.BeforeCreate.AddEventListener(async (ctx, attrValue) => await ValidateAttributeValue(ctx, attrValue));
+			Events.ProductAttributeValue.BeforeUpdate.AddEventListener(ValidateAttributeValue);
+			
 			Cache();
+		}
+
+		private ValueTask<ProductAttributeValue> ValidateAttributeValue(Context context, ProductAttributeValue attrValue, ProductAttributeValue original = null)
+		{
+
+			if (!string.IsNullOrEmpty(attrValue.Value))
+			{
+				throw new PublicException("The attribute value cannot be empty.", "attribute-value-validation/no-value");
+			}
+
+			return ValueTask.FromResult(attrValue);
 		}
 
 	}

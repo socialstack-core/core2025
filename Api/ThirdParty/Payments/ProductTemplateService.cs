@@ -1,7 +1,4 @@
-using Api.Database;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Api.Permissions;
 using Api.Contexts;
 using Api.Eventing;
 
@@ -20,6 +17,17 @@ namespace Api.Payments
         {
 			// Example admin page install:
 			// InstallAdminPages("ProductTemplates", "fa:fa-rocket", new string[] { "id", "name" });
+			
+			Events.ProductTemplate.BeforeCreate.AddEventListener(async (ctx, tpl) => await ValidateTemplate(ctx, tpl));
+			Events.ProductTemplate.BeforeUpdate.AddEventListener(ValidateTemplate);
+		}
+
+		private ValueTask<ProductTemplate> ValidateTemplate(Context context, ProductTemplate template, ProductTemplate original = null)
+		{
+			
+			// TODO: Implement these as the templates structure grows.
+			
+			return ValueTask.FromResult(template);
 		}
 	}
     
