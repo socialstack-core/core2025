@@ -64,7 +64,18 @@ public class MongoSearchEventListener
 						Log.Info("productsearch", "MongoDB did not reply to the hello message with a setName so atlas search is disabled.");
 					}
 				}
-				catch(MongoException me)
+				catch (MongoCommandException mce)
+				{
+					if (mce.CodeName == "CommandNotFound")
+					{
+						Log.Info("productsearch", "MongoDB did not reply to the hello message with a setName so atlas search is disabled.");
+					}
+					else
+					{
+						throw;
+					}
+				}
+				catch (MongoException me)
 				{
 					Log.Warn("productsearch", me, "MongoDB atlas feature check threw an error. This is harmless but should be fixed.");
 				}
@@ -204,14 +215,14 @@ public class MongoSearchEventListener
 				// Basic facets are instead derived from the (paginated) returned product set only
 				// (that happens in ProductSearchService).
 
-				var filter = Builders<Product>.Filter.Regex("name.en", new BsonRegularExpression(query, "i"));
+				var filter = Builders<Product>.Filter.Regex("Name.en", new BsonRegularExpression(query, "i"));
 				
 				/*
 				 * (description is not plaintext, it is canvas JSON)
 				 * 
 				 * Builders<Product>.Filter.Or(
-					Builders<Product>.Filter.Regex("name.en", new BsonRegularExpression(query, "i")),
-					Builders<Product>.Filter.Regex("description.en", new BsonRegularExpression(query, "i"))
+					Builders<Product>.Filter.Regex("Name.en", new BsonRegularExpression(query, "i")),
+					Builders<Product>.Filter.Regex("Description.en", new BsonRegularExpression(query, "i"))
 				);
 				*/
 
