@@ -538,7 +538,7 @@ namespace Api.Permissions{
 			// Convert Linq selectors to lists (unfortunately the mongo driver doesn't know how to treat it as an arbritrary IEnumerable)
 			var iEnum = val as IEnumerable;
 
-			if (iEnum != null)
+			if (iEnum != null && !(val is string))
 			{
 				var type = val.GetType();
 
