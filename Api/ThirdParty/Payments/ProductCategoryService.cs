@@ -82,6 +82,21 @@ namespace Api.Payments
 				return new ValueTask<object>(sender);
 			});
 
+			Events.ProductCategory.BeforeCreate.AddEventListener(async (Context context, ProductCategory category) => {
+				if (category == null)
+				{
+					return null;
+				}
+
+				// Ensure a slug is generated and is unique.
+				if (string.IsNullOrEmpty(category.Slug))
+				{
+					category.Slug = await SlugGenerator.GenerateUniqueSlug(this, context, category.Name.Get(context));
+				}
+
+				return category;
+			});
+
 			Events.ProductCategory.BeforeUpdate.AddEventListener(async (Context ctx, ProductCategory update, ProductCategory orig) =>
 			{
 				// check for circular dependency (recursion loop)  

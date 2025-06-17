@@ -30,7 +30,22 @@ namespace Api.Payments
 
 			InstallAdminPages("Products", "fa:fa-shopping-basket", ["id", "name", "minQuantity"]);
 
-            HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" };
+			Events.Product.BeforeCreate.AddEventListener(async (Context context, Product product) => {
+				if (product == null)
+				{
+					return null;
+				}
+
+				// Ensure a slug is generated and is unique.
+				if (string.IsNullOrEmpty(product.Slug))
+				{
+					product.Slug = await SlugGenerator.GenerateUniqueSlug(this, context, product.Name.Get(context));
+				}
+
+				return product;
+			});
+
+			HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" };
             HashSet<string> nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };
 
             Events.Product.BeforeSettable.AddEventListener((Context ctx, JsonField<Product, uint> field) =>
