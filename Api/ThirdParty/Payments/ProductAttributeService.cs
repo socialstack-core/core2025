@@ -588,6 +588,11 @@ namespace Api.Payments
 			{
 				throw new PublicException("The attribute key cannot be empty.", "attribute-validation/no-key");
 			}
+
+			if (attrib.ProductAttributeGroupId == 0)
+			{
+				throw new PublicException("The attribute group cannot be empty.", "attribute-validation/no-group");
+			}
 			
 			return ValueTask.FromResult(attrib);
 		}
