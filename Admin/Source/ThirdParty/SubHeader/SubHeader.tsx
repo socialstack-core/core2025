@@ -1,6 +1,7 @@
 import Link from 'UI/Link';
 import Search from 'UI/Search';
-import { ListFilter } from 'Api/ApiEndpoints';
+import AutoFormExtensions, {AutoFormType} from "Admin/AutoForm/AutoFormExtensions";
+import {ListFilter} from "Api/Content";
 
 /**
  * Props for the SubHeader component.
@@ -22,6 +23,16 @@ interface SubHeaderProps {
 	 * @returns
 	 */
 	onQuery?: (filter: ListFilter, query: string) => void
+
+	/**
+	 * Provide this to allow a custom search component to be displayed instead of the default.
+	 */
+	contentType?: string,
+
+	/**
+	 * Provide this to distinguish the page type on the sub header.
+	 */
+	pageType?: AutoFormType
 }
 
 /**
@@ -40,6 +51,8 @@ export interface Breadcrumb {
  * @param props React props.
  */
 const SubHeader: React.FC<React.PropsWithChildren<SubHeaderProps>> = (props) => {
+	
+	const SearchOverride = props.contentType && props.pageType ? AutoFormExtensions.getCustomSearchProvider(props.contentType, props.pageType) : undefined;
 
 	return (
 		<header className="admin-page__subheader">
@@ -68,13 +81,19 @@ const SubHeader: React.FC<React.PropsWithChildren<SubHeaderProps>> = (props) => 
 					)}
 				</ul>}
 			</div>
-			{props.onQuery && <>
-				<Search
-					className="admin-page__search"
-					placeholder={`Search..`}
-					onQuery={props.onQuery}
-				/>
-			</>}
+			{props.onQuery &&
+				(
+					SearchOverride ? 
+						<SearchOverride 
+							onChange={props.onQuery} 
+						/> :
+						<Search
+							className="admin-page__search"
+							placeholder={`Search..`}
+							onQuery={props.onQuery}
+						/>			
+				)
+			}
 
 			{props.primaryUrl &&
 				<div className="admin-page__url">

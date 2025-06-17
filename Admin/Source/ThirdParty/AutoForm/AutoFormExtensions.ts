@@ -32,7 +32,7 @@ export type AutoFormButtonExtension = {
 
 export type CustomSearchProviderProps = {
     filters?: ListFilter,
-    onChange: (filters: ListFilter) => void
+    onChange: (filters: ListFilter, query:string) => void
 }
 
 export type CustomSearchProvider = React.FC<CustomSearchProviderProps>;
