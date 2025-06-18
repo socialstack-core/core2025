@@ -259,7 +259,7 @@ namespace Api.AutoForms
 			var labelName = name;
 
 			// If the field is a string and ends with Json, it's going to be either canvas (default) or a json field:
-			if (fieldType == typeof(string) && labelName.EndsWith("Json"))
+			if (fieldType == typeof(JsonString) || (fieldType == typeof(string) && labelName.EndsWith("Json")))
 			{
 				type = "canvas";
 
