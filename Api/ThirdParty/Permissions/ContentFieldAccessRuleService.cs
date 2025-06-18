@@ -15,6 +15,7 @@ namespace Api.Permissions
         {
 			// Example admin page install:
 			// InstallAdminPages("ContentFieldAccessRules", "fa:fa-rocket", new string[] { "id", "name" });
+			Cache();
 		}
 	}
     

@@ -267,13 +267,18 @@ public partial class AutoController<T,ID> : AutoController
 			// Attempt to get the available field:
 			var field = availableFields.GetField(property.Name);
 
-			if (field == null || !field.Writeable)
+			if (field == null)
 			{
 				continue;
 			}
 
-			// Try setting the value now:
-			await field.SetFieldValue(context, target, property.Value);
+			var writeRule = field.GetWriteAccessRule();
+
+			if (writeRule.IsWriteGranted(context, target))
+			{
+				// Try setting the value now:
+				await field.SetFieldValue(context, target, property.Value);
+			}
 		}
 	}
 

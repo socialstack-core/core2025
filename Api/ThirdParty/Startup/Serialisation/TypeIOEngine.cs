@@ -766,15 +766,6 @@ namespace Api.Startup
 				// Write the header:
 				header.Write(writerBody);
 
-				var fieldService = Services.Get<ContentFieldAccessRuleService>();
-
-				var fields = Task.Run(() => 
-					fieldService.Where("RoleId = ? and EntityName = ?")
-								.Bind(context.RoleId)
-								.Bind(typeof(T).Name)
-								.ListAll(new(1, 1, 1))
-				).GetAwaiter().GetResult().Result;
-				
 				if (set.Fields != null){
 
 					// Add each field
@@ -843,21 +834,20 @@ namespace Api.Startup
 
 						var fieldName = field.Name;
 						var lowercaseFirst = char.ToLower(fieldName[0]) + fieldName.Substring(1);
-
-						var matchingField = fields.Find(rule => rule.FieldName == lowercaseFirst);
+						var readAccessRuleText = field.GetReadAccessRuleText();
 
 						bool? constTrueOrFalse = null;
 						string filterString = null;
 						
-						if(matchingField is null || string.IsNullOrEmpty(matchingField.CanRead)){
+						if(string.IsNullOrEmpty(readAccessRuleText)){
 							constTrueOrFalse = field.Readable;
-						}else if( matchingField.CanRead == "true"){
+						}else if( readAccessRuleText == "true"){
 							constTrueOrFalse = true;
-						}else if( matchingField.CanRead == "false"){
+						}else if( readAccessRuleText == "false"){
 							constTrueOrFalse = false;
 						}else{
 							// will be a full filter obj
-							filterString = matchingField.CanRead;
+							filterString = readAccessRuleText;
 						}
 
 						if (constTrueOrFalse.HasValue && constTrueOrFalse.Value == false)

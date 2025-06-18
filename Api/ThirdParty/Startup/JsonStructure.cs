@@ -180,6 +180,14 @@ namespace Api.Startup
 		{
 			var context = new Context();
 
+			// Load the access rules:
+			var fieldAccessService = Services.Get<ContentFieldAccessRuleService>();
+
+			var accessRules = await fieldAccessService.Where("RoleId=? and EntityName=?", DataOptions.IgnorePermissions)
+				.Bind(ForRole.Id)
+				.Bind(typeof(T).Name)
+				.ListAll(context);
+
 			// Most types have all fields as readable by default:
 			var readable = true;
 
@@ -235,6 +243,12 @@ namespace Api.Startup
 						Hide = !property.CanWrite
 					};
 				}
+
+				// Locate an access rule if there is one:
+				var fieldName = jsonField.Name;
+				var lowercaseFirst = char.ToLower(fieldName[0]) + fieldName.Substring(1);
+				var matchedAccessRule = accessRules == null ? null : accessRules.Find(rule => rule.FieldName == lowercaseFirst);
+				jsonField.AccessRule = matchedAccessRule;
 
 				await TryAddField(context, jsonField, readable, beforeSettable, beforeGettable);
 			}
@@ -756,6 +770,10 @@ namespace Api.Startup
 		where T : Content<ID>, new()
 		where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
 	{
+		/// <summary>
+		/// The access rule for this field.
+		/// </summary>
+		public ContentFieldAccessRule AccessRule;
 
 		/// <summary>
 		/// The structure this field belongs to.
@@ -770,6 +788,79 @@ namespace Api.Startup
 		/// An event which is called when the value is set. It returns the value it wants to be set.
 		/// </summary>
 		public EventHandler<object, T, JToken> OnSetValue = new EventHandler<object, T, JToken>();
+
+		private FieldGrantRule<T, ID> _readAccessRule;
+		private FieldGrantRule<T, ID> _writeAccessRule;
+
+		/// <summary>
+		/// Gets the fields write access rule (filter text) if there is one set. Null/ empty string otherwise.
+		/// </summary>
+		/// <returns></returns>
+		public string GetWriteAccessRuleText()
+		{
+			if (AccessRule == null)
+			{
+				return null;
+			}
+
+			return AccessRule.CanWrite;
+		}
+
+		/// <summary>
+		/// Gets the write access filter.
+		/// </summary>
+		/// <returns></returns>
+		public FieldGrantRule<T, ID> GetWriteAccessRule()
+		{
+			// This whole JsonField is reconstructed 
+			// whenever the role is edited so we can safely just cache a constructed filter in here.
+			var ar = _writeAccessRule;
+
+			if (ar != null)
+			{
+				return ar;
+			}
+
+			var text = GetWriteAccessRuleText();
+			ar = new FieldGrantRule<T, ID>(this, text);
+			_writeAccessRule = ar;
+			return ar;
+		}
+
+		/// <summary>
+		/// Gets the fields read access rule (filter text) if there is one set. Null/ empty string otherwise.
+		/// </summary>
+		/// <returns></returns>
+		public string GetReadAccessRuleText()
+		{
+			if (AccessRule == null)
+			{
+				return null;
+			}
+
+			return AccessRule.CanRead;
+		}
+
+		/// <summary>
+		/// Gets the read access filter.
+		/// </summary>
+		/// <returns></returns>
+		public FieldGrantRule<T, ID> GetReadAccessRule()
+		{
+			// This whole JsonField is reconstructed 
+			// whenever the role is edited so we can safely just cache a constructed filter in here.
+			var ar = _readAccessRule;
+
+			if (ar != null)
+			{
+				return ar;
+			}
+
+			var text = GetReadAccessRuleText();
+			ar = new FieldGrantRule<T, ID>(this, text);
+			_readAccessRule = ar;
+			return ar;
+		}
 
 		/// <summary>
 		/// The role that this is for.
