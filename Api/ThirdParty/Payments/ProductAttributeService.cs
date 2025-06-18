@@ -608,7 +608,7 @@ namespace Api.Payments
 		/// <param name="original"></param>
 		/// <returns></returns>
 		/// <exception cref="PublicException"></exception>
-		private ValueTask<ProductAttribute> ValidateAttribute(Context context, ProductAttribute attrib,
+		private async ValueTask<ProductAttribute> ValidateAttribute(Context context, ProductAttribute attrib,
 			ProductAttribute original = null)
 		{
 
@@ -619,7 +619,19 @@ namespace Api.Payments
 
 			if (string.IsNullOrEmpty(attrib.Key))
 			{
-				throw new PublicException("The attribute key cannot be empty.", "attribute-validation/no-key");
+				attrib.Key = ToAttributeKey(attrib.Name.GetFallback());
+				
+				// try and match a single record. 
+				var query = Where("Key = ?").Bind(attrib.Key);
+				query.PageSize = 1;
+				query.SortAscending = false;
+				
+				// if one is found, append the ID + 1 of the last one found.
+				var result = await query.ListAll(context);
+				if (result.Count != 0)
+				{
+					attrib.Key += "_" + (result.First().Id + 1);
+				}
 			}
 
 			if (attrib.ProductAttributeGroupId == 0)
@@ -627,7 +639,7 @@ namespace Api.Payments
 				throw new PublicException("The attribute group cannot be empty.", "attribute-validation/no-group");
 			}
 			
-			return ValueTask.FromResult(attrib);
+			return attrib;
 		}
 
 		/// <summary>
