@@ -290,7 +290,7 @@ namespace Api.Startup
 
 					// These fields are exclusively readonly.
 					jsonField.Writeable = false;
-					jsonField.TargetType = valueGenerator.GetOutputType();
+					jsonField.TargetType = valueGenerator.OutputType;
 				}
 				else
 				{
@@ -352,7 +352,7 @@ namespace Api.Startup
 
 					// These fields are exclusively readonly.
 					jsonField.Writeable = false;
-					jsonField.TargetType = valueGenerator.GetOutputType();
+					jsonField.TargetType = valueGenerator.OutputType;
 				}
 				else
 				{

@@ -51,13 +51,10 @@ public partial class EmailAddressValueGenerator<T, ID> : VirtualFieldValueGenera
 	}
 
     /// <summary>
-    /// The type, if any, associated with the value being outputted.
+    /// The type, if any, associated with the value being outputted. Must not vary.
     /// For example, if GetValue outputs only strings, this is typeof(string).
     /// </summary>
     /// <returns></returns>
-    public override Type GetOutputType()
-    {
-        return typeof(string);
-    }
+    public override Type OutputType => typeof(string);
 
 }
