@@ -168,7 +168,16 @@ namespace Api.Pages
 					return ValueTask.FromResult(builder);
 				}
 
-				if (builder.PageType == CommonPageType.AdminEdit || builder.PageType == CommonPageType.AdminAdd)
+				if (builder.PageType == CommonPageType.AdminEdit)
+				{
+					builder.GetContentRoot()
+						.Empty()
+						.AppendChild(
+							new CanvasNode("Admin/Page/Single")
+							.WithPrimaryLink("content")
+						);
+				}
+				else if (builder.PageType == CommonPageType.AdminAdd)
 				{
 					builder.GetContentRoot()
 						.Empty()

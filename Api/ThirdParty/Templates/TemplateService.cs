@@ -153,9 +153,22 @@ namespace Api.Templates
 
 			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 			{
-				if ((builder.PageType == CommonPageType.AdminEdit || builder.PageType == CommonPageType.AdminAdd) && builder.ContentType == typeof(Template))
+				if (builder == null || builder.ContentType != typeof(Template))
 				{
-					// Installing admin page for the list of uploads.
+					return ValueTask.FromResult(builder);
+				}
+
+				if (builder.PageType == CommonPageType.AdminEdit)
+				{
+					builder.GetContentRoot()
+						.Empty()
+						.AppendChild(
+							new CanvasNode("Admin/Template/SinglePage")
+							.WithPrimaryLink("content")
+						);
+				}
+				else if (builder.PageType == CommonPageType.AdminAdd)
+				{
 					builder.GetContentRoot()
 						.Empty()
 						.AppendChild(new CanvasNode("Admin/Template/SinglePage"));
