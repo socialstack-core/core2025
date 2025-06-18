@@ -493,12 +493,9 @@ namespace Api.DatabaseMongoDB
 
 					var fields = typeof(T).GetFields(
 						BindingFlags.Public | 
-						BindingFlags.NonPublic | 
 						BindingFlags.Instance | 
 						BindingFlags.DeclaredOnly
 					)
-					// Omit property backing fields etc.
-					.Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false))
 					.ToArray();
 
 					foreach (var field in fields)
