@@ -70,10 +70,7 @@ public partial class VirtualFieldValueGenerator<T, ID>
 	/// For example, if GetValue outputs only strings, this is typeof(string).
 	/// </summary>
 	/// <returns></returns>
-	public virtual Type GetOutputType()
-	{
-		return typeof(object);
-	}
+	public virtual Type OutputType => typeof(object);
 
 }
 

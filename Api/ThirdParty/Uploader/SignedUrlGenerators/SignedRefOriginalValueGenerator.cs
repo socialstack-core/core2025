@@ -53,15 +53,12 @@ public partial class SignedRefOriginalValueGenerator<T, ID> : VirtualFieldValueG
 		writer.WriteEscaped(signedUrl);
 		return new ValueTask();
 	}
-	
+
 	/// <summary>
 	/// The type, if any, associated with the value being outputted.
 	/// For example, if GetValue outputs only strings, this is typeof(string).
 	/// </summary>
 	/// <returns></returns>
-	public override Type GetOutputType()
-	{
-		return typeof(string);
-	}
+	public override Type OutputType => typeof(string);
 
 }

@@ -1420,6 +1420,23 @@ namespace Api.Startup {
 		}
 
 		/// <summary>
+		/// Reflection based mechanism to get the return type of a ValueGenerator (functional include).
+		/// </summary>
+		/// <returns></returns>
+		public Type GetValueGeneratorOutputType()
+		{
+			if (ValueGeneratorType == null)
+			{
+				throw new Exception("Not a functional include field!");
+			}
+
+			// Role is used as a common concrete type:
+			var concreteType = ValueGeneratorType.MakeGenericType(typeof(Api.Permissions.Role), typeof(uint));
+			var fieldGen = Activator.CreateInstance(concreteType) as VirtualFieldValueGenerator<Api.Permissions.Role, uint>;
+			return fieldGen.OutputType;
+		}
+
+		/// <summary>
 		/// Usually a one-off to establish if this ListAs field is implicit for the given source type.
 		/// </summary>
 		/// <param name="type"></param>

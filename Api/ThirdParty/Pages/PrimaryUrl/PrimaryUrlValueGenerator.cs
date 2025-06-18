@@ -47,9 +47,5 @@ public partial class PrimaryUrlValueGenerator<T, ID> : VirtualFieldValueGenerato
 	/// For example, if GetValue outputs only strings, this is typeof(string).
 	/// </summary>
 	/// <returns></returns>
-	public override Type GetOutputType()
-	{
-		return typeof(string);
-	}
-
+	public override Type OutputType => typeof(string);
 }
