@@ -14,3 +14,26 @@ https://getbootstrap.com/docs/5.0/layout/breakpoints/#min-width
 	}
 }
 */
+
+.product-category-tree {
+    .view-toggle {
+        margin: 20px;
+        width: fit-content;
+        display: inline-block;
+    }
+    .admin-page__internal .table {
+        margin:10px;
+        max-width: calc(100% - 40px);
+        
+        tbody {
+            
+            img {
+                max-height:100px;
+            }
+        }
+    }
+    .product-search {
+        display: inline-block;
+        width: calc(100% - 150px);
+    }
+}
