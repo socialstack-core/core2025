@@ -50,7 +50,16 @@ namespace Api.Payments
 
 			// Example admin page install:
 			InstallAdminPages("Product Attributes", "fa:fa-tags", ["id", "name"]);
-
+			
+			Events.Role.AfterUpdate.AddEventListener(OnRoleMutate);
+			Events.Role.AfterCreate.AddEventListener(OnRoleMutate);
+			
+			Events.Role.AfterDelete.AddEventListener((ctx, role) =>
+			{
+				_canEditAttribute.Remove(role);
+				return ValueTask.FromResult(role);
+			});
+			
 			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 			{
 				if (builder.ContentType == typeof(ProductAttribute) && builder.PageType == CommonPageType.AdminList)
@@ -574,6 +583,20 @@ namespace Api.Payments
 		{
 			_attributeTree = null;
 			return ValueTask.FromResult(category);
+		}
+
+		private ValueTask<Role> OnRoleMutate(Context ctx, Role role)
+		{
+			var capability = Capabilities.GetAllCurrent().FirstOrDefault(cap => cap.Name == "productattribute_update");
+
+			if (capability is null)
+			{
+				throw new PublicException("Cannot find correct capability", "product-attribute/capability");
+			}
+			
+			_canEditAttribute[role] = role.IsGranted(capability, new Context(1, 1, role.Id), new (), false);
+			
+			return ValueTask.FromResult(role);
 		}
 
 		/// <summary>
