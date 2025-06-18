@@ -39,7 +39,7 @@ public partial class WebSecurityService : AutoService
 			await CheckCertificate(context);
 			return obj;
 
-		});
+		}, 60); // 60 here defers it until after the webserver start occurs (at priority 50)
 
 	}
 

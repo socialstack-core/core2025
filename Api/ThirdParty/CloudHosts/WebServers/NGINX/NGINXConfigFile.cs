@@ -71,7 +71,7 @@ public partial class NGINXConfigFile : NGINXContext
     /// </summary>
     public void SetupDefaults(string nginxConfigPath, Dictionary<string, DomainCertificateLocales> certInfo = null)
     {
-        var fileRootPath = Path.GetFullPath("");
+        var fileRootPath = Directory.GetCurrentDirectory();
 
         // TODO: Does not handle www and root domain redirects yet.
         // What that means: Check the server's configured domains. If one of them is a subdomain of another, then we have a root domain redirect requirement.
