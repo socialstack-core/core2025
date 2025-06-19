@@ -4,10 +4,12 @@ import { useRouter } from 'UI/Router';
 import productCategoryApi from 'Api/ProductCategory';
 import {useEffect, useState} from "react";
 import Input from "UI/Input";
-import searchApi, {ProductSearchResult} from "Api/ProductSearchController";
+import searchApi from "Api/ProductSearchController";
 import Image from "UI/Image";
 import {useSession} from "UI/Session";
 import Loading from "UI/Loading";
+import {Product} from "Api/Product";
+import {ApiList} from "UI/Functions/WebRequest";
 
 export type ProductCategoryTreeProps = {
 	noCreate: boolean
@@ -20,22 +22,17 @@ export default function ProductCategoryTree(props: ProductCategoryTreeProps) {
 	const [viewType, setViewType] = useState<PageViewType>('tree');
 	const [originalViewType, setOriginalViewType] = useState<PageViewType | undefined>('tree');
 	
-	const session = useSession();
-	
-	const { locale } = session.session;
-	
 	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [pageOffset, setPageOffset] = useState<number>(0);
 	const [loading, setLoading] = useState<boolean>(false);
 	
-	const [searchResults, setSearchResults] = useState<ProductSearchResult | undefined>();
+	const [searchResults, setSearchResults] = useState<ApiList<Product> | undefined>();
 	
 	const addProductUrl = '/en-admin/product/add';
 	const addCategoryUrl = '/en-admin/productcategory/add';
 	const { pageState } = useRouter();
 	const { query } = pageState;
 	const path = query?.get("path") || "";
-	const localeCode = locale?.code ?? 'en';
 
 	
 	const breadcrumbs = buildBreadcrumbs(
@@ -120,7 +117,7 @@ export default function ProductCategoryTree(props: ProductCategoryTreeProps) {
 										</tr>
 									</thead>
 									<tbody>
-									{searchResults?.products?.map((product, idx) => {
+									{searchResults?.results?.map((product, idx) => {
 										
 										return (
 											<tr>
@@ -128,7 +125,7 @@ export default function ProductCategoryTree(props: ProductCategoryTreeProps) {
 												<td>
 													{product.featureRef ? <Image fileRef={product.featureRef}/> : `No image available`}
 												</td>
-												<td>{product.name.values[localeCode]}</td>
+												<td>{product.name}</td>
 												<td>{product.sku}</td>
 												<td> - </td>
 											</tr>
