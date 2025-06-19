@@ -65,7 +65,6 @@ namespace Api.TypeScript.Objects
                     // import instead
                     _requiredImports.Add(type);
                     method.RequiresIncludes = true;;
-                    container.Import(type.Name + "Includes", includes);
                     container.Import("ApiIncludes", includes);
                 }
                 else
@@ -157,15 +156,8 @@ namespace Api.TypeScript.Objects
                     }
 
                     type ??= method.TrueReturnType;
-
-                    if (TypeScriptService.IsEntityType(type))
-                    {
-                        builder.Append($"includes?: {type.Name}Includes[]");
-                    }
-                    else
-                    {
-                        builder.Append($"includes?: ApiIncludes[]");
-                    }
+                    
+                    builder.Append($"includes?: ApiIncludes[]");
                     
                 }
 

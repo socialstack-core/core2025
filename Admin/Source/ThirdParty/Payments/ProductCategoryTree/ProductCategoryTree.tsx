@@ -10,6 +10,7 @@ import {useSession} from "UI/Session";
 import Loading from "UI/Loading";
 import {Product} from "Api/Product";
 import {ApiList} from "UI/Functions/WebRequest";
+import {ProductAttributeIncludes, ProductIncludes} from "Api/Includes";
 
 export type ProductCategoryTreeProps = {
 	noCreate: boolean
@@ -62,7 +63,10 @@ export default function ProductCategoryTree(props: ProductCategoryTreeProps) {
 		searchApi.faceted({
 			query: searchQuery,
 			pageOffset: pageOffset as uint,
-		})
+		}, [
+			new ProductIncludes().attributes.attribute,
+			new ProductIncludes().attributes.attribute.attributeGroup
+		])
 		.then(response => {
 			setSearchResults(response);
 			setLoading(false);
