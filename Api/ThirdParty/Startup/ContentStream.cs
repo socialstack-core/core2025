@@ -80,11 +80,27 @@ public class SecondaryContentStreamSource
 	/// <param name="stream"></param>
 	/// <param name="includes"></param>
 	/// <returns></returns>
-	public async ValueTask ToJson(Context context, Writer writer, Stream stream, string includes)
+	public async ValueTask ToJson(Context context, Writer writer, Stream stream, IncludeSet includes)
 	{
 		writer.WriteASCII("{\"results\":[");
 
 		var serializer = await GetSerializer(context);
+
+		InclusionNode includeNode = null;
+		IDCollector firstCollector = null;
+
+		if (includes != null)
+		{
+			includeNode = includes.GetSecondaryNode(SourceName);
+
+			if (includeNode != null)
+			{
+				firstCollector = includeNode.GetCollectors();
+
+				// Functional includes are not supported on the first layer of
+				// secondary sets as they can be non-content types.
+			}
+		}
 
 		await GetResults(context, (Context ctx, object result, int index, object a, object b) => {
 
@@ -103,6 +119,16 @@ public class SecondaryContentStreamSource
 			else
 			{
 				serializer.WriteJsonUnclosedObject(result, wr, ctx, false);
+
+				// Collect IDs from it:
+				var current = firstCollector;
+
+				while (current != null)
+				{
+					current.WriteAndCollect(context, writer, result);
+					current = current.NextCollector;
+				}
+
 				wr.Write((byte)'}');
 			}
 
@@ -115,8 +141,15 @@ public class SecondaryContentStreamSource
 			writer.Reset(null);
 		}
 
-		writer.WriteASCII("],\"includes\":[]");
-		writer.Write((byte)'}');
+		writer.WriteASCII("],\"includes\":[");
+
+		if (includeNode != null)
+		{
+			// Execute all inclusions (internally releases the collectors):
+			await includeNode.ExecuteIncludes(context, stream, writer, firstCollector);
+		}
+
+		writer.WriteASCII("]}");
 	}
 
 }
@@ -252,11 +285,13 @@ public struct ContentStream<T, ID>
 		}
 
 		bool hasSecondary = false;
+		IncludeSet includeSet = null;
 		bool firstSecondary = true;
 
 		if (currentSecondarySource != null)
 		{
 			hasSecondary = true;
+			includeSet = ServiceForType.GetContentFields().GetIncludeSet(includes);
 			writer.WriteASCII(",\"secondary\":{");
 		}
 
@@ -273,7 +308,7 @@ public struct ContentStream<T, ID>
 			writer.WriteEscaped(currentSecondarySource.SourceName);
 			writer.Write((byte)':');
 
-			await currentSecondarySource.ToJson(context, writer, stream, includes);
+			await currentSecondarySource.ToJson(context, writer, stream, includeSet);
 
 			// Keep asking the original for its next source if there are more.
 			currentSecondarySource = src.GetNextSource();

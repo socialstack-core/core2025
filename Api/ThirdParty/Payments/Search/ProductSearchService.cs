@@ -27,7 +27,7 @@ public class ProductSearchFacets
 /// A facet value for a specific product category.
 /// </summary>
 [HasVirtualField("category", typeof(ProductCategory), "ProductCategoryId")]
-public struct ProductCategoryFacet
+public class ProductCategoryFacet
 {
 	/// <summary>
 	/// The number of times this particular value appeared.
@@ -44,7 +44,7 @@ public struct ProductCategoryFacet
 /// A facet value for a specific product attribute.
 /// </summary>
 [HasVirtualField("value", typeof(ProductAttributeValue), "AttributeValueId")]
-public struct AttributeValueFacet
+public class AttributeValueFacet
 {
 	/// <summary>
 	/// The number of times this particular value appeared.

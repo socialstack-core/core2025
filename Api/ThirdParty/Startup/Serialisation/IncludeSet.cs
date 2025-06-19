@@ -5,6 +5,7 @@ using Api.SocketServerLibrary;
 using Google.Protobuf.Collections;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -63,6 +64,35 @@ namespace Api.Startup
 			// Bake the root:
 			int outputIndex = -1;
 			RootInclude.Bake(ref outputIndex);
+
+			if (RootInclude.SecondaryRoot != null)
+			{
+				var secondary = RootInclude.SecondaryRoot;
+
+				foreach (var kvp in secondary.UniqueChildNodes)
+				{
+					outputIndex = -1;
+					kvp.Value.Bake(ref outputIndex);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets the root inclusion node for a secondary set by its lowercase name.
+		/// </summary>
+		/// <param name="lcName"></param>
+		/// <returns></returns>
+		public InclusionNode GetSecondaryNode(string lcName)
+		{
+			var secondary = RootInclude.SecondaryRoot;
+
+			if (secondary == null)
+			{
+				return null;
+			}
+
+			secondary.UniqueChildNodes.TryGetValue(lcName, out InclusionNode node);
+			return node;
 		}
 
 		/// <summary>
@@ -92,6 +122,21 @@ namespace Api.Startup
 
 				// Trim the part:
 				currentName = currentName.Trim();
+
+				if (current.IsSecondaryRoot && current.RelativeTo != null)
+				{
+					// Only one valid source for currentName.
+
+					if (
+						!current.RelativeTo.SecondaryResultNameMap.TryGetValue(currentName, out ContentField secondaryField))
+					{
+						throw new PublicException("Your request tried to use '" + currentName + "' in include '" + rootRelativeFieldName + "' but it doesn't exist", "include_no_exist");
+					}
+
+					// Add field:
+					current = current.Add(secondaryField, rootRelativeFieldName);
+					continue;
+				}
 
 				if (current.TypeSource != null)
 				{
@@ -135,6 +180,12 @@ namespace Api.Startup
 						{
 							current.Add(field, rootRelativeFieldName);
 						}
+
+						if (!current.RelativeTo.IsContentType)
+						{
+							// ListAs fields are not present on non-content types (because Mappings doesn't exist).
+							break;
+						}
 					}
 
 					// Add every ListAs field except for the explicit ones where this is not an implicit type.
@@ -160,7 +211,15 @@ namespace Api.Startup
 				}
 
 				// Is it a global field?
-				if (ContentFields.GlobalVirtualFields.TryGetValue(currentName, out ContentField globalField))
+				var globalPermitted = true;
+
+				if (current.RelativeTo != null && !current.RelativeTo.IsContentType)
+				{
+					// Non-content types do not support Mappings and thus cannot use these global list fields.
+					globalPermitted = false;
+				}
+
+				if (globalPermitted && ContentFields.GlobalVirtualFields.TryGetValue(currentName, out ContentField globalField))
 				{
 					// Yes! it's a global - these ones are available on all types. They're usually lists, like tags or categories.
 					// Service and type are required for these.
@@ -168,7 +227,14 @@ namespace Api.Startup
 					continue;
 				}
 
-				// It must be a local field, otherwise it doesn't exist:
+				// How about the special 'secondary' sub-root node?
+				if (i == 0 && currentName == "secondary" && current.RelativeTo != null)
+				{
+					current = current.AddSecondary();
+					continue;
+				}
+
+				// It must be a local virtual field, otherwise it doesn't exist:
 				if (
 					current.RelativeTo == null || 
 					!current.RelativeTo.LocalVirtualNameMap.TryGetValue(currentName, out ContentField localField))
@@ -229,6 +295,25 @@ namespace Api.Startup
 	/// </summary>
 	public class InclusionNode
 	{
+		/// <summary>
+		/// ,"includes":[ 
+		/// </summary>
+		private static readonly byte[] IncludesHeader = new byte[] {
+		(byte)',', (byte)'"', (byte)'i', (byte)'n', (byte)'c', (byte)'l', (byte)'u', (byte)'d', (byte)'e', (byte)'s', (byte)'"', (byte)':', (byte)'['
+	};
+
+		private static readonly byte[] IncludesFooter = new byte[] { (byte)']', (byte)'}' };
+
+		/// <summary>
+		/// End of include block. ]}.
+		/// </summary>
+		private static readonly byte[] IncludesValueFooter = new byte[] { (byte)']', (byte)'}' };
+
+		/// <summary>
+		/// End of dynamic include block. }}.
+		/// </summary>
+		private static readonly byte[] IncludesDynamicValueFooter = new byte[] { (byte)'}', (byte)'}' };
+
 		/// <summary>
 		/// The field that sources data for this inclusion node.
 		/// </summary>
@@ -318,6 +403,11 @@ namespace Api.Startup
 		public InclusionNode Parent;
 
 		/// <summary>
+		/// The secondary result set root if there is one.
+		/// </summary>
+		public InclusionNode SecondaryRoot;
+
+		/// <summary>
 		/// The index of this inclusion in the output inclusion array.
 		/// </summary>
 		public int InclusionOutputIndex = -1;
@@ -328,14 +418,167 @@ namespace Api.Startup
 		public ContentField MappingTargetField;
 
 		/// <summary>
+		/// True if this node is the secondary result set root. Only secondary result sets are valid includes on it.
+		/// </summary>
+		public bool IsSecondaryRoot;
+
+		/// <summary>
 		/// Create a new node
 		/// </summary>
 		/// <param name="relativeTo"></param>
 		/// <param name="parent"></param>
-		public InclusionNode(ContentFields relativeTo, InclusionNode parent)
+		/// <param name="isSecondaryRoot"></param>
+		public InclusionNode(ContentFields relativeTo, InclusionNode parent, bool isSecondaryRoot = false)
 		{
 			RelativeTo = relativeTo;
 			Parent = parent;
+			IsSecondaryRoot = isSecondaryRoot;
+		}
+
+		/// <summary>
+		/// Used to execute includes.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="targetStream"></param>
+		/// <param name="writer"></param>
+		/// <param name="firstCollector"></param>
+		/// <returns></returns>
+		public async ValueTask ExecuteIncludes(Context context, Stream targetStream, Writer writer, IDCollector firstCollector)
+		{
+			// Now all IDs that are needed have been collected,
+			// go through the inclusions and perform the include.
+			var includesToExecute = ChildNodes;
+
+			for (var i = 0; i < includesToExecute.Length; i++)
+			{
+				var toExecute = includesToExecute[i];
+
+				if (toExecute.InclusionOutputIndex != 0)
+				{
+					// Comma between includes. Exists for all nodes except the very first include (output index 0).
+					writer.Write((byte)',');
+				}
+
+				// Write the inclusion node header:
+				var h = toExecute.IncludeHeader;
+				writer.Write(h, 0, h.Length);
+
+				// Get ID collector:
+				var collector = firstCollector;
+				var curIndex = 0;
+
+				// A linked list is by far the best structure here - the set is usually tiny and it avoids allocating.
+				while (curIndex < toExecute.CollectorIndex)
+				{
+					curIndex++;
+					collector = collector.NextCollector;
+				}
+
+				// Spawn child collectors now, if we need any.
+				var childCollectors = toExecute.GetCollectors();
+
+				if (toExecute.TypeSource != null)
+				{
+					// The collector in this case is a MultiIdCollector.
+					// Ask each service in it (which can be none) to output a JSON list.
+					var multiCollector = collector as MultiIdCollector;
+
+					if (multiCollector != null)
+					{
+						for (var n = 0; n < multiCollector.CollectorFill; n++)
+						{
+							var cbt = multiCollector.CollectorsByType[n];
+							if (n == 0)
+							{
+								writer.Write((byte)'\"');
+							}
+							else
+							{
+								writer.WriteASCII(",\"");
+							}
+							writer.WriteASCII(cbt.Service.EntityName);
+
+							writer.WriteASCII("\":{\"results\":[");
+
+							// Load the sub-include set:
+							if (toExecute.DynamicChildIncludes != null)
+							{
+								var childIncludeSet = cbt.Service.GetContentFields().GetIncludeSet(toExecute.DynamicChildIncludes);
+
+								if (childIncludeSet != null)
+								{
+									// We've got some includes to add.
+
+									// First we need to obtain ID collectors, and then collect the IDs.
+									var childRoot = childIncludeSet.RootInclude;
+
+									var firstChildCollector = childRoot.GetCollectors();
+
+									await cbt.Service.OutputJsonList(
+										context,
+										firstChildCollector,
+										cbt.Collector,
+										writer, true,
+										childIncludeSet.RootInclude.FunctionalIncludes
+									);
+
+									writer.Write((byte)']');
+									// Write the includes header, then write out the data so far.
+									writer.Write(IncludesHeader, 0, 13);
+
+									if (childRoot.ChildNodes != null && childRoot.ChildNodes.Length > 0)
+									{
+										// NB: This will release the child collectors for us.
+										await childRoot.ExecuteIncludes(context, targetStream, writer, firstChildCollector);
+									}
+
+									writer.Write(IncludesFooter, 0, 2);
+								}
+								else
+								{
+									await cbt.Service.OutputJsonList(context, null, cbt.Collector, writer, true, null);
+									writer.Write(IncludesValueFooter, 0, 2);
+								}
+							}
+							else
+							{
+								await cbt.Service.OutputJsonList(context, null, cbt.Collector, writer, true, null);
+								writer.Write(IncludesValueFooter, 0, 2);
+							}
+						}
+					}
+
+					// End of this include.
+					writer.Write(IncludesDynamicValueFooter, 0, 2);
+
+				}
+				else
+				{
+					// Directly use IDs in collector with the service.
+					await toExecute.Service.OutputJsonList(context, childCollectors, collector, writer, true, toExecute.FunctionalIncludes);
+
+					// End of this include.
+					writer.Write(IncludesValueFooter, 0, 2);
+				}
+
+				// Did it have any child nodes? If so, execute those as well.
+				// Above we will have collected the IDs that the children need.
+				if (toExecute.ChildNodes != null && toExecute.ChildNodes.Length > 0)
+				{
+					// NB: This will release the child collectors for us.
+					await toExecute.ExecuteIncludes(context, targetStream, writer, childCollectors);
+				}
+			}
+
+			// Release the collectors:
+			var current = firstCollector;
+
+			while (current != null)
+			{
+				var next = current.NextCollector;
+				current.Release();
+				current = next;
+			}
 		}
 
 		/// <summary>
@@ -389,6 +632,23 @@ namespace Api.Startup
 		}
 
 		/// <summary>
+		/// Adds the secondary root node set.
+		/// </summary>
+		/// <returns></returns>
+		public InclusionNode AddSecondary()
+		{
+			if (UniqueChildNodes == null)
+			{
+				throw new System.Exception("Can't add to an include set after it has been baked.");
+			}
+
+			var result = new InclusionNode(RelativeTo, this, true);
+			result.IncludeName = "secondary";
+			SecondaryRoot = result;
+			return result;
+		}
+
+		/// <summary>
 		/// Add to tree
 		/// </summary>
 		/// <param name="field"></param>
@@ -398,6 +658,38 @@ namespace Api.Startup
 			if (UniqueChildNodes == null)
 			{
 				throw new System.Exception("Can't add to an include set after it has been baked.");
+			}
+
+			if (field.SecondaryInfo != null)
+			{
+				// This is a secondary result set. It is not necessarily even a content type.
+
+				var secName = field.SecondaryInfo.FieldName;
+
+				if (UniqueChildNodes.TryGetValue(secName, out InclusionNode secResult))
+				{
+					return secResult;
+				}
+
+				var camelCaseName = Char.ToLowerInvariant(secName[0]) + secName.Substring(1);
+
+				if (field.SecondaryInfo.Service != null)
+				{
+					// Regular include node from here.
+					secResult = new InclusionNode(field.SecondaryInfo.Service.GetContentFields(), this);
+					secResult.Service = field.SecondaryInfo.Service;
+				}
+				else
+				{
+					// Non-content type secondary result set. It only has local includes, nothing else.
+					var cf = new ContentFields(field.SecondaryInfo.Type, false);
+					secResult = new InclusionNode(cf, this);
+				}
+
+				secResult.HostField = field;
+				secResult.IncludeName = includeName;
+				UniqueChildNodes[secName] = secResult;
+				return secResult;
 			}
 
 			var name = field.VirtualInfo.FieldName;
@@ -488,8 +780,8 @@ namespace Api.Startup
 
 			if (HostField != null)
 			{
-				var listAs = HostField.VirtualInfo.FieldName;
-				FieldName = char.ToLower(listAs[0]) + listAs.Substring(1);
+				var fieldName = HostField.VirtualInfo != null ? HostField.VirtualInfo.FieldName : HostField.SecondaryInfo.FieldName;
+				FieldName = char.ToLower(fieldName[0]) + fieldName.Substring(1);
 				SetHeader(IncludeName, FieldName);
 			}
 

@@ -333,7 +333,7 @@ public partial class AutoService<T, ID>
 			}
 
 			// Execute all inclusions (internally releases the collectors):
-			await ExecuteIncludes(context, targetStream, writer, firstCollector, includeSet.RootInclude);
+			await includeSet.RootInclude.ExecuteIncludes(context, targetStream, writer, firstCollector);
 
 			if (leaveOpen)
 			{
@@ -525,7 +525,7 @@ public partial class AutoService<T, ID>
 
 			if (firstCollector != null)
 			{
-				await ExecuteIncludes(context, targetStream, writer, firstCollector, includeSet.RootInclude);
+				await includeSet.RootInclude.ExecuteIncludes(context, targetStream, writer, firstCollector);
 			}
 
 			if (addResultWrap)
@@ -543,153 +543,6 @@ public partial class AutoService<T, ID>
 				await writer.CopyToAsync(targetStream);
 				writer.Reset(null);
 			}
-		}
-	}
-
-	/// <summary>
-	/// Used to execute includes.
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="targetStream"></param>
-	/// <param name="writer"></param>
-	/// <param name="firstCollector"></param>
-	/// <param name="includeNode"></param>
-	/// <returns></returns>
-	public async ValueTask ExecuteIncludes(Context context, Stream targetStream, Writer writer, IDCollector firstCollector, InclusionNode includeNode)
-	{
-		// Now all IDs that are needed have been collected,
-		// go through the inclusions and perform the include.
-		var includesToExecute = includeNode.ChildNodes;
-
-		for (var i = 0; i < includesToExecute.Length; i++)
-		{
-			var toExecute = includesToExecute[i];
-
-			if (toExecute.InclusionOutputIndex != 0)
-			{
-				// Comma between includes. Exists for all nodes except the very first include (output index 0).
-				writer.Write((byte)',');
-			}
-
-			// Write the inclusion node header:
-			var h = toExecute.IncludeHeader;
-			writer.Write(h, 0, h.Length);
-
-			// Get ID collector:
-			var collector = firstCollector;
-			var curIndex = 0;
-
-			// A linked list is by far the best structure here - the set is usually tiny and it avoids allocating.
-			while (curIndex < toExecute.CollectorIndex)
-			{
-				curIndex++;
-				collector = collector.NextCollector;
-			}
-
-			// Spawn child collectors now, if we need any.
-			var childCollectors = toExecute.GetCollectors();
-
-			if (toExecute.TypeSource != null)
-			{
-				// The collector in this case is a MultiIdCollector.
-				// Ask each service in it (which can be none) to output a JSON list.
-				var multiCollector = collector as MultiIdCollector;
-
-				if (multiCollector != null)
-				{
-					for (var n = 0; n < multiCollector.CollectorFill; n++)
-					{
-						var cbt = multiCollector.CollectorsByType[n];
-						if (n == 0)
-						{
-							writer.Write((byte)'\"');
-						}
-						else
-						{
-							writer.WriteASCII(",\"");
-						}
-						writer.WriteASCII(cbt.Service.EntityName);
-
-						writer.WriteASCII("\":{\"results\":[");
-
-						// Load the sub-include set:
-						if (toExecute.DynamicChildIncludes != null)
-						{
-							var childIncludeSet = cbt.Service.GetContentFields().GetIncludeSet(toExecute.DynamicChildIncludes);
-
-							if (childIncludeSet != null)
-							{
-								// We've got some includes to add.
-
-								// First we need to obtain ID collectors, and then collect the IDs.
-								var childRoot = childIncludeSet.RootInclude;
-
-								var firstChildCollector = childRoot.GetCollectors();
-
-								await cbt.Service.OutputJsonList(
-									context,
-									firstChildCollector,
-									cbt.Collector,
-									writer, true,
-									childIncludeSet.RootInclude.FunctionalIncludes
-								);
-
-								writer.Write((byte)']');
-								// Write the includes header, then write out the data so far.
-								writer.Write(IncludesHeader, 0, 13);
-
-								if (childRoot.ChildNodes != null && childRoot.ChildNodes.Length > 0)
-								{
-									// NB: This will release the child collectors for us.
-									await ExecuteIncludes(context, targetStream, writer, firstChildCollector, childRoot);
-								}
-
-								writer.Write(IncludesFooter, 0, 2);
-							}
-							else
-							{
-								await cbt.Service.OutputJsonList(context, null, cbt.Collector, writer, true, null);
-								writer.Write(IncludesValueFooter, 0, 2);
-							}
-						}
-						else
-						{
-							await cbt.Service.OutputJsonList(context, null, cbt.Collector, writer, true, null);
-							writer.Write(IncludesValueFooter, 0, 2);
-						}
-					}   
-				}
-				
-				// End of this include.
-				writer.Write(IncludesDynamicValueFooter, 0, 2);
-
-			}
-			else
-			{
-				// Directly use IDs in collector with the service.
-				await toExecute.Service.OutputJsonList(context, childCollectors, collector, writer, true, toExecute.FunctionalIncludes);
-
-				// End of this include.
-				writer.Write(IncludesValueFooter, 0, 2);
-			}
-
-			// Did it have any child nodes? If so, execute those as well.
-			// Above we will have collected the IDs that the children need.
-			if (toExecute.ChildNodes != null && toExecute.ChildNodes.Length > 0)
-			{
-				// NB: This will release the child collectors for us.
-				await ExecuteIncludes(context, targetStream, writer, childCollectors, toExecute);
-			}
-		}
-
-		// Release the collectors:
-		var current = firstCollector;
-
-		while (current != null)
-		{
-			var next = current.NextCollector;
-			current.Release();
-			current = next;
 		}
 	}
 

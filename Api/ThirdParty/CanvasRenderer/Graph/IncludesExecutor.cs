@@ -139,7 +139,7 @@ public class IncludesExecutor<T, ID>
 			// Collect all IDs:
 			if (firstCollector != null)
 			{
-				await _svc.ExecuteIncludes(context, null, writer, firstCollector, includeSet.RootInclude);
+				await includeSet.RootInclude.ExecuteIncludes(context, null, writer, firstCollector);
 			}
 
 			writer.Write(IncludesFooter, 0, 2);

@@ -55,7 +55,7 @@ namespace Api.Startup
 		/// <param name="ctx"></param>
 		/// <param name="writer"></param>
 		/// <param name="c"></param>
-		public virtual void WriteAndCollect(Context ctx, Writer writer, Content c)
+		public virtual void WriteAndCollect(Context ctx, Writer writer, object c)
 		{
 			
 		}
@@ -102,7 +102,7 @@ namespace Api.Startup
 		/// <param name="ctx"></param>
 		/// <param name="writer"></param>
 		/// <param name="c"></param>
-		public override void WriteAndCollect(Context ctx, Writer writer, Content c)
+		public override void WriteAndCollect(Context ctx, Writer writer, object c)
 		{
 			#warning generic includes is currently unsupported
 			throw new NotSupportedException("MultiId collectors are currently WIP");
@@ -306,10 +306,10 @@ namespace Api.Startup
 		public IDBlock Last;
 
 		/// <summary>
-		/// The underlying delegate which collects from the given content in to this collector from a specific field.
+		/// The underlying delegate which collects from the given entity in to this collector from a specific field.
 		/// Only present on IDCollectors which were rented for a specific field.
 		/// </summary>
-		public Action<IDCollector, Writer, Content, Context> OnCollect;
+		public Action<IDCollector, Writer, object, Context> OnCollect;
 
 		/// <summary>
 		/// ,"fieldName": - used when collecting for a specific includes field.
@@ -351,7 +351,7 @@ namespace Api.Startup
 		/// <param name="ctx"></param>
 		/// <param name="writer"></param>
 		/// <param name="c"></param>
-		public override void WriteAndCollect(Context ctx, Writer writer, Content c)
+		public override void WriteAndCollect(Context ctx, Writer writer, object c)
 		{
 			writer.WriteASCII(JsonFieldHeading);
 			OnCollect(this, writer, c, ctx);

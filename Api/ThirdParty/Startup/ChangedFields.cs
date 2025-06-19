@@ -238,6 +238,12 @@ namespace Api.Startup {
 		/// The AutoService that this map is for.
 		/// </summary>
 		public AutoService Service;
+		
+		/// <summary>
+		/// True if this is a content type. Non-content types are more 
+		/// restricted as they are unable to support e.g. global includes.
+		/// </summary>
+		public bool IsContentType;
 
 		/// <summary>
 		/// The type that this map is for.
@@ -311,6 +317,7 @@ namespace Api.Startup {
 		public ContentFields(AutoService service)
 		{
 			Service = service;
+			IsContentType = true;
 			InstanceType = service.InstanceType;
 			BuildMap();
 		}
@@ -319,9 +326,10 @@ namespace Api.Startup {
 		/// Creates a map for the given type.
 		/// Use aService.GetChangeField(..); rather than this directly.
 		/// </summary>
-		public ContentFields(Type instanceType)
+		public ContentFields(Type instanceType, bool isContentType = true)
 		{
 			InstanceType = instanceType;
+			IsContentType = isContentType;
 			BuildMap();
 		}
 
@@ -384,6 +392,11 @@ namespace Api.Startup {
 		private List<ContentField> _vList;
 		
 		/// <summary>
+		/// Raw secondary result list.
+		/// </summary>
+		private List<ContentField> _secondaryResultList;
+		
+		/// <summary>
 		/// The underlying mapping.
 		/// </summary>
 		private Dictionary<string, ContentField> _nameMap;
@@ -397,6 +410,11 @@ namespace Api.Startup {
 		/// The underlying mapping.
 		/// </summary>
 		private Dictionary<string, ContentField> _vNameMap;
+		
+		/// <summary>
+		/// A lowercase name mapping for secondary results.
+		/// </summary>
+		private Dictionary<string, ContentField> _secondaryResultNameMap;
 
 		/// <summary>
 		/// Raw field list.
@@ -437,6 +455,17 @@ namespace Api.Startup {
 			get
 			{
 				return _vNameMap;
+			}
+		}
+		
+		/// <summary>
+		/// Secondary result set name mapped to entry on this type only, lowercase.
+		/// </summary>
+		public Dictionary<string, ContentField> SecondaryResultNameMap
+		{
+			get
+			{
+				return _secondaryResultNameMap;
 			}
 		}
 
@@ -541,212 +570,27 @@ namespace Api.Startup {
 			return null;
 		}
 
-		private void BuildMap()
+		/// <summary>
+		/// Creates this field set as only its virtual field set. Global virtual fields are not supported on it.
+		/// </summary>
+		public void BuildVirtualsOnly()
 		{
-			if (InstanceType == null)
-			{
-				// There is no type.
-				return;
-			}
-
-			// Start collecting db indices:
-			_indexSet = new List<DatabaseIndexInfo>();
-
-			// Build attribute set:
-			TypeAttributes = ContentField.BuildAttributes(InstanceType);
-
-			// Add global listAs attribs, if there is any:
-			var listAsSet = GetTypeAttributes<ListAsAttribute>();
-
-			// Get the implicit types, if there are any:
-			var implicitSet = GetTypeAttributes<ImplicitForAttribute>();
-
-			List<ContentField> listAsFields = null;
-
-			if (listAsSet != null)
-			{
-				ListAsAttribute primary = null;
-
-				foreach (var listAs in listAsSet)
-				{
-					List<Type> implicitTypes = null;
-
-					foreach(var implicitAttrib in implicitSet)
-					{
-						if (implicitAttrib.ListAsName == listAs.FieldName)
-						{
-							if (implicitTypes == null)
-							{
-								implicitTypes = new List<Type>();
-							}
-
-							implicitTypes.Add(implicitAttrib.Type);
-						}
-					}
-
-					if (listAs.Explicit && implicitTypes == null)
-					{
-						implicitTypes = new List<Type>();
-					}
-
-					var listAsField = new ContentField(new VirtualInfo()
-					{
-						FieldName = listAs.FieldName,
-						Type = InstanceType,
-						ImplicitTypes = implicitTypes,
-						IsList = true,
-						IdSourceField = "Id"
-					});
-
-					if (listAs.IsPrimary)
-					{
-						if (primary != null)
-						{
-							throw new Exception(
-								"Multiple primary ListAs attributes specified on type '" + InstanceType.Name + 
-								"'. If a type has more than one ListAs, only one can be the primary one. " + 
-								primary.FieldName + " and " + listAs.FieldName + " are currently both set to primary. Use IsPrimary=false on one of them."
-							);
-						}
-
-						primary = listAs;
-						PrimaryMapName = listAs.FieldName;
-						PrimaryMap = listAsField;
-					}
-
-					GlobalVirtualFields[listAs.FieldName.ToLower()] = listAsField;
-
-					if (listAsFields == null)
-					{
-						listAsFields = new List<ContentField>();
-					}
-
-					listAsFields.Add(listAsField);
-				}
-			}
-
-
-
-			// Public fields:
-			var fields = InstanceType.GetFields();
-
 			_nameMap = new Dictionary<string, ContentField>();
 			_metaMap = new Dictionary<string, ContentField>();
 			_list = new List<ContentField>();
 			_vNameMap = new Dictionary<string, ContentField>();
 			_vList = new List<ContentField>();
+			_secondaryResultNameMap = new Dictionary<string, ContentField>();
+			_secondaryResultList = new List<ContentField>();
 
-			for (var i=0;i<fields.Length;i++){
-				var field = fields[i];
-				var cf = new ContentField(field);
-				_list.Add(cf);
-				cf.Id = _list.Count;
-				_nameMap[field.Name.ToLower()] = cf;
-				
-				// Get field attributes:
-				var attribs = cf.Attributes;
+			// Build attribute set:
+			TypeAttributes = ContentField.BuildAttributes(InstanceType);
 
-				if (field.FieldType.IsGenericType)
-				{
-					var typeDef = field.FieldType.GetGenericTypeDefinition();
+			BuildVirtuals();
+		}
 
-					if (typeDef == typeof(Localized<>))
-					{
-						cf.Localised = true;
-					}
-				}
-
-				foreach (var attrib in attribs)
-				{
-					if (attrib is DatabaseIndexAttribute attribute)
-					{
-						// Add db index:
-						var dbi = new DatabaseIndexInfo(attribute, new ContentField[] { cf });
-						dbi.Id = _indexSet.Count;
-						cf.AddIndex(dbi);
-						_indexSet.Add(dbi);
-					}
-
-					if (attrib is MetaAttribute)
-					{
-						_metaMap[(attrib as MetaAttribute).FieldName.ToLower()] = cf;
-					}
-				}
-			}
-
-			// Do we have a title and description meta field?
-			// If not, we'll attempt to invent them based on some common names.
-			if (!_metaMap.ContainsKey("title"))
-			{
-				var titleField = TryGetAnyOf(CommonTitleNames);
-				if (titleField != null)
-				{
-					_metaMap["title"] = titleField;
-				}
-			}
-
-			if (!_metaMap.ContainsKey("description"))
-			{
-				var descriptionField = TryGetAnyOf(CommonDescriptionNames);
-				if (descriptionField != null)
-				{
-					_metaMap["description"] = descriptionField;
-				}
-			}
-
-			// Collect any databaseIndex attributes on the type itself:
-			var attributes = TypeAttributes;
-
-			foreach (var attrib in attributes)
-			{
-				if (attrib is DatabaseIndexAttribute attribute)
-				{
-					var indexFields = attribute.Fields;
-
-					if (indexFields == null || indexFields.Length == 0)
-					{
-						throw new ArgumentException("You've got a [DatabaseIndex] on " + InstanceType.Name + " which requires fields but has none.");
-					}
-
-					var columnFields = new ContentField[indexFields.Length];
-
-					for (var i = 0; i < indexFields.Length; i++)
-					{
-						if (!_nameMap.TryGetValue(indexFields[i].ToLower(), out ContentField reffedIndexField))
-						{
-							// All the reffed fields must exist.
-							throw new ArgumentException(
-								"A [DatabaseIndex] on '" + InstanceType.Name + "' tries to use a field called '" + indexFields[i] + "' which doesn't exist. " +
-								"Note that properties can't be used in an index."
-							);
-						}
-
-						columnFields[i] = reffedIndexField;
-					}
-
-					var dbi = new DatabaseIndexInfo(attribute, columnFields);
-					dbi.Id = _indexSet.Count;
-
-					for (var i = 0; i < columnFields.Length; i++)
-					{
-						columnFields[i].AddIndex(dbi);
-					}
-
-					_indexSet.Add(dbi);
-				}
-			}
-
-			var properties = InstanceType.GetProperties();
-			
-			// Public properties (can't be localised):
-			for(var i=0;i<properties.Length;i++){
-				var property = properties[i];
-				var cf = new ContentField(property);
-				_list.Add(cf);
-				cf.Id = _list.Count;
-				_nameMap[property.Name.ToLower()] = cf;
-			}
-
+		private void BuildVirtuals()
+		{
 			// Get all the virtuals:
 			var virtualFields = GetTypeAttributes<HasVirtualFieldAttribute>();
 
@@ -861,6 +705,246 @@ namespace Api.Startup {
 				_vNameMap[vInfo.FieldName.ToLower()] = cf;
 			}
 
+		}
+
+		private void BuildMap()
+		{
+			if (InstanceType == null)
+			{
+				// There is no type.
+				return;
+			}
+
+			// Start collecting db indices:
+			_indexSet = new List<DatabaseIndexInfo>();
+
+			// Build attribute set:
+			TypeAttributes = ContentField.BuildAttributes(InstanceType);
+
+			// Add global listAs attribs, if there is any:
+			var listAsSet = GetTypeAttributes<ListAsAttribute>();
+
+			// Get the implicit types, if there are any:
+			var implicitSet = GetTypeAttributes<ImplicitForAttribute>();
+
+			List<ContentField> listAsFields = null;
+
+			if (listAsSet != null)
+			{
+				ListAsAttribute primary = null;
+
+				foreach (var listAs in listAsSet)
+				{
+					List<Type> implicitTypes = null;
+
+					foreach(var implicitAttrib in implicitSet)
+					{
+						if (implicitAttrib.ListAsName == listAs.FieldName)
+						{
+							if (implicitTypes == null)
+							{
+								implicitTypes = new List<Type>();
+							}
+
+							implicitTypes.Add(implicitAttrib.Type);
+						}
+					}
+
+					if (listAs.Explicit && implicitTypes == null)
+					{
+						implicitTypes = new List<Type>();
+					}
+
+					var listAsField = new ContentField(new VirtualInfo()
+					{
+						FieldName = listAs.FieldName,
+						Type = InstanceType,
+						ImplicitTypes = implicitTypes,
+						IsList = true,
+						IdSourceField = "Id"
+					});
+
+					if (listAs.IsPrimary)
+					{
+						if (primary != null)
+						{
+							throw new Exception(
+								"Multiple primary ListAs attributes specified on type '" + InstanceType.Name + 
+								"'. If a type has more than one ListAs, only one can be the primary one. " + 
+								primary.FieldName + " and " + listAs.FieldName + " are currently both set to primary. Use IsPrimary=false on one of them."
+							);
+						}
+
+						primary = listAs;
+						PrimaryMapName = listAs.FieldName;
+						PrimaryMap = listAsField;
+					}
+
+					GlobalVirtualFields[listAs.FieldName.ToLower()] = listAsField;
+
+					if (listAsFields == null)
+					{
+						listAsFields = new List<ContentField>();
+					}
+
+					listAsFields.Add(listAsField);
+				}
+			}
+
+			// Public fields:
+			var fields = InstanceType.GetFields();
+
+			_nameMap = new Dictionary<string, ContentField>();
+			_metaMap = new Dictionary<string, ContentField>();
+			_list = new List<ContentField>();
+			_vNameMap = new Dictionary<string, ContentField>();
+			_vList = new List<ContentField>();
+			_secondaryResultNameMap = new Dictionary<string, ContentField>();
+			_secondaryResultList = new List<ContentField>();
+
+			for (var i=0;i<fields.Length;i++){
+				var field = fields[i];
+				var cf = new ContentField(field);
+				_list.Add(cf);
+				cf.Id = _list.Count;
+				_nameMap[field.Name.ToLower()] = cf;
+				
+				// Get field attributes:
+				var attribs = cf.Attributes;
+
+				if (field.FieldType.IsGenericType)
+				{
+					var typeDef = field.FieldType.GetGenericTypeDefinition();
+
+					if (typeDef == typeof(Localized<>))
+					{
+						cf.Localised = true;
+					}
+				}
+
+				foreach (var attrib in attribs)
+				{
+					if (attrib is DatabaseIndexAttribute attribute)
+					{
+						// Add db index:
+						var dbi = new DatabaseIndexInfo(attribute, new ContentField[] { cf });
+						dbi.Id = _indexSet.Count;
+						cf.AddIndex(dbi);
+						_indexSet.Add(dbi);
+					}
+
+					if (attrib is MetaAttribute)
+					{
+						_metaMap[(attrib as MetaAttribute).FieldName.ToLower()] = cf;
+					}
+				}
+			}
+
+			// Do we have a title and description meta field?
+			// If not, we'll attempt to invent them based on some common names.
+			if (!_metaMap.ContainsKey("title"))
+			{
+				var titleField = TryGetAnyOf(CommonTitleNames);
+				if (titleField != null)
+				{
+					_metaMap["title"] = titleField;
+				}
+			}
+
+			if (!_metaMap.ContainsKey("description"))
+			{
+				var descriptionField = TryGetAnyOf(CommonDescriptionNames);
+				if (descriptionField != null)
+				{
+					_metaMap["description"] = descriptionField;
+				}
+			}
+
+			// Collect any databaseIndex attributes on the type itself:
+			var attributes = TypeAttributes;
+
+			foreach (var attrib in attributes)
+			{
+				if (attrib is DatabaseIndexAttribute attribute)
+				{
+					var indexFields = attribute.Fields;
+
+					if (indexFields == null || indexFields.Length == 0)
+					{
+						throw new ArgumentException("You've got a [DatabaseIndex] on " + InstanceType.Name + " which requires fields but has none.");
+					}
+
+					var columnFields = new ContentField[indexFields.Length];
+
+					for (var i = 0; i < indexFields.Length; i++)
+					{
+						if (!_nameMap.TryGetValue(indexFields[i].ToLower(), out ContentField reffedIndexField))
+						{
+							// All the reffed fields must exist.
+							throw new ArgumentException(
+								"A [DatabaseIndex] on '" + InstanceType.Name + "' tries to use a field called '" + indexFields[i] + "' which doesn't exist. " +
+								"Note that properties can't be used in an index."
+							);
+						}
+
+						columnFields[i] = reffedIndexField;
+					}
+
+					var dbi = new DatabaseIndexInfo(attribute, columnFields);
+					dbi.Id = _indexSet.Count;
+
+					for (var i = 0; i < columnFields.Length; i++)
+					{
+						columnFields[i].AddIndex(dbi);
+					}
+
+					_indexSet.Add(dbi);
+				}
+			}
+
+			var properties = InstanceType.GetProperties();
+			
+			// Public properties (can't be localised):
+			for(var i=0;i<properties.Length;i++){
+				var property = properties[i];
+				var cf = new ContentField(property);
+				_list.Add(cf);
+				cf.Id = _list.Count;
+				_nameMap[property.Name.ToLower()] = cf;
+			}
+
+			BuildVirtuals();
+
+			var secondaryResults = GetTypeAttributes<HasSecondaryResultAttribute>();
+
+			if (secondaryResults != null && secondaryResults.Count > 0)
+			{
+				foreach (var secondaryResult in secondaryResults)
+				{
+					var lcName = secondaryResult.FieldName.ToLower();
+
+					if (_secondaryResultNameMap.ContainsKey(lcName))
+					{
+						throw new Exception(
+							"Can't create a secondary result set called '" + secondaryResult.FieldName + "' on '" + InstanceType.Name + "' " +
+							"because it already exists. Typically the usage is [HasSecondaryField(\"pluralName\", typeof(ATypeName))]."
+						);
+					}
+
+					var secondaryInfo = new SecondaryResultInfo() {
+						FieldName = secondaryResult.FieldName,
+						Type = secondaryResult.Type,
+						Service = Services.GetByContentType(secondaryResult.Type) // Can be null - not required to be a content type at all.
+					};
+
+					var cf = new ContentField(secondaryInfo);
+
+					_secondaryResultList.Add(cf);
+					cf.Id = _vList.Count;
+					_secondaryResultNameMap[lcName] = cf;
+				}
+			}
+
 			if (listAsFields != null)
 			{
 				// Mark its meta title field.
@@ -952,6 +1036,12 @@ namespace Api.Startup {
 		/// The first virtual field that this field is used by (applies to local mappings only).
 		/// </summary>
 		public ContentField UsedByVirtual;
+
+		/// <summary>
+		/// Set if this is a secondary result set field. 
+		/// These are extremely rare and will only be encountered if you explicitly use the secondary result set map.
+		/// </summary>
+		public SecondaryResultInfo SecondaryInfo;
 
 		/// <summary>
 		/// True if this field is a Localized type
@@ -1094,7 +1184,7 @@ namespace Api.Startup {
 		/// A generated action which collects one or more IDs from this field in to the given collector, writing it/them to the given writer as a string.
 		/// The ID type is either a uint or ulong.
 		/// </summary>
-		private Action<IDCollector, Writer, Content, Context> _collect;
+		private Action<IDCollector, Writer, object, Context> _collect;
 
 		/// <summary>
 		/// Rents an ID collector from the global pool.
@@ -1114,7 +1204,7 @@ namespace Api.Startup {
 						"IdListFieldCollector",
 						typeof(void),
 						[
-							typeof(IDCollector), typeof(Writer), typeof(Content), typeof(Context)
+							typeof(IDCollector), typeof(Writer), typeof(object), typeof(Context)
 						],
 						true
 					);
@@ -1137,8 +1227,8 @@ namespace Api.Startup {
 						generator.Emit(OpCodes.Callvirt, typeof(MappingData).GetMethod(nameof(MappingData.WriteAndCollect)));
 
 						generator.Emit(OpCodes.Ret);
-						_collect = (Action<IDCollector, Writer, Content, Context>)compareMethod.CreateDelegate(
-							typeof(Action<IDCollector, Writer, Content, Context>)
+						_collect = (Action<IDCollector, Writer, object, Context>)compareMethod.CreateDelegate(
+							typeof(Action<IDCollector, Writer, object, Context>)
 						);
 					}
 					else
@@ -1152,7 +1242,7 @@ namespace Api.Startup {
 						"IdFieldCollector", 
 						typeof(void),
 						[
-							typeof(IDCollector), typeof(Writer), typeof(Content), typeof(Context)
+							typeof(IDCollector), typeof(Writer), typeof(object), typeof(Context)
 						],
 						true
 					);
@@ -1185,8 +1275,8 @@ namespace Api.Startup {
 					generator.Emit(OpCodes.Callvirt, writeSMethod); // write now
 
 					generator.Emit(OpCodes.Ret);
-					_collect = (Action<IDCollector, Writer, Content, Context>)compareMethod.CreateDelegate(
-						typeof(Action<IDCollector, Writer, Content, Context>)
+					_collect = (Action<IDCollector, Writer, object, Context>)compareMethod.CreateDelegate(
+						typeof(Action<IDCollector, Writer, object, Context>)
 					);
 				}
 				else
@@ -1273,6 +1363,14 @@ namespace Api.Startup {
 		public ContentField(VirtualInfo info)
 		{
 			VirtualInfo = info;
+		}
+		
+		/// <summary>
+		/// Secondary result set.
+		/// </summary>
+		public ContentField(SecondaryResultInfo info)
+		{
+			SecondaryInfo = info;
 		}
 
 		/// <summary>
@@ -1376,6 +1474,32 @@ namespace Api.Startup {
 				return null;
 			}
 		}
+	}
+
+	/// <summary>
+	/// Metadata about a possible secondary result set on endpoints involving a particular type.
+	/// </summary>
+	public class SecondaryResultInfo
+	{
+		/// <summary>
+		/// A sequential ID for this secondary result set, starting from 1.
+		/// </summary>
+		public int Id;
+
+		/// <summary>
+		/// The effective name of the field.
+		/// </summary>
+		public string FieldName;
+
+		/// <summary>
+		/// The type of the field. This type can be a non-content type.
+		/// </summary>
+		public Type Type;
+
+		/// <summary>
+		/// If type is a content type, the associated autoService. null otherwise.
+		/// </summary>
+		public AutoService Service;
 	}
 
 	/// <summary>
