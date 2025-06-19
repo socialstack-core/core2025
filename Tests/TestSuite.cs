@@ -55,7 +55,7 @@ namespace Tests
                 
                 // lets create one per role.
 
-                var allRoles = await roleService.Where("Id > ?").Bind((uint) 0).ListAll(developerContext);
+                var allRoles = await roleService.Where("Id > ?", DataOptions.IgnorePermissions).Bind((uint) 0).ListAll(developerContext);
 
                 if (allRoles is null)
                 {
