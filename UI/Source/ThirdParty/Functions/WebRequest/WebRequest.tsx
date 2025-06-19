@@ -93,7 +93,7 @@ export function expandIncludes<T>(response : any){
 		return null;
 	}
 
-	var { result, results, includes } = response;
+	var { result, results, includes, secondary } = response;
 
 	if(includes){
 		for(var i=includes.length-1;i>=0;i--){
@@ -134,6 +134,13 @@ export function expandIncludes<T>(response : any){
 					}
 				});
 			}
+		}
+	}
+	
+	if(secondary){
+		// Secondary result sets
+		for(var k in secondary){
+			expandIncludes(secondary[k]);
 		}
 	}
 	
