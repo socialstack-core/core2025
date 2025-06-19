@@ -26,7 +26,9 @@ namespace Api.Payments
     [ListAs("Suggestions", IsPrimary = false)]
     [ImplicitFor("Suggestions", typeof(Product))]
 
-    public partial class Product : VersionedContent<uint>
+	[HasSecondaryResult("attributeValueFacets", typeof(AttributeValueFacet))]
+	[HasSecondaryResult("productCategoryFacets", typeof(ProductCategoryFacet))]
+	public partial class Product : VersionedContent<uint>
 	{
         /// <summary>
         /// The unique identifier for product

@@ -1,5 +1,6 @@
 using Api.Contexts;
 using Api.Eventing;
+using Api.Startup;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ public class ProductSearchFacets
 /// <summary>
 /// A facet value for a specific product category.
 /// </summary>
+[HasVirtualField("category", typeof(ProductCategory), "ProductCategoryId")]
 public struct ProductCategoryFacet
 {
 	/// <summary>
@@ -41,6 +43,7 @@ public struct ProductCategoryFacet
 /// <summary>
 /// A facet value for a specific product attribute.
 /// </summary>
+[HasVirtualField("value", typeof(ProductAttributeValue), "AttributeValueId")]
 public struct AttributeValueFacet
 {
 	/// <summary>

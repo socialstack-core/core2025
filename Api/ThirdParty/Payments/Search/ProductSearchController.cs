@@ -66,24 +66,27 @@ public partial class ProductSearchController : AutoController
 		//     "results": [product, product, ..],
 		//     "includes": [any includes for the products],
 		//     "secondary": {
-		//       "attributes": {
+		//       "attributeValueFacets": {
 		//           "results": [attrFacet, attrFacet, ..],
 		//           "includes": [any includes for attribute facets]
 		//       },
-		//       "productCategories": {
+		//       "productCategoryFacets": {
 		//           "results": [catFacet, catFacet, ..],
 		//           "includes": [any includes for category facets]
 		//       }
 		//     }
 		// }
-
+		
+		// These are declared on Product as HasSecondaryResult, which isn't mandatory but does make them support includes as well.
+		// This means you can include the attributeValue,category and attribute plus anything else you might want
+		// even though these AttributeValueFacet instances are not actually regular content types.
 		var secondarySources = new SecondaryListStreamSource<AttributeValueFacet>(
-			"attributes", 
+			"attributeValueFacets", 
 			resultSet.ResultFacets.Attributes
 		);
 
 		secondarySources.Next = new SecondaryListStreamSource<ProductCategoryFacet>(
-			"productCategories",
+			"productCategoryFacets",
 			resultSet.ResultFacets.Categories
 		);
 
