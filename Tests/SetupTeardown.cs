@@ -196,7 +196,9 @@ public class GlobalSetupFixture : IDisposable
 
 			if ( string.IsNullOrEmpty(_mainDatabaseName) || string.IsNullOrEmpty(_testDatabaseName) )
 			{
-				var connectionStrings = AppSettings.GetSection("ConnectionStrings") ?? throw new Exception("No connection strings are present");
+				var connectionStrings = AppSettings.GetSection("MongoConnectionStrings") ?? 
+															 AppSettings.GetSection("ConnectionStrings") ?? 
+															 throw new Exception("No connection strings are present");
 
 				var mainDbConnectionString = connectionStrings[
 					System.Environment.GetEnvironmentVariable("ConnectionStringName") ?? "DefaultConnection"
@@ -204,51 +206,16 @@ public class GlobalSetupFixture : IDisposable
 
 				var testDbConnectionString = connectionStrings["TestingConnection"] ?? throw new Exception("Test connection string is empty");
 
-				var mainDbConnection = ParseConnectionString(mainDbConnectionString);
-				var testDbConnection = ParseConnectionString(testDbConnectionString);
+				var mainDbConnection = new Uri(mainDbConnectionString);
+				var testDbConnection = new Uri(testDbConnectionString);
 
-				if (!mainDbConnection.ContainsKey("database"))
+				if (mainDbConnection.AbsolutePath == testDbConnection.AbsolutePath)
 				{
-					throw new Exception("No Database name passed to the main connection string");
+					throw new Exception("You cannot perform tests against your development database");
 				}
-				if (!testDbConnection.ContainsKey("database"))
-				{
-					throw new Exception("No Database name passed to the test connection string");
-				}
-
-				_mainDatabaseName = mainDbConnection["database"];
-				_testDatabaseName = testDbConnection["database"];
 			}
-
-			if ( _mainDatabaseName == _testDatabaseName )
-			{
-				throw new Exception("You cannot run tests on your main database, make sure the test database is different from your main one");
-			}
-			
-			await _database.Run($"DROP TABLE IF EXISTS `{_testDatabaseName}`.`{tableName}`");
-            await _database.Run($"CREATE TABLE `{_testDatabaseName}`.`{tableName}` SELECT * FROM `{_mainDatabaseName}`.`{tableName}`");
         }
     }
-
-	private static Dictionary<string, string> ParseConnectionString(string connectionString)
-	{
-		var connection = new Dictionary<string, string>();
-        var parameters = connectionString.Split(';');
-
-        foreach (var parameter in parameters)
-        {
-            if (!string.IsNullOrWhiteSpace(parameter))
-            {
-                var keyValue = parameter.Split('=');
-                if (keyValue.Length == 2)
-                {
-                    connection[keyValue[0].Trim()] = keyValue[1].Trim();
-                }
-            }
-        }
-
-		return connection;
-	}
 
 	protected static List<string> GetDirtyTableTypes() 
 	{

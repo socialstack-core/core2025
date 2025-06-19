@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using Api.Startup;
 
 namespace Api.TypeScript.Objects
 {
@@ -35,7 +36,7 @@ namespace Api.TypeScript.Objects
         /// other return types and Web API methods. It scans controller method signatures to prepare metadata
         /// for TypeScript output.
         /// </remarks>
-        public NonEntityController(Type controllerType, ESModule container)
+        public NonEntityController(Type controllerType, ESModule container, ESModule includes)
         {
 
             _container = container;
@@ -46,18 +47,30 @@ namespace Api.TypeScript.Objects
                 TypeScriptService.EnsureApis(method, container, null);
                 TypeScriptService.EnsureParameterTypes(method.WebSafeParams, container);
 
-                if (container.HasTypeDefinition(method.ReturnType, out _))
+                var type = TypeScriptService.UnwrapTypeNesting(method.ReturnType);
+
+                if (type is not null && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                {
+                    type = type.GetGenericArguments()[0];
+                }
+
+                type ??= method.ReturnType;
+                
+                if (container.HasTypeDefinition(type, out _))
                 {
                     continue;
                 }
-                if (TypeScriptService.IsEntityType(method.ReturnType))
+                if (TypeScriptService.IsEntityType(type))
                 {
                     // import instead
-                    _requiredImports.Add(method.ReturnType);
+                    _requiredImports.Add(type);
+                    method.RequiresIncludes = true;;
+                    container.Import(type.Name + "Includes", includes);
+                    container.Import("ApiIncludes", includes);
                 }
                 else
                 {
-                    container.AddType(method.ReturnType);
+                    container.AddType(type);
                 };
             }
         }
@@ -126,6 +139,34 @@ namespace Api.TypeScript.Objects
 
                     builder.Append($"{param.Name}{(param.IsOptional ? "?" : "")}: {paramType}");
                     paramCount++;
+                }
+
+                if (method.RequiresIncludes)
+                {
+                    if (paramCount != 0)
+                    {
+                        builder.Append(", ");
+                    }
+
+                    var type = TypeScriptService.UnwrapTypeNesting(method.ReturnType);
+
+                    if (type is not null && type.IsGenericType &&
+                        type.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    {
+                        type = type.GetGenericArguments()[0];
+                    }
+
+                    type ??= method.TrueReturnType;
+
+                    if (TypeScriptService.IsEntityType(type))
+                    {
+                        builder.Append($"includes?: {type.Name}Includes[]");
+                    }
+                    else
+                    {
+                        builder.Append($"includes?: ApiIncludes[]");
+                    }
+                    
                 }
 
                 // Closing params and declaring return type

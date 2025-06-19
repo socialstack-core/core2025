@@ -188,9 +188,9 @@ namespace Api.TypeScript.Objects
         /// Adds a non-entity controller.
         /// </summary>
         /// <param name="type"></param>
-        public void AddNonEntityController(Type type)
+        public void AddNonEntityController(Type type, ESModule includes)
         {
-            _nonEntityControllers.Add(new NonEntityController(type, this));
+            _nonEntityControllers.Add(new NonEntityController(type, this, includes));
         }
 
         /// <summary>

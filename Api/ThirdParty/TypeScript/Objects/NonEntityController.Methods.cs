@@ -71,6 +71,11 @@ namespace Api.TypeScript.Objects
                     nonValueTaskReturnType = nonValueTaskReturnType.GetGenericArguments()[0];
                 }
 
+                if (nonValueTaskReturnType is not null && nonValueTaskReturnType.IsInterface)
+                {
+                    continue;
+                }
+
                 var controllerMethod = new ControllerMethod
                 {
                     TrueReturnType = returnType,
