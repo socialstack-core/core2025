@@ -165,13 +165,13 @@ public class ListStreamSource<T, ID> : ContentStreamSource<T, ID>
 	/// <summary>
 	/// The list in this source.
 	/// </summary>
-	public List<T> Content;
+	public IEnumerable<T> Content;
 	
 	/// <summary>
 	/// Creates a new list source.
 	/// </summary>
 	/// <param name="content"></param>
-	public ListStreamSource(List<T> content)
+	public ListStreamSource(IEnumerable<T> content)
 	{
 		Content = content;
 	}
@@ -191,13 +191,16 @@ public class ListStreamSource<T, ID> : ContentStreamSource<T, ID>
 		{
 			return 0;
 		}
-		
-		for(var i=0;i<Content.Count;i++)
+
+		var counter = 0;
+
+		foreach (var item in Content)
 		{
-			await onResult(context, Content[i], i, srcA, srcB);
+			await onResult(context, item, counter, srcA, srcB);
+			counter++;
 		}
 
-		return Content.Count;
+		return counter;
 	}
 
 }
