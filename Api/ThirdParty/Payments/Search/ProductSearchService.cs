@@ -8,6 +8,53 @@ namespace Api.Payments;
 
 
 /// <summary>
+/// Facet results.
+/// </summary>
+public class ProductSearchFacets
+{
+	/// <summary>
+	/// Attribute facets.
+	/// </summary>
+	public List<AttributeValueFacet> Attributes;
+	/// <summary>
+	/// Category facets.
+	/// </summary>
+	public List<ProductCategoryFacet> Categories;
+}
+
+/// <summary>
+/// A facet value for a specific product category.
+/// </summary>
+public struct ProductCategoryFacet
+{
+	/// <summary>
+	/// The number of times this particular value appeared.
+	/// </summary>
+	public int Count;
+
+	/// <summary>
+	/// The category ID.
+	/// </summary>
+	public uint ProductCategoryId;
+}
+
+/// <summary>
+/// A facet value for a specific product attribute.
+/// </summary>
+public struct AttributeValueFacet
+{
+	/// <summary>
+	/// The number of times this particular value appeared.
+	/// </summary>
+	public int Count;
+
+	/// <summary>
+	/// The ID for the value itself (e.g. "blue").
+	/// </summary>
+	public uint AttributeValueId;
+}
+
+/// <summary>
 /// Searches for products.
 /// </summary>
 public class ProductSearch
@@ -39,17 +86,17 @@ public class ProductSearch
 	/// <summary>
 	/// The set of applied facet filters. Can be null if none are active.
 	/// </summary>
-	public List<ProductSearchFilter> AppliedFacets;
+	public List<ProductSearchAppliedFacet> AppliedFacets;
 	/// <summary>
 	/// Facets in the results. Can be null for DBE's that don't support it.
 	/// </summary>
-    public List<ProductSearchFacet> ResultFacets;
+    public ProductSearchFacets ResultFacets;
 }
 
 /// <summary>
-/// A search filter for a particular mapping.
+/// A search facet for a particular mapping.
 /// </summary>
-public struct ProductSearchFilter
+public struct ProductSearchAppliedFacet
 {
 	/// <summary>
 	/// The name of the mapping (e.g. "attributes").
@@ -62,21 +109,7 @@ public struct ProductSearchFilter
 	public List<ulong> Ids;
 }
 
-/// <summary>
-/// A search filter for a particular mapping.
-/// </summary>
-public struct ProductSearchFacet
-{
-	/// <summary>
-	/// The name of the mapping (e.g. "attributes").
-	/// </summary>
-	public string Mapping;
 
-	/// <summary>
-	/// The set of facet results
-	/// </summary>
-	public List<ProductSearchFacetResult> Values;
-}
 
 /// <summary>
 /// A particular facet result.
@@ -147,8 +180,23 @@ public class ProductSearchService : AutoService
 	/// <param name="pageSize"></param>
 	/// <returns></returns>
 	public async ValueTask<ProductSearch> Search(
-		Context context, string query, List<ProductSearchFilter> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
+		Context context, string query, List<ProductSearchAppliedFacet> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
     {
+		if (pageOffset < 0)
+		{
+			pageOffset = 0;
+		}
+
+		if (pageSize < 1)
+		{
+			pageSize = 1;
+		}
+
+		if (pageSize > 100)
+		{
+			pageSize = 100;
+		}
+
         var search = new ProductSearch(){
 			Query = query,
 			PageIndex = pageOffset,
@@ -207,33 +255,42 @@ public class ProductSearchService : AutoService
 				}
 			}
 
-			search.ResultFacets = new List<ProductSearchFacet>()
-			{
-				ToFacetSet("productcategories", categories),
-				ToFacetSet("attributes", attributes)
-			};
+			search.ResultFacets.Attributes = ToAttributeFacets(attributes);
+			search.ResultFacets.Categories = ToCategoryFacets(categories);
 		}
 
 		return search;
     }
 
-	private ProductSearchFacet ToFacetSet(string mappingName, Dictionary<ulong, int> uniqueIds)
+	private List<ProductCategoryFacet> ToCategoryFacets(Dictionary<ulong, int> uniqueIds)
 	{
-		var vals = new List<ProductSearchFacetResult>();
+		var vals = new List<ProductCategoryFacet>();
 
 		foreach (var kvp in uniqueIds)
 		{
-			vals.Add(new ProductSearchFacetResult()
+			vals.Add(new ProductCategoryFacet()
 			{
-				EntityId = kvp.Key,
+				ProductCategoryId = (uint)kvp.Key,
 				Count = kvp.Value
 			});
 		}
 
-		return new ProductSearchFacet()
+		return vals;
+	}
+
+	private List<AttributeValueFacet> ToAttributeFacets(Dictionary<ulong, int> uniqueIds)
+	{
+		var vals = new List<AttributeValueFacet>();
+
+		foreach (var kvp in uniqueIds)
 		{
-			Mapping = mappingName,
-			Values = vals
-		};
+			vals.Add(new AttributeValueFacet()
+			{
+				AttributeValueId = (uint)kvp.Key,
+				Count = kvp.Value
+			});
+		}
+
+		return vals;
 	}
 }

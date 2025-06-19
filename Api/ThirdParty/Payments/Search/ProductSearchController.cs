@@ -31,7 +31,7 @@ public partial class ProductSearchController : AutoController
 	[HttpPost("faceted")]
 	public async ValueTask<ProductSearchResult> Faceted(Context context, [FromBody] ProductSearchRequest request)
 	{
-		var resultSet = await productSearchService.Search(context, request.Query, request.AppliedFilters, request.PageOffset);
+		var resultSet = await productSearchService.Search(context, request.Query, request.AppliedFacets, request.PageOffset);
 
 		if (resultSet == null || resultSet.Products.Count == 0)
 		{
@@ -42,6 +42,7 @@ public partial class ProductSearchController : AutoController
 			};
 		}
 
+		// Expand attributes and categories.
 		return new ProductSearchResult {
 			Products = resultSet.Products,
 			Total = resultSet.Total,
@@ -69,7 +70,7 @@ public struct ProductSearchResult
 	/// <summary>
 	/// Facets present on this result set.
 	/// </summary>
-	public List<ProductSearchFacet> Facets;
+	public ProductSearchFacets Facets;
 }
 
 /// <summary>
@@ -88,7 +89,7 @@ public class ProductSearchRequest
 	public string Query;
 
 	/// <summary>
-	/// Optional applied filters per mapping (e.g. you want to filter results by attributes containing the colour 'blue').
+	/// Optional applied facets per mapping (e.g. you want to filter results by attributes containing the colour 'blue').
 	/// </summary>
-	public List<ProductSearchFilter> AppliedFilters;
+	public List<ProductSearchAppliedFacet> AppliedFacets;
 }

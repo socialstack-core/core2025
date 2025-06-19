@@ -2,7 +2,6 @@ using Api.Contexts;
 using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
-using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

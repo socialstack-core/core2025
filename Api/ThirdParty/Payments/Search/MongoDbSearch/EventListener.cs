@@ -112,32 +112,32 @@ public class MongoSearchEventListener
 
 				if (search.AppliedFacets != null)
 				{
-					List<BsonDocument> filters = null;
+					List<BsonDocument> appliedFacets = null;
 
-					foreach (var filter in search.AppliedFacets)
+					foreach (var facet in search.AppliedFacets)
 					{
-						var ids = filter.Ids;
+						var ids = facet.Ids;
 
-						if (ids == null || ids.Count == 0 || filter.Mapping == null)
+						if (ids == null || ids.Count == 0 || facet.Mapping == null)
 						{
 							continue;
 						}
 
-						if (filters == null)
+						if (appliedFacets == null)
 						{
-							filters = new List<BsonDocument>();
+							appliedFacets = new List<BsonDocument>();
 						}
 
-						filters.Add(new BsonDocument("terms", new BsonDocument
+						appliedFacets.Add(new BsonDocument("terms", new BsonDocument
 						{
-							{ "path", "Mappings." + filter.Mapping.ToLower() },
+							{ "path", "Mappings." + facet.Mapping.ToLower() },
 							{ "value", new BsonArray(ids) }
 						}));
 					}
 
-					if (filters != null)
+					if (appliedFacets != null)
 					{
-						compoundDoc["filter"] = new BsonArray(filters);
+						compoundDoc["filter"] = new BsonArray(appliedFacets);
 					}
 				}
 
@@ -191,8 +191,8 @@ public class MongoSearchEventListener
 					.Select(d => BsonSerializer.Deserialize<Product>(d.AsBsonDocument))
 					.ToList();
 
-				var categoryFacet = ToFacetSet("productcategories", doc["productcategoriesFacet"].AsBsonArray);
-				var attributeFacet = ToFacetSet("attributes", doc["attributesFacet"].AsBsonArray);
+				var categoryFacet = ToCategoryFacets(doc["productcategoriesFacet"].AsBsonArray);
+				var attributeFacet = ToAttributeFacets( doc["attributesFacet"].AsBsonArray);
 
 				int totalCount = 0;
 				var countArray = doc["totalCount"].AsBsonArray;
@@ -204,9 +204,9 @@ public class MongoSearchEventListener
 				search.Products = products;
 				search.Handled = true;
 				search.Total = totalCount;
-				search.ResultFacets = new List<ProductSearchFacet>() {
-					categoryFacet,
-					attributeFacet
+				search.ResultFacets = new ProductSearchFacets() {
+					Categories = categoryFacet,
+					Attributes = attributeFacet
 				};
 			}
 			else
@@ -241,27 +241,42 @@ public class MongoSearchEventListener
 		
 	}
 
-	private ProductSearchFacet ToFacetSet(string mappingName, BsonArray values)
+	private List<AttributeValueFacet> ToAttributeFacets(BsonArray values)
 	{
-		var vals = new List<ProductSearchFacetResult>();
+		var vals = new List<AttributeValueFacet>();
 
 		foreach (var bsonVal in values)
 		{
 			var id = bsonVal["_id"].AsInt64;
 			var count = bsonVal["count"].AsInt32;
 
-			vals.Add(new ProductSearchFacetResult()
+			vals.Add(new AttributeValueFacet()
 			{
-				EntityId = (ulong)id,
+				AttributeValueId = (uint)id,
 				Count = count
 			});
 		}
 
-		return new ProductSearchFacet()
+		return vals;
+	}
+
+	private List<ProductCategoryFacet> ToCategoryFacets(BsonArray values)
+	{
+		var vals = new List<ProductCategoryFacet>();
+
+		foreach (var bsonVal in values)
 		{
-			Mapping = mappingName,
-			Values = vals
-		};
+			var id = bsonVal["_id"].AsInt64;
+			var count = bsonVal["count"].AsInt32;
+
+			vals.Add(new ProductCategoryFacet()
+			{
+				ProductCategoryId = (uint)id,
+				Count = count
+			});
+		}
+
+		return vals;
 	}
 
 
