@@ -45,7 +45,13 @@ export interface ApiList<T> extends HasIncludes {
 	 * If you asked for a paginated fragment this 
 	 * will be the total number of records.
 	 */
-	totalResults: int
+	totalResults: int,
+
+	/**
+	 * Secondary result sets if there are any. Each one is also an ApiList of an unknown type, 
+	 * however, the key will always identify the type.
+	 */
+	secondary?: Record<string, any>
 };
 
 interface WebRequestOptions {
@@ -115,7 +121,7 @@ export function expandIncludes<T>(response : any){
 				inc.values.forEach((v : any) => byIdMap[v.id] = v);
 				targetValues.forEach((val: any) => {
 					if(Array.isArray(val[srcField])){
-						val[inc.field] = val[srcField].map(id => {
+						val[inc.field] = val[srcField].map((id : any) => {
 							if(id.id){
 								// Already loaded - skip.
 								return id;

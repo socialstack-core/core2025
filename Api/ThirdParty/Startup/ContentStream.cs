@@ -2,6 +2,7 @@ using Api.Contexts;
 using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
+using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -21,6 +22,45 @@ where ID : struct, IEquatable<ID>, IComparable<ID>, IConvertible
 	/// Starts cycling results for the given filter with the given callback function. Usually use Where and then one if its convenience functions instead.
 	/// </summary>
 	ValueTask<int> GetResults(Context context, Filter<T, ID> filter, Func<Context, T, int, object, object, ValueTask> onResult, object srcA, object srcB);
+
+	/// <summary>
+	/// If this content stream has more than one source, this returns the next one.
+	/// </summary>
+	/// <returns></returns>
+	SecondaryContentStreamSource GetNextSource();
+}
+
+/// <summary>
+/// A secondary result set content stream source. Forms a linked list.
+/// Unlike the primary result set, this one can also return any type - not just database ones.
+/// These types are still permitted to use the includes system via HasVirtualField.
+/// </summary>
+public class SecondaryContentStreamSource
+{
+	/// <summary>
+	/// The name that will appear in the JSON.
+	/// </summary>
+	public string SourceName;
+
+	/// <summary>
+	/// The next one in a linked list if there is one.
+	/// </summary>
+	public SecondaryContentStreamSource Next;
+
+	/// <summary>
+	/// Starts streaming the results, invoking the given callback on each one. 
+	/// Unlike the primary content stream, secondary ones cannot be filtered.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="onResult"></param>
+	/// <param name="srcA"></param>
+	/// <param name="srcB"></param>
+	/// <returns></returns>
+	public virtual ValueTask<int> GetResults(Context context, Func<Context, object, int, object, object, ValueTask> onResult, object srcA, object srcB)
+	{
+		throw new NotImplementedException();
+	}
+
 }
 
 /// <summary>
@@ -33,6 +73,11 @@ public class ApiList<T> {
 	/// The result set.
 	/// </summary>
 	public List<T> Results { get; set; }
+
+	/// <summary>
+	/// Secondary result sets. It is effectively a dictionary of ApiLists, where each one has its own results/ includes.
+	/// </summary>
+	public Dictionary<string, object> Secondary { get; set; }
 }
 
 /// <summary>
@@ -132,6 +177,7 @@ public struct ContentStream<T, ID>
 		writer.Start(null);
 
 		ContentStreamSource<T, ID> src = Source;
+		var next = src.GetNextSource();
 
 		await ServiceForType.ToJson(context, Filter, async (Context ctx, Filter<T, ID> filt, Func<T, int, ValueTask> onResult) => {
 
@@ -140,16 +186,137 @@ public struct ContentStream<T, ID>
 				await _onResult(result, index);
 			}, onResult, null);
 
-		}, writer, stream, includes, Filter == null ? false : Filter.IncludeTotal);
+		}, writer, stream, includes, Filter == null ? false : Filter.IncludeTotal, next != null);
 
 		if (ReleaseFilter && Filter != null)
 		{
 			Filter.Release();
 		}
 
+		bool hasSecondary = false;
+		bool firstSecondary = true;
+
+		if (next != null)
+		{
+			hasSecondary = true;
+			writer.WriteASCII(",\"secondary\":{");
+		}
+
+		while (next != null)
+		{
+			if (firstSecondary)
+			{
+				firstSecondary = false;
+			}
+			else
+			{
+				writer.Write((byte)',');
+			}
+			writer.WriteEscaped(next.SourceName);
+			writer.Write((byte)':');
+
+			// todo: jsonify the source here!
+			writer.WriteASCII("{}");
+
+			// Keep asking the original for its next source if there are more.
+			next = src.GetNextSource();
+		}
+
+		if (hasSecondary)
+		{
+			// Close both
+			writer.WriteASCII("}}");
+		}
+		else
+		{
+			writer.Write((byte)'}');
+		}
+
+		if (stream != null)
+		{
+			// Copy remaining bits:
+			await writer.CopyToAsync(stream);
+		}
+
 		writer.Release();
 	}
 
+}
+
+/// <summary>
+/// Streams the given main type, plus then some additional results sets which can be non DB content types.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="ID"></typeparam>
+public class MultiStreamSource<T, ID> : ContentStreamSource<T, ID>
+	where T : Content<ID>, new()
+	where ID : struct, IEquatable<ID>, IComparable<ID>, IConvertible
+{
+	/// <summary>
+	/// The primary source (typically either an AutoService or ListStreamSource).
+	/// </summary>
+	public ContentStreamSource<T, ID> PrimarySource;
+
+	/// <summary>
+	/// The first secondary source in a linked list.
+	/// </summary>
+	public SecondaryContentStreamSource FirstSecondarySource;
+
+	/// <summary>
+	/// The current secondary source (effectively the pointer in a linked list).
+	/// </summary>
+	public SecondaryContentStreamSource Current;
+
+
+	/// <summary>
+	/// Creates a new multi-stream src.
+	/// </summary>
+	/// <param name="primarySource"></param>
+	/// <param name="secondaryChain"></param>
+	public MultiStreamSource(ContentStreamSource<T, ID> primarySource, SecondaryContentStreamSource secondaryChain)
+	{
+		PrimarySource = primarySource;
+		FirstSecondarySource = secondaryChain;
+		Current = secondaryChain;
+	}
+
+	/// <summary>
+	/// Resets the source such that iteration over the sets can happen again.
+	/// </summary>
+	public void Reset()
+	{
+		Current = FirstSecondarySource;
+	}
+
+	/// <summary>
+	/// Starts streaming the results, invoking the given callback on each one.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="filter"></param>
+	/// <param name="onResult"></param>
+	/// <param name="srcA"></param>
+	/// <param name="srcB"></param>
+	/// <returns></returns>
+	public ValueTask<int> GetResults(Context context, Filter<T, ID> filter, Func<Context, T, int, object, object, ValueTask> onResult, object srcA, object srcB)
+	{
+		return PrimarySource.GetResults(context, filter, onResult, srcA, srcB);
+	}
+
+	/// <summary>
+	/// Gets the next source if this stream has more than one.
+	/// </summary>
+	/// <returns></returns>
+	public SecondaryContentStreamSource GetNextSource()
+	{
+		var active = Current;
+
+		if (active != null)
+		{
+			Current = active.Next;
+		}
+
+		return active;
+	}
 }
 
 /// <summary>
@@ -202,4 +369,62 @@ public class ListStreamSource<T, ID> : ContentStreamSource<T, ID>
 		return counter;
 	}
 
+	/// <summary>
+	/// If this content stream has more than one source, this gets the next one.
+	/// </summary>
+	/// <returns></returns>
+	public SecondaryContentStreamSource GetNextSource()
+	{
+		return null;
+	}
+}
+
+/// <summary>
+/// A convenience wrapper for streaming lists of content types.
+/// Best avoided - use the mainline service output instead as it avoids allocating the list itself.
+/// For quick wins or minorly used endpoints though, this is completely fine.
+/// </summary>
+public class SecondaryListContentStreamSource<T> : SecondaryContentStreamSource
+{
+	/// <summary>
+	/// The list in this source.
+	/// </summary>
+	public IEnumerable<T> Content;
+
+	/// <summary>
+	/// Creates a new list source.
+	/// </summary>
+	/// <param name="srcName"></param>
+	/// <param name="content"></param>
+	public SecondaryListContentStreamSource(string srcName, IEnumerable<T> content)
+	{
+		SourceName = srcName;
+		Content = content;
+	}
+
+	/// <summary>
+	/// Starts streaming the results, invoking the given callback on each one.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="onResult"></param>
+	/// <param name="srcA"></param>
+	/// <param name="srcB"></param>
+	/// <returns></returns>
+	public override async ValueTask<int> GetResults(Context context, Func<Context, object, int, object, object, ValueTask> onResult, object srcA, object srcB)
+	{
+		if(Content == null)
+		{
+			return 0;
+		}
+
+		var counter = 0;
+
+		foreach (var item in Content)
+		{
+			await onResult(context, item, counter, srcA, srcB);
+			counter++;
+		}
+
+		return counter;
+	}
 }

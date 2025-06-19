@@ -196,7 +196,7 @@ public partial class AutoService<T, ID>
 		Context context, ANY dataSource,
 		Func<Context, ANY, Func<T, int, ValueTask>, ValueTask<int>> onGetData,
 		Writer writer,
-		Stream targetStream = null, string includes = null, bool includeTotal = false)
+		Stream targetStream = null, string includes = null, bool includeTotal = false, bool leaveOpen = false)
 	{
 		// Get the json structure:
 		var jsonStructure = await GetTypedJsonStructure(context);
@@ -286,10 +286,19 @@ public partial class AutoService<T, ID>
 			{
 				writer.Write(TotalHeader, 0, 10);
 				writer.WriteS(total);
-				writer.Write((byte)'}');
+
+				if (!leaveOpen)
+				{
+					writer.Write((byte)'}');
+				}
+			}
+			else if (leaveOpen)
+			{
+				writer.Write((byte)']');
 			}
 			else
 			{
+				// ]}
 				writer.Write(ResultsFooter, 0, 2);
 			}
 
@@ -326,7 +335,15 @@ public partial class AutoService<T, ID>
 			// Execute all inclusions (internally releases the collectors):
 			await ExecuteIncludes(context, targetStream, writer, firstCollector, includeSet.RootInclude);
 
-			writer.Write(IncludesFooter, 0, 2);
+			if (leaveOpen)
+			{
+				writer.Write((byte)']');
+			}
+			else
+			{
+				// ]}
+				writer.Write(IncludesFooter, 0, 2);
+			}
 
 			if (targetStream != null)
 			{

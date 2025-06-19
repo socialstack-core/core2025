@@ -255,8 +255,11 @@ public class ProductSearchService : AutoService
 				}
 			}
 
-			search.ResultFacets.Attributes = ToAttributeFacets(attributes);
-			search.ResultFacets.Categories = ToCategoryFacets(categories);
+			search.ResultFacets = new ProductSearchFacets()
+			{
+				Attributes = ToAttributeFacets(attributes),
+				Categories = ToCategoryFacets(categories)
+			};
 		}
 
 		return search;

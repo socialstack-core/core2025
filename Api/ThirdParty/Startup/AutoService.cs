@@ -679,6 +679,15 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 	}
 
 	/// <summary>
+	/// If this content stream source has more than one additional source, this gets the next one.
+	/// </summary>
+	/// <returns></returns>
+	public SecondaryContentStreamSource GetNextSource()
+	{
+		return null;
+	}
+
+	/// <summary>
 	/// Starts cycling results for the given filter with the given callback function. Usually use Where and then one if its convenience functions instead.
 	/// </summary>
 	/// <param name="context"></param>
