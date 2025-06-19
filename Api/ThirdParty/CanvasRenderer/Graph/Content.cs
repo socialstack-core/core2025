@@ -253,7 +253,7 @@ public class Content : Executor
 
 		if (tio == null)
 		{
-			jsonStructure.TypeIO = tio = TypeIOEngine.Generate(jsonStructure, svc, ctxt);
+			jsonStructure.TypeIO = tio = TypeIOEngine.Generate<T>(jsonStructure, svc);
 		}
 
 		_typeReadWrite = tio;

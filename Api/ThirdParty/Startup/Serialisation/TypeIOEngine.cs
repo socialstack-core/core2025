@@ -3,9 +3,11 @@ using Api.Database;
 using Api.Permissions;
 using Api.SocketServerLibrary;
 using Api.Translate;
+using MySqlX.XDevAPI.Common;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
@@ -260,19 +262,13 @@ namespace Api.Startup
 		}
 
 		/// <summary>
-		/// Generates a system native write for the given structure.
+		/// Used for debugging bolt generated IO.
 		/// </summary>
-		public static TypeReaderWriter<T> Generate<T, ID>(JsonStructure<T,ID> fieldSet, AutoService service, Context context)
-			where T : Content<ID>, new()
-			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
+		public static void DebugField(string s)
 		{
-			var set = new List<JsonStructure<T, ID>>
-			{
-				fieldSet
-			};
-			return Generate(set, service, context)[0];
+			Log.Info("bolt", s);
 		}
-
+		
 		/// <summary>
 		/// The bytes for "true"
 		/// </summary>
@@ -670,78 +666,174 @@ namespace Api.Startup
 			map[type] = fieldType;
 			return fieldType;
 		}
-		
+
+		private static Dictionary<Type, TypeReaderWriter> _cache = new Dictionary<Type, TypeReaderWriter>();
+
 		/// <summary>
-		/// Used for debugging bolt generated IO.
+		/// Gets a serializer for any concrete type.
 		/// </summary>
-		public static void DebugField(string s)
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		public static async ValueTask<TypeReaderWriter<T>> GetSerializer<T>(Context context)
 		{
-			Log.Info("bolt", s);
+			if (_cache.TryGetValue(typeof(T), out TypeReaderWriter result))
+			{
+				return result as TypeReaderWriter<T>;
+			}
+
+			// Generate and cache it.
+			var svcForType = Services.GetByContentType(typeof(T));
+
+			TypeReaderWriter<T> serializer;
+
+			if (svcForType != null)
+			{
+				serializer = Generate<T>(await svcForType.GetJsonStructure(context), svcForType);
+			}
+			else
+			{
+				serializer = Generate<T>(GetFieldSet(typeof(T)), null);
+			}
+
+			_cache[typeof(T)] = serializer;
+			return serializer;
 		}
-		
+
 		/// <summary>
-		/// Generates a system native write for the given structures. This list will usually be the list of all roles for a type on the first run.
+		/// Gets the field set for a given basic (non DB content) type.
 		/// </summary>
-		public static List<TypeReaderWriter<T>> Generate<T, ID>(List<JsonStructure<T, ID>> fieldSets, AutoService service, Context context)
-			where T : Content<ID>, new()
-			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		private static List<JsonField> GetFieldSet(Type type)
 		{
-			var result = new List<TypeReaderWriter<T>>();
+			var results = new List<JsonField>();
+
+			// Get the public field set:
+			var publicFields = type.GetFields();
+
+			// and the public property set:
+			var publicProperties = type.GetProperties();
+
+			foreach (var field in publicFields)
+			{
+				results.Add(new JsonField()
+				{
+					Name = field.Name,
+					OriginalName = field.Name,
+					Attributes = ContentField.BuildAttributes(field.CustomAttributes),
+					TargetType = field.FieldType,
+					FieldInfo = field,
+					ContentField = null
+				});
+			}
 			
+			foreach (var property in publicProperties)
+			{
+				results.Add(new JsonField()
+				{
+					Name = property.Name,
+					OriginalName = property.Name,
+					Attributes = ContentField.BuildAttributes(property.CustomAttributes),
+					PropertyInfo = property,
+					TargetType = property.PropertyType,
+					PropertyGet = property.GetGetMethod(),
+					PropertySet = property.GetSetMethod(),
+					ContentField = null,
+					Writeable = property.CanWrite,
+					// Default behaviour is to hide (from autoforms) non-writeable properties.
+					// Using BeforeSettable and setting Hide to false will display a readonly field if you want it to be visible.
+					Hide = !property.CanWrite
+				});
+			}
+
+			return results;
+		}
+
+		/// <summary>
+		/// Generates a system native write for the given content type.
+		/// </summary>
+		public static TypeReaderWriter<T> Generate<T>(JsonStructure jsonStructure, AutoService service)
+		{
+			return Generate<T>(jsonStructure.AllFields.Select(kvp => kvp.Value), service);
+		}
+
+		/// <summary>
+		/// Generates a system native write for the given structure. It can be any type. If it is a content type however 
+		/// then you must also provide the associated autoservice such that it can load the field visibility rules.
+		/// </summary>
+		public static TypeReaderWriter<T> Generate<T>(IEnumerable<JsonField> fields, AutoService service)
+		{
 			AssemblyName assemblyName = new AssemblyName("GeneratedTypesRW_" + counter);
 			counter++;
 			AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
 			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
 
-			foreach (var set in fieldSets)
+			// Base type to use:
+			var baseType = typeof(TypeReaderWriter<T>);
+
+			// Start building the type:
+			var typeName = typeof(T).Name;
+			TypeBuilder typeBuilder = moduleBuilder.DefineType(typeName + "_RW", TypeAttributes.Public, baseType);
+
+			ConstructorBuilder ctor0;
+
+			// Just an empty constructor. The actual pre-defined byte[]'s will be set direct to the fields shortly.
+			if (service == null)
 			{
-				if (set == null)
-				{
-					continue;
-				}
-
-				// Base type to use:
-				var baseType = typeof(TypeReaderWriter<T>);
-
-				// Start building the type:
-				var typeName = typeof(T).Name;
-				TypeBuilder typeBuilder = moduleBuilder.DefineType(typeName + "_RW", TypeAttributes.Public, baseType);
-
-				
-				// Just an empty constructor. The actual pre-defined byte[]'s will be set direct to the fields shortly.
-				ConstructorBuilder ctor0 = typeBuilder.DefineConstructor(
+				ctor0 = typeBuilder.DefineConstructor(
 					MethodAttributes.Public,
 					CallingConventions.Standard,
-					[ typeof(AutoService<T,ID>) ]
+					Array.Empty<Type>()
 				);
-				ILGenerator constructorBody = ctor0.GetILGenerator();
+			}
+			else
+			{
+				ctor0 = typeBuilder.DefineConstructor(
+					MethodAttributes.Public,
+					CallingConventions.Standard,
+					[typeof(AutoService)]
+				);
+			}
 
-				// all byte[] fields to initialise:
-				var fieldsToInit = new List<PreGeneratedByteField>();
+			ILGenerator constructorBody = ctor0.GetILGenerator();
 
-				// The JSON "header" which will be of the form {"type":"typename"
-				var header = AddField(typeBuilder, fieldsToInit, "{\"type\":\"" + typeName + "\"");
+			// all byte[] fields to initialise:
+			var fieldsToInit = new List<PreGeneratedByteField>();
 
-				var writeJsonPartialMethod = typeBuilder.DefineMethod("WriteJsonPartial", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), new Type[] {
-					typeof(T),
-					typeof(Writer)
-				});
+			// The JSON "header" which will be of the form {"type":"typename"
+			var header = AddField(typeBuilder, fieldsToInit, "{\"type\":\"" + typeName + "\"");
 
-				ILGenerator writerPartialBody = writeJsonPartialMethod.GetILGenerator();
+			var writeJsonPartialMethod = typeBuilder.DefineMethod("WriteJsonPartial", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), new Type[] {
+				typeof(T),
+				typeof(Writer)
+			});
 
-				// Write the header:
-				header.Write(writerPartialBody);
+			ILGenerator writerPartialBody = writeJsonPartialMethod.GetILGenerator();
 
-				if (IdHeaderRef == null)
+			// Write the header:
+			header.Write(writerPartialBody);
+
+			if (IdHeaderRef == null)
+			{
+				IdHeaderRef = GetFromCommonField(nameof(IdHeader), IdHeader);
+			}
+
+			var typeMap = GetTypeMap();
+
+			// Get the ID field, if there even is one:
+			JsonField idField = null;
+
+			foreach (var field in fields)
+			{
+				if (field.Name.ToLower() == "id")
 				{
-					IdHeaderRef = GetFromCommonField(nameof(IdHeader), IdHeader);
+					idField = field;
+					break;
 				}
+			}
 
-				var typeMap = GetTypeMap();
-
-				// The ID:
-				var idField = set.GetField("id");
-
+			if (idField != null)
+			{
 				if (typeMap.TryGetValue(idField.FieldInfo.FieldType, out JsonFieldType idJft))
 				{
 					// ,"id":
@@ -749,194 +841,184 @@ namespace Api.Startup
 
 					idJft.EmitWrite(writerPartialBody, idField, null);
 				}
-
-				// }
-				WriteChar(writerPartialBody, '}');
-
-				writerPartialBody.Emit(OpCodes.Ret);
-
-				var writeJsonMethod = typeBuilder.DefineMethod("WriteJsonUnclosed", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), [
-					typeof(T),
-					typeof(Writer),
-					typeof(Context),
-					typeof(bool)
-				]);
-				ILGenerator writerBody = writeJsonMethod.GetILGenerator();
-
-				// Write the header:
-				header.Write(writerBody);
-
-				if (set.Fields != null){
-
-					// Add each field
-					foreach(var field in set.Fields.Values)
-					{
-						if(field == null || field.Name == "Type")
-						{
-							continue;
-						}
-
-						var ignore = false;
-
-						if (field.Attributes != null)
-						{
-							foreach (var attrib in field.Attributes)
-							{
-								if ((attrib as Newtonsoft.Json.JsonIgnoreAttribute) != null || (attrib as System.Text.Json.Serialization.JsonIgnoreAttribute) != null)
-								{
-									// This field is not for us.
-									ignore = true;
-									break;
-								}
-							}
-						}
-
-						if (ignore)
-						{
-							continue;
-						}
-
-						// Skip all virtual fields.
-						if (field.PropertyGet == null && field.FieldInfo == null)
-						{
-							continue;
-						}
-
-						// The type we may be outputting a value outputter for:
-						var fieldType = field.TargetType;
-						var isLocalised = false;
-
-						if (fieldType.IsGenericType)
-						{
-							var typeDef = fieldType.GetGenericTypeDefinition();
-
-							if (typeDef == typeof(Localized<>))
-							{
-								isLocalised = true;
-								fieldType = fieldType.GetGenericArguments()[0];
-							}
-						}
-
-						// Check if it's a nullable:
-						Type nullableType = Nullable.GetUnderlyingType(fieldType);
-
-						if (nullableType != null)
-						{
-							fieldType = nullableType;
-						}
-
-						if (!typeMap.TryGetValue(fieldType, out JsonFieldType jft))
-						{
-							// Can't serialise this here.
-							Log.Warn("typeio", "Skipped serialising a field because it is of an unrecognised type: " + field.Name + " on " + typeof(T));
-							continue;
-						}
-
-						var fieldName = field.Name;
-						var lowercaseFirst = char.ToLower(fieldName[0]) + fieldName.Substring(1);
-						var readAccessRuleText = field.GetReadAccessRuleText();
-
-						bool? constTrueOrFalse = null;
-						string filterString = null;
-						
-						if(string.IsNullOrEmpty(readAccessRuleText)){
-							constTrueOrFalse = field.Readable;
-						}else if( readAccessRuleText == "true"){
-							constTrueOrFalse = true;
-						}else if( readAccessRuleText == "false"){
-							constTrueOrFalse = false;
-						}else{
-							// will be a full filter obj
-							filterString = readAccessRuleText;
-						}
-
-						if (constTrueOrFalse.HasValue && constTrueOrFalse.Value == false)
-						{
-							// This field is not for us.
-							continue;
-						}
-
-						// The field name:
-						var property = AddField(typeBuilder, fieldsToInit, ",\"" + lowercaseFirst + "\":");
-
-						// Define a label for the end of the conditional block
-						var endOfIfLabel = writerBody.DefineLabel();
-
-						// this/instance
-						
-						if (!string.IsNullOrEmpty(filterString))
-						{
-
-							var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(FilterBase), FieldAttributes.Private);
-
-							
-							constructorBody.Emit(OpCodes.Ldarg_0);
-							constructorBody.Emit(OpCodes.Ldarg_1);
-							constructorBody.Emit(OpCodes.Ldstr, filterString); 
-							constructorBody.Emit(OpCodes.Ldc_I4_1); 
-							constructorBody.Emit(OpCodes.Callvirt,
-								typeof(AutoService).GetMethod(
-									nameof(AutoService.GetGeneralFilterFor), 
-									BindingFlags.Instance | BindingFlags.Public,
-									[
-										typeof (string), typeof(bool)
-									]
-								)
-							);
-
-							
-							constructorBody.Emit(OpCodes.Stfld, fieldBuilder);
-							
-							
-
-							writerBody.Emit(OpCodes.Ldarg_0); // this
-							writerBody.Emit(OpCodes.Ldfld, fieldBuilder); // .filter_whatever
-							writerBody.Emit(OpCodes.Ldarg_3); // context
-							writerBody.Emit(OpCodes.Ldarg_1); // the object
-							writerBody.Emit(OpCodes.Ldarg, 4); // isIncluded
-							writerBody.Emit(OpCodes.Callvirt, typeof(FilterBase).GetMethod(nameof(FilterBase.Match), BindingFlags.Instance | BindingFlags.Public, [typeof(Context), typeof(object), typeof(bool) ]));
-							
-							// Branch if false (skip the block if the condition is false)
-							writerBody.Emit(OpCodes.Brfalse, endOfIfLabel);
-						}	
-						// Code to execute if the condition is true
-						// ,"fieldName":
-						property.Write(writerBody);
-						// Value->str:
-						if (isLocalised)
-						{
-							jft.EmitLocalisedWrite(writerBody, field, nullableType);
-						}
-						else
-						{
-							jft.EmitWrite(writerBody, field, nullableType);
-						}
-						// Mark the end of the conditional block
-						writerBody.MarkLabel(endOfIfLabel);
-
-
-					}
-				}
-
-				writerBody.Emit(OpCodes.Ret);
-
-				constructorBody.Emit(OpCodes.Ret);
-				
-				// Finish the type.
-				Type builtType = typeBuilder.CreateType();
-				var instance = Activator.CreateInstance(builtType, [service]) as TypeReaderWriter<T>;
-
-				foreach (var field in fieldsToInit)
-				{
-					var fld = instance.GetType().GetField(field.Field.Name, BindingFlags.NonPublic | BindingFlags.Instance);
-
-					fld.SetValue(instance, field.Value);
-				}
-
-				result.Add(instance);
 			}
-			
-			return result;
+
+			// }
+			WriteChar(writerPartialBody, '}');
+
+			writerPartialBody.Emit(OpCodes.Ret);
+
+			var writeJsonMethod = typeBuilder.DefineMethod("WriteJsonUnclosed", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual, typeof(void), [
+				typeof(T),
+				typeof(Writer),
+				typeof(Context),
+				typeof(bool)
+			]);
+			ILGenerator writerBody = writeJsonMethod.GetILGenerator();
+
+			// Write the header:
+			header.Write(writerBody);
+
+			if (fields != null){
+
+				// Add each field
+				foreach(var field in fields)
+				{
+					if(field == null || field.Name == "Type")
+					{
+						continue;
+					}
+
+					var ignore = false;
+
+					if (field.Attributes != null)
+					{
+						foreach (var attrib in field.Attributes)
+						{
+							if ((attrib as Newtonsoft.Json.JsonIgnoreAttribute) != null || (attrib as System.Text.Json.Serialization.JsonIgnoreAttribute) != null)
+							{
+								// This field is not for us.
+								ignore = true;
+								break;
+							}
+						}
+					}
+
+					if (ignore)
+					{
+						continue;
+					}
+
+					// Skip all virtual fields.
+					if (field.PropertyGet == null && field.FieldInfo == null)
+					{
+						continue;
+					}
+
+					// The type we may be outputting a value outputter for:
+					var fieldType = field.TargetType;
+					var isLocalised = false;
+
+					if (fieldType.IsGenericType)
+					{
+						var typeDef = fieldType.GetGenericTypeDefinition();
+
+						if (typeDef == typeof(Localized<>))
+						{
+							isLocalised = true;
+							fieldType = fieldType.GetGenericArguments()[0];
+						}
+					}
+
+					// Check if it's a nullable:
+					Type nullableType = Nullable.GetUnderlyingType(fieldType);
+
+					if (nullableType != null)
+					{
+						fieldType = nullableType;
+					}
+
+					if (!typeMap.TryGetValue(fieldType, out JsonFieldType jft))
+					{
+						// Can't serialise this here.
+						Log.Warn("typeio", "Skipped serialising a field because it is of an unrecognised type: " + field.Name + " on " + typeof(T));
+						continue;
+					}
+
+					var fieldName = field.Name;
+					var lowercaseFirst = char.ToLower(fieldName[0]) + fieldName.Substring(1);
+					var readAccessRuleText = service == null ? null : field.GetReadAccessRuleText();
+
+					bool? constTrueOrFalse = null;
+					string filterString = null;
+						
+					if(string.IsNullOrEmpty(readAccessRuleText)){
+						constTrueOrFalse = field.Readable;
+					}else if( readAccessRuleText == "true"){
+						constTrueOrFalse = true;
+					}else if( readAccessRuleText == "false"){
+						constTrueOrFalse = false;
+					}else{
+						// will be a full filter obj
+						filterString = readAccessRuleText;
+					}
+
+					if (constTrueOrFalse.HasValue && constTrueOrFalse.Value == false)
+					{
+						// This field is not for us.
+						continue;
+					}
+
+					// The field name:
+					var property = AddField(typeBuilder, fieldsToInit, ",\"" + lowercaseFirst + "\":");
+
+					// Define a label for the end of the conditional block
+					var endOfIfLabel = writerBody.DefineLabel();
+
+					// this/instance
+					if (!string.IsNullOrEmpty(filterString))
+					{
+						var fieldBuilder = typeBuilder.DefineField("filter_" + lowercaseFirst, typeof(FilterBase), FieldAttributes.Private);
+
+						constructorBody.Emit(OpCodes.Ldarg_0);
+						constructorBody.Emit(OpCodes.Ldarg_1);
+						constructorBody.Emit(OpCodes.Ldstr, filterString); 
+						constructorBody.Emit(OpCodes.Ldc_I4_1); 
+						constructorBody.Emit(OpCodes.Callvirt,
+							typeof(AutoService).GetMethod(
+								nameof(AutoService.GetGeneralFilterFor), 
+								BindingFlags.Instance | BindingFlags.Public,
+								[
+									typeof (string), typeof(bool)
+								]
+							)
+						);
+
+						constructorBody.Emit(OpCodes.Stfld, fieldBuilder);
+						
+						writerBody.Emit(OpCodes.Ldarg_0); // this
+						writerBody.Emit(OpCodes.Ldfld, fieldBuilder); // .filter_whatever
+						writerBody.Emit(OpCodes.Ldarg_3); // context
+						writerBody.Emit(OpCodes.Ldarg_1); // the object
+						writerBody.Emit(OpCodes.Ldarg, 4); // isIncluded
+						writerBody.Emit(OpCodes.Callvirt, typeof(FilterBase).GetMethod(nameof(FilterBase.Match), BindingFlags.Instance | BindingFlags.Public, [typeof(Context), typeof(object), typeof(bool) ]));
+							
+						// Branch if false (skip the block if the condition is false)
+						writerBody.Emit(OpCodes.Brfalse, endOfIfLabel);
+					}
+
+					// Code to execute if the condition is true
+					// ,"fieldName":
+					property.Write(writerBody);
+					// Value->str:
+					if (isLocalised)
+					{
+						jft.EmitLocalisedWrite(writerBody, field, nullableType);
+					}
+					else
+					{
+						jft.EmitWrite(writerBody, field, nullableType);
+					}
+					// Mark the end of the conditional block
+					writerBody.MarkLabel(endOfIfLabel);
+				}
+			}
+
+			writerBody.Emit(OpCodes.Ret);
+			constructorBody.Emit(OpCodes.Ret);
+				
+			// Finish the type.
+			Type builtType = typeBuilder.CreateType();
+			var instance = (service == null ? Activator.CreateInstance(builtType) : Activator.CreateInstance(builtType, [service])) as TypeReaderWriter<T>;
+
+			foreach (var field in fieldsToInit)
+			{
+				var fld = instance.GetType().GetField(field.Field.Name, BindingFlags.NonPublic | BindingFlags.Instance);
+
+				fld.SetValue(instance, field.Value);
+			}
+
+			return instance;
 		}
 
 		private static PreGeneratedByteField True;

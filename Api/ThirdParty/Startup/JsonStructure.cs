@@ -608,6 +608,15 @@ namespace Api.Startup
 		public bool Hide;
 
 		/// <summary>
+		/// Gets the read access rule as the raw textual filter, if there is one.
+		/// </summary>
+		/// <returns></returns>
+		public virtual string GetReadAccessRuleText()
+		{
+			return null;
+		}
+
+		/// <summary>
 		/// Sets up the default display module for common field types.
 		/// This runs just before the field load event occurs.
 		/// </summary>
@@ -831,7 +840,7 @@ namespace Api.Startup
 		/// Gets the fields read access rule (filter text) if there is one set. Null/ empty string otherwise.
 		/// </summary>
 		/// <returns></returns>
-		public string GetReadAccessRuleText()
+		public override string GetReadAccessRuleText()
 		{
 			if (AccessRule == null)
 			{

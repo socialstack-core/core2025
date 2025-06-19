@@ -203,7 +203,7 @@ public partial class AutoService<T, ID>
 
 		if (jsonStructure.TypeIO == null)
 		{
-			jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this, context);
+			jsonStructure.TypeIO = TypeIOEngine.Generate<T>(jsonStructure, this);
 		}
 
 		// Get the include set (can be null). Must happen first such that if it errors, nothing was written out to the stream.
@@ -382,7 +382,7 @@ public partial class AutoService<T, ID>
 
 		if (jsonStructure.TypeIO == null)
 		{
-			jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this, context);
+			jsonStructure.TypeIO = TypeIOEngine.Generate<T>(jsonStructure, this);
 		}
 
 		jsonStructure.TypeIO.WriteJsonPartial((T)entity, writer);
@@ -439,7 +439,7 @@ public partial class AutoService<T, ID>
 
 		if (jsonStructure.TypeIO == null)
 		{
-			jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this, context);
+			jsonStructure.TypeIO = TypeIOEngine.Generate<T>(jsonStructure, this);
 		}
 
 		// Get the include set (can be null):
@@ -705,7 +705,7 @@ public partial class AutoService<T, ID>
 
 		if (jsonStructure.TypeIO == null)
 		{
-			jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this, context);
+			jsonStructure.TypeIO = TypeIOEngine.Generate<T>(jsonStructure, this);
 		}
 
 		// Write the object out:
@@ -849,7 +849,7 @@ public partial class AutoService<T, ID>
 
 		if (jsonStructure.TypeIO == null)
 		{
-			jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this, context);
+			jsonStructure.TypeIO = TypeIOEngine.Generate<T>(jsonStructure, this);
 		}
 
 		if (entity == null)
@@ -874,7 +874,7 @@ public partial class AutoService<T, ID>
 
 		if (jsonStructure.TypeIO == null)
 		{
-			jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, this, context);
+			jsonStructure.TypeIO = TypeIOEngine.Generate<T>(jsonStructure, this);
 		}
 
 		if (entity == null)

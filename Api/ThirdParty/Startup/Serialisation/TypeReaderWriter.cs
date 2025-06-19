@@ -12,9 +12,39 @@ using System.Reflection.Emit;
 namespace Api.Startup
 {
 	/// <summary>
+	/// Base class for JSON reader/ writers.
+	/// </summary>
+	public partial class TypeReaderWriter
+	{
+		
+		/// <summary>
+		/// Generic object write.
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <param name="writer"></param>
+		public virtual void WriteJsonPartialObject(object obj, Writer writer)
+		{
+			
+		}
+
+		/// <summary>
+		/// Generic object write.
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <param name="writer"></param>
+		/// <param name="context"></param>
+		/// <param name="isIncludes"></param>
+		public virtual void WriteJsonUnclosedObject(object obj, Writer writer, Context context, bool isIncludes)
+		{
+
+		}
+
+	}
+
+	/// <summary>
 	/// A reader/ writer.
 	/// </summary>
-	public partial class TypeReaderWriter<T>
+	public partial class TypeReaderWriter<T> : TypeReaderWriter
 	{
 		/// <summary>
 		/// Writes only the type and id fields of the given object.
@@ -37,6 +67,29 @@ namespace Api.Startup
 		{
 
 		}
+
+		/// <summary>
+		/// Generic object write.
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <param name="writer"></param>
+		public override void WriteJsonPartialObject(object obj, Writer writer)
+		{
+			WriteJsonPartial((T)obj, writer);
+		}
+
+		/// <summary>
+		/// Generic object write.
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <param name="writer"></param>
+		/// <param name="context"></param>
+		/// <param name="isIncludes"></param>
+		public override void WriteJsonUnclosedObject(object obj, Writer writer, Context context, bool isIncludes)
+		{
+			WriteJsonUnclosed((T)obj, writer, context, isIncludes);
+		}
+
 	}
 
 	/// <summary>

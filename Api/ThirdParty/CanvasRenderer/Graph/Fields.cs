@@ -77,7 +77,7 @@ namespace Api.CanvasRenderer
 
 			if (jsonStructure.TypeIO == null)
 			{
-				jsonStructure.TypeIO = TypeIOEngine.Generate(jsonStructure, svc, ctxt);
+				jsonStructure.TypeIO = TypeIOEngine.Generate<T>(jsonStructure, svc);
 			}
 
 			_typeReadWrite = jsonStructure.TypeIO;

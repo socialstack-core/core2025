@@ -5,6 +5,7 @@ using Api.SocketServerLibrary;
 using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Api.Startup;
@@ -59,6 +60,63 @@ public class SecondaryContentStreamSource
 	public virtual ValueTask<int> GetResults(Context context, Func<Context, object, int, object, object, ValueTask> onResult, object srcA, object srcB)
 	{
 		throw new NotImplementedException();
+	}
+
+	/// <summary>
+	/// Gets the serializer for the type of content in this stream source.
+	/// </summary>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
+	public virtual ValueTask<TypeReaderWriter> GetSerializer(Context context)
+	{
+		throw new NotImplementedException();
+	}
+
+	/// <summary>
+	/// Writes the source out as JSON to the given writer.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="writer"></param>
+	/// <param name="stream"></param>
+	/// <param name="includes"></param>
+	/// <returns></returns>
+	public async ValueTask ToJson(Context context, Writer writer, Stream stream, string includes)
+	{
+		writer.WriteASCII("{\"results\":[");
+
+		var serializer = await GetSerializer(context);
+
+		await GetResults(context, (Context ctx, object result, int index, object a, object b) => {
+
+			// avoids delegate alloc
+			Writer wr = (Writer)a;
+
+			if (index != 0)
+			{
+				wr.Write((byte)',');
+			}
+
+			if (result == null)
+			{
+				wr.WriteASCII("null");
+			}
+			else
+			{
+				serializer.WriteJsonUnclosedObject(result, wr, ctx, false);
+				wr.Write((byte)'}');
+			}
+
+			return new ValueTask();
+		}, writer, null);
+
+		if (stream != null)
+		{
+			await writer.CopyToAsync(stream);
+			writer.Reset(null);
+		}
+
+		writer.WriteASCII("],\"includes\":[]");
+		writer.Write((byte)'}');
 	}
 
 }
@@ -177,7 +235,7 @@ public struct ContentStream<T, ID>
 		writer.Start(null);
 
 		ContentStreamSource<T, ID> src = Source;
-		var next = src.GetNextSource();
+		var currentSecondarySource = src.GetNextSource();
 
 		await ServiceForType.ToJson(context, Filter, async (Context ctx, Filter<T, ID> filt, Func<T, int, ValueTask> onResult) => {
 
@@ -186,7 +244,7 @@ public struct ContentStream<T, ID>
 				await _onResult(result, index);
 			}, onResult, null);
 
-		}, writer, stream, includes, Filter == null ? false : Filter.IncludeTotal, next != null);
+		}, writer, stream, includes, Filter == null ? false : Filter.IncludeTotal, currentSecondarySource != null);
 
 		if (ReleaseFilter && Filter != null)
 		{
@@ -196,13 +254,13 @@ public struct ContentStream<T, ID>
 		bool hasSecondary = false;
 		bool firstSecondary = true;
 
-		if (next != null)
+		if (currentSecondarySource != null)
 		{
 			hasSecondary = true;
 			writer.WriteASCII(",\"secondary\":{");
 		}
 
-		while (next != null)
+		while (currentSecondarySource != null)
 		{
 			if (firstSecondary)
 			{
@@ -212,24 +270,19 @@ public struct ContentStream<T, ID>
 			{
 				writer.Write((byte)',');
 			}
-			writer.WriteEscaped(next.SourceName);
+			writer.WriteEscaped(currentSecondarySource.SourceName);
 			writer.Write((byte)':');
 
-			// todo: jsonify the source here!
-			writer.WriteASCII("{}");
+			await currentSecondarySource.ToJson(context, writer, stream, includes);
 
 			// Keep asking the original for its next source if there are more.
-			next = src.GetNextSource();
+			currentSecondarySource = src.GetNextSource();
 		}
 
 		if (hasSecondary)
 		{
 			// Close both
 			writer.WriteASCII("}}");
-		}
-		else
-		{
-			writer.Write((byte)'}');
 		}
 
 		if (stream != null)
@@ -384,7 +437,7 @@ public class ListStreamSource<T, ID> : ContentStreamSource<T, ID>
 /// Best avoided - use the mainline service output instead as it avoids allocating the list itself.
 /// For quick wins or minorly used endpoints though, this is completely fine.
 /// </summary>
-public class SecondaryListContentStreamSource<T> : SecondaryContentStreamSource
+public class SecondaryListStreamSource<T> : SecondaryContentStreamSource
 {
 	/// <summary>
 	/// The list in this source.
@@ -396,10 +449,21 @@ public class SecondaryListContentStreamSource<T> : SecondaryContentStreamSource
 	/// </summary>
 	/// <param name="srcName"></param>
 	/// <param name="content"></param>
-	public SecondaryListContentStreamSource(string srcName, IEnumerable<T> content)
+	public SecondaryListStreamSource(string srcName, IEnumerable<T> content)
 	{
 		SourceName = srcName;
 		Content = content;
+	}
+
+	/// <summary>
+	/// Gets the serializer for the type of content in this stream source.
+	/// </summary>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
+	public override async ValueTask<TypeReaderWriter> GetSerializer(Context context)
+	{
+		// Get a typeRW for T.
+		return await TypeIOEngine.GetSerializer<T>(context);
 	}
 
 	/// <summary>

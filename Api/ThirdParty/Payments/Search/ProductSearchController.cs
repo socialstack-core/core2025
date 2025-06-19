@@ -77,12 +77,12 @@ public partial class ProductSearchController : AutoController
 		//     }
 		// }
 
-		var secondarySources = new SecondaryListContentStreamSource<AttributeValueFacet>(
+		var secondarySources = new SecondaryListStreamSource<AttributeValueFacet>(
 			"attributes", 
 			resultSet.ResultFacets.Attributes
 		);
 
-		secondarySources.Next = new SecondaryListContentStreamSource<ProductCategoryFacet>(
+		secondarySources.Next = new SecondaryListStreamSource<ProductCategoryFacet>(
 			"productCategories",
 			resultSet.ResultFacets.Categories
 		);
