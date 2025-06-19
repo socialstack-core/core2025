@@ -135,7 +135,7 @@ namespace Api.TypeScript
                             {
                                 var module = ESModule.Empty(type, modules);
                                 module.SetFileName(type.Name);
-                                module.AddNonEntityController(type);
+                                module.AddNonEntityController(type, includesScript);
                             }
                         }
                         catch (NotSupportedException notSupported)
