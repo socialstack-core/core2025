@@ -111,6 +111,18 @@ namespace Api.Payments
 							new CanvasNode("UI/Product/View").WithPrimaryLink("product")
 						);
 					}
+				},
+				new PageBuilder()
+				{
+					Key = "product_search",
+					Url = "product/search",
+					Title = "Search for products",
+					BuildBody = (PageBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("UI/Product/Search")
+						);
+					}
 				}
 			);
 
