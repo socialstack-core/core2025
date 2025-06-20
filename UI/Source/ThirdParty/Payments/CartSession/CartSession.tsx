@@ -22,7 +22,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
     const includeSet: ApiIncludes[] = [
         shoppingCartApi.includes.productquantities,
         shoppingCartApi.includes.productquantities.product,
-        shoppingCartApi.includes.productquantities.product.price,
+        shoppingCartApi.includes.productquantities.totalprice,
     ];
 
     useEffect(() => {

@@ -28,44 +28,11 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 
 	function renderTotals(cartTotals, options) {
 		var totals = [];
-		var coupon = options && options.coupon;
 
 		for (var i = 0; i < 5; i++) {
 			if (cartTotals[i]) {
 				var total = cartTotals[i];
 				var totalCost = total;
-
-				if (coupon != null) {
-					if (coupon.minSpendPrice) {
-						// Are we above it?
-						if (totalCost < coupon.minSpendPrice.amount) {
-							// No!
-							coupon = null;
-						}
-					}
-
-					if (coupon && coupon.discountPercent != 0) {
-						var discountedTotal = totalCost * (1 - (coupon.discountPercent / 100));
-
-						if (discountedTotal <= 0) {
-							// Becoming free!
-							totalCost = 0;
-						} else {
-							// Round to nearest pence/ cent
-							totalCost = Math.ceil(discountedTotal);
-						}
-					}
-
-					if (coupon && coupon.discountAmount) {
-						if (totalCost < coupon.discountAmount.amount) {
-							// Becoming free!
-							totalCost = 0;
-						} else {
-							// Discount a fixed number of units:
-							totalCost -= coupon.discountAmount.amount;
-						}
-					}
-				}
 
 				var recurTitle = recurrenceText(i);
 
@@ -110,7 +77,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 	var cartTotalByFrequency = [0, 0, 0, 0, 0];
 
 	var itemSet = [];
-	var currencyCode = null;
+	var currencyCode: string = '';
 	var hasAtLeastOneSubscription = false;
 
 	items.forEach(cartInfo => {
@@ -129,7 +96,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 			qty = product.minQuantity;
 		}
 
-		var cost = calculatePrice(product, qty);
+		var cost = cartInfo.totalPrice;
 
 		if (cost) {
 			cartTotalByFrequency[product.billingFrequency] += cost.amount;
@@ -167,10 +134,6 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 				var product = cartInfo.product;
 				var qty = cartInfo.quantity;
 				var cost = cartInfo.cost;
-
-				if (qty < product.minQuantity) {
-					qty = product.minQuantity;
-				}
 
 				var formattedCost = formatCurrency(cost.amount, { currencyCode });
 
@@ -211,7 +174,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 						<Quantity inBasket={cartInfo.quantity} />
 					</td>
 					<td className="currency-column">
-						{formatCurrency(product.price.amount, { currencyCode })}
+						{formattedCost}
 					</td>
 					{!readonly && <td className="actions-column">
 						<button type="button" className="btn btn-small btn-outline-danger" title={`Remove`}
@@ -230,7 +193,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 				<td className="qty-column">
 				</td>
 				<td className="currency-column" style={{ fontWeight: 'bold' }}>
-					{currencyCode ? renderTotals(cartTotalByFrequency, { currencyCode, coupon: props.coupon }) : '-'}
+					{currencyCode ? renderTotals(cartTotalByFrequency, { currencyCode }) : '-'}
 				</td>
 				<td>
 					&nbsp;
