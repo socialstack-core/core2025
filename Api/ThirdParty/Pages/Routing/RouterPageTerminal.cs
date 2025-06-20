@@ -31,6 +31,11 @@ public class RouterPageTerminal : TerminalNode
 	public readonly string TokenNamesJson;
 
 	/// <summary>
+	/// Token names as a normal list.
+	/// </summary>
+	public List<string> TokenNames;
+
+	/// <summary>
 	/// The HtmlService instance.
 	/// </summary>
 	protected readonly HtmlService _htmlService;
@@ -68,6 +73,7 @@ public class RouterPageTerminal : TerminalNode
 		else
 		{
 			TokenNamesJson = Newtonsoft.Json.JsonConvert.SerializeObject(tokens);
+			TokenNames = tokens;
 		}
 	}
 

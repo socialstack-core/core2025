@@ -306,7 +306,7 @@ namespace Api.Pages
 			else
 			{
 				// Execute canvas graphs:
-				await terminal.Generator.Generate(context, writer, pageAndTokens.PrimaryObject);
+				await terminal.Generator.Generate(context, writer, pageAndTokens);
 			}
 
 			writer.WriteASCII(",\"title\":\"");

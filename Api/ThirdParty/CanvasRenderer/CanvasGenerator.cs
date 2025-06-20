@@ -1,5 +1,6 @@
 using Api.Contexts;
 using Api.Eventing;
+using Api.Pages;
 using Api.SocketServerLibrary;
 using Newtonsoft.Json.Linq;
 using System;
@@ -231,7 +232,7 @@ public class CanvasGenerator
 	/// <summary>
 	/// Generate the target canvas. Puts the result in to the given writer.
 	/// </summary>
-	public async ValueTask Generate(Context context, Writer writer, object po)
+	public async ValueTask Generate(Context context, Writer writer, PageWithTokens pageWithTokens)
 	{
 		if(_plan == null)
 		{
@@ -240,7 +241,7 @@ public class CanvasGenerator
 
 		// Get canvas state object:
 		var state = GetState();
-		state.PrimaryObject = po;
+		state.PageWithTokens = pageWithTokens;
 		state.Context = context;
 		state.Writer = writer;
 
