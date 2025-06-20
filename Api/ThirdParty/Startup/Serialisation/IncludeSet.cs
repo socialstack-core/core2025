@@ -642,6 +642,11 @@ namespace Api.Startup
 				throw new System.Exception("Can't add to an include set after it has been baked.");
 			}
 
+			if (SecondaryRoot != null)
+			{
+				return SecondaryRoot;
+			}
+
 			var result = new InclusionNode(RelativeTo, this, true);
 			result.IncludeName = "secondary";
 			SecondaryRoot = result;
