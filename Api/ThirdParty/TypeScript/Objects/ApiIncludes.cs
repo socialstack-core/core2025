@@ -23,6 +23,8 @@ namespace Api.TypeScript.Objects
     {
         private List<Type> _entities = [];
 
+        private List<Type> _secondaryIncludes = [];
+
         /// <summary>
         /// Registers an entity type to be included in the TypeScript generation output.
         /// </summary>
@@ -125,9 +127,53 @@ namespace Api.TypeScript.Objects
                     builder.AppendLine($"        return new {targetType}Includes(this.toString(), '{virtualField.FieldName.ToLower()}');");
                     builder.AppendLine("    }");
                 }
+                
+                AddSecondaryResultIncludes(entity, builder);
 
                 builder.AppendLine("}");
             }
+
+            foreach (var entity in _secondaryIncludes)
+            {
+                CreateSecondaryIncludeClass(entity, builder);
+            }
+        }
+
+        private void AddSecondaryResultIncludes(Type type, StringBuilder builder)
+        {
+            var secondaryIncludes = type.GetCustomAttributes<HasSecondaryResultAttribute>();
+
+            var hasSecondaryResultAttributes = secondaryIncludes as HasSecondaryResultAttribute[] ?? secondaryIncludes.ToArray();
+            
+            if (hasSecondaryResultAttributes.Length == 0)
+            {
+                return;
+            }
+
+            foreach (var include in hasSecondaryResultAttributes)
+            {
+                _secondaryIncludes.Add(include.Type);
+                
+                builder.AppendLine($"    get {include.FieldName}() {{");
+                builder.AppendLine($"          return new {include.Type.Name}Includes(this.toString(), '{include.FieldName.ToLower()}');");
+                builder.AppendLine("    }");
+            }
+        }
+
+        private void CreateSecondaryIncludeClass(Type type, StringBuilder builder)
+        {
+            builder.AppendLine($"export class {type.Name}Includes extends ApiIncludes {{");
+            
+            var hasVirtField = type.GetCustomAttributes<HasVirtualFieldAttribute>();
+
+            foreach (var virtualField in hasVirtField)
+            {
+                builder.AppendLine($"    get {TypeScriptService.LcFirst(virtualField.FieldName)}() {{");
+                builder.AppendLine($"        return new {virtualField.Type.Name}Includes(this.toString(), '{virtualField.FieldName.ToLower()}');");
+                builder.AppendLine("    }");
+            }
+            
+            builder.AppendLine("}");
         }
     }
 }
