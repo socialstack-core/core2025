@@ -133,6 +133,16 @@ namespace Api.TypeScript.Objects
                 builder.AppendLine("}");
             }
 
+            builder.AppendLine("export class SecondaryIncludes extends ApiIncludes {");
+            builder.AppendLine("    private secondaryIncludeString: string;");
+            builder.AppendLine("    constructor(existing: string = '', addition: string = ''){");
+            builder.AppendLine("        super('','');");
+            builder.AppendLine("        let src = existing.startsWith('secondary') ? existing : 'secondary';");
+            builder.AppendLine("        this.secondaryIncludeString = src + '.' + (addition.length != 0 ? addition : '');");    
+            builder.AppendLine("    }");
+            builder.AppendLine("    toString(){ return this.secondaryIncludeString }");
+            builder.AppendLine("}");
+
             foreach (var entity in _secondaryIncludes)
             {
                 CreateSecondaryIncludeClass(entity, builder);
@@ -162,7 +172,7 @@ namespace Api.TypeScript.Objects
 
         private void CreateSecondaryIncludeClass(Type type, StringBuilder builder)
         {
-            builder.AppendLine($"export class {type.Name}Includes extends ApiIncludes {{");
+            builder.AppendLine($"export class {type.Name}Includes extends SecondaryIncludes {{");
             
             var hasVirtField = type.GetCustomAttributes<HasVirtualFieldAttribute>();
 

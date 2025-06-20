@@ -64,8 +64,9 @@ export default function ProductCategoryTree(props: ProductCategoryTreeProps) {
 			query: searchQuery,
 			pageOffset: pageOffset as uint,
 		}, [
+			new ProductIncludes().attributeValueFacets,
+			new ProductIncludes().productCategoryFacets,
 			new ProductIncludes().attributes.attribute,
-			new ProductIncludes().attributes.attribute.attributeGroup
 		])
 		.then(response => {
 			setSearchResults(response);
