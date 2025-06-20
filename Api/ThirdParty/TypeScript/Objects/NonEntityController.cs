@@ -41,6 +41,7 @@ namespace Api.TypeScript.Objects
 
             _container = container;
             _referenceType = controllerType;
+            container.RequireWebApi(WebApis.GetList);
 
             foreach (var method in GetEndpointMethods())
             {
@@ -140,6 +141,9 @@ namespace Api.TypeScript.Objects
                     paramCount++;
                 }
 
+                var isContentStream = false;
+                var type = TypeScriptService.UnwrapTypeNesting(method.ReturnType);
+
                 if (method.RequiresIncludes)
                 {
                     if (paramCount != 0)
@@ -147,12 +151,12 @@ namespace Api.TypeScript.Objects
                         builder.Append(", ");
                     }
 
-                    var type = TypeScriptService.UnwrapTypeNesting(method.ReturnType);
 
                     if (type is not null && type.IsGenericType &&
                         type.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                     {
                         type = type.GetGenericArguments()[0];
+                        isContentStream = true;
                     }
 
                     type ??= method.TrueReturnType;
@@ -169,13 +173,18 @@ namespace Api.TypeScript.Objects
                     if (TypeScriptService.IsEntityType(method.ReturnType))
                     {
                         call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
-                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
+                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
                     }
                     else
                     {
                         call = $"getJson<{svc.GetGenericSignature(method.ReturnType)}[]>";
                         builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}[]> => {{");
                     }
+                }
+                else if (isContentStream)
+                {
+                    call = $"getList<{type.Name}>";
+                    builder.Append($"): Promise<ApiList<{type.Name}>> => {{");
                 }
                 else
                 {
