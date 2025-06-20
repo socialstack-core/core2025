@@ -93,16 +93,19 @@ public class ContentList : Executor
 		// Start constructing the filter here, binding each input arg according to what the filter needs.
 		// Rather confusingly though we need to construct the filter twice - once here inside this node
 		// such that we know what the bind types are and then a 2nd time, the actual instanced used in the emitted code.
+
+		// 1st one: Call .Where on the _svc for the filter itself.
+		// A filter is required regardless of if a filter string is present or not.
+		// We have the service on "this" node, but we can get it to do the where call for us.
+		compileEngine.EmitCurrentNode();
+		var createFilterMethod = GetType().GetMethod(nameof(ContentList.CreateFilter));
+		compileEngine.CodeBody.Emit(OpCodes.Callvirt, createFilterMethod);
+
 		if (!string.IsNullOrWhiteSpace(_filterStr))
 		{
+			// This is the 2nd one!
 			var filterForDeterminingBindTypes = _svc.GetGeneralFilterFor(_filterStr);
 			var bindTypes = filterForDeterminingBindTypes.GetArgTypes();
-
-			// Call .Where on the _svc for the filter itself.
-			// We have the service on "this" node, but we can get it to do the where call for us.
-			compileEngine.EmitCurrentNode();
-			var createFilterMethod = GetType().GetMethod(nameof(ContentList.CreateFilter));
-			compileEngine.CodeBody.Emit(OpCodes.Callvirt, createFilterMethod);
 
 			var filterType = typeof(Filter<,>).MakeGenericType(new Type[] { svcType, _svc.IdType });
 
@@ -147,11 +150,6 @@ public class ContentList : Executor
 				}
 			}
 
-		}
-		else
-		{
-			// A null filter
-			compileEngine.CodeBody.Emit(OpCodes.Ldnull);
 		}
 
 		// Emit the LoadContent call:
