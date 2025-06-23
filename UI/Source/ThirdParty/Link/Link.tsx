@@ -1,21 +1,71 @@
 import { useSession } from 'UI/Session';
 import { useTokens } from 'UI/Token';
-
+import Button from 'UI/Button';
 
 /**
  * Props for the link component.
  */
 interface LinkProps extends React.HTMLAttributes<HTMLAnchorElement> {
 	/**
+	 * True if the link is disabled.
+	 */
+	disabled?: boolean,
+
+	/**
+	 * optional additional class name(s)
+	 */
+	className?: string,
+
+	/**
 	 * The href for the link itself.
 	 */
-	href: string
+	href?: string,
+
+	/**
+	 * True if the link should be the extra small style.
+	 */
+	xs?: boolean,
+
+	/**
+	 * True if the link should be the small style.
+	 */
+	sm?: boolean,
+
+	/**
+	 * True if the link should be the regular style.
+	 */
+	md?: boolean,
+
+	/**
+	 * True if the link should be the large style.
+	 */
+	lg?: boolean,
+
+	/**
+	 * True if the link should be the extra large style.
+	 */
+	xl?: boolean,
+
+	/**
+	 * True if the link should prevent wrapping text inside it.
+	 */
+	noWrap?: boolean,
+
+	/**
+	 * True if the link should be the outlined style.
+	 */
+	outlined?: boolean,
+
+	/**
+	 * The style variant, "primary", "secondary" etc. no style (i.e. basic link) assumed.
+	 */
+	variant?: string
+
 }
 
 const Link: React.FC<React.PropsWithChildren<LinkProps>> = ({
-	children,
-	href,
-	...attribs
+	children, className, href, variant,
+	disabled, outlined, noWrap, xs, sm, md, lg, xl, ...attribs
 }) => {
 	const { session } = useSession();
 	const { locale } = session;
@@ -61,19 +111,50 @@ const Link: React.FC<React.PropsWithChildren<LinkProps>> = ({
 
 	}
 
-	return <a href={url} {...attribs}>
+	var classes = className ? className.split(" ") : [];
+	var styleAsButton = (variant && variant.length) || outlined;
+
+	// sizing
+	if (styleAsButton) {
+		return <>
+			<Button className={className} href={href} variant={variant} disabled={disabled}
+				outlined={outlined} allowWrap={false} xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
+				{children}
+			</Button>
+		</>;
+	}
+
+	if (xs) {
+		classes.unshift("ui-link--xs");
+	}
+
+	if (sm) {
+		classes.unshift("ui-link--sm");
+	}
+
+	if (md) {
+		classes.unshift("ui-link--md");
+	}
+
+	if (lg) {
+		classes.unshift("ui-link--lg");
+	}
+
+	if (xl) {
+		classes.unshift("ui-link--xl");
+	}
+
+	if (noWrap) {
+		classes.unshift("ui-link--nowrap");
+	}
+
+	classes.unshift("ui-link");
+
+	var linkClass = classes.join(" ");
+
+	return <a href={url} inert={disabled ? true : undefined} className={linkClass} {...attribs}>
 		{children}
 	</a>;
 }
 
 export default Link;
-
-/*
-Link.editable = true;
-
-Link.propTypes = {
-	title: 'string',
-	href: 'string',
-	children: 'jsx'
-};
-*/

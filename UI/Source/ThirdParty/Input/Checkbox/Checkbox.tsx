@@ -2,7 +2,13 @@ import { DefaultInputType } from 'UI/Input/Default';
 import { useId } from 'react';
 
 type CheckboxInputType = DefaultInputType & {
+	xs?: boolean,
+	sm?: boolean,
+	md?: boolean,
+	lg?: boolean,
+	xl?: boolean,
 	isSwitch?: boolean,
+	flipped?: boolean,
 	groupVariant?: string,
 	groupIcon?: string,
 	solid?: boolean,
@@ -27,7 +33,7 @@ interface CheckboxProps {
 const Checkbox: React.FC<CheckboxProps> = (props) => {
 	const { field, config } = props;
 	const { label, validationFailure, onInputRef, helpFieldId } = config;
-	let { isSwitch, groupVariant, groupIcon, solid, className, onChange, style, ...attribs } = field;
+	let { isSwitch, flipped, xs, sm, md, lg, xl, groupVariant, groupIcon, solid, className, onChange, style, ...attribs } = field;
 	const id = attribs.id || useId();
 	
 	const classes = className ? className.split(" ") : [];
@@ -36,10 +42,35 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 		classes.unshift("form-switch");
 	}
 
+	if (flipped) {
+		classes.unshift("form-check--flipped");
+	}
+
+	if (xs) {
+		classes.unshift("form-check--xs");
+	}
+
+	if (sm) {
+		classes.unshift("form-check--sm");
+	}
+
+	if (md) {
+		classes.unshift("form-check--md");
+	}
+
+	if (lg) {
+		classes.unshift("form-check--lg");
+	}
+
+	if (xl) {
+		classes.unshift("form-check--xl");
+	}
+
 	if (validationFailure) {
 		classes.push("is-invalid");
 	}
 
+	classes.unshift("ui-check");
 	classes.unshift("form-check");
 
 	/* wrapped by UI/Input
@@ -94,6 +125,8 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 					id={id}
 					checked={value}
 					defaultChecked={defaultValue}
+					// haptic support for Safari
+					switch={isSwitch ? true : undefined}
 			/>}
 			<label className="form-check-label" htmlFor={id}>
 				{label}

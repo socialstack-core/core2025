@@ -29,9 +29,19 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
 	href?: string,
 
 	/**
+	 * True if the button should be the extra small style.
+	 */
+	xs?: boolean,
+
+	/**
 	 * True if the button should be the small style.
 	 */
 	sm?: boolean,
+
+	/**
+	 * True if the button should be the regular style.
+	 */
+	md?: boolean,
 
 	/**
 	 * True if the button should be the large style.
@@ -39,9 +49,14 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
 	lg?: boolean,
 
 	/**
-	 * True if the button should not wrap text inside it.
+	 * True if the button should be the extra large style.
 	 */
-	noWrap?: boolean,
+	xl?: boolean,
+
+	/**
+	 * True if the button should wrap text inside it.
+	 */
+	allowWrap?: boolean,
 
 	/**
 	 * True if the button should be the outlined style.
@@ -60,9 +75,8 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
  */
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 	children, className, tag, buttonType, href, variant,
-	disabled, outlined, noWrap, sm, lg, ...props
+	disabled, outlined, allowWrap, xs, sm, md, lg, xl, ...props
 }) => {
-	
 	var classes = className ? className.split(" ") : [];
 
 	var Tag = tag ? tag : "button";
@@ -101,21 +115,33 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 		variant = "primary";
 	}
 
-	if (noWrap) {
-		classes.unshift("text-nowrap");
+	if (allowWrap) {
+		classes.unshift("btn--wrapped");
 	}
 
-	// Removal: Don't add a disabled classname, use the disabled attr instead
+	// sizing
+	if (xs) {
+		classes.unshift("btn-xs");
+	}
 
 	if (sm) {
 		classes.unshift("btn-sm");
+	}
+
+	if (md) {
+		classes.unshift("btn-md");
 	}
 
 	if (lg) {
 		classes.unshift("btn-lg");
 	}
 
+	if (xl) {
+		classes.unshift("btn-xl");
+	}
+
 	classes.unshift("btn-" + (outlined ? "outline-" : "") + variant);
+	classes.unshift("ui-btn");
 	classes.unshift("btn");
 
 	var btnClass = classes.join(" ");
@@ -123,6 +149,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 	return (
 		<Tag className={btnClass}
 			disabled={Tag != "a" && disabled ? true : undefined}
+			inert={Tag == "a" && disabled ? true : undefined}
 			aria-disabled={disabled ? "true" : undefined}
 			tabIndex={disabled ? -1 : undefined}
 			href={Tag == "a" ? href : undefined}
@@ -136,13 +163,3 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 }
 
 export default Button;
-
-/*
-Button.propTypes = {
-};
-
-Button.defaultProps = {
-}
-
-Button.icon = 'keyboard';
-*/
