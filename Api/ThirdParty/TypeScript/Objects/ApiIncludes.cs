@@ -91,7 +91,7 @@ namespace Api.TypeScript.Objects
                 var virtualInfo = kvp.Value.VirtualInfo;
 
                 Type virtualType = null;
-
+                
                 if(virtualInfo.DynamicTypeField != null){
                     virtualType = typeof(object);
                 } else if(virtualInfo.ValueGeneratorType != null) {
@@ -100,8 +100,9 @@ namespace Api.TypeScript.Objects
                     virtualType = virtualInfo.Type;
                 }
 
-                if (virtualType == typeof(string) || !TypeScriptService.IsEntityType(virtualType))
+                if (virtualInfo.ValueGeneratorType != null || !TypeScriptService.IsEntityType(virtualType))
                 {
+                    // Functional includes and anything that is not an entity type with its own includes set.
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
                     builder.AppendLine($"        return new TerminalIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
                     builder.AppendLine("    }");
@@ -109,7 +110,7 @@ namespace Api.TypeScript.Objects
                 else
                 {
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
-                    builder.AppendLine($"        return new TerminalIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
+                    builder.AppendLine($"        return new {virtualType.Name}Includes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
                     builder.AppendLine("    }");
                 }
             }
