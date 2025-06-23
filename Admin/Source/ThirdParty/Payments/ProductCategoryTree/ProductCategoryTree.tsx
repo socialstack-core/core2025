@@ -27,6 +27,11 @@ type SearchResultIncludes<T> = {
 	values: T[];
 };
 
+type AttributeFilter = {
+	mapping: string,
+	ids: ulong[]
+}
+
 export default function ProductCategoryTree({ noCreate }: ProductCategoryTreeProps) {
 	const [viewType, setViewType] = useState<PageViewType>("tree");
 	const [originalViewType, setOriginalViewType] = useState<PageViewType>();
@@ -35,7 +40,7 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 	const [loading, setLoading] = useState(false);
 	const [searchResults, setSearchResults] = useState<ApiList<Product>>();
 
-	const [attributeFilter, setAttributeFilter] = useState<Record<string, string[]>>({});
+	const [attributeFilter, setAttributeFilter] = useState<Record<uint, AttributeFilter>>({});
 
 	const { pageState } = useRouter();
 	const path = pageState.query?.get("path") || "";
@@ -55,13 +60,18 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 		if (viewType !== "list") {
 			setOriginalViewType(viewType);
 			setViewType("list");
+			return;
 		}
 
 		setLoading(true);
 
 		searchApi
 			.faceted(
-				{ query: searchQuery, pageOffset: pageOffset as uint },
+				{ 
+					query: searchQuery, 
+					pageOffset: pageOffset as uint,
+					appliedFacets: Object.values(attributeFilter)
+				},
 				[
 					new ProductIncludes().attributeValueFacets,
 					new ProductIncludes().productCategoryFacets,
@@ -72,11 +82,17 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 				setSearchResults(response);
 				setLoading(false);
 			});
-	}, [searchQuery, pageOffset]);
+	}, [searchQuery, pageOffset, attributeFilter]);
 
-	useEffect(() => {
-		setAttributeFilter({});
-	}, [searchQuery]);
+	// useEffect(() => {
+	// 	if (!attributeFilter) {
+	// 		setAttributeFilter({});
+	// 		return;
+	// 	}
+	// 	if (searchQuery.length === 0) {
+	// 		setAttributeFilter({});
+	// 	}
+	// }, [attributeFilter, searchQuery]);
 
 	const searchResultAttributes: SearchResultIncludes<ProductAttribute> | undefined =
 		searchResults?.includes?.find((inc: SearchResultIncludes<ProductAttribute>) => inc.field === "attribute");
@@ -88,12 +104,14 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 		searchResultAttributes.values = searchResultAttributes.values
 			.filter((attr, idx, self) => self.findIndex((t) => t.name === attr.name) === idx)
 			.sort((a, b) => {
-				const aHasFilter = attributeFilter[a.id]?.length > 0;
-				const bHasFilter = attributeFilter[b.id]?.length > 0;
+				const aHasFilter = attributeFilter[a.id]?.values?.length > 0;
+				const bHasFilter = attributeFilter[b.id]?.values?.length > 0;
 				return aHasFilter === bHasFilter ? 0 : aHasFilter ? -1 : 1;
 			});
 	}
-
+	
+	console.log({ attributeFilter })
+	
 	return (
 		<>
 			<SubHeader title="Edit Products" breadcrumbs={breadcrumbs} />
@@ -151,13 +169,14 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 											.map((val) => ({
 												value: val.value + (attribute.units ?? ""),
 												count: valueFacets.find((f: { attributeValueId: uint }) => f.attributeValueId === val.id)?.count ?? 0,
+												valueId: val.id
 											}))
 											.reduce((acc, curr) => {
 												if (!acc.find((opt) => opt.value === curr.value)) {
 													acc.push(curr);
 												}
 												return acc;
-											}, [] as { value: string; count: number }[])
+											}, [] as { value: string; count: number, valueId: number }[])
 											.sort((a, b) => a.value.localeCompare(b.value, undefined, { numeric: true }));
 
 										return (
@@ -167,13 +186,17 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 											>
 												<MultiSelectBox
 													onChange={(values) =>
-														setAttributeFilter((prev) => ({
-															...prev,
-															[attribute.id]: values,
-														}))
+														setAttributeFilter({
+															...attributeFilter,
+															[attribute.id]: {
+																mapping: attribute.key,
+																ids: values
+															}
+														})
 													}
+													key={'attribute-' + attribute.id}
 													defaultText={attribute.name}
-													value={attributeFilter[attribute.id] ?? []}
+													value={attributeFilter[attribute.id]?.ids ?? []}
 													options={options ?? []}
 												/>
 											</div>

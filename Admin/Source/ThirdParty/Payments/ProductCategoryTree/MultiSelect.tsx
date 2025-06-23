@@ -3,20 +3,21 @@ import Input from 'UI/Input'
 
 export type MultiSelectOption = {
     value: string,
-    count: number
+    count: number,
+    valueId: number
 }
 
 export type MultiSelectBoxProps = {
-    onChange: (values: string[]) => void;
+    onChange: (values: ulong[]) => void;
     defaultText: string;
-    value: string[]
+    value: ulong[]
     options: MultiSelectOption[]
 }
 
 export const MultiSelectBox = (props: MultiSelectBoxProps) => {
     
     const [isOpen, setIsOpen] = useState(false);
-    const [value, setValue] = useState<string[]>();
+    const [value, setValue] = useState<ulong[]>();
 
     useEffect(() => {
         if (!value && props.value) {
@@ -25,7 +26,7 @@ export const MultiSelectBox = (props: MultiSelectBoxProps) => {
             return;
         }
         
-        if (value) {
+        if (value && value != props.value) {
             props.onChange(value);
         }
     }, [value]);
@@ -81,14 +82,14 @@ export const MultiSelectBox = (props: MultiSelectBoxProps) => {
                                     type={'checkbox'} 
                                     label={option.value + ' (' + option.count + ')'}
                                     onChange={(event) => {
-                                        const newValue = (value?.filter((existing) => existing !== option.value) ?? []);
+                                        const newValue: ulong[] = value?.filter((existing) => existing !== option.valueId) ?? [];
                                         
                                         if ((event.target as HTMLInputElement).checked) {
-                                            newValue.push(option.value);
+                                            newValue.push(option.valueId as ulong);
                                         }
                                         setValue(newValue);
                                     }}
-                                    checked={value?.includes(option.value)}
+                                    checked={value?.includes(option.valueId as ulong)}
                                />
                             </li>
                         )
