@@ -1,16 +1,84 @@
 .ui-product-search {
-	// reference an image in the same component folder
-	//background-image: url("./filename.svg");
-	
-	// Style should be mobile first with media queries for larger sizes.
-}
+	margin-top: px_to_rem(44);
 
-/*
-Size overrides. See bootstrap breakpoints for more information:
-https://getbootstrap.com/docs/5.0/layout/breakpoints/#min-width
-
-@include media-breakpoint-up(md) {
-	.ui-product-search {
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: px_to_rem(24);
 	}
+
+	&__title {
+		font-size: px_to_rem(39);
+		font-weight: normal;
+
+		strong {
+			font-weight: 700;
+		}
+	}
+
+	&__view-options {
+		display: flex;
+		align-items: center;
+		gap: px_to_rem(12);
+	}
+
+	&__internal {
+		display: grid;
+		grid-template-columns: px_to_rem(344) 1fr;
+		grid-template-rows: auto;
+		grid-template-areas: "filters results";
+		gap: px_to_rem(24);
+	}
+
+	&__filters {
+		grid-area: filters;
+		background: #ccc;
+		padding: px_to_rem(20) px_to_rem(24);
+		border-radius: px_to_rem(8);
+		display: flex;
+		flex-direction: column;
+		gap: px_to_rem(20);
+		height: fit-content;
+
+		button[type="reset"] {
+			--btn-border-radius: 8;
+		}
+
+		fieldset {
+
+			legend {
+				font-size: px_to_rem(15);
+				font-weight: 700;
+				margin-bottom: px_to_rem(20);
+			}
+
+		}
+
+		.fieldset-content {
+			display: flex;
+			flex-direction: column;
+			gap: px_to_rem(20);
+
+			&:not(.fieldset-content--no-border) {
+				padding: px_to_rem(12) px_to_rem(16);
+				border: 1px solid currentColor;
+				border-radius: px_to_rem(8);
+			}
+
+		}
+
+		// border switch toggles
+		.form-check.ui-check.form-switch {
+			padding: px_to_rem(12) px_to_rem(16);
+			border: 1px solid currentColor;
+			border-radius: px_to_rem(8);
+		}
+
+	}
+
+	.ui-product-list {
+		grid-area: results;
+	}
+
 }
-*/
