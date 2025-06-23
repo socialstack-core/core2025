@@ -57,7 +57,10 @@ const Datetime: React.FC<CustomInputTypeProps<"datetime-local">> = (props) => {
 		props.onInputRef && props.onInputRef(r);
 
 		if (r) {
-			(r as any).onGetValue = (v : string) => {
+			(r as any).onGetValue = (v: string) => {
+				if (v == "") {
+					return null;
+				}
 				return new Date(Date.parse(v));
 			};
 		}
