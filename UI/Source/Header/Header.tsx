@@ -14,7 +14,8 @@ import useApi from "UI/Functions/UseApi";
 import Loading from "UI/Loading";
 import BasketItem from 'UI/Product/Signpost';
 import { useCart } from 'UI/Payments/CartSession';
-import { calculatePrice, recurrenceText } from 'UI/Functions/Payments';
+import { recurrenceText } from 'UI/Functions/Payments';
+import { formatCurrency } from 'UI/Functions/CurrencyTools';
 import RecentSearches from "UI/RecentSearches";
 import Loop from "UI/Loop";
 import Link from "UI/Link";
@@ -222,9 +223,10 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	// calculate basket totals
 	var basketCount = 0;
 	var basketTotal = 0;
-
-	let basketItems = loading || cartIsEmpty ? [] : shoppingCart?.productQuantities;
-
+	
+	let basketItems = loading || cartIsEmpty() ? [] : shoppingCart?.productQuantities;
+	let currencyCode: string | null = null;
+	
 	basketItems.forEach(cartInfo => {
 		var product = cartInfo.product;
 
@@ -238,21 +240,24 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 			qty = product.minQuantity;
 		}
 
-		var cost = calculatePrice(product, qty);
+		var cost = cartInfo.totalPrice;
 
 		basketCount += qty;
 
 		if (cost) {
-			basketTotal += cost.amount / 100;
+			basketTotal += cost.amount;
+			
+			if(!currencyCode){
+				currencyCode = cost.currencyCode;
+			}
 		}
 
 	});
-
-	let GBPound = new Intl.NumberFormat('en-GB', {
-		style: 'currency',
-		currency: 'GBP',
-	});
-
+	
+	if(!currencyCode){
+		currencyCode = 'GBP';
+	}
+	
 	const showContact = contactHref?.length || message?.length;
 
 	const highlightMatch = (text: string, query: string) => {
@@ -372,7 +377,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 							</>}
 							{!cartIsEmpty() && <>
 								<span className="site-header__actions-basket-total">
-									{GBPound.format(basketTotal)}
+									{formatCurrency(basketTotal, {currencyCode})}
 								</span>
 								<NotificationBadge count={basketCount} />
 							</>}
@@ -391,7 +396,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 								</>}
 								{!cartIsEmpty() && <>
 									<span>
-										{GBPound.format(basketTotal)}
+										{formatCurrency(basketTotal, {currencyCode})}
 									</span>
 									<NotificationBadge count={basketCount} />
 								</>}
