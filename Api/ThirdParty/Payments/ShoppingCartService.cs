@@ -97,6 +97,14 @@ namespace Api.Payments
 				}
 			}
 
+			// Carts aren't cached but we'll copy it anyway just in case a site does choose to cache them.
+			// This copy allows us to safely manipulate the mapping set outside of the Update callbacks.
+			var quantities = cart.Mappings.GetCopy("ProductQuantities");
+			if (quantities == null)
+			{
+				quantities = new List<ulong>();
+			}
+
 			foreach (var change in itemChanges)
 			{
 				// Get the product:
@@ -107,15 +115,29 @@ namespace Api.Payments
 					throw new PublicException("Product '" + change.ProductId + "' was not found", "product/not_found");
 				}
 
-				await AddToCart(context, cart, product, new CartQuantity() {
+				await AddToCart(context, cart, quantities, product, new CartQuantity() {
 					Total = change.Quantity,
 					Delta = change.DeltaQuantity
 				});
 			}
 
+			cart = await Update(context, cart, (Context ctx, ShoppingCart toUpdate, ShoppingCart orig) => {
+
+				// Update the carts editedUtc such that other checkout
+				// features are aware that the cart has changed.
+				toUpdate.EditedUtc = DateTime.UtcNow;
+				toUpdate.DeliveryOptionId = 0;
+
+				// Set the PQ's:
+				toUpdate.Mappings.Set("ProductQuantities", quantities);
+
+			}, DataOptions.IgnorePermissions);
+
+
 			return cart;
 		}
-		
+
+		/*
 		/// <summary>
 		/// Adds the given product to the cart.
 		/// </summary>
@@ -136,16 +158,18 @@ namespace Api.Payments
 
 			return await AddToCart(context, cart, productId, quantity);
 		}
+		*/
 
 		/// <summary>
 		/// Adds or removes N of the given product from the cart.
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="cart"></param>
+		/// <param name="productQuantityMapping"></param>
 		/// <param name="product"></param>
 		/// <param name="quantity"></param>
 		/// <returns></returns>
-		public async ValueTask<ProductQuantity> AddToCart(Context context, ShoppingCart cart, Product product, CartQuantity quantity)
+		private async ValueTask<ProductQuantity> AddToCart(Context context, ShoppingCart cart, List<ulong> productQuantityMapping, Product product, CartQuantity quantity)
 		{
 			if (!quantity.Delta.HasValue && !quantity.Total.HasValue)
 			{
@@ -158,7 +182,10 @@ namespace Api.Payments
 			}
 
 			// Check if this product is already in this cart:
-			var inCart = await _productQuantities.ListBySource(context, cart, "ProductQuantities");
+			var inCart = await _productQuantities
+				.Where("Id=[?]", DataOptions.IgnorePermissions)
+				.Bind(productQuantityMapping.Select(id => (uint)id))
+				.ListAll(context);
 			var pQuantity = inCart.FirstOrDefault(item => item.ProductId == product.Id);
 
 			ProductQuantity toRemove = null;
@@ -189,6 +216,8 @@ namespace Api.Payments
 					ProductId = product.Id,
 					Quantity = (uint)currentQuantity
 				}, DataOptions.IgnorePermissions);
+
+				productQuantityMapping.Add(pQuantity.Id);
 			}
 			else
 			{
@@ -199,6 +228,9 @@ namespace Api.Payments
 				{
 					toRemove = pQuantity;
 					await _productQuantities.Delete(context, pQuantity, DataOptions.IgnorePermissions);
+
+					// Remove from the mapping set:
+					productQuantityMapping.Remove(pQuantity.Id);
 				}
 				else
 				{
@@ -215,27 +247,14 @@ namespace Api.Payments
 					{
 						toUpdate.Quantity = (uint)newQty;
 					});
+
+					// Ensure it's in the mapping set:
+					if (productQuantityMapping.IndexOf(pQuantity.Id) == -1)
+					{
+						productQuantityMapping.Add(pQuantity.Id);
+					}
 				}
 			}
-
-			await Update(context, cart, (Context ctx, ShoppingCart toUpdate, ShoppingCart orig) => {
-
-				// Update the carts editedUtc such that other checkout
-				// features are aware that the cart has changed.
-				toUpdate.EditedUtc = DateTime.UtcNow;
-				toUpdate.DeliveryOptionId = 0;
-
-				// Ensure the qty entry itself is updated:
-				if (toRemove != null)
-				{
-					toUpdate.Mappings.Remove("ProductQuantities", toRemove);
-				}
-				else
-				{
-					toUpdate.Mappings.Add("ProductQuantities", pQuantity);
-				}
-
-			}, DataOptions.IgnorePermissions);
 
 			return pQuantity;
 		}
