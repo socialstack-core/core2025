@@ -36,4 +36,14 @@ https://getbootstrap.com/docs/5.0/layout/breakpoints/#min-width
         display: inline-block;
         width: calc(100% - 150px);
     }
+    .attribute-filters {
+        
+        position: relative;
+        top:-15px;
+     
+        .attribute-filter {
+            display: inline-block;
+            margin-right: 10px;
+        }
+    }
 }

@@ -1,157 +1,223 @@
-import TreeView, { buildBreadcrumbs } from 'Admin/TreeView';
-import SubHeader from 'Admin/SubHeader';
-import { useRouter } from 'UI/Router';
-import productCategoryApi from 'Api/ProductCategory';
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "UI/Router";
+import SubHeader from "Admin/SubHeader";
+import TreeView, { buildBreadcrumbs } from "Admin/TreeView";
 import Input from "UI/Input";
-import searchApi from "Api/ProductSearchController";
 import Image from "UI/Image";
-import {useSession} from "UI/Session";
 import Loading from "UI/Loading";
-import {Product} from "Api/Product";
-import {ApiList} from "UI/Functions/WebRequest";
-import {ProductAttributeIncludes, ProductIncludes} from "Api/Includes";
+import { MultiSelectBox } from "./MultiSelect";
+
+import productCategoryApi from "Api/ProductCategory";
+import searchApi from "Api/ProductSearchController";
+import { ProductIncludes } from "Api/Includes";
+import { Product } from "Api/Product";
+import { ApiList } from "UI/Functions/WebRequest";
+import { ProductAttribute } from "Api/ProductAttribute";
+import { ProductAttributeValue } from "Api/ProductAttributeValue";
 
 export type ProductCategoryTreeProps = {
-	noCreate: boolean
-}
+	noCreate: boolean;
+};
 
-export type PageViewType = 'list' | 'tree';
+type PageViewType = "list" | "tree";
 
-export default function ProductCategoryTree(props: ProductCategoryTreeProps) {
-	
-	const [viewType, setViewType] = useState<PageViewType>('tree');
-	const [originalViewType, setOriginalViewType] = useState<PageViewType | undefined>('tree');
-	
-	const [searchQuery, setSearchQuery] = useState<string>('');
-	const [pageOffset, setPageOffset] = useState<number>(0);
-	const [loading, setLoading] = useState<boolean>(false);
-	
-	const [searchResults, setSearchResults] = useState<ApiList<Product> | undefined>();
-	
-	const addProductUrl = '/en-admin/product/add';
-	const addCategoryUrl = '/en-admin/productcategory/add';
+type SearchResultIncludes<T> = {
+	field: string;
+	name: string;
+	values: T[];
+};
+
+export default function ProductCategoryTree({ noCreate }: ProductCategoryTreeProps) {
+	const [viewType, setViewType] = useState<PageViewType>("tree");
+	const [originalViewType, setOriginalViewType] = useState<PageViewType>();
+	const [searchQuery, setSearchQuery] = useState("");
+	const [pageOffset, setPageOffset] = useState(0);
+	const [loading, setLoading] = useState(false);
+	const [searchResults, setSearchResults] = useState<ApiList<Product>>();
+
+	const [attributeFilter, setAttributeFilter] = useState<Record<string, string[]>>({});
+
 	const { pageState } = useRouter();
-	const { query } = pageState;
-	const path = query?.get("path") || "";
+	const path = pageState.query?.get("path") || "";
 
-	
-	const breadcrumbs = buildBreadcrumbs(
-		'/en-admin/product',
-		`Products`,
-		path,
-		'/en-admin/product'
-	);
+	const breadcrumbs = buildBreadcrumbs("/en-admin/product", "Products", path, "/en-admin/product");
+
+	const addProductUrl = "/en-admin/product/add";
+	const addCategoryUrl = "/en-admin/productcategory/add";
 
 	useEffect(() => {
-		
-		if (searchQuery.length == 0)
-		{
+		if (searchQuery.length === 0) {
 			setViewType(originalViewType ?? viewType);
 			setOriginalViewType(undefined);
 			return;
 		}
-		if (viewType !== 'list')
-		{
+
+		if (viewType !== "list") {
 			setOriginalViewType(viewType);
-			setViewType('list');
+			setViewType("list");
 		}
-		
+
 		setLoading(true);
-		
-		// lets pull some results in
-		searchApi.faceted({
-			query: searchQuery,
-			pageOffset: pageOffset as uint,
-		}, [
-			new ProductIncludes().attributeValueFacets,
-			new ProductIncludes().productCategoryFacets,
-			new ProductIncludes().attributes.attribute,
-		])
-		.then(response => {
-			setSearchResults(response);
-			setLoading(false);
-		})
-		
+
+		searchApi
+			.faceted(
+				{ query: searchQuery, pageOffset: pageOffset as uint },
+				[
+					new ProductIncludes().attributeValueFacets,
+					new ProductIncludes().productCategoryFacets,
+					new ProductIncludes().attributes.attribute,
+				]
+			)
+			.then((response) => {
+				setSearchResults(response);
+				setLoading(false);
+			});
 	}, [searchQuery, pageOffset]);
+
+	useEffect(() => {
+		setAttributeFilter({});
+	}, [searchQuery]);
+
+	const searchResultAttributes: SearchResultIncludes<ProductAttribute> | undefined =
+		searchResults?.includes?.find((inc: SearchResultIncludes<ProductAttribute>) => inc.field === "attribute");
+
+	const searchResultAttributeValues: SearchResultIncludes<ProductAttributeValue> | undefined =
+		searchResults?.includes?.find((inc: SearchResultIncludes<ProductAttributeValue>) => inc.field === "attributes");
+
+	if (searchResultAttributes) {
+		searchResultAttributes.values = searchResultAttributes.values
+			.filter((attr, idx, self) => self.findIndex((t) => t.name === attr.name) === idx)
+			.sort((a, b) => {
+				const aHasFilter = attributeFilter[a.id]?.length > 0;
+				const bHasFilter = attributeFilter[b.id]?.length > 0;
+				return aHasFilter === bHasFilter ? 0 : aHasFilter ? -1 : 1;
+			});
+	}
 
 	return (
 		<>
-			<SubHeader 
-				title={`Edit Products`} 
-				breadcrumbs={breadcrumbs}
-			/>
+			<SubHeader title="Edit Products" breadcrumbs={breadcrumbs} />
+
 			<div className="sitemap__wrapper product-category-tree">
-				<div className={'page-controls'}>
-					<div className="btn-group view-toggle" role="group" aria-label={`Select view style`}>
-						<Input type="radio" noWrapper label={`Tree`} groupIcon="fr-grid" groupVariant="primary" value={viewType == 'tree'} onChange={() => setViewType('tree')} name="view-style" />
-						<Input type="radio" noWrapper label={`List`} groupIcon="fr-th-list" groupVariant="primary" value={viewType == 'list'} onChange={() => setViewType('list')} name="view-style" />
+				<div className="page-controls">
+					<div className="btn-group view-toggle" role="group" aria-label="Select view style">
+						<Input
+							type="radio"
+							noWrapper
+							label="Tree"
+							groupIcon="fr-grid"
+							groupVariant="primary"
+							value={viewType === "tree"}
+							onChange={() => setViewType("tree")}
+							name="view-style"
+						/>
+						<Input
+							type="radio"
+							noWrapper
+							label="List"
+							groupIcon="fr-th-list"
+							groupVariant="primary"
+							value={viewType === "list"}
+							onChange={() => setViewType("list")}
+							name="view-style"
+						/>
 					</div>
-					<div className={'product-search'}>
+					<div className="product-search">
 						<Input
 							type="search"
 							defaultValue={searchQuery}
-							onInput={(ev) => {
-								setSearchQuery((ev.target as HTMLInputElement).value);
-							}}
-							placeholder={'Filter products'}
+							onInput={(ev) => setSearchQuery((ev.target as HTMLInputElement).value)}
+							placeholder="Filter products"
 						/>
 					</div>
 				</div>
+
 				<div className="sitemap__internal">
-					{viewType == 'tree' && searchQuery.length == 0 ? (
-						<TreeView onLoadData={(path) => {
-							return productCategoryApi
-								.getTreeNodePath(path)
-								.then(resp => {
-									return resp;
-								});
-							}} 
+					{viewType === "tree" && !searchQuery ? (
+						<TreeView
+							onLoadData={(path) => productCategoryApi.getTreeNodePath(path).then((resp) => resp)}
 						/>
-						) : (
-							loading ? <Loading /> :
-							<div className={'admin-page__internal'}>	
-								<table className={'table'}>
-									<thead>
-										<tr>
-											<th>{`Id`}</th>
-											<th>{`Image`}</th>
-											<th>{`Name`}</th>
-											<th>{`SKU`}</th>
-											<th>{`Actions`}</th>
-										</tr>
-									</thead>
-									<tbody>
-									{searchResults?.results?.map((product, idx) => {
-										
+					) : loading ? (
+						<Loading />
+					) : (
+						<div className="admin-page__internal">
+							{searchResultAttributes && (
+								<div className="attribute-filters">
+									{searchResultAttributes.values.map((attribute) => {
+										const valueFacets = searchResults?.secondary?.attributeValueFacets.results ?? [];
+
+										const options = searchResultAttributeValues?.values
+											.filter((val) => val.productAttributeId === attribute.id)
+											.map((val) => ({
+												value: val.value + (attribute.units ?? ""),
+												count: valueFacets.find((f: { attributeValueId: uint }) => f.attributeValueId === val.id)?.count ?? 0,
+											}))
+											.reduce((acc, curr) => {
+												if (!acc.find((opt) => opt.value === curr.value)) {
+													acc.push(curr);
+												}
+												return acc;
+											}, [] as { value: string; count: number }[])
+											.sort((a, b) => a.value.localeCompare(b.value, undefined, { numeric: true }));
+
 										return (
-											<tr>
-												<td>{product.id}</td>
-												<td>
-													{product.featureRef ? <Image fileRef={product.featureRef}/> : `No image available`}
-												</td>
-												<td>{product.name}</td>
-												<td>{product.sku}</td>
-												<td> - </td>
-											</tr>
-										)
+											<div
+												key={attribute.id}
+												className={`attribute-filter${attributeFilter[attribute.id] ? " in-use" : ""}`}
+											>
+												<MultiSelectBox
+													onChange={(values) =>
+														setAttributeFilter((prev) => ({
+															...prev,
+															[attribute.id]: values,
+														}))
+													}
+													defaultText={attribute.name}
+													value={attributeFilter[attribute.id] ?? []}
+													options={options ?? []}
+												/>
+											</div>
+										);
 									})}
-									</tbody>
-								</table>
-							</div>
-						)
-					}
+								</div>
+							)}
+
+							<table className="table">
+								<thead>
+								<tr>
+									<th>Id</th>
+									<th>Image</th>
+									<th>Name</th>
+									<th>SKU</th>
+									<th>Actions</th>
+								</tr>
+								</thead>
+								<tbody>
+								{searchResults?.results?.map((product) => (
+									<tr key={product.id}>
+										<td>{product.id}</td>
+										<td>{product.featureRef ? <Image fileRef={product.featureRef} /> : "No image available"}</td>
+										<td>{product.name}</td>
+										<td>{product.sku}</td>
+										<td>-</td>
+									</tr>
+								))}
+								</tbody>
+							</table>
+						</div>
+					)}
 				</div>
-				{!props.noCreate && <>
+
+				{!noCreate && (
 					<footer className="admin-page__footer">
 						<a href={addCategoryUrl} className="btn btn-primary">
-							{`New category`}
+							New category
 						</a>
 						<a href={addProductUrl} className="btn btn-primary">
-							{`New product`}
+							New product
 						</a>
 					</footer>
-				</>}
+				)}
 			</div>
 		</>
 	);
