@@ -302,6 +302,7 @@ textarea.form-control.ui-form-control {
 // select dropdowns
 .form-select.ui-form-select {
 	position: relative;
+	width: auto;
 	color: var(--field-color);
 	background-color: var(--field-select-background);
 	background-image: var(--field-select-icon);
