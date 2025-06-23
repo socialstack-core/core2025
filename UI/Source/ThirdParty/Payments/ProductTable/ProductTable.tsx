@@ -101,15 +101,16 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 		if (cost) {
 			cartTotalByFrequency[product.billingFrequency] += cost.amount;
 
-			itemSet.push({
-				...cartInfo,
-				cost
-			});
-
 			if (!currencyCode) {
 				currencyCode = cost.currencyCode;
 			}
 		}
+
+		itemSet.push({
+			...cartInfo,
+			cost
+		});
+
 	});
 
 	return <table className="table shopping-cart__table">
@@ -135,7 +136,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 				var qty = cartInfo.quantity;
 				var cost = cartInfo.cost;
 
-				var formattedCost = formatCurrency(cost.amount, { currencyCode });
+				var formattedCost = cost ? formatCurrency(cost.amount, { currencyCode }) : `No price set`;
 
 				if (product.billingFrequency) {
 					formattedCost += ' ' + recurrenceText(product.billingFrequency);
