@@ -49,7 +49,7 @@ const Color: React.FC<CustomInputTypeProps<"color">> = (props) => {
 		fieldMarkup = (
 			<input
 				ref={(el: HTMLInputElement) => onInputRef && onInputRef(el)}
-				className={(className || "form-control") + (validationFailure ? ' is-invalid' : '')}
+				className={(className || "form-control ui-form-control") + (validationFailure ? ' is-invalid' : '')}
 				aria-describedby={helpFieldId}
 				type="text"
 				onInput={onChange}

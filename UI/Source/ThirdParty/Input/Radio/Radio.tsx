@@ -91,7 +91,7 @@ const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 				checked={value}
 				defaultChecked={defaultValue}
 			/>
-			<label className={`btn btn-outline-${groupVariant}`} htmlFor={id}>
+			<label className={`btn ui-btn btn-outline-${groupVariant}`} htmlFor={id}>
 				{groupIcon ? <>
 					<i className={`fr ${groupIcon}`} />
 					<span className="sr-only">{label}</span>

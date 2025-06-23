@@ -19,7 +19,7 @@ const Textarea: React.FC<CustomInputTypeProps<"textarea">> = (props) => {
 		<textarea
 			{...field}
 			ref={(el: HTMLTextAreaElement) => onInputRef && onInputRef(el as HTMLElement)}
-			className={(field.className || "form-control") + (props.validationFailure ? ' is-invalid' : '')}
+			className={(field.className || "form-control ui-form-control") + (props.validationFailure ? ' is-invalid' : '')}
 			onInput={e => {
 				var ele = e.target as HTMLTextAreaElement;
 				setLength(ele.textLength);

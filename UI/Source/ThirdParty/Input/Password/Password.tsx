@@ -28,7 +28,7 @@ const Password: React.FC<CustomInputTypeProps<"password">> = (props) => {
 			<input
 				ref={(el: HTMLInputElement) => onInputRef && onInputRef(el)}
 				id={field.id}
-				className={(className || "form-control") + (validationFailure ? ' is-invalid' : '')}
+				className={(className || "form-control ui-form-control") + (validationFailure ? ' is-invalid' : '')}
 				aria-describedby={helpFieldId}
 				type={pwVisible ? 'text' : 'password'}
 				onInput={onChange}

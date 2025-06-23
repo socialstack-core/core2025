@@ -1,109 +1,88 @@
-// styles used by UI/Form and UI/Input can be overridden by updating the relevant CSS prop below
+// styles used by UI/Form can be overridden by updating the relevant CSS prop below
 // defaults will be used for any undefined values
-/*
 :root {
-	// shared styles (non size-specific)
-	--form-check-border: 1px solid var(--primary);
-	--form-check-border-color--focus: var(--primary);
-	--form-check-box-shadow--focus: 0 0 0 0.25rem var(--primary-shadow);
-	--form-check-font-weight: 400;
-	--form-check-font-weight--checked: 700;
-	--form-check-color: var(--primary);
-	--form-check-color--checked: var(--secondary);
-	--form-check-background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2.49 2.49'%3E%3Cpath d='M.88 2.14a.23.23 0 01-.1-.03 10.69 10.69 0 01-.74-.75.2.2 0 01-.03-.12v-.08a.2.2 0 01.1-.1.19.19 0 01.1-.03.2.2 0 01.13.04l.3.28.27.28.61-.62.64-.63a.26.26 0 01.07-.04h.1a.2.2 0 01.15.14V.6l-.04.07A201.5 201.5 0 01.97 2.13a.24.24 0 01-.1.01z' fill='%23fff'/%3E%3C/svg%3E");
-
-	--form-switch-border: 1px solid transparent;
-	--form-switch-border--focus: var(--form-switch-border);
-	--form-switch-background-color: #d3d3d3;
-	--form-switch-background-color--checked: var(--primary);
-	--form-switch-box-shadow--focus: 0 0 0 0.25rem var(--primary-shadow);
-	--form-switch-font-weight: 400;
-	--form-switch-font-weight--checked: var(--form-switch-font-weight);
-	--form-switch-dot-color: #fff;
-	--form-switch-dot-color--checked: var(--primary-fg);
-	--form-switch-color: var(--primary);
-	--form-switch-color--checked: var(--form-switch-color);
-
-	--form-radio-background-image: var(--form-check-background-image);
-
+/*
 	// extra small (xs)
-	--form-xs-font-size: 12;
+	--label-xs-font-size: 13;
+	--label-xs-font-weight: 700;
+	
+	--field-xs-min-height: 35;
+	--field-xs-padding: 10;
+	--field-xs-font-size: 13;
+	--field-xs-font-weight: 400;
+	--field-xs-border-radius: 5;
+	--field-xs-placeholder-font-size: 13;
+	--field-xs-placeholder-font-weight: 400;
+	--field-xs-text-font-size: 11;
+	--field-xs-select-icon-width: 13;
+	--field-xs-select-icon-height: 6;
 
-	--form-xs-check-size: 16;
-	--form-xs-check-gap: 6;
-	--form-xs-check-border-radius: 2;
-	--form-xs-check-background-size: 8;
-
-	--form-xs-switch-width: 32;
-	--form-xs-switch-height: 20;
-	--form-xs-switch-dot: 14;
-	--form-xs-switch-gap: 6;
-	--form-xs-switch-border-radius: 10;
-
-	--form-xs-radio-background-size: 8;
 
 	// small (sm)
-	--form-sm-font-size: 13;
+	--label-sm-font-size: 14;
+	--label-sm-font-weight: 700;
+	
+	--field-sm-min-height: 40;
+	--field-sm-padding: 16;
+	--field-sm-font-size: 14;
+*/
+	--field-sm-font-weight: 400;
+/*
+	--field-sm-border-radius: 5;
+	--field-sm-placeholder-font-size: 14;
+	--field-sm-placeholder-font-weight: 400;
+	--field-sm-text-font-size: 12;
+	--field-sm-select-icon-width: 14;
+	--field-sm-select-icon-height: 7;
 
-	--form-sm-check-size: 20;
-	--form-sm-check-gap: 8;
-	--form-sm-check-border-radius: 3;
-	--form-sm-check-background-size: 10;
-
-	--form-sm-switch-width: 40;
-	--form-sm-switch-height: 20;
-	--form-sm-switch-dot: 16;
-	--form-sm-switch-gap: 8;
-	--form-sm-switch-border-radius: 10;
-
-	--form-sm-radio-background-size: 10;
 
 	// regular (md)
-	--form-md-font-size: 15;
+	--label-md-font-size: 15;
+	--label-md-font-weight: 700;
+	
+	--field-md-min-height: 45;
+	--field-md-padding: 18;
+	--field-md-font-size: 16;
+*/
+	--field-md-font-weight: 400;
+/*
+	--field-md-border-radius: 5;
+	--field-md-placeholder-font-size: 16;
+	--field-md-placeholder-font-weight: 400;
+	--field-md-text-font-size: 14;
+	--field-md-select-icon-width: 16;
+	--field-md-select-icon-height: 8;
 
-	--form-md-check-size: 24;
-	--form-md-check-gap: 10;
-	--form-md-check-border-radius: 3;
-	--form-md-check-background-size: 10;
-
-	--form-md-switch-width: 48;
-	--form-md-switch-height: 24;
-	--form-md-switch-dot: 18;
-	--form-md-switch-gap: 10;
-	--form-md-switch-border-radius: 12;
-
-	--form-md-radio-background-size: 10;
 	
 	// large (lg)
-	--form-lg-font-size: 16;
+	--label-lg-font-size: 18;
+	--label-lg-font-weight: 700;
+  
+	--field-lg-min-height: 55;
+	--field-lg-padding: 20;
+	--field-lg-font-size: 18;
+	--field-lg-font-weight: 700;
+	--field-lg-border-radius: 5;
+	--field-lg-placeholder-font-size: 18;
+	--field-lg-placeholder-font-weight: 400;
+	--field-lg-text-font-size: 16;
+	--field-lg-select-icon-width: 18;
+	--field-lg-select-icon-height: 9;
 
-	--form-lg-check-size: 28;
-	--form-lg-check-gap: 12;
-	--form-lg-check-border-radius: 4;
-	--form-lg-check-background-size: 12;
-
-	--form-lg-switch-width: 56;
-	--form-lg-switch-height: 28;
-	--form-lg-switch-dot: 22;
-	--form-lg-switch-gap: 12;
-	--form-lg-switch-border-radius: 14;
-
-	--form-lg-radio-background-size: 12;
 
 	// extra large (xl)
-	--form-xl-font-size: 18;
-
-	--form-xl-check-size: 32;
-	--form-xl-check-gap: 12;
-	--form-xl-check-border-radius: 6;
-	--form-xl-check-background-size: 14;
-
-	--form-xl-switch-width: 64;
-	--form-xl-switch-height: 32;
-	--form-xl-switch-dot: 24;
-	--form-xl-switch-gap: 12;
-	--form-xl-switch-border-radius: 16;
-
-	--form-xl-radio-background-size: 14;
-}
+	--label-xl-font-size: 23;
+	--label-xl-font-weight: 700;
+	
+	--field-xl-min-height: 65;
+	--field-xl-padding: 25;
+	--field-xl-font-size: 23;
+	--field-xl-font-weight: 700;
+	--field-xl-border-radius: 5;
+	--field-xl-placeholder-font-size: 23;
+	--field-xl-placeholder-font-weight: 400;
+	--field-xl-text-font-size: 20;
+	--field-xl-select-icon-width: 23;
+	--field-xl-select-icon-height: 11;
 */
+}

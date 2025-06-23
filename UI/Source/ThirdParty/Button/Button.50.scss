@@ -135,6 +135,7 @@ $btn-variants: (
     &.dropdown-toggle.show {
         background-color: var($var);
         color: var($var-color);
+        border-color: var($var);
         //background-color: var($activeBackgroundColor);
         //border-color: var($activeBorderColor);
         //color: var($activeColor);
@@ -334,3 +335,12 @@ fieldset:disabled .btn {
 
 }
  
+// grouped buttons
+.btn-group.ui-btn-group {
+
+	.btn.ui-btn {
+		--btn-padding: 0;
+		min-width: var_to_rem(--btn-min-height);
+	}
+
+}
