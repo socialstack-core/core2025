@@ -628,6 +628,32 @@ public struct MappingData
 	}
 
 	/// <summary>
+	/// Gets the value for the given mapping name, copying the set such that it can be safely manipulated.
+	/// Do this if the type you are getting the raw mapping set from is cached.
+	/// </summary>
+	/// <param name="mappingName"></param>
+	/// <returns></returns>
+	public List<ulong> GetCopy(string mappingName)
+	{
+		if (_values == null)
+		{
+			return null;
+		}
+
+		if (!_values.TryGetValue(mappingName.ToLower(), out List<ulong> result))
+		{
+			return null;
+		}
+
+		if (result == null)
+		{
+			return null;
+		}
+
+		return new List<ulong>(result);
+	}
+
+	/// <summary>
 	/// Gets the value for the given mapping name.
 	/// </summary>
 	/// <param name="mappingName"></param>
