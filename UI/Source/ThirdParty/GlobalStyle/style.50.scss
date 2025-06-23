@@ -36,6 +36,17 @@ html, body, #react-view, #react-root, #content-root, #content-page, #react-loadi
 				flex-grow: 1;
 			}
 		}
+
+		// check: header followed by content?
+		// ensure there's spacing between the two
+		// NB: homepage may need to override this if a hero area needs to be flush with the bottom of the header
+		&:has(header + #content) {
+
+			> #content {
+				margin-top: px_to_rem(10);
+			}
+		}
+
 	}
 
 }
