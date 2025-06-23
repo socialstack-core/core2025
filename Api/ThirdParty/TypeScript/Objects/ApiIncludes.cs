@@ -57,13 +57,13 @@ namespace Api.TypeScript.Objects
         public override void ToSource(StringBuilder builder, TypeScriptService svc)
         {
             builder.AppendLine("export class ApiIncludes {");
-
             builder.AppendLine("    private text: string = '';");
-
+            builder.AppendLine("    private isTerminal: boolean = false;");
             builder.AppendLine();
-            builder.AppendLine("    constructor(existing: string = '', addition: string = ''){");
+            builder.AppendLine("    constructor(existing: string = '', addition: string = '', isTerminal: boolean = false){");
             builder.AppendLine("        this.text = (existing.length != 0) ? existing : '';");
-            builder.AppendLine("        if (addition.length != 0) {");
+            builder.AppendLine("        this.isTerminal = isTerminal;");
+            builder.AppendLine("        if (addition.length != 0 && !isTerminal) {");
             builder.AppendLine("             if (this.text != ''){");
             builder.AppendLine("                this.text += '.'");
             builder.AppendLine("             }");
@@ -76,8 +76,11 @@ namespace Api.TypeScript.Objects
             builder.AppendLine("    toString(){ return this.text }");
 
             builder.AppendLine();
-            
-            builder.AppendLine("    get all(){ return new ApiIncludes(this.text, '*'); }");
+
+            builder.AppendLine("    get all(){ ");
+            builder.AppendLine("          if (this.isTerminal) { throw new Error('This include is terminal, you cannot chain any further than this'); } ");
+            builder.AppendLine("          return new ApiIncludes(this.text, '*', true); ");
+            builder.AppendLine("    }");
 
             // Generate virtual field accessors from global virtual fields.
             foreach (var kvp in ContentFields.GlobalVirtualFields)
@@ -94,16 +97,18 @@ namespace Api.TypeScript.Objects
                     virtualType = virtualInfo.Type;
                 }
 
-                if (virtualType == typeof(string))
+                if (virtualType == typeof(string) || !TypeScriptService.IsEntityType(virtualType))
                 {
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
-                    builder.AppendLine($"        return new ApiIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
+                    builder.AppendLine("         if (this.isTerminal) { throw new Error('This include is terminal, you cannot chain any further than this'); } ");
+                    builder.AppendLine($"        return new ApiIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}', true);");
                     builder.AppendLine("    }");
                 }
                 else
                 {
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
-                    builder.AppendLine($"        return new {virtualType.Name}Includes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
+                    builder.AppendLine("         if (this.isTerminal) { throw new Error('This include is terminal, you cannot chain any further than this'); } ");
+                    builder.AppendLine($"        return new {virtualType.Name}Includes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}', true);");
                     builder.AppendLine("    }");
                 }
             }
