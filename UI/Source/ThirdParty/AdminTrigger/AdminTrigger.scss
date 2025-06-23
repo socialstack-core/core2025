@@ -43,6 +43,7 @@ html:not(.admin) {
             transform-origin: 50% 50%;
             transition: all .3s ease;
 			padding: px_to_rem(4) px_to_rem(8) !important;
+			min-height: 0;
         }
 
         .dropdown__label i:first-child {
