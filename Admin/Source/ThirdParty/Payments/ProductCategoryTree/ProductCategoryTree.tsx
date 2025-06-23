@@ -104,13 +104,11 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 		searchResultAttributes.values = searchResultAttributes.values
 			.filter((attr, idx, self) => self.findIndex((t) => t.name === attr.name) === idx)
 			.sort((a, b) => {
-				const aHasFilter = attributeFilter[a.id]?.values?.length > 0;
-				const bHasFilter = attributeFilter[b.id]?.values?.length > 0;
+				const aHasFilter = attributeFilter[a.id]?.ids?.length > 0;
+				const bHasFilter = attributeFilter[b.id]?.ids?.length > 0;
 				return aHasFilter === bHasFilter ? 0 : aHasFilter ? -1 : 1;
 			});
 	}
-	
-	console.log({ attributeFilter })
 	
 	return (
 		<>
