@@ -57,29 +57,32 @@ namespace Api.TypeScript.Objects
         public override void ToSource(StringBuilder builder, TypeScriptService svc)
         {
             builder.AppendLine("export class ApiIncludes {");
+            
+            
             builder.AppendLine("    private text: string = '';");
-            builder.AppendLine("    private isTerminal: boolean = false;");
             builder.AppendLine();
-            builder.AppendLine("    constructor(existing: string = '', addition: string = '', isTerminal: boolean = false){");
+            builder.AppendLine("    constructor(existing: string = '', addition: string = ''){");
             builder.AppendLine("        this.text = (existing.length != 0) ? existing : '';");
-            builder.AppendLine("        this.isTerminal = isTerminal;");
-            builder.AppendLine("        if (addition.length != 0 && !isTerminal) {");
+            builder.AppendLine("        if (addition.length != 0) {");
             builder.AppendLine("             if (this.text != ''){");
             builder.AppendLine("                this.text += '.'");
             builder.AppendLine("             }");
             builder.AppendLine("             this.text += addition;");
             builder.AppendLine("        }");
             builder.AppendLine("    }");
-
             
             builder.AppendLine();
             builder.AppendLine("    toString(){ return this.text }");
+            
+            builder.AppendLine("}");
+            builder.AppendLine("export class TerminalIncludes extends ApiIncludes {}");
+            
+            builder.AppendLine("export class ApiGlobalIncludes extends ApiIncludes {");
 
             builder.AppendLine();
 
             builder.AppendLine("    get all(){ ");
-            builder.AppendLine("          if (this.isTerminal) { throw new Error('This include is terminal, you cannot chain any further than this'); } ");
-            builder.AppendLine("          return new ApiIncludes(this.text, '*', true); ");
+            builder.AppendLine("          return new TerminalIncludes(this.toString(), '*'); ");
             builder.AppendLine("    }");
 
             // Generate virtual field accessors from global virtual fields.
@@ -100,15 +103,13 @@ namespace Api.TypeScript.Objects
                 if (virtualType == typeof(string) || !TypeScriptService.IsEntityType(virtualType))
                 {
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
-                    builder.AppendLine("         if (this.isTerminal) { throw new Error('This include is terminal, you cannot chain any further than this'); } ");
-                    builder.AppendLine($"        return new ApiIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}', true);");
+                    builder.AppendLine($"        return new TerminalIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
                     builder.AppendLine("    }");
                 }
                 else
                 {
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(kvp.Key)}() {{");
-                    builder.AppendLine("         if (this.isTerminal) { throw new Error('This include is terminal, you cannot chain any further than this'); } ");
-                    builder.AppendLine($"        return new {virtualType.Name}Includes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}', true);");
+                    builder.AppendLine($"        return new TerminalIncludes(this.toString(), '{TypeScriptService.LcFirst(kvp.Key)}');");
                     builder.AppendLine("    }");
                 }
             }
@@ -119,7 +120,7 @@ namespace Api.TypeScript.Objects
             foreach (var entity in _entities)
             {
                 builder.AppendLine();
-                builder.AppendLine($"export class {entity.Name}Includes extends ApiIncludes {{");
+                builder.AppendLine($"export class {entity.Name}Includes extends ApiGlobalIncludes {{");
 
                 var virtuals = entity.GetCustomAttributes<HasVirtualFieldAttribute>();
 
@@ -138,7 +139,7 @@ namespace Api.TypeScript.Objects
                 builder.AppendLine("}");
             }
 
-            builder.AppendLine("export class SecondaryIncludes extends ApiIncludes {");
+            builder.AppendLine("export class SecondaryIncludes extends ApiGlobalIncludes {");
             builder.AppendLine("    private secondaryIncludeString: string;");
             builder.AppendLine("    constructor(existing: string = '', addition: string = ''){");
             builder.AppendLine("        super('','');");
