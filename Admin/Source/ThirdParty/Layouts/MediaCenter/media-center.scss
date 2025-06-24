@@ -54,11 +54,12 @@ $preview_size: 512px;
 				align-items: center;
 				justify-content: center;
 
-				> img,
-				> video {
+				img,
+				video {
 					width: 100%;
 					height: 100%;
 					object-fit: scale-down;
+					aspect-ratio: 1;
 
 					// broken ref styling
 					&::before {
@@ -96,8 +97,8 @@ $preview_size: 512px;
 
 				&:hover {
 
-					> img, 
-					> video {
+					img, 
+					video {
 
 						&::before {
 							background-color: var(--secondary);
@@ -124,8 +125,8 @@ $preview_size: 512px;
 				background-color: var(--primary);
 				color: var(--primary-fg);
 
-				> img,
-				> video {
+				img,
+				video {
 
 					// broken ref styling
 					&::before {
