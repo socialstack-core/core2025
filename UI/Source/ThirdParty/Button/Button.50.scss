@@ -1,3 +1,14 @@
+:root {
+	// set defaults to regular (md)
+	--btn-min-height: var(--btn-md-min-height, #{$default-btn-md-min-height});
+	--btn-padding: var(--btn-md-padding, #{$default-btn-md-padding});
+	--btn-font-size: var(--btn-md-font-size, #{$default-btn-md-font-size});
+	--btn-font-weight: var(--btn-md-font-weight, #{$default-btn-md-font-weight});
+	--btn-border-radius: var(--btn-md-border-radius, #{$default-btn-md-border-radius});
+	--btn-icon: var(--btn-md-icon, #{$default-btn-md-icon});
+	--btn-gap: var(--btn-md-gap, #{$default-btn-md-gap});
+}
+
 $btn-variants: (
     primary,
     secondary,
@@ -124,6 +135,7 @@ $btn-variants: (
     &.dropdown-toggle.show {
         background-color: var($var);
         color: var($var-color);
+        border-color: var($var);
         //background-color: var($activeBackgroundColor);
         //border-color: var($activeBorderColor);
         //color: var($activeColor);
@@ -145,38 +157,103 @@ $btn-variants: (
 
 }
 
-// overrides btn / btn-sm / btn-lg styling
-// updated styles will use pre-existing CSS theme vars injected into the page
-@mixin themed-button-size($size) {
-    // TODO: requires defaults
-    $prefix: --button-size-#{$size};
-    $paddingX: #{$prefix}-padding-x;
-    $paddingY: #{$prefix}-padding-y;
-    $fontSize: #{$prefix}-font-size;
-    $fontWeight: #{$prefix}-font-weight;
-    $borderRadius: #{$prefix}-border-radius;
-
-    $themeBaseFontSize: 16;
-
-    /*
-    padding: var($paddingY) var($paddingX);
-    font-size: calc(1rem * (var(#{$fontSize}) / #{$themeBaseFontSize}));
-    border-radius: var($borderRadius);
-    */
-}
-
 .btn {
     cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;  
 
-    // button sizes
-    @include themed-button-size(normal);
+	// defaults to no-wrapping
+    white-space: nowrap;
 
-    &.btn-lg {
-        @include themed-button-size(lg);
+	&.btn--wrapped {
+		white-space: normal;
     }
 
-    &.btn-sm {
-        @include themed-button-size(sm);
+	&:disabled,
+	&.disabled,
+	&[inert] {
+		opacity: .5;
+	}
+
+	// override	vars based on size
+	&-xs,
+	&--xs {
+		--btn-min-height: var(--btn-xs-min-height, #{$default-btn-xs-min-height});
+		--btn-padding: var(--btn-xs-padding, #{$default-btn-xs-padding});
+		--btn-font-size: var(--btn-xs-font-size, #{$default-btn-xs-font-size});
+		--btn-font-weight: var(--btn-xs-font-weight, #{$default-btn-xs-font-weight});
+		--btn-border-radius: var(--btn-xs-border-radius, #{$default-btn-xs-border-radius});
+		--btn-icon: var(--btn-xs-icon, #{$default-btn-xs-icon});
+		--btn-gap: var(--btn-xs-gap, #{$default-btn-xs-gap});
+	}
+	
+	&-sm,
+	&--sm {
+		--btn-min-height: var(--btn-sm-min-height, #{$default-btn-sm-min-height});
+		--btn-padding: var(--btn-sm-padding, #{$default-btn-sm-padding});
+		--btn-font-size: var(--btn-sm-font-size, #{$default-btn-sm-font-size});
+		--btn-font-weight: var(--btn-sm-font-weight, #{$default-btn-sm-font-weight});
+		--btn-border-radius: var(--btn-sm-border-radius, #{$default-btn-sm-border-radius});
+		--btn-icon: var(--btn-sm-icon, #{$default-btn-sm-icon});
+		--btn-gap: var(--btn-sm-gap, #{$default-btn-sm-gap});
+	}
+
+	&-md,
+	&--md {
+		--btn-min-height: var(--btn-sm-min-height, #{$default-btn-md-min-height});
+		--btn-padding: var(--btn-sm-padding, #{$default-btn-md-padding});
+		--btn-font-size: var(--btn-sm-font-size, #{$default-btn-md-font-size});
+		--btn-font-weight: var(--btn-sm-font-weight, #{$default-btn-md-font-weight});
+		--btn-border-radius: var(--btn-sm-border-radius, #{$default-btn-md-border-radius});
+		--btn-icon: var(--btn-sm-icon, #{$default-btn-md-icon});
+		--btn-gap: var(--btn-sm-gap, #{$default-btn-md-gap});
+	}
+
+	&-lg,
+	&--lg {
+		--btn-min-height: var(--btn-lg-min-height, #{$default-btn-lg-min-height});
+		--btn-padding: var(--btn-lg-padding, #{$default-btn-lg-padding});
+		--btn-font-size: var(--btn-lg-font-size, #{$default-btn-lg-font-size});
+		--btn-font-weight: var(--btn-lg-font-weight, #{$default-btn-lg-font-weight});
+		--btn-border-radius: var(--btn-lg-border-radius, #{$default-btn-lg-border-radius});
+		--btn-icon: var(--btn-lg-icon, #{$default-btn-lg-icon});
+		--btn-gap: var(--btn-lg-gap, #{$default-btn-lg-gap});
+	}
+	
+	&-xl,
+	&--xl {
+		--btn-min-height: var(--btn-xl-min-height, #{$default-btn-xl-min-height});
+		--btn-padding: var(--btn-xl-padding, #{$default-btn-xl-padding});
+		--btn-font-size: var(--btn-xl-font-size, #{$default-btn-xl-font-size});
+		--btn-font-weight: var(--btn-xl-font-weight, #{$default-btn-xl-font-weight});
+		--btn-border-radius: var(--btn-xl-border-radius, #{$default-btn-xl-border-radius});
+		--btn-icon: var(--btn-xl-icon, #{$default-btn-xl-icon});
+		--btn-gap: var(--btn-xl-gap, #{$default-btn-xl-gap});
+	}
+
+}
+
+fieldset:disabled .btn {
+	opacity: .5;
+}
+
+.btn:where(.ui-btn) {
+	min-height: var_to_rem(--btn-min-height);
+	padding: 0 var_to_rem(--btn-padding);
+	font-size: var_to_rem(--btn-font-size);
+	font-weight: var(--btn-font-weight);
+	border-radius: var_to_rem(--btn-border-radius);
+	gap: var_to_rem(--btn-gap);
+	
+	> svg {
+		max-width: var_to_rem(--btn-icon);
+		height: var_to_rem(--btn-icon);
+		flex-shrink: 0;
+	}
+	
+	> i {
+		flex-shrink: 0;
     }
 
     // alternate buttons
@@ -196,26 +273,74 @@ $btn-variants: (
 
     // link buttons
     &.btn-link {
-        // TODO
-        /*
-        font-weight: $font-weight-normal;
-        color: $btn-link-color;
-        text-decoration: $link-decoration;
+		--btn-min-height: 0;
+		--btn-padding: 0;
+		--btn-font-weight: normal;
+		--btn-border-radius: 0;
+		text-decoration: none;
+		color: #fff;
+		// override Bootstrap default
+		font-size: var_to_rem(--btn-font-size) !important;
+
+		&:focus {
+			outline: 1px dotted currentColor;
+			box-shadow: none;
+		}
+
+		// no children / only one child - assume this is purely text
+		&:not(:has(*)),
+		&:has(> :last-child:nth-child(1)) {
+			text-decoration: var(--ui-link-text-decoration, #{$default-link-text-decoration});
         
         &:hover {
-            color: $btn-link-hover-color;
-            text-decoration: $link-hover-decoration;
+				text-decoration: underline;
         }
         
-        &:focus {
-            text-decoration: $link-hover-decoration;
         }
         
-        &:disabled,
-        &.disabled {
-            color: $btn-link-disabled-color;
+		// two or more children - assume prefixed / suffixed with icons
+		// (this requires the label text be wrapped with a <span>)
+		&:has(:nth-child(2)) {
+		
+			&:not(:has(span)) {
+				text-decoration: var(--ui-link-text-decoration, #{$default-link-text-decoration});
+			
+				&:hover {
+					text-decoration: underline;
+				}
+
+			}
+		
+			&:has(span) {
+				text-decoration: none;
+			
+				> span {
+					text-decoration: var(--ui-link-text-decoration, #{$default-link-text-decoration});
         }
-        */
+			
+				&:hover {
+				
+					> span {
+						text-decoration: underline;
+					}
+
+				}
+
+			}
+
+		}
+
+
     }
+
+}
+ 
+// grouped buttons
+.btn-group.ui-btn-group {
+
+	.btn.ui-btn {
+		--btn-padding: 0;
+		min-width: var_to_rem(--btn-min-height);
+	}
 
 }

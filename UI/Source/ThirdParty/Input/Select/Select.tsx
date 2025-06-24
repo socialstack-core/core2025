@@ -54,7 +54,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 
 	var selectDefaultValue = typeof selectValue === 'undefined' ? defaultValue : selectValue;
 
-	var selectClass = className || "form-select" + (validationFailure ? ' is-invalid' : '');
+	var selectClass = className || "form-select ui-form-select" + (validationFailure ? ' is-invalid' : '');
 
 	if (value !== undefined) {
 		selectDefaultValue = value;
@@ -64,10 +64,15 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 		selectClass += " no-selection";
 	}
 
+	if (noSelectionValue === undefined) {
+		noSelectionValue = '';
+	}
+
+	if (noSelection === undefined) {
+		noSelection = `Please select`;
+	}
+
 	if (contentType) {
-		if (noSelectionValue === undefined) {
-			noSelectionValue = '';
-		}
 
 		if (!options) {
 			return <Loading />;
@@ -91,7 +96,9 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			className={selectClass}
 			{...attribs}
 		>
-			<option value={noSelectionValue}>{noSelection}</option>
+			<option disabled hidden selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
+				{noSelection}
+			</option>
 			{options.results.map((entry : any) => <option
 				value={contentTypeValue
 					? entry[contentTypeValue]
@@ -117,6 +124,9 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			onChange={onSelectChange}
 			{...attribs}
 		>
+			<option disabled hidden selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
+				{noSelection}
+			</option>
 			{children}
 		</select>
 	);

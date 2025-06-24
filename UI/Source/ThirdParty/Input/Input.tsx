@@ -110,7 +110,7 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 			return null;
 		}
 
-		return <label htmlFor={id} className="form-label">
+		return <label htmlFor={id} className="form-label ui-form-label">
 			{label}
 			{!hideRequiredStar && validate && validate.indexOf("Required")!=-1 && <span className="is-required-field"></span>}
 		</label>;
@@ -122,7 +122,7 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 			return null;
 		}
 
-		return <div id={helpFieldId} className={"form-text form-text-" + pos}>
+		return <div id={helpFieldId} className={`form-text form-text-${pos} ui-form-text`}>
 			{help}
 		</div>;
 	}

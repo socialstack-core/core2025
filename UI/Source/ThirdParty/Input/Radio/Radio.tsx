@@ -2,6 +2,12 @@ import { DefaultInputType } from 'UI/Input/Default';
 import { useId } from 'react';
 
 type RadioInputType = DefaultInputType & {
+	xs?: boolean,
+	sm?: boolean,
+	md?: boolean,
+	lg?: boolean,
+	xl?: boolean,
+	flipped?: boolean,
 	groupVariant?: string,
 	groupIcon?: string,
 	solid?: boolean,
@@ -18,7 +24,7 @@ declare global {
 
 const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 	const { field, validationFailure, label, onInputRef, helpFieldId } = props;
-	const { className, groupVariant, groupIcon, solid, onChange, ...attribs } = field;
+	const { className, flipped, xs, sm, md, lg, xl, groupVariant, groupIcon, solid, onChange, ...attribs } = field;
 	const id = attribs.id || useId();
 
 	const classes = className ? className.split(" ") : [];
@@ -27,6 +33,31 @@ const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 		classes.push("is-invalid");
 	}
 
+	if (flipped) {
+		classes.unshift("form-check--flipped");
+	}
+
+	if (xs) {
+		classes.unshift("form-check--xs");
+	}
+
+	if (sm) {
+		classes.unshift("form-check--sm");
+	}
+
+	if (md) {
+		classes.unshift("form-check--md");
+	}
+
+	if (lg) {
+		classes.unshift("form-check--lg");
+	}
+
+	if (xl) {
+		classes.unshift("form-check--xl");
+	}
+
+	classes.unshift("ui-check");
 	classes.unshift("form-check");
 
 	// NB: don't auto-apply a bottom margin as radio buttons will be rendered in groups and should remain in close proximity
@@ -60,7 +91,7 @@ const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 				checked={value}
 				defaultChecked={defaultValue}
 			/>
-			<label className={`btn btn-outline-${groupVariant}`} htmlFor={id}>
+			<label className={`btn ui-btn btn-outline-${groupVariant}`} htmlFor={id}>
 				{groupIcon ? <>
 					<i className={`fr ${groupIcon}`} />
 					<span className="sr-only">{label}</span>

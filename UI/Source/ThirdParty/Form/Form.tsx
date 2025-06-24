@@ -16,6 +16,12 @@ interface FormProps<ResponseType, FieldType> extends React.HTMLAttributes<HTMLFo
 	successMessage?: React.ReactNode,
 	submitEnabled?: boolean,
 	submitLabel?: string,
+	xs?: boolean,
+	sm?: boolean,
+	md?: boolean,
+	lg?: boolean,
+	xl?: boolean,
+	className?: string,
 	onSuccess?: (response: ResponseType) => void,
 	onFailed?: (e: PublicError) => void,
 	onValues?: (values: FieldType) => FieldType | Promise<FieldType>,
@@ -98,14 +104,23 @@ const Form = <ResponseType extends any, FieldType extends any>(props: FormProps<
 	
 		return false;
 	};
-	
 
 	let failureMessage = failed ? (failed.message || failedMessage) : undefined;
 	var showFormResponse = !!(loadingMessage || submitLabel || failedMessage);
 	var submitDisabled = loading || (submitEnabled !== undefined && submitEnabled != true);
-	
+
+	const sizes = ['xs', 'sm', 'md', 'lg', 'xl'];
+	const formClasses = ['ui-form'];
+
+	sizes.forEach(size => {
+		if (props[size]) {
+			formClasses.push(`ui-form--${size}`)
+		}
+	});
+
 	return (
 		<form
+		    className={formClasses.join(' ')}
 			onSubmit={onSubmit}
 			ref={formRef}
 			method={"post"}

@@ -36,6 +36,13 @@ namespace Api.Payments
         [DatabaseField(Length = 200)]
         public string Sku;
 
+		/// <summary>
+		/// 0 = Physical
+		/// 1 = Digital (no delivery method required)
+		/// </summary>
+		[Module("Admin/Payments/ProductTypes")]
+		public uint ProductType;
+
         /// <summary>
         /// The name of the product
         /// </summary>

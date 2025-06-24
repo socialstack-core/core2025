@@ -31,7 +31,7 @@ const Default: React.FC<DefaultProps> = (props) => {
 		<input
 			type={type}
 			ref={(el) => onInputRef && onInputRef(el as HTMLElement)}
-			className={(className || "form-control") + (validationFailure ? ' is-invalid' : '')}
+			className={(className || "form-control ui-form-control") + (validationFailure ? ' is-invalid' : '')}
 			aria-describedby={helpFieldId}
 			onInput={onChange}
 			{...attribs}

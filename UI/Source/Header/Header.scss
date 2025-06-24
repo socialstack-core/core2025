@@ -187,19 +187,8 @@
 		align-items: center;
 		gap: px_to_rem(12);
 
-		.btn {
-			border-radius: px_to_rem(8);
-			padding: px_to_rem(8);
-			min-height: px_to_rem(38);
-			display: flex;
-			align-items: center;
-		}
-
 		&-login,
 		&-account {
-			display: flex;
-			gap: px_to_rem(8);
-			font-size: px_to_rem(15);
 
 			svg {
 				width: px_to_rem(20);
@@ -208,9 +197,6 @@
 		}
 
 		&-basket {
-			display: flex;
-			gap: px_to_rem(8);
-			font-size: px_to_rem(15);
 
 			svg {
 				width: px_to_rem(20);
@@ -481,6 +467,7 @@
 			padding: 0;
 			text-align: left;
 			width: 100%;
+			white-space: normal;
 
 			&:hover {
 				text-decoration: underline;
@@ -737,11 +724,6 @@
 
 		&__actions {
 			gap: px_to_rem(24);
-
-			.btn {
-				padding: px_to_rem(8) px_to_rem(16);  
-				min-height: px_to_rem(44);
-			}
 
 			/*
 			&-login,

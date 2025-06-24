@@ -733,7 +733,7 @@ class AutoFormInternal extends React.Component {
 			{
 				this.state.editFailure && (
 					<div className="alert alert-danger">
-						{`Something went wrong whilst trying to save your changes - your device might be offline, so check your internet connection and try again.`}
+						{this.state.editFailure.message || `Something went wrong whilst trying to save your changes - your device might be offline, so check your internet connection and try again.`}
 					</div>
 				)
 			}
@@ -885,7 +885,7 @@ class AutoFormInternal extends React.Component {
 		};
 
 		var onFailed = response => {
-			this.setState({ editFailure: true, createSuccess: false, submitting: false });
+			this.setState({ editFailure: response || true, createSuccess: false, submitting: false });
 		};
 
 		var onSuccess = response => {

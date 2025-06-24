@@ -1,0 +1,19 @@
+:root {
+    // used to limit maximum width of page content
+	--max-width: #{px_to_rem(1360)};
+	
+	// add project-specific palette colours here, e.g.
+	// --palette-main: #ff0000;
+
+	// overrides for UI/Breadcrumb
+	//--breadcrumb-fg: ...;
+	//--breadcrumb-bg: ...;
+
+	// WIP
+	/*
+	--product-qty-bg: ...;
+	--product-qty-fg: ...;
+	--product-qty-btn-bg: ...;
+	--product-qty-btn-fg: ...;
+	*/
+}
