@@ -9,11 +9,13 @@ import { MultiSelectBox } from "./MultiSelect";
 
 import productCategoryApi, {ProductCategory} from "Api/ProductCategory";
 import searchApi, { ProductSearchAppliedFacet } from "Api/ProductSearchController";
-import {CategoryIncludes, ProductIncludes} from "Api/Includes";
+import { ProductIncludes} from "Api/Includes";
 import ProductApi, { Product } from "Api/Product";
 import { ApiList } from "UI/Functions/WebRequest";
 import { ProductAttribute } from "Api/ProductAttribute";
 import { ProductAttributeValue } from "Api/ProductAttributeValue";
+import Link from "UI/Link";
+import Button from "UI/Button";
 
 /**
  * Props for the ProductCategoryTree component
@@ -38,11 +40,14 @@ type PageViewType = "list" | "tree";
  * @returns {JSX.Element}
  */
 export default function ProductCategoryTree({ noCreate }: ProductCategoryTreeProps) {
-	const [viewType, setViewType] = useState<PageViewType>("tree");
-	const [searchQuery, setSearchQuery] = useState("");
+
 
 	const { pageState } = useRouter();
+	
+	const [viewType, setViewType] = useState<PageViewType>(pageState.query?.get("query") ? "list" : "tree");
+	const [searchQuery, setSearchQuery] = useState(pageState.query?.get("query") ?? '');
 	const path = pageState.query?.get("path") || "";
+
 
 	const breadcrumbs = buildBreadcrumbs("/en-admin/product", "Products", path, "/en-admin/product");
 
@@ -81,7 +86,9 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 						<Input
 							type="search"
 							defaultValue={searchQuery}
-							onInput={(ev) => setSearchQuery((ev.target as HTMLInputElement).value)}
+							onInput={(ev) => {
+								setSearchQuery((ev.target as HTMLInputElement).value)
+							}}
 							placeholder="Filter products"
 						/>
 					</div>
@@ -120,6 +127,21 @@ type ProductListViewProps = {
 	query?: string;
 };
 
+const hydrateFacets = (): ProductSearchAppliedFacet[] => {
+	var req = parseProductUrl(location.href);
+	
+	var facets: ProductSearchAppliedFacet[] = [];
+	
+	Object.keys(req.facet).map((mapping: string) => {
+		if (!req.facet[mapping]) {
+			return;
+		}
+		facets.push({ mapping, ids: req.facet[mapping] })
+	})
+	
+	return facets;
+}
+
 /**
  * Displays a list view of products, including filtering and search functionality.
  *
@@ -131,7 +153,7 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 	const [defaultProductList, setDefaultProductList] = useState<ApiList<Product>>();
 	const [searchResults, setSearchResults] = useState<ApiList<Product>>();
 	const [pageOffset, setPageOffset] = useState(0);
-	const [attributeFacets, setAttributeFacets] = useState<ProductSearchAppliedFacet[]>([]);
+	const [attributeFacets, setAttributeFacets] = useState<ProductSearchAppliedFacet[]>(hydrateFacets());
 	const [loading, setLoading] = useState<boolean>(false);
 
 	useEffect(() => {
@@ -151,6 +173,19 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 	};
 
 	useEffect(() => {
+
+		let facetStr = '';
+
+		attributeFacets.forEach(facet => {
+			if (!facet.ids) {
+				return;
+			}
+			facetStr += '&facet[' + facet.mapping + ']=' + facet.ids.join(',');
+		})
+		
+		const url = location.pathname + '?query=' + props.query + facetStr;
+		history.replaceState(null, '',url);
+		
 		searchApi
 			.faceted(queryPayload, [
 				new ProductIncludes().attributeValueFacets,
@@ -163,6 +198,27 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 				setLoading(false);
 			});
 	}, [props.query, attributeFacets]);
+
+	useEffect(() => {
+		
+		if (!props.query) {
+			const GET = parseProductUrl(location.href);
+
+			if (GET.query) {
+				// update all from URL.
+				
+				const facets: ProductSearchAppliedFacet[] = [];
+				
+				Object.keys(GET.facet).forEach((mapping: string) => {
+					facets.push({ mapping, ids:GET.facet[mapping] });
+				})
+				
+				setAttributeFacets(facets);
+				
+			}
+		}
+		
+	}, [props.query]);
 
 	return (
 		<div className="admin-page__internal">
@@ -203,7 +259,11 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 								<td>{product.featureRef ? <Image fileRef={product.featureRef} /> : "No image available"}</td>
 								<td>{product.name}</td>
 								<td>{product.sku}</td>
-								<td>-</td>
+								<td>
+									<Link href={'/en-admin/product/' + product.id}>
+										<Button>{`Edit product`}</Button>
+									</Link>
+								</td>
 							</tr>
 						))}
 						</tbody>
@@ -374,3 +434,41 @@ const uniqueAttributeValues = (values: ProductAttributeValue[]): ProductAttribut
 		.filter((v) => !seen.has(v.value!) && seen.add(v.value!))
 		.sort((a, b) => a.value!.localeCompare(b.value!, undefined, { numeric: true }));
 };
+
+type ParsedQuery = {
+	query?: string;
+	facet: Record<string, ulong[]>;
+};
+
+/**
+ * Parses a URL and extracts the 'query' string and 'facet' parameters.
+ *
+ * @param {string} url - The full URL to parse
+ * @returns {ParsedQuery} - Parsed object containing query and facet map
+ */
+function parseProductUrl(url: string): ParsedQuery {
+	const parsed = new URL(url);
+	const params = new URLSearchParams(parsed.search);
+	const result: ParsedQuery = { facet: {} };
+
+	// Extract query
+	const query = params.get("query");
+	if (query) {
+		result.query = query;
+	}
+
+	// Extract facet[key]=... values
+	for (const [key, value] of params.entries()) {
+		const match = key.match(/^facet\[(.+?)\]$/);
+		if (match) {
+			const facetKey = match[1];
+			const idList = value
+				.split(',')
+				.map((str: string) => parseInt(str, 10))
+				.filter((n: number) => !isNaN(n));
+			result.facet[facetKey] = idList;
+		}
+	}
+
+	return result;
+}
