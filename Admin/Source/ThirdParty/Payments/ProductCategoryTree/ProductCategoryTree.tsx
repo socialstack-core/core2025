@@ -88,13 +88,17 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 							defaultValue={searchQuery}
 							onInput={(ev) => {
 								setSearchQuery((ev.target as HTMLInputElement).value)
+								setViewType("list")
+							}}
+							onFocus={() => {
+								setViewType("list");
 							}}
 							placeholder="Filter products"
 						/>
 					</div>
 				</div>
 				<div className="sitemap__internal">
-					{viewType === "tree" && !searchQuery ? (
+					{viewType === "tree" ? (
 						<TreeView
 							onLoadData={(path) => productCategoryApi.getTreeNodePath(path).then((resp) => resp)}
 						/>
@@ -150,26 +154,24 @@ const hydrateFacets = (): ProductSearchAppliedFacet[] => {
  * @returns {JSX.Element}
  */
 const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewProps) => {
-	const [defaultProductList, setDefaultProductList] = useState<ApiList<Product>>();
 	const [searchResults, setSearchResults] = useState<ApiList<Product>>();
 	const [pageOffset, setPageOffset] = useState(0);
 	const [attributeFacets, setAttributeFacets] = useState<ProductSearchAppliedFacet[]>(hydrateFacets());
 	const [loading, setLoading] = useState<boolean>(false);
 
-	useEffect(() => {
-		if (!defaultProductList) {
-			setLoading(true);
-			ProductApi.list({ pageSize: 20 as int, pageIndex: pageOffset as int }).then((result: ApiList<Product>) => {
-				setDefaultProductList(result);
-				setLoading(false);
-			});
-		}
-	}, [defaultProductList]);
-
 	const queryPayload = {
 		query: props.query,
 		pageOffset: pageOffset as uint,
-		appliedFacets: attributeFacets
+		appliedFacets: [
+			{
+				mapping: "attributes",
+				ids: attributeFacets.filter(item => item.mapping != 'category').flatMap(attr => attr.ids) as ulong[]
+			},
+			{
+				mapping: "productcategories",
+				ids: attributeFacets.filter(item => item.mapping == 'category').flatMap(attr => attr.ids) as ulong[]
+			}
+		] 
 	};
 
 	useEffect(() => {
@@ -253,7 +255,7 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 						</tr>
 						</thead>
 						<tbody>
-						{(searchResults ?? defaultProductList)?.results.map((product) => (
+						{searchResults?.results.map((product) => (
 							<tr key={product.id}>
 								<td>{product.id}</td>
 								<td>{product.featureRef ? <Image fileRef={product.featureRef} /> : "No image available"}</td>
@@ -362,6 +364,10 @@ const CategoryFilter: React.FC<CategoryFilterProps> = (props) => {
 	
 	let categories = results?.includes.find((include: { field: string }) => include.field === "productCategories")?.values ?? [];
 	categories = uniqueCategories(categories);
+	
+	if (categories.length == 0) {
+		return;
+	}
 
 
 	const secondaryFacets = results.secondary?.productCategoryFacets.results ?? [];
