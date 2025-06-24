@@ -51,7 +51,6 @@ namespace Api.Payments
 
 					if (coupon != null && coupon.MaxNumberOfPeople > 0)
 					{
-						// Future TODO: Ask the data API to decrease by 1 for large cluster concurrency.
 						var newMax = coupon.MaxNumberOfPeople - 1;
 
 						if (newMax <= 0)
@@ -63,7 +62,7 @@ namespace Api.Payments
 								cToUpdate.MaxNumberOfPeople = 0;
 								cToUpdate.Disabled = true;
 
-							}, DataOptions.IgnorePermissions);
+							}, DataOptions.CheckNotChanged | DataOptions.IgnorePermissions);
 						}
 						else
 						{
@@ -73,7 +72,7 @@ namespace Api.Payments
 
 								cToUpdate.MaxNumberOfPeople = newMax;
 
-							}, DataOptions.IgnorePermissions);
+							}, DataOptions.CheckNotChanged | DataOptions.IgnorePermissions);
 						}
 					}
 				}

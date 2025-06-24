@@ -23,6 +23,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
         shoppingCartApi.includes.productquantities,
         shoppingCartApi.includes.productquantities.product,
         shoppingCartApi.includes.productquantities.totalprice,
+        shoppingCartApi.includes.coupon
     ];
 
     useEffect(() => {

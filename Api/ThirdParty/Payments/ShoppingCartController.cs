@@ -9,14 +9,46 @@ namespace Api.Payments
     [Route("v1/shoppingCart")]
 	public partial class ShoppingCartController : AutoController<ShoppingCart>
     {
-        /// <summary>
-        /// Adds or removes items from the specified cart. The contextual user must have access to the cart.
-        /// If the cart ID is zero, a new cart will be spawned and returned.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="itemChanges"></param>
-        /// <returns></returns>
-        [HttpPost("change_items")]
+
+		/// <summary>
+		/// Applies a coupon to the shopping cart.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="couponInfo"></param>
+		/// <returns></returns>
+		[HttpPost("apply_coupon")]
+        public async ValueTask<ShoppingCart> ApplyCoupon(Context context, [FromBody] CartCoupon couponInfo)
+        {
+			return await (_service as ShoppingCartService)
+				.ApplyCoupon(context,
+					couponInfo.ShoppingCartId,
+					couponInfo.Code
+				);
+		}
+
+		/// <summary>
+		/// Removes a coupon from the shopping cart.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="couponInfo"></param>
+		/// <returns></returns>
+		[HttpPost("remove_coupon")]
+		public async ValueTask<ShoppingCart> RemoveCoupon(Context context, [FromBody] RemoveCoupon couponInfo)
+		{
+			return await (_service as ShoppingCartService)
+				.RemoveCoupon(context,
+					couponInfo.ShoppingCartId
+				);
+		}
+
+		/// <summary>
+		/// Adds or removes items from the specified cart. The contextual user must have access to the cart.
+		/// If the cart ID is zero, a new cart will be spawned and returned.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="itemChanges"></param>
+		/// <returns></returns>
+		[HttpPost("change_items")]
         public async ValueTask<ShoppingCart> ChangeItems(Context context, [FromBody] CartItemChanges itemChanges)
         {
             return await (_service as ShoppingCartService)
@@ -59,6 +91,33 @@ namespace Api.Payments
 		/// </summary>
 		public List<CartItemChange> Items;
     }
+    
+    /// <summary>
+    /// Changing the coupon on a cart.
+    /// </summary>
+    public struct RemoveCoupon
+	{
+		/// <summary>
+		/// The shopping cart
+		/// </summary>
+		public uint ShoppingCartId;
+	}
+	
+    /// <summary>
+    /// Changing the coupon on a cart.
+    /// </summary>
+    public struct CartCoupon
+	{
+		/// <summary>
+		/// The coupon to apply. If this is null, nothing happens.
+		/// </summary>
+		public string Code;
+
+		/// <summary>
+		/// The shopping cart
+		/// </summary>
+		public uint ShoppingCartId;
+	}
 
 	/// <summary>
 	/// Changing (usually an addition) the quantity of an item in a cart.

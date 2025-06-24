@@ -9,6 +9,7 @@ using Api.Emails;
 using System;
 using Api.Pages;
 using Api.CanvasRenderer;
+using Api.Translate;
 
 namespace Api.Payments
 {
@@ -28,14 +29,16 @@ namespace Api.Payments
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public PurchaseService(PaymentMethodService paymentMethods, PageService pages, PaymentGatewayService gateways, ProductQuantityService prodQuantities, ProductService products, EmailTemplateService emails, PriceService prices) : base(Events.Purchase)
+		public PurchaseService(PaymentMethodService paymentMethods, PageService pages, 
+			PaymentGatewayService gateways, ProductQuantityService prodQuantities, 
+			ProductService products, EmailTemplateService emails, PriceService prices, LocaleService locales) : base(Events.Purchase)
         {
 			_paymentMethods = paymentMethods;
 			_gateways = gateways;
 			_prodQuantities = prodQuantities;
 			_products = products;
 			_prices = prices;
-
+			
 			pages.Install(
 				new PageBuilder()
 				{

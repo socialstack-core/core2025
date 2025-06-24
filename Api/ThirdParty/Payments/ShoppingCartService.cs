@@ -7,6 +7,10 @@ using Api.Eventing;
 using Api.Startup;
 using System;
 using System.Linq;
+using Stripe;
+using static Azure.Core.HttpHeader;
+using Api.Users;
+using Api.Addresses;
 
 namespace Api.Payments
 {
@@ -19,15 +23,50 @@ namespace Api.Payments
 		private ProductQuantityService _productQuantities;
 		private PurchaseService _purchases;
 		private ProductService _products;
+		private CouponService _coupons;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public ShoppingCartService(ProductQuantityService productQuantities, PurchaseService purchases, ProductService products) : base(Events.ShoppingCart)
+		public ShoppingCartService(ProductQuantityService productQuantities, PurchaseService purchases, 
+			ProductService products, CouponService coupons, AddressService addressService) : base(Events.ShoppingCart)
         {
 			_productQuantities = productQuantities;
 			_purchases = purchases;
 			_products = products;
+			_coupons = coupons;
+
+			Events.ShoppingCart.BeforeSettable.AddEventListener((Context context, JsonField<ShoppingCart, uint> field) =>
+			{
+				if (field == null)
+				{
+					return new ValueTask<JsonField<ShoppingCart, uint>>(field);
+				}
+
+				if (field.Name == "CouponId" && !field.ForRole.CanViewAdmin)
+				{
+					// This field isn't settable by non-admins.
+					field = null;
+				}
+
+				return new ValueTask<JsonField<ShoppingCart, uint>>(field);
+			});
+
+			Events.ShoppingCart.BeforeUpdate.AddEventListener(async (Context context, ShoppingCart toUpdate, ShoppingCart original) => {
+
+				if (toUpdate == null)
+				{
+					return toUpdate;
+				}
+
+				if (toUpdate.AddressId != original.AddressId && toUpdate.AddressId != 0)
+				{
+					toUpdate.TaxJurisdiction = await addressService.GetTaxJurisdiction(context, toUpdate.AddressId);
+				}
+
+				return toUpdate;
+			});
+
 		}
 
 		/// <summary>
@@ -71,6 +110,50 @@ namespace Api.Payments
 		}
 
 		/// <summary>
+		/// Removes a coupon from the cart.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="cartId"></param>
+		/// <returns></returns>
+		public async ValueTask<ShoppingCart> RemoveCoupon(Context context, uint cartId)
+		{
+			return await Update(context, cartId, (Context ctx, ShoppingCart toUpdate, ShoppingCart original) => {
+				toUpdate.CouponId = 0;
+			});
+		}
+
+		/// <summary>
+		/// Applies a coupon to the cart.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="cartId"></param>
+		/// <param name="couponCode"></param>
+		/// <returns></returns>
+		public async ValueTask<ShoppingCart> ApplyCoupon(Context context, uint cartId, string couponCode)
+		{
+			if (string.IsNullOrEmpty(couponCode))
+			{
+				return null;
+			}
+
+			var coupon = await _coupons.Where("Token=?").Bind(couponCode).First(context);
+
+			if (coupon == null)
+			{
+				throw new PublicException("That coupon code does not exist.", "coupon/not_found");
+			}
+
+			if (coupon.ExpiryDateUtc > DateTime.UtcNow)
+			{
+				throw new PublicException("That coupon code has expired.", "coupon/expired");
+			}
+
+			return await Update(context, cartId, (Context ctx, ShoppingCart toUpdate, ShoppingCart original) => {
+				toUpdate.CouponId = coupon.Id;
+			});
+		}
+
+		/// <summary>
 		/// Adds the given product to the cart.
 		/// </summary>
 		/// <param name="context"></param>
@@ -84,7 +167,11 @@ namespace Api.Payments
 			if (cartId == 0)
 			{
 				// Spawn a new cart now.
-				cart = await Create(context, new ShoppingCart() { }, DataOptions.IgnorePermissions);
+				var locale = await context.GetLocale();
+
+				cart = await Create(context, new ShoppingCart() {
+					TaxJurisdiction = locale.DefaultTaxJurisdiction
+				}, DataOptions.IgnorePermissions);
 			}
 			else
 			{

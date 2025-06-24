@@ -203,7 +203,8 @@ public class ProductSearchService : AutoService
         var search = new ProductSearch(){
 			Query = query,
 			PageIndex = pageOffset,
-			PageSize = pageSize
+			PageSize = pageSize,
+			AppliedFacets = appliedFacets
 		};
 		
 		search = await Events.Product.Search.Dispatch(context, search);

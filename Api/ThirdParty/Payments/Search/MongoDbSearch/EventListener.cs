@@ -216,7 +216,29 @@ public class MongoSearchEventListener
 				// (that happens in ProductSearchService).
 
 				var filter = Builders<Product>.Filter.Regex("Name.en", new BsonRegularExpression(query, "i"));
-				
+
+				if (search.AppliedFacets != null)
+				{
+					var childFilters = new List<FilterDefinition<Product>>
+					{
+						filter
+					};
+
+					foreach (var facet in search.AppliedFacets)
+					{
+						var ids = facet.Ids;
+
+						if (ids == null || ids.Count == 0 || facet.Mapping == null)
+						{
+							continue;
+						}
+
+						childFilters.Add(Builders<Product>.Filter.All("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
+					}
+
+					filter = Builders<Product>.Filter.And(childFilters);
+				}
+
 				/*
 				 * (description is not plaintext, it is canvas JSON)
 				 * 

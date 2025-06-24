@@ -22,17 +22,16 @@ export default function start(custom) {
 		providers.sort((a,b) => {return b.priority - a.priority;});
 	}
 
-	var html = document.querySelector('html');
-
-	if (html) {
-		html.classList.remove("no-js");
-	}
-	
 	var root = document.getElementById('react-root');
 	
 	if(root){
 		// We're server side otherwise.
-		
+		var html = document.body.parentElement;
+
+		if (html) {
+			html.classList.remove("no-js");
+		}
+
 		// Start logging in now and update the loader:
 		var loader = document.getElementById('react-loading');
 		loader && loader.parentNode.removeChild(loader);
