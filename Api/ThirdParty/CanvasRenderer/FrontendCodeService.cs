@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Api.Themes;
 
 namespace Api.CanvasRenderer
 {
@@ -25,10 +26,11 @@ namespace Api.CanvasRenderer
     [HostType("web")]
     public class FrontendCodeService : AutoService
 	{
+		private TaskCompletionSource uiLoadTask = new TaskCompletionSource();
 		private UIBundle UIBuilder;
 		private UIBundle EmailBuilder;
 		private UIBundle AdminBuilder;
-		private Task initialBuildTask;
+
 		/// <summary>
 		/// The inline header. This should be served inline in the html. It includes preact, preact hooks and the ss module require function, totalling 13kb.
 		/// </summary>
@@ -93,6 +95,102 @@ namespace Api.CanvasRenderer
 		}
 
 		private string[] serviceUrlByLocale;
+
+		private void InitialBuild()
+		{
+			var themeConfig = _themes.GetAllConfig();
+			var cssVariables = _themes.OutputCss(themeConfig);
+
+			var dllPath = AppDomain.CurrentDomain.BaseDirectory;
+
+			// The html inline header. It includes preact, preact hooks and the socialstack module require function.
+
+			var headerFile = _config.React ? "inline_header_react" : "inline_header";
+
+			InlineJavascriptHeader = File.ReadAllBytes(dllPath + "/Api/ThirdParty/CanvasRenderer/" + headerFile + ".js");
+			serviceUrlByLocale = null;
+
+			var prebuilt = _config.Prebuilt;
+
+			// If UI/Source doesn't exist, prebuilt = true.
+			if (!Directory.Exists(Path.GetFullPath("UI/Source")))
+			{
+				prebuilt = true;
+			}
+
+			Prebuilt = prebuilt;
+			
+			if (prebuilt)
+			{
+				Log.Info(LogTag, "Running in prebuilt mode. *Not* watching your files for changes.");
+				try
+				{
+					AddBuilder(UIBuilder = new UIBundle("UI", "/pack/", _translations, _locales, this) { CssPrepend = cssVariables });
+					AddBuilder(EmailBuilder = new UIBundle("Email", "/pack/email-static/", _translations, _locales, this) { FilePathOverride = "/pack/" });
+					AddBuilder(AdminBuilder = new UIBundle("Admin", "/en-admin/pack/", _translations, _locales, this));
+					CodeLoaded();
+				}
+				catch (Exception e)
+				{
+					Log.Fatal(LogTag, e, "Unable to load the UI.");
+				}
+			}
+			else
+			{
+				// Must wait until all services are ready before the UI can be compiled.
+				// This is because it has a dependency on knowing what services are available.
+				Events.Service.AfterStart.AddEventListener(async (Context context, object src) => {
+					await RunBuild();
+					CodeLoaded();
+					return src;
+				});
+			}
+		}
+
+		private void CodeLoaded()
+		{
+			Log.Info(LogTag, "Done handling UI load.");
+			uiLoadTask.SetResult();
+			uiLoadTask = null;
+		}
+
+		private async ValueTask RunBuild()
+		{
+			var themeConfig = _themes.GetAllConfig();
+			var cssVariables = _themes.OutputCss(themeConfig);
+			
+			// Get a build engine:
+			var engine = GetBuildEngine();
+
+			var globalMap = new GlobalSourceFileMap();
+
+			// Todo: make this into a config variable. If true, the build from the watcher will be minified.
+			var minify = _config.Minified;
+
+			var ctx = new Context(1, 1, 1);
+
+			// Create a group of build/watchers for each bundle of files (all in parallel):
+			AddBuilder(UIBuilder = new UIBundle("UI", "/pack/", _translations, _locales, this, engine, globalMap, minify) { CssPrepend = cssVariables });
+			AddBuilder(EmailBuilder = new UIBundle("Email", "/pack/email-static/", _translations, _locales, this, engine, globalMap, minify));
+			AddBuilder(AdminBuilder = new UIBundle("Admin", "/en-admin/pack/", _translations, _locales, this, engine, globalMap, minify));
+
+			var container = new SourceFileContainerSet();
+			container.Bundles = SourceBuilders;
+
+			await Events.Compiler.BeforeCompile.Dispatch(ctx, container);
+
+			// Sort global map:
+			globalMap.Sort();
+
+			// Happens in a separate loop to ensure all the global SCSS has loaded first.
+			foreach (var sb in SourceBuilders)
+			{
+				// Compile everything:
+				await sb.BuildEverything();
+			}
+
+			await Events.Compiler.AfterCompile.Dispatch(ctx, container);
+		}
 
 		/// <summary>
 		/// Gets service URLs, such as the content source and websocket one, as a javascript variable set.
@@ -210,22 +308,28 @@ namespace Api.CanvasRenderer
 		
 		#if DEBUG
 		private readonly string reloadMessage = "{\"host\":1,\"reload\":1}";
-		#endif
-		
+#endif
+
+		private readonly LocaleService _locales;
+		private readonly TranslationService _translations;
+		private readonly ThemeService _themes;
+
 		/// <summary>
 		/// Instanced automatically.
 		/// </summary>
 		public FrontendCodeService(LocaleService locales, TranslationService translations, Themes.ThemeService themeService, ContentSyncService contentSync)
 		{
 			_contentSync = contentSync;
+			_locales = locales;
+			_translations = translations;
+			_themes = themeService;
 			var themeConfig = themeService.GetAllConfig();
-			var cssVariables = themeService.OutputCss(themeConfig);
 
 			themeConfig.OnChange += async () => {
 
 				// A theme was reconfigured (this also includes when the message came via contentsync as well).
 				// Reconstruct the CSS now.
-				cssVariables = themeService.OutputCss(themeConfig);
+				var cssVariables = themeService.OutputCss(themeConfig);
 				
 				if(UIBuilder != null)
 				{
@@ -274,78 +378,9 @@ namespace Api.CanvasRenderer
 
 				return new ValueTask<long>(buildNumber);
 			});
-			#endif
+#endif
 
-			initialBuildTask = Task.Run(async () =>
-			{
-				var dllPath = AppDomain.CurrentDomain.BaseDirectory;
-
-				// The html inline header. It includes preact, preact hooks and the socialstack module require function.
-				
-				var headerFile = _config.React ? "inline_header_react" : "inline_header";
-
-				InlineJavascriptHeader = File.ReadAllBytes(dllPath + "/Api/ThirdParty/CanvasRenderer/"+ headerFile + ".js");
-				serviceUrlByLocale = null;
-
-				var prebuilt = _config.Prebuilt;
-
-				// If UI/Source doesn't exist, prebuilt = true.
-				if (!Directory.Exists(Path.GetFullPath("UI/Source")))
-				{
-					prebuilt = true;
-				}
-
-				Prebuilt = prebuilt;
-
-				if (prebuilt)
-				{
-					Log.Info(LogTag, "Running in prebuilt mode. *Not* watching your files for changes.");
-					try{
-						AddBuilder(UIBuilder = new UIBundle("UI", "/pack/", translations, locales, this) { CssPrepend = cssVariables });
-						AddBuilder(EmailBuilder = new UIBundle("Email", "/pack/email-static/", translations, locales, this) { FilePathOverride = "/pack/" });
-						AddBuilder(AdminBuilder = new UIBundle("Admin", "/en-admin/pack/", translations, locales, this));
-					}catch(Exception e){
-						Log.Fatal(LogTag, e, "Unable to load the UI.");
-					}
-				}
-				else
-				{
-					// Get a build engine:
-					var engine = GetBuildEngine();
-
-					var globalMap = new GlobalSourceFileMap();
-
-					// Todo: make this into a config variable. If true, the build from the watcher will be minified.
-					var minify = _config.Minified;
-
-					var ctx = new Context(1, 1, 1);
-
-					// Create a group of build/watchers for each bundle of files (all in parallel):
-					AddBuilder(UIBuilder = new UIBundle("UI", "/pack/", translations, locales, this, engine, globalMap, minify) { CssPrepend = cssVariables });
-					AddBuilder(EmailBuilder = new UIBundle("Email", "/pack/email-static/", translations, locales, this, engine, globalMap, minify));
-					AddBuilder(AdminBuilder = new UIBundle("Admin", "/en-admin/pack/", translations, locales, this, engine, globalMap, minify));
-
-					var container = new SourceFileContainerSet();
-					container.Bundles = SourceBuilders;
-
-					await Events.Compiler.BeforeCompile.Dispatch(ctx, container);
-
-					// Sort global map:
-					globalMap.Sort();
-
-					// Happens in a separate loop to ensure all the global SCSS has loaded first.
-					foreach (var sb in SourceBuilders)
-					{
-						// Compile everything:
-						await sb.BuildEverything();
-					}
-
-					await Events.Compiler.AfterCompile.Dispatch(ctx, container);
-				}
-
-                Log.Ok(LogTag, "Done handling UI load.");
-                initialBuildTask = null;
-			});
+			InitialBuild();
 
 			_config.OnChange += () => {
 
@@ -414,10 +449,12 @@ namespace Api.CanvasRenderer
 		public async ValueTask<List<StaticFileInfo>> GetStaticFiles()
 		{
 			// Special case for devs - may need to wait for first build if it hasn't happened yet.
-			if (initialBuildTask != null)
+			var loadTask = uiLoadTask;
+			if (loadTask != null)
 			{
-				await initialBuildTask;
+				await loadTask.Task;
 			}
+
 #else
 		public ValueTask<List<StaticFileInfo>> GetStaticFiles()
 		{
@@ -470,9 +507,10 @@ namespace Api.CanvasRenderer
 		public async ValueTask<List<UIBuildError>> GetLastBuildErrors()
 		{
 			// Special case for devs - may need to wait for first build if it hasn't happened yet.
-			if (initialBuildTask != null)
+			var loadTask = uiLoadTask;
+			if (loadTask != null)
 			{
-				await initialBuildTask;
+				await loadTask.Task;
 			}
 
 			var uiErrors = UIBuilder.GetBuildErrors();
@@ -592,9 +630,10 @@ namespace Api.CanvasRenderer
 		{
 #if DEBUG
 			// Special case for devs - may need to wait for first build if it hasn't happened yet.
-			if (initialBuildTask != null)
+			var loadTask = uiLoadTask;
+			if (loadTask != null)
 			{
-				await initialBuildTask;
+				await loadTask.Task;
 			}
 #endif
 			if (_cachedTypeMetadata != null)
@@ -659,10 +698,12 @@ namespace Api.CanvasRenderer
 		{
 #if DEBUG
 			// Special case for devs - may need to wait for first build if it hasn't happened yet.
-			if (initialBuildTask != null)
+			var loadTask = uiLoadTask;
+			if (loadTask != null)
 			{
-				await initialBuildTask;
+				await loadTask.Task;
 			}
+
 #endif
 			return await UIBuilder.GetJs(localeId);
 		}
@@ -677,10 +718,12 @@ namespace Api.CanvasRenderer
 		{
 #if DEBUG
 			// Special case for devs - may need to wait for first build if it hasn't happened yet.
-			if (initialBuildTask != null)
+			var loadTask = uiLoadTask;
+			if (loadTask != null)
 			{
-				await initialBuildTask;
+				await loadTask.Task;
 			}
+
 #endif
 			return await UIBuilder.GetCss(localeId);
 		}
@@ -695,10 +738,12 @@ namespace Api.CanvasRenderer
 		{
 #if DEBUG
 			// Special case for devs - may need to wait for first build if it hasn't happened yet.
-			if (initialBuildTask != null)
+			var loadTask = uiLoadTask;
+			if (loadTask != null)
 			{
-				await initialBuildTask;
+				await loadTask.Task;
 			}
+
 #endif
 			return await AdminBuilder.GetCss(localeId);
 		}
@@ -713,10 +758,12 @@ namespace Api.CanvasRenderer
 		{
 #if DEBUG
 			// Special case for devs - may need to wait for first build if it hasn't happened yet.
-			if (initialBuildTask != null)
+			var loadTask = uiLoadTask;
+			if (loadTask != null)
 			{
-				await initialBuildTask;
+				await loadTask.Task;
 			}
+
 #endif
 			return await AdminBuilder.GetJs(localeId);
 		}
@@ -731,10 +778,12 @@ namespace Api.CanvasRenderer
         {
 #if DEBUG
 			// Special case for devs - may need to wait for first build if it hasn't happened yet.
-			if (initialBuildTask != null)
+			var loadTask = uiLoadTask;
+			if (loadTask != null)
 			{
-				await initialBuildTask;
+				await loadTask.Task;
 			}
+
 #endif
 			return await EmailBuilder.GetJs(localeId);
 		}
