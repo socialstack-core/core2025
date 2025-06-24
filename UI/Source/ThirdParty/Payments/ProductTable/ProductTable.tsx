@@ -3,7 +3,7 @@ import Loop from 'UI/Loop';
 import Alert from 'UI/Alert';
 import Icon from 'UI/Icon';
 import productApi from 'Api/Product';
-import { calculatePrice, recurrenceText } from 'UI/Functions/Payments';
+import { recurrenceText } from 'UI/Functions/Payments';
 import { useSession } from 'UI/Session';
 import BasketItem from 'UI/Product/Signpost';
 import Quantity from 'UI/Product/Quantity';

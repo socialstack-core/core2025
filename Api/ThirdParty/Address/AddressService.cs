@@ -1,6 +1,8 @@
 
+using Api.Contexts;
 using Api.Eventing;
 using Api.Pages;
+using System.Threading.Tasks;
 
 namespace Api.Addresses;
 
@@ -34,6 +36,19 @@ public partial class AddressService : AutoService<Address>
 			}
 		);
 
+	}
 
+	/// <summary>
+	/// Gets the ISO 3166 tax jurisdiction of the given address by ID.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="addressId"></param>
+	/// <returns></returns>
+	public async ValueTask<string> GetTaxJurisdiction(Context context, uint addressId)
+	{
+		var addr = await Get(context, addressId);
+
+		// Todo! Can be e.g. specific US states etc.
+		return "GB";
 	}
 }
