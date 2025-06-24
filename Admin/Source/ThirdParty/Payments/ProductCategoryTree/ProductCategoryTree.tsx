@@ -7,9 +7,9 @@ import Image from "UI/Image";
 import Loading from "UI/Loading";
 import { MultiSelectBox } from "./MultiSelect";
 
-import productCategoryApi from "Api/ProductCategory";
+import productCategoryApi, {ProductCategory} from "Api/ProductCategory";
 import searchApi, { ProductSearchAppliedFacet } from "Api/ProductSearchController";
-import { ProductIncludes } from "Api/Includes";
+import {CategoryIncludes, ProductIncludes} from "Api/Includes";
 import ProductApi, { Product } from "Api/Product";
 import { ApiList } from "UI/Functions/WebRequest";
 import { ProductAttribute } from "Api/ProductAttribute";
@@ -155,7 +155,8 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 			.faceted(queryPayload, [
 				new ProductIncludes().attributeValueFacets,
 				new ProductIncludes().productCategoryFacets,
-				new ProductIncludes().attributes.attribute
+				new ProductIncludes().attributes.attribute,
+				new ProductIncludes().productcategories,
 			])
 			.then((response) => {
 				setSearchResults(response);
@@ -250,6 +251,13 @@ const SearchAttributeFilter: React.FC<ProductAttributeFilterProps> = (props: Pro
 
 	return (
 		<div className="attribute-filters">
+			<CategoryFilter 
+				results={results} 
+				value={props.value?.find(facet => facet.mapping === 'category')?.ids ?? []} 
+				onCategoryFilterChange={(values: ulong[]) => {
+					onFilterChange('category', values);
+				}} 
+			/>
 			{uniqueAttributes(attributes).map((productAttribute: ProductAttribute) => {
 				const values = attributeValues.filter((val) => val.productAttributeId == productAttribute.id);
 				const selectedValues = value.find((facet) => facet.mapping == productAttribute.key);
@@ -278,6 +286,47 @@ const SearchAttributeFilter: React.FC<ProductAttributeFilterProps> = (props: Pro
 	);
 };
 
+type CategoryFilterProps = {
+	results: ApiList<Product>;
+	onCategoryFilterChange: (values: ulong[]) => void;
+	value: ulong[]
+}
+
+const CategoryFilter: React.FC<CategoryFilterProps> = (props) => {
+	
+	const { results } = props;
+	
+	if (!results) {
+		return;
+	}
+	
+	let categories = results?.includes.find((include: { field: string }) => include.field === "productCategories")?.values ?? [];
+	categories = uniqueCategories(categories);
+
+
+	const secondaryFacets = results.secondary?.productCategoryFacets.results ?? [];
+	
+	return (
+		<div className={'attribute-filter'}>
+			<MultiSelectBox 
+				onChange={(values: ulong[]) => {
+					props.onCategoryFilterChange(values)
+				}} 
+				defaultText={`Categories`} 
+				value={props.value} 
+				options={categories.map((category: ProductCategory) => {
+					
+					return {
+						value: category.name,
+						count: secondaryFacets.find((cat: any) => cat.productCategoryId === category.id)?.count ?? 0,
+						valueId: category.id,
+					}
+				})}
+			/>
+		</div>
+	)
+}
+
 /**
  * Filters and returns a list of unique attributes by name.
  *
@@ -292,6 +341,26 @@ const uniqueAttributes = (attrs: ProductAttribute[]): ProductAttribute[] => {
 		return true;
 	});
 };
+
+
+/**
+ * Filters and returns a list of unique categories.
+ *
+ * @param {ProductCategory[]} categories - List of attributes
+ * @returns {ProductCategory[]} Unique attributes
+ */
+const uniqueCategories = (categories: ProductCategory[]): ProductCategory[] => {
+	const unique: ProductCategory[] = [];
+	
+	categories.forEach((category) => {
+		if (unique.find(unq => unq.id === category.id)) {
+			return;
+		}
+		unique.push(category);
+	})
+	return unique.sort((a, b) => a.name!.localeCompare(b.name!, undefined, { numeric: true }));;
+};
+
 
 /**
  * Filters and returns unique attribute values, sorted by value.
