@@ -1,40 +1,22 @@
 import { useRouter } from 'UI/Router';
 import useApi from 'UI/Functions/UseApi';
 import searchApi from 'Api/ProductSearchController';
-import productApi from 'Api/Product';
 import ProductList from 'UI/Product/List';
 import Loading from 'UI/Loading';
 import Html from 'UI/Html';
 import Input from 'UI/Input';
 import Button from 'UI/Button';
-import { ProductCategory } from 'Api/ProductCategory';
-import { ProductAttributeValue } from 'Api/ProductAttributeValue';
-import { ProductAttribute } from 'Api/ProductAttribute';
+import FilterList from 'UI/Product/Search/FilterList';
 import { useState } from "react";
+import { ProductCategoryFacet, AttributeValueFacet, AttributeFacetGroup } from 'UI/Product/Search/Facets';
+
+const MAX_VISIBLE_CATEGORIES = 3;
+const MAX_VISIBLE_ATTRIBUTE_OPTIONS = 4;
 
 /**
  * Props for the Search component.
  */
 interface SearchProps {
-	/**
-	 * An example optional fileRef prop.
-	 */
-	// logoRef?: FileRef
-}
-
-interface ProductCategoryFacet {
-	count: int;
-	category: ProductCategory
-}
-
-interface AttributeValueFacet {
-	count: int;
-	value: ProductAttributeValue
-}
-
-interface AttributeFacetGroup {
-	attribute: ProductAttribute,
-	facetValues: AttributeValueFacet[]
 }
 
 /**
@@ -44,11 +26,22 @@ interface AttributeFacetGroup {
 const Search: React.FC<SearchProps> = (props) => {
 	const { pageState } = useRouter();
 	const { query } = pageState;
-	const [showApprovedOnly, setShowApprovedOnly] = useState();
-	const [showInStockOnly, setShowInStockOnly] = useState();
+
+	// acticare design shows these as toggles - see corresponding commented UI below
+	//const [showApprovedOnly, setShowApprovedOnly] = useState();
+	//const [showInStockOnly, setShowInStockOnly] = useState();
+
+	// list, thumb or grid view
 	const [viewStyle, setViewStyle] = useState('grid');
+
+	// TODO: confirm sort options
 	const [sortOrder, setSortOrder] = useState('most-popular');
+
+	// TODO: make pagination great again
 	const [pagination, setPagination] = useState('page1');
+
+	// filter category text
+	const [categorySearch, setCategorySearch] = useState('');
 
 	var initialSearch = query?.get("q") || "";
 	var initialPageStr = query?.get("page") || "";
@@ -65,6 +58,10 @@ const Search: React.FC<SearchProps> = (props) => {
 		'secondary.productCategoryFacets.category',
 		'secondary.attributeValueFacets.value.attribute.attributeGroup'
 	]), [initialSearch]);
+
+	const resetFilters = () => {
+		setCategorySearch('');
+	};
 
 	const showSearchResults = () => {
 
@@ -109,7 +106,8 @@ const Search: React.FC<SearchProps> = (props) => {
 		return <>
 			<div className="ui-product-search__internal">
 				<form className="ui-product-search__filters">
-					<Button type="reset" variant="secondary">
+
+					<Button type="reset" variant="secondary" onClick={() => resetFilters()}>
 						{`Reset all filters`}
 					</Button>
 
@@ -127,28 +125,14 @@ const Search: React.FC<SearchProps> = (props) => {
 					*/}
 
 					{/* categories */}
-					{/* NB: design calls for "show more" expander - TODO */}
 					{categoryFacets.length > 0 && <>
 						<fieldset>
 							<legend>
 								{`Categories`}
 							</legend>
 							<div className="fieldset-content">
-								<Input type="search" placeholder={`Search for ...`} noWrapper />
-								{
-									categoryFacets.map(facet => {
-
-										if (!facet.category) {
-											return null;
-										}
-
-										// can include primaryUrl etc on facets as well if needed
-										// here though it is (probably, I haven't looked at the designs recently) exclusively a button
-										// which then restricts the search.
-
-										return <Input type="checkbox" sm label={`${facet.category.name} (${facet.count})`} noWrapper />;
-									})
-								}
+								<Input type="search" placeholder={`Search for ...`} value={categorySearch} onChange={(e) => setCategorySearch(e.target.value)} noWrapper />
+								<FilterList facets={categoryFacets} maxVisible={MAX_VISIBLE_CATEGORIES} searchFilter={categorySearch} noBorder />
 							</div>
 						</fieldset>
 					</>}
@@ -166,13 +150,7 @@ const Search: React.FC<SearchProps> = (props) => {
 										<legend>
 											{facet.attribute.name}
 										</legend>
-										<div className="fieldset-content">
-											{
-												facet.facetValues.map(facetVal => {
-													return <Input type="checkbox" sm label={`${facetVal.value.value} (${facetVal.count})`} noWrapper />;
-												})
-											}
-										</div>
+										<FilterList facets={facet.facetValues} maxVisible={MAX_VISIBLE_ATTRIBUTE_OPTIONS} />
 									</fieldset>
 								</>;
 							})
