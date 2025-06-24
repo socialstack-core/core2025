@@ -5,7 +5,7 @@ html.admin {
 		font-family: inherit;
 	}
 
-	:where(a) {
+	:where(a):not(.btn) {
 		color: var(--admin-link, var(--fallback__admin-link));
 	}
 
