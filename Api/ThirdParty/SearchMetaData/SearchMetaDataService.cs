@@ -1,8 +1,10 @@
 ﻿using Api.CanvasRenderer;
 using Api.Database;
 using Api.Eventing;
+using Api.Permissions;
 using Api.Startup;
 using Api.Translate;
+using Mysqlx.Crud;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -20,7 +22,6 @@ namespace Api.SearchMetaData
     /// Add additional meta data to the document indexing
     /// </summary>
 
-    [LoadPriority(9)]
     public partial class SearchMetaDataService : AutoService
     {
         private SearchMetaDataConfig _cfg;
@@ -28,19 +29,16 @@ namespace Api.SearchMetaData
         /// <summary>
         /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
         /// </summary>
-        public SearchMetaDataService(CanvasRendererService canvasRenderer)
+        public SearchMetaDataService(ContentFieldAccessRuleService fieldAccessRuleService)
         {
-            if (!IsConfigured())
-            {
-                return;
-            }
+            _cfg = GetConfig<SearchMetaDataConfig>();
 
             // subscribe to events triggered by content types so we can add index listeners 
-            Events.Service.AfterCreate.AddEventListener((Context ctx, AutoService service) =>
+            Events.Service.AfterCreate.AddEventListener(async (Context ctx, AutoService service) =>
             {
                 if (service == null)
                 {
-                    return new ValueTask<AutoService>(service);
+                    return service;
                 }
 
                 // Get the content type for this service and event group:
@@ -48,7 +46,19 @@ namespace Api.SearchMetaData
                 if (servicedType == null)
                 {
                     // Things like the ffmpeg service.
-                    return new ValueTask<AutoService>(service);
+                    return service;
+                }
+
+                if (_cfg == null || _cfg.Mappings == null)
+                {
+                    return service;
+                }
+
+                // ensure there is a mapping for the service
+                var mapping = _cfg.Mappings.FirstOrDefault(i => i.Type == service.EntityName);
+                if (mapping == null || string.IsNullOrWhiteSpace(mapping.Includes))
+                {
+                    return service;
                 }
 
                 var setupForTypeMethod = GetType().GetMethod(nameof(SetupForType));
@@ -62,15 +72,9 @@ namespace Api.SearchMetaData
                 setupType.Invoke(this, new object[] {
                     service
                 });
-                return new ValueTask<AutoService>(service);
+                return service;
             });
 
-        }
-
-        private bool IsConfigured()
-        {
-            _cfg = GetConfig<SearchMetaDataConfig>();
-            return _cfg.Mappings != null && _cfg.Mappings.Count > 0;
         }
 
         /// <summary>
@@ -83,9 +87,10 @@ namespace Api.SearchMetaData
             where T : Content<ID>, new()
             where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
         {
+
             if (_cfg.DebugToConsole)
             {
-                Log.Info(LogTag, $"Attaching search metadata to '{service.EntityName}'");
+                Log.Info(LogTag, $"Registering Search Metadata for {service.EntityName}");
             }
 
             // Content types that are configured for additional metaddata indexing processed here.    
@@ -155,7 +160,43 @@ namespace Api.SearchMetaData
 
                 return metadataText;
             }, 5);
+
+
+            service.EventGroup.BeforeCreate.AddEventListener(async (ctx, entity) =>
+            {
+                return await HandleSearchMetaData(ctx, entity, service);
+            }, 20);
+
+            service.EventGroup.BeforeUpdate.AddEventListener(async (Context ctx, T updated, T orig) =>
+            {
+                return await HandleSearchMetaData(ctx, updated, service);
+            }, 20);
         }
+
+        private async Task<T> HandleSearchMetaData<T,ID>(Context ctx, T entity, AutoService<T, ID> service)
+            where T : Content<ID>, new()
+            where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
+        {
+            if (!service.EventGroup.SearchMetaData.HasListeners())
+            {
+                return entity;
+            }
+
+            var fieldInfo = await service.GetJsonStructure(ctx);
+            var metadataField = fieldInfo.AllFields
+                .FirstOrDefault(s => s.Key.Equals("descriptionraw", StringComparison.OrdinalIgnoreCase))
+                .Value;
+
+            if (metadataField != null)
+            {
+                var metaData = new HashSet<string>();
+                metaData = await service.EventGroup.SearchMetaData.Dispatch(ctx, metaData, entity);
+                metadataField.FieldInfo.SetValue(entity, string.Join(" ", metaData));
+            }
+
+            return entity;
+        }
+
 
         /// <summary>
         /// Locate any string field elements in an object
@@ -165,8 +206,8 @@ namespace Api.SearchMetaData
         /// <returns></returns>
         private IEnumerable<FieldInfo> GetStringFields<TEntity>(TEntity entity)
         {
-            return entity.GetType().GetFields().Where(p => 
-            p.FieldType == typeof(String) || 
+            return entity.GetType().GetFields().Where(p =>
+            p.FieldType == typeof(String) ||
             p.FieldType == typeof(string) ||
             p.FieldType == typeof(Localized<string>) ||
             p.FieldType == typeof(Localized<JsonString>));
@@ -191,7 +232,7 @@ namespace Api.SearchMetaData
                 {
                     continue;
                 }
-                
+
                 string value = null;
 
                 if (field.FieldType == typeof(Localized<JsonString>))
@@ -208,7 +249,7 @@ namespace Api.SearchMetaData
                 }
 
                 // ignore empty strings and any and links and images
-                if (string.IsNullOrWhiteSpace(value) || 
+                if (string.IsNullOrWhiteSpace(value) ||
                     value.StartsWith("public:") ||
                     value.StartsWith("private:") ||
                     value.StartsWith("http://") ||
@@ -225,7 +266,7 @@ namespace Api.SearchMetaData
                     {
                         stringValues.UnionWith(plainTextItems);
                     }
-                } 
+                }
                 else
                 {
                     if (_cfg.DebugToConsole)
@@ -256,13 +297,14 @@ namespace Api.SearchMetaData
                 JToken root = JToken.Parse(content);
                 return ExtractTextValues(root);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 Log.Error("Search Indexing", $"Failed to extract plain text [{content}] [{ex.ToString}]");
             }
 
             return null;
         }
-        
+
         /// <summary>
         /// Extract any string/text entries from a canvas element
         /// </summary>
