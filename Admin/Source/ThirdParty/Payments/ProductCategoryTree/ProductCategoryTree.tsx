@@ -159,6 +159,8 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 	const [attributeFacets, setAttributeFacets] = useState<ProductSearchAppliedFacet[]>(hydrateFacets());
 	const [loading, setLoading] = useState<boolean>(false);
 
+	const { pageState } = useRouter();
+
 	const queryPayload = {
 		query: props.query,
 		pageOffset: pageOffset as uint,
@@ -173,6 +175,12 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 			}
 		] 
 	};
+
+	useEffect(() => {
+		if (props.query !== pageState.query?.get("query")) {
+			setAttributeFacets([]);
+		}
+	}, [props.query]);
 
 	useEffect(() => {
 
@@ -221,6 +229,8 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 		}
 		
 	}, [props.query]);
+	
+	
 
 	return (
 		<div className="admin-page__internal">
@@ -365,7 +375,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = (props) => {
 	let categories = results?.includes.find((include: { field: string }) => include.field === "productCategories")?.values ?? [];
 	categories = uniqueCategories(categories);
 	
-	if (categories.length == 0) {
+	if (categories.filter(Boolean).length == 0) {
 		return;
 	}
 
