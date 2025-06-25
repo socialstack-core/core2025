@@ -26,8 +26,10 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
     const { pageState, setPage } = useRouter();
     const [menuOpen, setMenuOpen] = useState(false);
     const [showImpersonationOpen, setShowImpersonationOpen] = useState(false);
-    const [colourScheme, setColourScheme] = useState(() => {
-        var scheme : string = store.get('colour_scheme') || 'auto';
+	const [colourScheme, setColourScheme] = useState(() => {
+		// TEMP: enforce light theme
+		//var scheme: string = store.get('colour_scheme') || 'auto';
+		var scheme: string = 'light';
         updateSchemeVars(scheme);
 
         return scheme;
@@ -202,7 +204,8 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
                 </div>
 
                 <div className="admin-page-user">
-                    {/* colour scheme */}
+					{/* colour scheme */}
+					{/* TEMP - hide as we're currently enforcing light mode
                     <div className="btn-group btn-group-sm" role="group" aria-label={`Colour scheme options`}>
                         <input type="radio" className="btn-check" name="colour_scheme" id="colour_scheme_light" autoComplete="off"
                             checked={colourScheme == 'light' ? true : undefined} onChange={() => updateScheme('light')} />
@@ -221,7 +224,8 @@ const Default: React.FC<React.PropsWithChildren<{}>> = (props) => {
                         <label className="btn btn-outline-primary" htmlFor="colour_scheme_auto">
                             <i className="fa fa-fw fa-adjust"></i>
                         </label>
-                    </div>
+					</div>
+					*/}
 
                     <label htmlFor="user_dropdown" className="user-label">
                         {`Logged in as`}

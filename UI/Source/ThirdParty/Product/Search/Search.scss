@@ -50,7 +50,7 @@
 			legend {
 				font-size: px_to_rem(15);
 				font-weight: 700;
-				margin-bottom: px_to_rem(20);
+				margin-bottom: px_to_rem(10);
 			}
 
 		}
@@ -58,7 +58,7 @@
 		.fieldset-content {
 			display: flex;
 			flex-direction: column;
-			gap: px_to_rem(20);
+			gap: px_to_rem(16);
 
 			&:not(.fieldset-content--no-border) {
 				padding: px_to_rem(12) px_to_rem(16);
@@ -73,6 +73,17 @@
 			padding: px_to_rem(12) px_to_rem(16);
 			border: 1px solid currentColor;
 			border-radius: px_to_rem(8);
+		}
+
+		details {
+
+			summary,
+			.fieldset-content__internal {
+				display: flex;
+				flex-direction: column;
+				gap: px_to_rem(20);
+			}
+
 		}
 
 	}

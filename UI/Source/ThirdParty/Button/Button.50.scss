@@ -278,7 +278,7 @@ fieldset:disabled .btn {
 		--btn-font-weight: normal;
 		--btn-border-radius: 0;
 		text-decoration: none;
-		color: #fff;
+		color: var(--ui-link-color, #{$default-link-color});
 		// override Bootstrap default
 		font-size: var_to_rem(--btn-font-size) !important;
 
