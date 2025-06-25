@@ -143,8 +143,34 @@ public class ProductSearchService : AutoService
 	/// <param name="products"></param>
 	public ProductSearchService(ProductService products)
 	{
+        Events.Product.BeforeCreate.AddEventListener(async (ctx, product) => {
 
-		Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
+            if (products.EventGroup.SearchMetaData.HasListeners())
+            {
+                HashSet<string> metaData = new HashSet<string>();
+                metaData = await products.EventGroup.SearchMetaData.Dispatch(ctx, metaData, product);
+
+                product.DescriptionRaw = string.Join(" ", metaData);
+            }
+
+            return product;
+        },20);
+
+        Events.Product.BeforeUpdate.AddEventListener(async (Context ctx, Product product, Product origProduct) => {
+
+            if (products.EventGroup.SearchMetaData.HasListeners())
+            {
+                HashSet<string> metaData = new HashSet<string>();
+                metaData = await products.EventGroup.SearchMetaData.Dispatch(ctx, metaData, product);
+
+                product.DescriptionRaw = string.Join(" ", metaData);
+            }
+
+            return product;
+        },20);
+
+
+        Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
 
 			if (search.Handled)
 			{

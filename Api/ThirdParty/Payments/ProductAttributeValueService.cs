@@ -49,7 +49,7 @@ namespace Api.Payments
 		private ValueTask<ProductAttributeValue> ValidateAttributeValue(Context context, ProductAttributeValue attrValue, ProductAttributeValue original = null)
 		{
 
-			if (!string.IsNullOrEmpty(attrValue.Value))
+			if (string.IsNullOrEmpty(attrValue.Value))
 			{
 				throw new PublicException("The attribute value cannot be empty.", "attribute-value-validation/no-value");
 			}

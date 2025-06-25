@@ -2,12 +2,16 @@
 using Api.Eventing;
 using Api.SocketServerLibrary;
 using Api.Templates;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 
 
 namespace Api.CanvasRenderer
@@ -400,11 +404,87 @@ namespace Api.CanvasRenderer
 			return result;
 		}
 
+
 		/// <summary>
-		/// Converts canvas to JSON.
+		/// Convert html into a canvas type object (usually just used for migrations)
 		/// </summary>
-		/// <param name="leaveOpen">If true, does not write the closing curly bracket</param>
-		public string ToJson(bool leaveOpen = false)
+		/// <param name="html"></param>
+		/// <returns></returns>
+        public static CanvasNode HtmlToCanvas(string html)
+		{
+			if (string.IsNullOrWhiteSpace(html))
+			{
+				return new CanvasNode();
+			}
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            return ConvertHtmlNode(doc.DocumentNode, true);
+        }
+
+        /// <summary>
+        /// Convert an html node and its children into canvas node
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="stripWrapper"></param>
+        /// <returns></returns>
+        public static CanvasNode ConvertHtmlNode(HtmlNode node, bool stripWrapper = false)
+        {
+			if (node == null || (node.NodeType != HtmlNodeType.Text && node.NodeType != HtmlNodeType.Element && node.NodeType != HtmlNodeType.Document))
+            {
+				return new CanvasNode();
+            }
+
+			CanvasNode canvasNode = null;
+
+			if (node.NodeType == HtmlNodeType.Document)
+			{
+				// if we only have 1 top level node then optionally strip it and just use the contents (redundant <div>/<p> etc)
+				if (stripWrapper && node.HasChildNodes && node.ChildNodes.Count == 1)
+				{
+					return ConvertHtmlNode(node.ChildNodes[0]);	
+                }
+
+                // outer wrapper 
+				canvasNode = new CanvasNode();
+            }
+			else if (node.NodeType == HtmlNodeType.Text)
+			{
+                return new CanvasNode() { StringContent = HttpUtility.HtmlDecode(node.InnerText)};
+            }
+			else
+			{
+				canvasNode = new CanvasNode(node.Name);
+			}
+
+            var StringContent = string.Join(" ", node.ChildNodes
+				.Where(cn => cn.NodeType == HtmlNodeType.Text)
+				.Select(cn => cn.InnerText.Trim()));
+
+			if (!string.IsNullOrWhiteSpace(StringContent))
+			{
+				canvasNode.AppendChild(HttpUtility.HtmlDecode(StringContent));
+			}
+
+            foreach (var child in node.ChildNodes)
+            {
+                if (child.NodeType == HtmlNodeType.Element)
+                {
+                    var childCanvas = ConvertHtmlNode(child);
+                    if (childCanvas != null)
+                        canvasNode.AppendChild(childCanvas);
+                }
+            }
+
+            return canvasNode;
+        }
+
+
+        /// <summary>
+        /// Converts canvas to JSON.
+        /// </summary>
+        /// <param name="leaveOpen">If true, does not write the closing curly bracket</param>
+        public string ToJson(bool leaveOpen = false)
 		{
 			var writer = Writer.GetPooled();
 			writer.Start(null);
