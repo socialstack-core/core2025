@@ -233,7 +233,7 @@ public class MongoSearchEventListener
 							continue;
 						}
 
-						childFilters.Add(Builders<Product>.Filter.All("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
+						childFilters.Add(Builders<Product>.Filter.AnyEq("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
 					}
 
 					filter = Builders<Product>.Filter.And(childFilters);
