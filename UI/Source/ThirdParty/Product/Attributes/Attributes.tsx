@@ -34,9 +34,18 @@ const Attributes: React.FC<AttributesProps> = ({ title, product }) => {
 	const { attributes } = product;
 
 	/**
-	 * Build a map of attribute names to their associated values.
+	 * Build a map of attribute names to their associated values , grouped by attribute type
 	 */
-	const attributeMap: Record<string, AttributeValue[]> = (attributes || []).reduce(function (
+	const attributeMap: Record<string, AttributeValue[]> = (attributes || [])
+	.sort((a, b) => {
+		const groupCompare = (a.attribute?.productAttributeGroupId ?? 0) - (b.attribute?.productAttributeGroupId ?? 0);
+		if (groupCompare !== 0) return groupCompare;
+
+		const nameA = a.attribute?.name?.toLowerCase() ?? "";
+		const nameB = b.attribute?.name?.toLowerCase() ?? "";
+		return nameA.localeCompare(nameB);
+	})
+	.reduce(function (
 		acc: Record<string, AttributeValue[]>,
 		attributeObj
 	) {
