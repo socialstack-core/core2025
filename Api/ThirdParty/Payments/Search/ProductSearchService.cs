@@ -143,8 +143,7 @@ public class ProductSearchService : AutoService
 	/// <param name="products"></param>
 	public ProductSearchService(ProductService products)
 	{
-
-		Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
+        Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
 
 			if (search.Handled)
 			{

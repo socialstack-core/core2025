@@ -145,12 +145,18 @@ namespace Api.Eventing
 		/// </summary>
 		public EventHandler<T> AfterLoad;
 
-		#endregion
+        /// <summary>
+        /// Called to extract the metadata of an entity
+		/// to allow for the processing of related data/includes etc
+        /// </summary>
+        public EventHandler<HashSet<string>, T> SearchMetaData;
 
-		/// <summary>
-		/// Called just after the host service instance type has been changed. Use this to clear out any caches built on the instance type.
-		/// </summary>
-		public EventHandler<AutoService> AfterInstanceTypeUpdate;
+        #endregion
+
+        /// <summary>
+        /// Called just after the host service instance type has been changed. Use this to clear out any caches built on the instance type.
+        /// </summary>
+        public EventHandler<AutoService> AfterInstanceTypeUpdate;
 
 		/// <summary>
 		/// Called when a remote entity was received via remote sync.

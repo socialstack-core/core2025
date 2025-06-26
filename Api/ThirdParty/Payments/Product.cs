@@ -84,6 +84,12 @@ namespace Api.Payments
         [Data("main", "false")]
         public Localized<JsonString> DescriptionJson;
 
+        /// <summary>
+        /// The raw metadata/content of this product, used for free text search
+        /// </summary>
+        [Data("readonly", true)]
+        public string DescriptionRaw;
+
 		/// <summary>
 		/// The feature image ref
 		/// </summary>

@@ -72,8 +72,23 @@ namespace Api.Payments
 				return new ValueTask<PageBuilder>(builder);
 			});
 			
-			Events.ProductAttribute.BeforeCreate.AddEventListener(async (ctx, attr) => await ValidateAttribute(ctx, attr));
-			Events.ProductAttribute.BeforeUpdate.AddEventListener(ValidateAttribute);
+			Events.ProductAttribute.BeforeCreate.AddEventListener(async (ctx, attr) => {
+				if (string.IsNullOrWhiteSpace(attr.Key))
+				{
+					attr.Key = await SlugGenerator.GenerateUniqueSlug(this, ctx, attr.Name.Get(ctx));
+				}
+				
+				await ValidateAttribute(ctx, attr);
+								
+				return attr;
+			});
+
+			Events.ProductAttribute.BeforeUpdate.AddEventListener(async (Context ctx, ProductAttribute attr, ProductAttribute origAttr) => {
+				await ValidateAttribute(ctx, attr);
+
+				// todo trigger product refresh
+				return attr;
+			});
 			
 			Events.ProductCategory.AfterCreate.AddEventListener(async (ctx, attr) => await ClearCache(ctx, attr));
 			Events.ProductCategory.AfterUpdate.AddEventListener(ClearCache);
