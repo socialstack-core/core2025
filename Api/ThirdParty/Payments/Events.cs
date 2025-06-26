@@ -110,8 +110,13 @@ namespace Api.Eventing
 		/// </summary>
 		public EventHandler<ProductSearch> Search;
 
+		/// <summary>
+		/// Called when pricing for a product is being established.
+		/// </summary>
+		public EventHandler<List<Price>, Product> Pricing;
+
 	}
-	
+
 	/// <summary>
 	/// Specialised event group for the Purchase type in order to add additional events.
 	/// As usual, instanced automatically by the event handler engine.

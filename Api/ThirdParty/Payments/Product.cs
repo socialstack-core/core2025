@@ -9,10 +9,10 @@ namespace Api.Payments
 {
 	
 	/// <summary>
-	/// A Product
+	/// A Product. Price is specified via price tiers as a product can have bulk discounts.
+	/// Typically though you would include calculatedPrice as that resolves both customer 
+	/// specific pricing and provides with/without tax results.
 	/// </summary>
-
-	[HasVirtualField("Price", typeof(Price), "PriceId")]
 
     [ListAs("Tiers")]
 	[ImplicitFor("Tiers", typeof(Product))]
@@ -73,11 +73,6 @@ namespace Api.Payments
 		public uint BillingFrequency;
 		
 		/// <summary>
-		/// Usually used by tiered products. This is the minimum purchase quantity of this product.
-		/// </summary>
-		public ulong MinQuantity;
-
-		/// <summary>
 		/// The content of this product.
 		/// </summary>
         [Data("type", "canvas")]
@@ -107,11 +102,6 @@ namespace Api.Payments
 		public uint PriceStrategy;
 
 		/// <summary>
-		/// The price to use.
-		/// </summary>
-		public Localized<uint> PriceId;
-
-		/// <summary>
 		/// Available stock. Null indicates it is unlimited.
 		/// </summary>
 		public uint? Stock;
@@ -120,11 +110,6 @@ namespace Api.Payments
 		/// Indicates if this is a variant product related to a parent base product
 		/// </summary>
 		public uint VariantOfId;
-		
-		/// <summary>
-		/// Indicates if this is a tiered product related to a parent base product
-		/// </summary>
-		public uint TierOfId;
 	}
 
 }

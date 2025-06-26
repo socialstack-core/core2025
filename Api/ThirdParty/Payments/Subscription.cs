@@ -3,6 +3,7 @@ using Api.Database;
 using Api.Startup;
 using Api.Translate;
 using Api.Users;
+using Newtonsoft.Json;
 
 
 namespace Api.Payments
@@ -25,9 +26,20 @@ namespace Api.Payments
 		public DateTime NextChargeUtc;
 
 		/// <summary>
+		/// Subscription tax jurisdiction.
+		/// </summary>
+		[JsonIgnore]
+		public string TaxJurisdiction;
+
+		/// <summary>
 		/// True if this subscription will cancel on the next billing cycle.
 		/// </summary>
 		public bool WillCancel;
+
+		/// <summary>
+		/// ID of a coupon to reuse on this subscription.
+		/// </summary>
+		public uint CouponId;
 
 		/// <summary>
 		/// 0 = The default, it's in months.   (currently the only supported option)

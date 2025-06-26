@@ -23,45 +23,11 @@ interface ProductTable {
  * @param props React props.
  */
 const ProductTable: React.FC<ProductTableProps> = (props) => {
-	var { shoppingCart, addToCart, readonly } = props;
+	var { shoppingCart, addToCart, readonly, lessTax } = props;
 	const { session } = useSession();
-
-	function renderTotals(cartTotals, options) {
-		var totals = [];
-
-		for (var i = 0; i < 5; i++) {
-			if (cartTotals[i]) {
-				var total = cartTotals[i];
-				var totalCost = total;
-
-				var recurTitle = recurrenceText(i);
-
-				if (totalCost != total) {
-					if (i) {
-						// i is 0 for one off payments.
-						// This is any recurring things with a discount, where the discount is applied on the first payment only.
-						totals.push(<div>{formatCurrency(totalCost, options)} today, then {
-							formatCurrency(total, options)
-						} {recurTitle}</div>);
-					} else {
-						totals.push(<div><small><s>{
-							formatCurrency(total, options)
-						}</s></small> {formatCurrency(totalCost, options)}</div>);
-					}
-				} else {
-					totals.push(<div>{
-						formatCurrency(totalCost, options)
-					} {recurTitle}</div>);
-				}
-			}
-		}
-
-		return totals;
-	}
-
-	var items = shoppingCart?.productQuantities || [];
-
-	if (!items.length) {
+	var pricedCart = shoppingCart?.cartContents;
+	
+	if (!pricedCart || !pricedCart.contents.length) {
 		return <Alert type="info">
 			{readonly ? <>
 				{`This purchase is empty`}
@@ -71,48 +37,11 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 
 		</Alert>;
 	}
-
-	// 'price', 'tiers', 'tiers.price'
-
-	var cartTotalByFrequency = [0, 0, 0, 0, 0];
-
-	var itemSet = [];
-	var currencyCode: string = '';
-	var hasAtLeastOneSubscription = false;
-
-	items.forEach(cartInfo => {
-		var product = cartInfo.product;
-		if (!product) {
-			return;
-		}
-
-		if (product.billingFrequency) {
-			hasAtLeastOneSubscription = true;
-		}
-
-		var qty = cartInfo.quantity;
-
-		if (qty < product.minQuantity) {
-			qty = product.minQuantity;
-		}
-
-		var cost = cartInfo.totalPrice;
-
-		if (cost) {
-			cartTotalByFrequency[product.billingFrequency] += cost.amount;
-
-			if (!currencyCode) {
-				currencyCode = cost.currencyCode;
-			}
-		}
-
-		itemSet.push({
-			...cartInfo,
-			cost
-		});
-
-	});
-
+	
+	var itemSet = pricedCart.contents;
+	var currencyCode = pricedCart.currencyCode;
+	var hasAtLeastOneSubscription = pricedCart.hasSubscriptionProducts;
+	
 	return <table className="table shopping-cart__table">
 		<thead>
 			<tr>
@@ -131,17 +60,16 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 			</tr>
 		</thead>
 		<tbody>
-			{itemSet.map(cartInfo => {
-				var product = cartInfo.product;
-				var qty = cartInfo.quantity;
-				var cost = cartInfo.cost;
+			{itemSet.map(lineInfo => {
+				var product = lineInfo.product;
+				var qty = lineInfo.quantity;
 
-				var formattedCost = cost ? formatCurrency(cost.amount, { currencyCode }) : `No price set`;
-
+				var formattedCost = formatCurrency(lessTax ? lineInfo.totalLessTax : lineInfo.total, { currencyCode });
+				
 				if (product.billingFrequency) {
 					formattedCost += ' ' + recurrenceText(product.billingFrequency);
 				}
-
+				
 				// subscription
 				if (product.billingFrequency) {
 
@@ -169,10 +97,10 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 				// standard quantity of product
 				return <tr>
 					<td>
-						<BasketItem content={product} quantity={cartInfo.quantity} disableLink hideQuantity hideOrder />
+						<BasketItem content={product} quantity={lineInfo.quantity} disableLink hideQuantity hideOrder />
 					</td>
 					<td className="qty-column">
-						<Quantity inBasket={cartInfo.quantity} />
+						<Quantity inBasket={lineInfo.quantity} />
 					</td>
 					<td className="currency-column">
 						{formattedCost}
@@ -194,7 +122,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 				<td className="qty-column">
 				</td>
 				<td className="currency-column" style={{ fontWeight: 'bold' }}>
-					{currencyCode ? renderTotals(cartTotalByFrequency, { currencyCode }) : '-'}
+					{formatCurrency(lessTax ? pricedCart.totalLessTax : pricedCart.total, {currencyCode})}
 				</td>
 				<td>
 					&nbsp;

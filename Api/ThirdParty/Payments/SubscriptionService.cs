@@ -420,7 +420,7 @@ namespace Api.Payments
                     }
                     else
                     {
-                        await ChargeSubscription(context, subscription, null, true);
+                        await ChargeSubscription(context, subscription, true);
                     }
                 }
                 catch (Exception e)
@@ -576,10 +576,9 @@ namespace Api.Payments
         /// </summary>
         /// <param name="context"></param>
         /// <param name="subscription"></param>
-        /// <param name="coupon"></param>
         /// <param name="offline">True if the payment is being made offline (without the user present. Most subscription purchases are offline).</param>
         public async ValueTask<PurchaseAndAction> ChargeSubscription(Context context, Subscription subscription,
-            Coupon coupon = null, bool offline = false)
+            bool offline = false)
         {
             // First, has a purchase been raised for the subscription already?
             ulong timePeriodKey = (ulong)subscription.LastChargeUtc.Ticks;
@@ -648,6 +647,8 @@ namespace Api.Payments
                 {
                     ContentType = "Subscription",
                     ContentId = subscription.Id,
+                    CouponId = subscription.CouponId,
+                    TaxJurisdiction = subscription.TaxJurisdiction,
                     PaymentMethodId = subscription.PaymentMethodId,
                     ContentAntiDuplication = timePeriodKey,
                     LocaleId = subscription.LocaleId,
@@ -669,7 +670,7 @@ namespace Api.Payments
             }
 
             // Attempt to fulfil the purchase now:
-            return await _purchases.Execute(context, purchase, method, coupon);
+            return await _purchases.Execute(context, purchase, method);
         }
 
         /// <summary>

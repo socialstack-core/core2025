@@ -24,17 +24,19 @@ namespace Api.Payments
 		private PurchaseService _purchases;
 		private ProductService _products;
 		private CouponService _coupons;
+		private PriceService _prices;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
 		public ShoppingCartService(ProductQuantityService productQuantities, PurchaseService purchases, 
-			ProductService products, CouponService coupons, AddressService addressService) : base(Events.ShoppingCart)
+			ProductService products, CouponService coupons, AddressService addressService, PriceService prices) : base(Events.ShoppingCart)
         {
 			_productQuantities = productQuantities;
 			_purchases = purchases;
 			_products = products;
 			_coupons = coupons;
+			_prices = prices;
 
 			Events.ShoppingCart.BeforeSettable.AddEventListener((Context context, JsonField<ShoppingCart, uint> field) =>
 			{
@@ -91,11 +93,25 @@ namespace Api.Payments
 
 			// Copy the items from the shopping cart to the purchase.
 			// This prevents any risk of someone manipulating their cart during the fulfilment.
-			var inCart = await GetProducts(context, cart);
+			var inCart = await GetProductQuantities(context, cart);
 			await _purchases.AddProducts(context, purchase, inCart);
 
 			// Attempt to fulfil the purchase now:
 			return await _purchases.Execute(context, purchase, payment);
+		}
+
+		/// <summary>
+		/// Calculates the prices for the given cart.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="cart"></param>
+		/// <returns></returns>
+		public async ValueTask<ProductQuantityPricing> GetContentPrices(Context context, ShoppingCart cart)
+		{
+			// Get the pq's:
+			var productQuants = await GetProductQuantities(context, cart);
+
+			return await _productQuantities.GetPricing(context, productQuants, cart.TaxJurisdiction, cart.CouponId);
 		}
 
 		/// <summary>
@@ -104,9 +120,10 @@ namespace Api.Payments
 		/// <param name="context"></param>
 		/// <param name="cart"></param>
 		/// <returns></returns>
-		public async ValueTask<List<ProductQuantity>> GetProducts(Context context, ShoppingCart cart)
+		public async ValueTask<List<ProductQuantity>> GetProductQuantities(Context context, ShoppingCart cart)
 		{
-			return await _productQuantities.Where("ShoppingCartId=?", DataOptions.IgnorePermissions).Bind(cart.Id).ListAll(context);
+			return await _productQuantities
+				.ListBySource(context, cart, "ProductQuantities", DataOptions.IgnorePermissions);
 		}
 
 		/// <summary>
@@ -143,9 +160,10 @@ namespace Api.Payments
 				throw new PublicException("That coupon code does not exist.", "coupon/not_found");
 			}
 
-			if (coupon.ExpiryDateUtc > DateTime.UtcNow)
+			if (coupon.Disabled || (coupon.ExpiryDateUtc.HasValue && coupon.ExpiryDateUtc.Value < System.DateTime.UtcNow))
 			{
-				throw new PublicException("That coupon code has expired.", "coupon/expired");
+				// NB: If max number of people is reached, it is marked as disabled.
+				throw new PublicException("Unfortunately the provided coupon has expired.", "coupon/expired");
 			}
 
 			return await Update(context, cartId, (Context ctx, ShoppingCart toUpdate, ShoppingCart original) => {

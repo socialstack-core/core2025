@@ -92,13 +92,12 @@ interface HeaderLinkProps {
  * @param props React props.
  */
 const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, searchPlaceholder, notificationCount, demo, ...props }) => {
-	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading } = useCart();
+	var { addToCart, emptyCart, cartContents, cartIsEmpty, loading, lessTax, setLessTax } = useCart();
 	const [categoryId, setCategoryId] = useState(PARENT_CATEGORY_ID);
 	//const [basketItems, setBasketItems] = useState(loading ? [] : shoppingCart?.productQuantities || []);
 	const [productCategory, setProductCategory] = useState<ProductCategory>();
 	const [productSubCategories, setProductSubCategories] = useState<ProductCategory[]>();
 	const [query, setQuery] = useState('');
-	const [incVat, setIncVat] = useState(false);
 
 	useApi(() => {
 		return productCategoryApi.load(categoryId as uint, [
@@ -225,41 +224,16 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 	// calculate basket totals
 	var basketCount = 0;
-	var basketTotal = 0;
+	var cartEmpty = loading || cartIsEmpty();
+	var basketTotal = cartEmpty ? 0 : (lessTax ? cartContents?.totalLessTax : cartContents?.total);
 
-	let basketItems = loading || cartIsEmpty() ? [] : shoppingCart?.productQuantities;
-	let currencyCode: string | null = null;
+	let basketItems = cartEmpty ? [] : cartContents?.contents;
+	let currencyCode = cartContents?.currencyCode;
 
 	basketItems.forEach(cartInfo => {
-		var product = cartInfo.product;
-
-		if (!product) {
-			return;
-		}
-
 		var qty = cartInfo.quantity;
-
-		if (qty < product.minQuantity) {
-			qty = product.minQuantity;
-		}
-
-		var cost = cartInfo.totalPrice;
-
 		basketCount += qty;
-
-		if (cost) {
-			basketTotal += cost.amount;
-
-			if (!currencyCode) {
-				currencyCode = cost.currencyCode;
-			}
-		}
-
 	});
-
-	if (!currencyCode) {
-		currencyCode = 'GBP';
-	}
 
 	const showContact = contactHref?.length || message?.length;
 
@@ -405,8 +379,16 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 								</>}
 							</>}
 						</header>
-						{basketItems.map(item => {
-							return <BasketItem content={item.product} quantity={Math.max(item.quantity, item.product.minQuantity)} disableLink />
+						{basketItems.map(lineItem => {
+							return <BasketItem
+								content={lineItem.product}
+								quantity={lineItem.quantity}
+								disableLink
+								priceOverride={{
+									currencyCode: currencyCode,
+									amount: lessTax ? lineItem.totalLessTax : lineItem.total
+								}}
+							/>
 						})}
 						{!cartIsEmpty() && <>
 							<a href="/cart" className="btn btn-primary site-header__basket-checkout">
@@ -418,7 +400,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 					{/* VAT switch */}
 					<div className="site-header__actions-vat">
-						<Input type="checkbox" xs isSwitch flipped label={`Inc VAT`} onChange={() => setIncVat(!incVat)} value={incVat} noWrapper />
+						<Input type="checkbox" xs isSwitch flipped label={`Ex VAT`} onChange={() => setLessTax(!lessTax)} value={lessTax} noWrapper />
 					</div>
 
 				</div>

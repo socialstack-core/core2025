@@ -26,7 +26,14 @@ namespace Api.Payments
 		/// <summary>
 		/// Set if a coupon was used.
 		/// </summary>
+		[JsonIgnore]
 		public uint CouponId;
+
+		/// <summary>
+		/// The tax jurisdiction of the purchase.
+		/// </summary>
+		[JsonIgnore]
+		public string TaxJurisdiction;
 
 		/// <summary>
 		/// True if this purchase was only authorised, not actually executed.

@@ -18,20 +18,49 @@ const CartSession = createContext<CartContext>({
 export const Provider: React.FC<React.PropsWithChildren> = (props) => {
     const [shoppingCart, setShoppingCart] = useState<ShoppingCart | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    const [lessTax, setLessTaxLocal] = useState<boolean>(false);
+
+    const setLessTax = (val: boolean) => {
+        setLessTaxLocal(val);
+        store.set("less_tax", val);
+    };
 
     const includeSet: ApiIncludes[] = [
         shoppingCartApi.includes.productquantities,
         shoppingCartApi.includes.productquantities.product,
-        shoppingCartApi.includes.productquantities.totalprice,
+        shoppingCartApi.includes.cartcontents,
         shoppingCartApi.includes.coupon
     ];
 
+    const loadCart = (cart: ShoppingCart) => {
+        // Merge productQuants in to contents.
+        var { productQuantities, cartContents } = cart;
+
+        if (cartContents && cartContents.contents && productQuantities) {
+
+            var contents = cartContents.contents;
+            for (var i = 0; i < contents.length; i++) {
+                var lineItem = contents[i];
+                lineItem.productQuantity = productQuantities.find(pq => pq.id == lineItem.productQuantityId);
+                lineItem.product = lineItem.productQuantity?.product;
+            }
+
+        }
+
+        setShoppingCart(cart);
+    };
+
     useEffect(() => {
+        var lessTax = store.get("less_tax") as boolean;
+        if (lessTax) {
+            setLessTaxLocal(true);
+        }
+
         var cartId = store.get('shopping_cart_id') as string;
         if (cartId) {
             shoppingCartApi.load(parseInt(cartId) as int, includeSet)
                 .then(response => {
-                    setShoppingCart(response);
+                    loadCart(response);
                     setLoading(false);
                 }).catch(e => {
                     console.error(e);
@@ -47,7 +76,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
         var qty = 0;
 
         shoppingCart?.productQuantities?.forEach(product => {
-            if (productId == product?.productId) {
+            if (!productId || productId == product?.productId) {
                 qty += product?.quantity || 0;
             }
         });
@@ -87,7 +116,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
             items
         }, includeSet).then(cart => {
             store.set('shopping_cart_id', cart.id.toString());
-            setShoppingCart(cart);
+            loadCart(cart);
             return cart;
         }).catch((e: PublicError) => {
             if (e?.type && e.type == 'cart/not_found') {
@@ -116,7 +145,10 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
                 emptyCart,
                 cartIsEmpty,
                 getCartQuantity,
-                hasSubscriptions
+                hasSubscriptions,
+                lessTax,
+                setLessTax,
+                cartContents: shoppingCart?.cartContents
             }}
         >
             {props.children}

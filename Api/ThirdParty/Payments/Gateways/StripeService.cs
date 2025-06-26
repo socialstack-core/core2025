@@ -316,9 +316,8 @@ namespace Api.Payments
 		/// <param name="purchase"></param>
 		/// <param name="totalCost"></param>
 		/// <param name="paymentMethod"></param>
-		/// <param name="coupon"></param>
 		/// <returns></returns>
-		public override async ValueTask<PurchaseAndAction> AuthorisePurchase(Purchase purchase, ProductCost totalCost, PaymentMethod paymentMethod, Coupon coupon = null)
+		public override async ValueTask<PurchaseAndAction> AuthorisePurchase(Purchase purchase, ProductCost totalCost, PaymentMethod paymentMethod)
 		{
 			if (_users == null)
 			{
@@ -349,7 +348,6 @@ namespace Api.Payments
 
 				// It might have instantly completed or instantly failed. We can find out from the status:
 				toUpdate.Status = 101;
-				toUpdate.CouponId = coupon == null ? 0 : coupon.Id;
 				toUpdate.TotalCost = 0;
 				toUpdate.Authorise = true;
 				toUpdate.CurrencyCode = totalCost.CurrencyCode;
@@ -413,9 +411,8 @@ namespace Api.Payments
 		/// <param name="purchase"></param>
 		/// <param name="totalCost"></param>
 		/// <param name="paymentMethod"></param>
-		/// <param name="coupon"></param>
 		/// <returns></returns>
-		public override async ValueTask<PurchaseAndAction> ExecutePurchase(Purchase purchase, ProductCost totalCost, PaymentMethod paymentMethod, Coupon coupon = null)
+		public override async ValueTask<PurchaseAndAction> ExecutePurchase(Purchase purchase, ProductCost totalCost, PaymentMethod paymentMethod)
 		{
 			if (_users == null)
 			{
@@ -454,7 +451,6 @@ namespace Api.Payments
 
 				// It might have instantly completed or instantly failed. We can find out from the status:
 				toUpdate.Status = 101;
-				toUpdate.CouponId = coupon == null ? 0 : coupon.Id;
 				toUpdate.TotalCost = totalCost.Amount;
 				toUpdate.CurrencyCode = totalCost.CurrencyCode;
 

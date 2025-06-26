@@ -3,7 +3,7 @@ import Image from 'UI/Image';
 import Link from 'UI/Link';
 import Quantity from 'UI/Product/Quantity';
 import defaultImageRef from './image_placeholder.png';
-import ProductPrice from 'UI/Product/Price';
+import ProductPrice, { CurrencyAmount } from 'UI/Product/Price';
 import ProductStock from 'UI/Product/Stock';
 
 /**
@@ -29,6 +29,11 @@ interface SignpostProps {
 	 * quantity within basket
 	 */
 	quantity?: number,
+	
+	/**
+	 * Line item price (in basket)
+	 */
+	priceOverride?: CurrencyAmount,
 
 	/**
 	 * The content to display in this signpost.
@@ -41,7 +46,7 @@ interface SignpostProps {
  * @param props React props.
  */
 const Signpost: React.FC<SignpostProps> = (props) => {
-	const { disableLink, quantity, content, hideQuantity, hideOrder } = props;
+	const { disableLink, quantity, content, hideQuantity, hideOrder, priceOverride } = props;
 
 	// TODO: need an isFeatured flag per product
 	let isFeatured = true;
@@ -101,7 +106,7 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 			</span>
 
 			{/* price */}
-			<ProductPrice product={content} />
+			<ProductPrice product={content} override={priceOverride} />
 
 			{/* stock info */}
 			<ProductStock product={content} />

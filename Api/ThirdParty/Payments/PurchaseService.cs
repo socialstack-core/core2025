@@ -298,138 +298,28 @@ namespace Api.Payments
 
 		/// <summary>
 		/// Calculates the total amount of the given purchase and returns it. Does not apply it to the purchase.
+		/// Errors if the total cannot be calculated, e.g. because of an invalid coupon.
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="purchase"></param>
-		/// <param name="coupon"></param>
 		/// <returns></returns>
-		public async ValueTask<ProductCost> CalcuateTotal(Context context, Purchase purchase, Coupon coupon = null)
+		private async ValueTask<ProductCost> CalcuateTotal(Context context, Purchase purchase)
 		{
 			// Get all product quantities:
 			var productQuantities = await GetProducts(context, purchase);
 
-			// Using the purchase locale, we'll now go through each product and establish the price
-			// based on the number of units and the product unit price.
-			// The product may be tiered though so we check for tiered prices as well.
+			// Calculate the full pricing info:
+			var pricingInfo = await _prodQuantities.GetPricing(context, productQuantities, purchase.TaxJurisdiction, purchase.CouponId);
 
-			// Valid coupon?
-			if (coupon != null)
-			{
-				if (coupon.Disabled || (coupon.ExpiryDateUtc.HasValue && coupon.ExpiryDateUtc.Value < System.DateTime.UtcNow))
-				{
-					// NB: If max number of people is reached, it is marked as disabled.
-					throw new PublicException("Unfortunately the provided coupon has expired.", "coupon_expired");
-				}
-			}
-
-			var hasSubscriptionProducts = false;
-			string currencyCode = null;
-			ulong totalCost = 0;
-
-			foreach (var pq in productQuantities)
-			{
-				// Get the cost of this entry:
-				var cost = await _prodQuantities.GetCostOf(pq, purchase.LocaleId);
-
-				if (cost.SubscriptionProducts)
-				{
-					hasSubscriptionProducts = true;
-				}
-
-				if (currencyCode == null)
-				{
-					// First one:
-					currencyCode = cost.CurrencyCode;
-				}
-				else
-				{
-					if (cost.CurrencyCode != currencyCode)
-					{
-						// Mixed currency purchases not supported.
-						throw new PublicException("Unable to request a mixed currency purchase at this time.", "mixed_currencies");
-					}
-				}
-
-				// Add to the cost:
-				var prevTotal = totalCost;
-				totalCost += cost.Amount;
-
-				// Overflow checking:
-				if (totalCost < prevTotal)
-				{
-					throw new PublicException("The requested quantity is too large.", "substantial_quantity");
-				}
-
-			}
-
-			// Next, factor in the coupon.
-			if (coupon != null)
-			{
-				var priceContext = context;
-
-				if (purchase.LocaleId != context.LocaleId)
-				{
-					priceContext = new Context(purchase.LocaleId, 0, 0);
-				}
-
-				if (coupon.MinimumSpendAmount != 0)
-				{
-					// Get the relevant price:
-					var minSpendPrice = await _prices.Get(priceContext, coupon.MinimumSpendAmount, DataOptions.IgnorePermissions);
-
-					if (minSpendPrice != null)
-					{
-						// Are we above it?
-						if (totalCost < minSpendPrice.Amount)
-						{
-							// No!
-							throw new PublicException("Can't use this coupon as the total is below the minimum spend.", "min_spend");
-						}
-					}
-				}
-
-				if (coupon.DiscountPercent != 0)
-				{
-					var discountedTotal = totalCost * (1d - ((double)coupon.DiscountPercent / 100d));
-
-					if (discountedTotal <= 0)
-					{
-						// Becoming free!
-						totalCost = 0;
-					}
-					else
-					{
-						// Round to nearest pence/ cent
-						totalCost = (ulong)Math.Ceiling(discountedTotal);
-					}
-				}
-
-				if (coupon.DiscountFixedAmount != 0)
-				{
-					// Get the relevant price:
-					var discountAmount = await _prices.Get(priceContext, coupon.DiscountFixedAmount, DataOptions.IgnorePermissions);
-
-					if (discountAmount != null)
-					{
-						if (totalCost < discountAmount.Amount)
-						{
-							// Becoming free!
-							totalCost = 0;
-						}
-						else
-						{
-							// Discount a fixed number of units:
-							totalCost -= (ulong)discountAmount.Amount;
-						}
-					}
-				}
-			}
+			// Throw if the info has any error info in it (such as invalid coupons, pricing issues etc).
+			_prodQuantities.RequireNoErrors(pricingInfo);
 
 			return new ProductCost()
 			{
-				SubscriptionProducts = hasSubscriptionProducts,
-				CurrencyCode = currencyCode,
-				Amount = totalCost
+				SubscriptionProducts = pricingInfo.HasSubscriptionProducts,
+				CurrencyCode = pricingInfo.CurrencyCode,
+				Amount = pricingInfo.Total,
+				AmountLessTax = pricingInfo.TotalLessTax
 			};
 		}
 
@@ -445,7 +335,7 @@ namespace Api.Payments
 		/// <param name="paymentMethod"></param>
 		/// <param name="coupon"></param>
 		/// <returns></returns>
-		public async ValueTask<PurchaseAndAction> MultiExecute(Context context, Purchase purchase, List<Subscription> subscriptions, PaymentMethod paymentMethod, Coupon coupon = null)
+		public async ValueTask<PurchaseAndAction> MultiExecute(Context context, Purchase purchase, List<Subscription> subscriptions, PaymentMethod paymentMethod)
 		{
 			if (subscriptions != null)
 			{
@@ -508,7 +398,7 @@ namespace Api.Payments
 			}
 
 			// Attempt to fulfil the purchase now:
-			return await Execute(context, purchase, paymentMethod, coupon);
+			return await Execute(context, purchase, paymentMethod);
 		}
 
 		/// <summary>
@@ -535,15 +425,14 @@ namespace Api.Payments
 		/// <param name="context"></param>
 		/// <param name="purchase"></param>
 		/// <param name="paymentMethod"></param>
-		/// <param name="coupon"></param>
 		/// <returns></returns>
-		public async ValueTask<PurchaseAndAction> Execute(Context context, Purchase purchase, PaymentMethod paymentMethod = null, Coupon coupon = null)
+		public async ValueTask<PurchaseAndAction> Execute(Context context, Purchase purchase, PaymentMethod paymentMethod = null)
 		{
 			// Event to indicate the purchase is about to execute:
 			await Events.Purchase.BeforeExecute.Dispatch(context, purchase);
 
 			// First ensure the correct total:
-			var totalAmount = await CalcuateTotal(context, purchase, coupon);
+			var totalAmount = await CalcuateTotal(context, purchase);
 
 			// If the total is free, we complete immediately, unless it's the first of a subscription payment.
 			// If first subscription payment, must authorise the card.
@@ -579,7 +468,7 @@ namespace Api.Payments
 					}
 
 					// Ask the gateway to authorise:
-					return await gateway.AuthorisePurchase(purchase, totalAmount, paymentMethod, coupon);
+					return await gateway.AuthorisePurchase(purchase, totalAmount, paymentMethod);
 				}
 				else
 				{
@@ -619,7 +508,7 @@ namespace Api.Payments
 			}
 
 			// Ask the gateway to do the thing:
-			return await gateway.ExecutePurchase(purchase, totalAmount, paymentMethod, coupon);
+			return await gateway.ExecutePurchase(purchase, totalAmount, paymentMethod);
 		}
 
 	}

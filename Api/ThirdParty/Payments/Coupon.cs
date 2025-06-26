@@ -54,9 +54,7 @@ namespace Api.Payments
 		/// A price indicating a specific discount.
 		/// </summary>
 		[Data("help", "Optional fixed amount discount. For example, £5 off if you spend £20 or more.")]
-		[Data("type", "select")]
-		[Data("contentType", "Price")]
-		public uint DiscountFixedAmount;
+		public Localized<uint> DiscountFixedAmount;
 
 		/// <summary>
 		/// True if delivery becomes free, if delivery is applicable.
@@ -67,9 +65,7 @@ namespace Api.Payments
 		/// A price indicating minimum spend required for the coupon to be usable on the purchase.
 		/// </summary>
 		[Data("help", "Optional minimum spend required for the coupon to be usable on the purchase.")]
-		[Data("type", "select")]
-		[Data("contentType", "Price")]
-		public uint MinimumSpendAmount;
+		public Localized<uint> MinimumSpendAmount;
 		
 	}
 

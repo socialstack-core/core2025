@@ -26,10 +26,10 @@ public class TaxCalculator
 	/// <summary>
 	/// Applies this tax calculator to the given pence/cents value.
 	/// </summary>
-	public uint Apply(uint amount)
+	public ulong Apply(ulong amount)
 	{
 		// Naturally floors.
-		return (uint)(amount * Multiplier);
+		return (ulong)(amount * Multiplier);
 	}
 	
 }
