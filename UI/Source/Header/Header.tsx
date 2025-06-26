@@ -230,6 +230,11 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	let basketItems = cartEmpty ? [] : cartContents?.contents;
 	let currencyCode = cartContents?.currencyCode;
 
+	// TEMP
+	if (!currencyCode) {
+		currencyCode = "GBP";
+	}
+
 	basketItems.forEach(cartInfo => {
 		var qty = cartInfo.quantity;
 		basketCount += qty;
