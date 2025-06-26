@@ -7,4 +7,10 @@ namespace Api.Uploader;
 [ListAs("ProductImages", IsPrimary = false)]
 [ImplicitFor("ProductImages", typeof(Product))]
 
-public partial class Upload {}
+[ListAs("ProductSpecifications", IsPrimary = false)]
+[ImplicitFor("ProductSpecifications", typeof(Product))]
+
+[ListAs("ProductManuals", IsPrimary = false)]
+[ImplicitFor("ProductManuals", typeof(Product))]
+
+public partial class Upload { }
