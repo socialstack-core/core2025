@@ -105,7 +105,7 @@ namespace Api.Payments
 				new PageBuilder()
 				{
 					Key = "primary:product",
-					PrimaryContentIncludes = "productCategories,attributes,attributes.attribute",
+					PrimaryContentIncludes = "productCategories,attributes,attributes.attribute,calculatedPrice",
 					Title = "${product.name}",
 					BuildBody = (PageBuilder builder) =>
 					{

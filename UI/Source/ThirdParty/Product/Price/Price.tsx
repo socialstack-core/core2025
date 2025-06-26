@@ -1,6 +1,7 @@
 import { Product } from 'Api/Product';
 import { useSession } from 'UI/Session';
 import { formatCurrency } from "UI/Functions/CurrencyTools";
+import { useCart } from 'UI/Payments/CartSession';
 
 /**
  * Props for the Price component.
@@ -29,6 +30,7 @@ export interface CurrencyAmount {
 const Price: React.FC<PriceProps> = (props) => {
 	const { product, override } = props;
 	const { session } = useSession();
+	const { lessTax } = useCart();
 	const { locale } = session;
 
 	// TODO: retrieve associated price (see priceId)
@@ -42,18 +44,18 @@ const Price: React.FC<PriceProps> = (props) => {
 	if (override) {
 		currencyCode = override.currencyCode;
 		amount = override.amount;
-	} else if (product?.priceTiers && product?.priceTiers.length && locale) {
+	} else if (product?.calculatedPrice && product?.calculatedPrice.length && locale) {
 		// NB: This will be replaced again when per-user pricing and the tax resolver is added
-		var tiers = product.priceTiers;
+		var tiers = product.calculatedPrice;
 		hasOptions = tiers.length > 1;
-
+		
 		// Get the lowest one:
 		var tier = tiers[0];
 
 		if (hasOptions) {
 			for (var i = 1; i < tiers.length; i++) {
 				var current = tiers[i];
-
+				
 				if (current.amount < tier.amount) {
 					tier = current;
 				}
@@ -61,7 +63,7 @@ const Price: React.FC<PriceProps> = (props) => {
 		}
 
 		currencyCode = locale.currencyCode;
-		amount = tier.amount;
+		amount = lessTax ? tier.amountLessTax : tier.amount;
 	}
 	else
 	{

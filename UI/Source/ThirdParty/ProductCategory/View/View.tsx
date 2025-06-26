@@ -37,7 +37,8 @@ const View: React.FC<ViewProps> = (props) => {
 			query: 'ProductCategories=?',
 			args: [productCategory.id]
 		}, [
-			productApi.includes!.primaryurl
+			productApi.includes.primaryurl,
+			productApi.includes.calculatedprice,
 		])
 	}, [
 		productCategory

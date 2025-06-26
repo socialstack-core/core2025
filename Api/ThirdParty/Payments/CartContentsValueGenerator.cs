@@ -26,11 +26,11 @@ public struct PriceCurrency
 	/// The amount excluding tax. 
 	/// This value is only different from amount if tax is configured on the site in the PriceService.
 	/// </summary>
-	public uint AmountExTax;
+	public uint AmountLessTax;
 }
 
 /// <summary>
-/// A virtual field value generator for a field called "totalPrice". It can only be used on ProductQuantity.
+/// A virtual field value generator for a field called "cartContents". It can only be used on a ShoppingCart.
 /// 
 /// Automatically instanced and the include field name is derived from the class name by the includes system. See VirtualFieldValueGenerator for more info.
 /// </summary>
