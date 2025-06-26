@@ -76,7 +76,7 @@ const Price: React.FC<PriceProps> = (props) => {
 			<span className="ui-product-view__price-internal">
 				{hasOptions && <span>{`From`}</span>}
 				{formatCurrency(amount, { currencyCode })}
-				{oldPrice && <span>{`Was ${formatCurrency(oldPrice, {currencyCode})}`}</span>}
+				{oldPrice ? <span>{`Was ${formatCurrency(oldPrice, {currencyCode})}`}</span> : null}
 			</span>
 		</span>
 	);
