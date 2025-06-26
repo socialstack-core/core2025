@@ -1,4 +1,25 @@
 // default values
+$default-label-color: currentColor;
+
+$default-field-background: #fff;
+$default-field-color: currentColor;
+$default-field-border: 1px solid #ced4da;
+
+$default-field-select-background: #fff;
+$default-field-select-color: currentColor;
+$default-field-select-border: 1px solid #ced4da;
+$default-field-select-option-background: #fff;
+$default-field-select-icon-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9' fill='none'%3E%3Cpath d='M15.8 1.66a.69.69 0 000-.96.66.66 0 00-.94 0L8.94 6.74a1.31 1.31 0 01-1.88 0L1.13.7A.66.66 0 00.2.7a.7.7 0 000 .97L6.12 7.7a2.62 2.62 0 003.77 0l5.93-6.04h-.02z' fill='currentColor'/%3E%3C/svg%3E");
+$default-field-select-icon-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9' fill='none'%3E%3Cpath d='M15.8 1.66a.69.69 0 000-.96.66.66 0 00-.94 0L8.94 6.74a1.31 1.31 0 01-1.88 0L1.13.7A.66.66 0 00.2.7a.7.7 0 000 .97L6.12 7.7a2.62 2.62 0 003.77 0l5.93-6.04h-.02z' fill='%23fff'/%3E%3C/svg%3E");
+
+$default-field-placeholder-color: currentColor;
+$default-field-placeholder-font-style: italic;
+$default-field-placeholder-opacity: .6;
+
+$default-field-readonly-background: #e8e8e8;
+$default-field-disabled-background: #fff;
+$default-field-disabled-opacity: .6;
+$default-field-text-color: #6c757d; // for small info text / validation messages displayed beneath the field
 
 // extra small (xs)
 $default-form-xs-font-size: 12;
