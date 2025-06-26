@@ -169,6 +169,9 @@
 
 		tr {
 			position: relative;
+			// NB: the following rules are necessary to work around a Safari bug where position: relative is ignored on table rows
+			transform: translate(0);
+			clip-path: inset(0);
 		}
 
 	}
