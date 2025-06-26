@@ -94,6 +94,11 @@ public class ProductSearch
 	/// Facets in the results. Can be null for DBE's that don't support it.
 	/// </summary>
     public ProductSearchFacets ResultFacets;
+	
+	/// <summary>
+	/// Is this search reductive or expansive.
+	/// </summary>
+	public ProductSearchType SearchType;
 }
 
 /// <summary>
@@ -182,7 +187,7 @@ public class ProductSearchService : AutoService
 	/// <param name="pageSize"></param>
 	/// <returns></returns>
 	public async ValueTask<ProductSearch> Search(
-		Context context, string query, List<ProductSearchAppliedFacet> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
+		Context context, string query, ProductSearchType searchType, List<ProductSearchAppliedFacet> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
     {
 		if (pageOffset < 0)
 		{
@@ -203,7 +208,8 @@ public class ProductSearchService : AutoService
 			Query = query,
 			PageIndex = pageOffset,
 			PageSize = pageSize,
-			AppliedFacets = appliedFacets
+			AppliedFacets = appliedFacets,
+			SearchType = searchType
 		};
 		
 		search = await Events.Product.Search.Dispatch(context, search);

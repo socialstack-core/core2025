@@ -8,7 +8,7 @@ import Loading from "UI/Loading";
 import { MultiSelectBox } from "./MultiSelect";
 
 import productCategoryApi, {ProductCategory} from "Api/ProductCategory";
-import searchApi, { ProductSearchAppliedFacet } from "Api/ProductSearchController";
+import searchApi, {ProductSearchAppliedFacet, ProductSearchType} from "Api/ProductSearchController";
 import { ProductIncludes} from "Api/Includes";
 import ProductApi, { Product } from "Api/Product";
 import { ApiList } from "UI/Functions/WebRequest";
@@ -173,7 +173,8 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 				mapping: "productcategories",
 				ids: attributeFacets.filter(item => item.mapping == 'category').flatMap(attr => attr.ids) as ulong[]
 			}
-		] 
+		],
+		searchType: ProductSearchType.Reductive
 	};
 
 	useEffect(() => {

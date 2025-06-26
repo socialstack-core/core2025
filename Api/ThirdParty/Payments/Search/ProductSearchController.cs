@@ -50,7 +50,7 @@ public partial class ProductSearchController : AutoController
 	[HttpPost("faceted")]
 	public async ValueTask<ContentStream<Product, uint>?> Faceted(Context context, [FromBody] ProductSearchRequest request)
 	{
-		var resultSet = await _productSearchService.Search(context, request.Query, request.AppliedFacets, request.PageOffset);
+		var resultSet = await _productSearchService.Search(context, request.Query, request.SearchType, request.AppliedFacets, request.PageOffset);
 
 		if (resultSet == null)
 		{
@@ -143,4 +143,30 @@ public class ProductSearchRequest
 	/// Optional applied facets per mapping (e.g. you want to filter results by attributes containing the colour 'blue').
 	/// </summary>
 	public List<ProductSearchAppliedFacet> AppliedFacets;
+	
+	/// <summary>
+	/// The max result set
+	/// </summary>
+	public uint PageSize;
+	
+	/// <summary>
+	/// Is it a reductive or an expansive search.
+	/// </summary>
+	public ProductSearchType SearchType;
+}
+
+/// <summary>
+/// An enum to set whether the query is reductive or expansive. 
+/// </summary>
+public enum ProductSearchType
+{
+	/// <summary>
+	/// Used to narrow down a target product, works how you'd expect on an admin panel.
+	/// I want products that only have...
+	/// </summary>
+	Reductive,
+	/// <summary>
+	/// Used to broaden the net cast to the product pool, by saying I want products that have any of....
+	/// </summary>
+	Expansive
 }

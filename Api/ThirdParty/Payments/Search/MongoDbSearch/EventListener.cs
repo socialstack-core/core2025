@@ -233,7 +233,14 @@ public class MongoSearchEventListener
 							continue;
 						}
 
-						childFilters.Add(Builders<Product>.Filter.AnyEq("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
+						if (search.SearchType == ProductSearchType.Reductive)
+						{
+							childFilters.Add(Builders<Product>.Filter.All("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
+						}
+						else
+						{
+							childFilters.Add(Builders<Product>.Filter.AnyEq("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
+						}
 					}
 
 					filter = Builders<Product>.Filter.And(childFilters);
