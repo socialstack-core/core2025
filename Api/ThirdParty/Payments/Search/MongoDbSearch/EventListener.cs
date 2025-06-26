@@ -104,7 +104,21 @@ public class MongoSearchEventListener
 							new BsonDocument("text", new BsonDocument
 							{
 								{ "query", query },
-								{ "path", "Name.en" }
+								{ "path", "Name.en" },
+								{ "score", new BsonDocument
+									{
+										{ "boost", new BsonDocument
+											{
+												{ "value", 2 }
+											}
+										}
+									}
+								}
+							}),
+							new BsonDocument("text", new BsonDocument
+							{
+								{ "query", query },
+								{ "path", "DescriptionRaw" }
 							})
 						}
 					}
@@ -215,7 +229,10 @@ public class MongoSearchEventListener
 				// Basic facets are instead derived from the (paginated) returned product set only
 				// (that happens in ProductSearchService).
 
-				var filter = Builders<Product>.Filter.Regex("Name.en", new BsonRegularExpression(query, "i"));
+				var filter = Builders<Product>.Filter.Or(
+					Builders<Product>.Filter.Regex("Name.en", new BsonRegularExpression(query, "i")),
+					Builders<Product>.Filter.Regex("DescriptionRaw", new BsonRegularExpression(query, "i"))
+				);
 
 				if (search.AppliedFacets != null)
 				{
@@ -245,15 +262,6 @@ public class MongoSearchEventListener
 
 					filter = Builders<Product>.Filter.And(childFilters);
 				}
-
-				/*
-				 * (description is not plaintext, it is canvas JSON)
-				 * 
-				 * Builders<Product>.Filter.Or(
-					Builders<Product>.Filter.Regex("Name.en", new BsonRegularExpression(query, "i")),
-					Builders<Product>.Filter.Regex("Description.en", new BsonRegularExpression(query, "i"))
-				);
-				*/
 
 				var products = await productCollection
 					.Find(filter)
