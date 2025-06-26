@@ -20,6 +20,16 @@ public class ProductQuantityPricing
 	public ulong TotalLessTax;
 	
 	/// <summary>
+	/// The active tax jurisdiction.
+	/// </summary>
+	public string TaxJurisdiction;
+
+	/// <summary>
+	/// Coupon used.
+	/// </summary>
+	public uint CouponId;
+
+	/// <summary>
 	/// The active currency.
 	/// </summary>
 	public string CurrencyCode;

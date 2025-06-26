@@ -294,6 +294,8 @@ namespace Api.Payments
 
 			var collection = new ProductQuantityPricing()
 			{
+				CouponId = couponId,
+				TaxJurisdiction = taxJurisdiction,
 				CurrencyCode = locale.CurrencyCode,
 				Contents = new List<LineItem>()
 			};

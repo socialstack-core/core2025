@@ -348,10 +348,7 @@ namespace Api.Payments
 
 				// It might have instantly completed or instantly failed. We can find out from the status:
 				toUpdate.Status = 101;
-				toUpdate.TotalCost = 0;
 				toUpdate.Authorise = true;
-				toUpdate.CurrencyCode = totalCost.CurrencyCode;
-
 			});
 
 			var gatewayTokenCustomerEnd = paymentMethod.GatewayToken.IndexOf('/');
@@ -365,7 +362,7 @@ namespace Api.Payments
 				Currency = totalCost.CurrencyCode,
 				PaymentMethod = methodId,
 				Confirm = true,
-				ReturnUrl = AppSettings.GetPublicUrl(user.LocaleId.HasValue ? user.LocaleId.Value : 1) + "/complete?status=success",
+				ReturnUrl = AppSettings.GetPublicUrl(user.LocaleId.HasValue ? user.LocaleId.Value : 1) + "cart/complete?status=success",
 				AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
 				{
 					Enabled = true,

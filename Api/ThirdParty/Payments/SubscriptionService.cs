@@ -420,7 +420,7 @@ namespace Api.Payments
                     }
                     else
                     {
-                        await ChargeSubscription(context, subscription, true);
+                        await ChargeSubscription(context, subscription);
                     }
                 }
                 catch (Exception e)
@@ -576,9 +576,7 @@ namespace Api.Payments
         /// </summary>
         /// <param name="context"></param>
         /// <param name="subscription"></param>
-        /// <param name="offline">True if the payment is being made offline (without the user present. Most subscription purchases are offline).</param>
-        public async ValueTask<PurchaseAndAction> ChargeSubscription(Context context, Subscription subscription,
-            bool offline = false)
+        public async ValueTask<PurchaseAndAction> ChargeSubscription(Context context, Subscription subscription)
         {
             // First, has a purchase been raised for the subscription already?
             ulong timePeriodKey = (ulong)subscription.LastChargeUtc.Ticks;
@@ -611,8 +609,10 @@ namespace Api.Payments
                 if (purchase.Status >= 100 && purchase.Status < 200)
                 {
                     // It's in the waiting for gateway state.
-                    System.Console.WriteLine(
-                        "[WARN] Manual intervention required. Subscription has waited unusually long for payment response. Gateway webhook likely misfired.");
+                    Log.Warn(LogTag,
+                        "Manual intervention required. " +
+                        "Subscription has waited unusually long for payment response. Gateway webhook likely misfired."
+                    );
 
                     return new PurchaseAndAction()
                     {
@@ -620,57 +620,37 @@ namespace Api.Payments
                     };
                 }
 
-                // All other status codes indicate permanent failure or not yet submitted to gateway.
-                // It is therefore safe to effectively recreate the products on the subscription and go again by first resetting the code.
-                purchase = await _purchases.Update(context, purchase,
-                    (Context context, Purchase toUpdate, Purchase orig) =>
-                    {
-                        // Clear status code:
-                        toUpdate.Status = 0;
+				// All other status codes indicate permanent failure or not yet submitted to gateway.
+			}
 
-                        // Ensure purchase locale matches that of the sub:
-                        toUpdate.LocaleId = subscription.LocaleId;
-                    }, DataOptions.IgnorePermissions);
+			// Copy the items from the subscription to the purchase.
+			// This prevents any risk of someone manipulating their cart during the fulfilment.
+			var inSub = await GetProducts(context, subscription);
 
-                // Remove all items from the purchase. We'll recreate them.
-                var currentProducts = await _purchases.GetProducts(context, purchase);
+			// Get the payment method from the subscription. Subscription charges can safely use IgnorePermissions.
+			PaymentMethod method = await _paymentMethods.Get(context, subscription.PaymentMethodId, DataOptions.IgnorePermissions);
 
-                foreach (var qp in currentProducts)
-                {
-                    await _productQuantities.Delete(context, qp, DataOptions.IgnorePermissions);
-                }
-            }
-            else
+            if (method == null)
             {
-                // Create a purchase:
-                purchase = await _purchases.Create(context, new Purchase()
-                {
-                    ContentType = "Subscription",
-                    ContentId = subscription.Id,
-                    CouponId = subscription.CouponId,
-                    TaxJurisdiction = subscription.TaxJurisdiction,
-                    PaymentMethodId = subscription.PaymentMethodId,
-                    ContentAntiDuplication = timePeriodKey,
-                    LocaleId = subscription.LocaleId,
-                    UserId = subscription.UserId,
-                }, DataOptions.IgnorePermissions);
+                throw new Exception("No payment method on subscription #" + subscription.Id + ".");
             }
 
-            // Copy the items from the subscription to the purchase.
-            // This prevents any risk of someone manipulating their cart during the fulfilment.
-            var inSub = await GetProducts(context, subscription);
-            await _purchases.AddProducts(context, purchase, inSub);
+            var userContext = new Context(subscription.LocaleId, subscription.UserId, 1);
 
-            // Get the payment method from the subscription. Offline subscription charges can safely use IgnorePermissions.
-            PaymentMethod method = null;
+			// Calculate the total:
+			var pricingInfo = await _productQuantities.GetPricing(context, inSub, subscription.TaxJurisdiction, subscription.CouponId);
 
-            if (offline)
-            {
-                method = await _paymentMethods.Get(context, purchase.PaymentMethodId, DataOptions.IgnorePermissions);
-            }
-
-            // Attempt to fulfil the purchase now:
-            return await _purchases.Execute(context, purchase, method);
+			return await _purchases.CreateAndExecute(
+                userContext, inSub, pricingInfo, "Subscription", 
+                subscription.Id, method, 
+                
+                // **don't change this false unless you know what you're doing and the site has been set up accordingly!
+                // Tax and legal liability ahead.
+                // B2B VAT registered corps in the UK for example still charge VAT to each other.
+                false, 
+                
+                timePeriodKey
+            );
         }
 
         /// <summary>

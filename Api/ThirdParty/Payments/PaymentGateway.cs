@@ -19,7 +19,6 @@ public class PaymentGateway
 	/// <param name="purchase"></param>
 	/// <param name="totalCost"></param>
 	/// <param name="paymentMethod"></param>
-	/// <param name="coupon"></param>
 	/// <returns></returns>
 	public virtual ValueTask<PurchaseAndAction> ExecutePurchase(Purchase purchase, ProductCost totalCost, PaymentMethod paymentMethod)
 	{
@@ -33,7 +32,6 @@ public class PaymentGateway
 	/// <param name="purchase"></param>
 	/// <param name="totalCost"></param>
 	/// <param name="paymentMethod"></param>
-	/// <param name="coupon"></param>
 	/// <returns></returns>
 	public virtual ValueTask<PurchaseAndAction> AuthorisePurchase(Purchase purchase, ProductCost totalCost, PaymentMethod paymentMethod)
 	{
