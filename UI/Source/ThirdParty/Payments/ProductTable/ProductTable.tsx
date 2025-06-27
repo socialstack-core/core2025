@@ -100,7 +100,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 						<BasketItem content={product} quantity={lineInfo.quantity} disableLink hideQuantity hideOrder />
 					</td>
 					<td className="qty-column">
-						{readonly ? lineInfo.quantity : <Quantity inBasket={lineInfo.quantity} />}
+						{readonly ? lineInfo.quantity : <Quantity product={product}  inBasket={lineInfo.quantity} />}
 					</td>
 					<td className="currency-column">
 						{formattedCost}

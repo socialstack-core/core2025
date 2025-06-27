@@ -31,13 +31,30 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 	const bundle = 1; // if product can only be ordered in multiples of [x]
 
 	const { product, className } = props;
+
+	if (!product) {
+		return `Product required`;
+	}
+
 	var { addToCart, getCartQuantity } = useCart();
-	const [quantity, setQuantity] = useState(getCartQuantity());
+	const quantity = getCartQuantity(product.id);
+	const [typedQuantity, setTypedQuantity] = useState(quantity.toString());
 	const [isEditing, setIsEditing] = useState(false);
 	//const wrapperRef = useRef(null);
 	const inputRef = useRef(null);
 
 	const ctaLabel = props.ctaLabel?.length ? props.ctaLabel : `Add to order`;
+
+	const setQuantity = (newQty : int) => {
+		addToCart(product.id, newQty, false);
+	};
+
+	// Ensure text copy is updated as well when any other qty edit occurs
+	useEffect(() => {
+		setTypedQuantity(quantity.toString());
+	}, [
+		quantity
+	]);
 
 	/*
 	useEffect(() => {
@@ -86,21 +103,15 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 
 	}
 
-	function updateQuantity() {
+	function updateTypedQuantity() {
 		let newQty = parseInt(inputRef.current.value, 10);
 
 		if (isNaN(newQty) || newQty < 0) {
 			newQty = 0;
 		}
 
-		addToCart(product.id,
-			newQty,
-			true
-		).then(() => {
-			setQuantity(newQty);
-			setIsEditing(false);
-		});
-
+		setQuantity(newQty);
+		setIsEditing(false);
 	}
 
 	function reduceQuantity() {
@@ -140,9 +151,17 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 				</>}
 
 				<div className="ui-product-qty__value-wrapper" /*ref={wrapperRef}*/>
-					<input ref={inputRef} type="number" value={quantity} className="ui-product-qty__value" noWrapper
-						min="0" max={max} step={bundle} onFocus={() => setIsEditing(true)} />
-					<Button sm className="ui-product-qty__update" onClick={() => updateQuantity()}>
+					<input ref={inputRef} type="number" value={typedQuantity} className="ui-product-qty__value" noWrapper
+						min="0" max={max} step={bundle} onFocus={() => setIsEditing(true)} onInput={
+							(e) => setTypedQuantity(e.target.value)
+						} onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								updateTypedQuantity();
+								(e.target as HTMLElement).blur();
+								e.preventDefault();
+							}
+						}} />
+					<Button sm className="ui-product-qty__update" onClick={() => updateTypedQuantity()}>
 						{`Update`}
 					</Button>
 				</div>
