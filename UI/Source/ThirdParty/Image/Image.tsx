@@ -139,7 +139,7 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
 	const responsive = props.responsive === undefined ? true : props.responsive;
 	
     // join class names as opposed to += 
-    const classNames:  string[]  = [props.className ?? ''];
+    const classNames: string[] = [props.className ? `ui-image__wrapper ${props.className}` : 'ui-image__wrapper'];
     let animation: string | null = null; 
 
     if (fileRef === null) {
@@ -150,8 +150,7 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
 	
     // adds an alignment CSS class to the image
     if (props.float && props.float !== "none") {
-        // avoided the horrible switch case that existed before.
-        classNames.push("image-" + props.float);
+        classNames.push(`ui-image--${props.float}`);
     }
 
     // any animation functionality.
@@ -161,7 +160,7 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
     }
 
     if (!responsive || size === "original" && width && !isNaN(width)) {
-        classNames.push("image-wide");
+        classNames.push("ui-image--wide");
     }
 	
 	var ref = parse(fileRef);
@@ -235,6 +234,7 @@ const Image: React.FC<ImageProps> = (props: ImageProps): React.ReactNode => {
 	>
 		{toPictureSources(sources)}
 		<img
+		    className="ui-image"
 			src={imgUrl}
 			alt={altWithAuthor}
 			width={width}
