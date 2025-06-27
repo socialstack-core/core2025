@@ -14,9 +14,6 @@ namespace Api.Payments
 	/// specific pricing and provides with/without tax results.
 	/// </summary>
 
-    [ListAs("Tiers")]
-	[ImplicitFor("Tiers", typeof(Product))]
-
     [ListAs("OptionalExtras", IsPrimary = false)]
     [ImplicitFor("OptionalExtras", typeof(Product))]
 
@@ -25,6 +22,8 @@ namespace Api.Payments
 
     [ListAs("Suggestions", IsPrimary = false)]
     [ImplicitFor("Suggestions", typeof(Product))]
+
+	[HasVirtualField("primaryCategory", typeof(ProductCategory), "PrimaryCategoryId")]
 
 	[HasSecondaryResult("attributeValueFacets", typeof(AttributeValueFacet))]
 	[HasSecondaryResult("productCategoryFacets", typeof(ProductCategoryFacet))]
@@ -110,6 +109,13 @@ namespace Api.Payments
 		/// Indicates if this is a variant product related to a parent base product
 		/// </summary>
 		public uint VariantOfId;
+
+		/// <summary>
+		/// The ID of the primary product category. 
+		/// This ID *must* also be present in the full product categories set 
+		/// (to make search etc not have to constantly make exceptions for this field).
+		/// </summary>
+		public uint PrimaryCategoryId;
 	}
 
 }
