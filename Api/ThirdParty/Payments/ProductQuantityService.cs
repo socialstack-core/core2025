@@ -5,9 +5,6 @@ using Api.Permissions;
 using Api.Contexts;
 using Api.Eventing;
 using Api.Startup;
-using Stripe;
-using Stripe.V2;
-using static Azure.Core.HttpHeader;
 using System;
 
 namespace Api.Payments
