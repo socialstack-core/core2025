@@ -54,9 +54,11 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 	let isApproved = true;
 
 	// retrieve associated category name
-	let categoryName = `Category name`;
+	let categoryName: string | null = null;
 
-	if (content.productCategories?.length) {
+	if (content.primaryCategory) {
+		categoryName = content.primaryCategory.name;
+	} else if (content.productCategories?.length) {
 		categoryName = content.productCategories[0].name;
 	}
 

@@ -28,6 +28,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
     const includeSet: ApiIncludes[] = [
         shoppingCartApi.includes.productquantities,
         shoppingCartApi.includes.productquantities.product,
+        'productquantities.product.primarycategory',
         shoppingCartApi.includes.cartcontents,
         shoppingCartApi.includes.coupon
     ];
