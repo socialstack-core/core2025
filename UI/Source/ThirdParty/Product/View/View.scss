@@ -120,6 +120,7 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 	*/
 
 	&__price-info {
+		grid-area: price;
 		display: grid;
 		grid-template-columns: auto auto auto;
 		grid-template-rows: auto auto;
@@ -361,11 +362,12 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 		margin-top: px_to_rem(40);
 		gap: px_to_rem(30);
 		grid-template-columns: px_to_rem(250) px_to_rem(344) 1fr px_to_rem(250);
-		grid-template-rows: auto auto 1fr;
+		grid-template-rows: auto auto auto 1fr;
 		grid-template-areas: 
 			"breadcrumbs carousel header price"
 			"breadcrumbs carousel tab-links price"
-			"breadcrumbs carousel tab-panels price";
+			"breadcrumbs carousel tab-panels price"
+			". . tab-panels .";
 
 		.site-breadcrumb {
 			//grid-area: breadcrumbs;
