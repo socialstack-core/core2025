@@ -4,6 +4,7 @@ using Api.Database;
 using Api.Startup;
 using Api.Translate;
 using Api.Users;
+using Newtonsoft.Json;
 
 namespace Api.Payments
 {
@@ -111,11 +112,11 @@ namespace Api.Payments
 		public uint VariantOfId;
 
 		/// <summary>
-		/// The ID of the primary product category. 
-		/// This ID *must* also be present in the full product categories set 
-		/// (to make search etc not have to constantly make exceptions for this field).
+		/// The ID of the primary product category. This is just a convenience field for 
+		/// being the equiv of the first mapping entry, and exists to make it easily includable.
 		/// </summary>
-		public uint PrimaryCategoryId;
+		[JsonIgnore]
+		public uint PrimaryCategoryId => (uint)Mappings.GetFirst("ProductCategories");
 	}
 
 }

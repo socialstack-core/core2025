@@ -1236,10 +1236,10 @@ namespace Api.Startup {
 						throw new Exception("This field is not collectible - you need to collect the underlying ID field instead.");
 					}
 				}
-				else if (FieldInfo != null)
+				else if (FieldInfo != null || PropertyInfo != null)
 				{
 					DynamicMethod compareMethod = new DynamicMethod(
-						"IdFieldCollector", 
+						"IdFieldCollector",
 						typeof(void),
 						[
 							typeof(IDCollector), typeof(Writer), typeof(object), typeof(Context)
@@ -1251,7 +1251,16 @@ namespace Api.Startup {
 					var valueLoc = generator.DeclareLocal(typeof(ulong));
 
 					// Read the field, unpacking it from nullable and/or localized if necessary:
-					var type = TypeIOEngine.UnpackLocalisedNullable(generator, 2, FieldInfo, 3);
+					Type type;
+
+					if (FieldInfo != null)
+					{
+						type = TypeIOEngine.UnpackLocalisedNullable(generator, 2, FieldInfo, 3);
+					}
+					else
+					{
+						type = TypeIOEngine.UnpackLocalisedNullable(generator, 2, PropertyInfo, 3);
+					}
 
 					// conv if necessary to ulong (throws if it can't):
 					TypeIOEngine.CoerseToUlong(generator, type);
