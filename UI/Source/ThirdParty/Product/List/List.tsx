@@ -11,7 +11,7 @@ interface ListProps {
 	content?: Product[],
 
 	/** 
-	 * determines if products should be shown in list or grid format
+	 * determines if products should be shown in small thumbnail, large thumbnail or grid format
 	 */
 	viewStyle?: string
 }
@@ -28,10 +28,7 @@ const List: React.FC<ListProps> = (props: ListProps) => {
 	}
 
 	let productListClasses = ["ui-product-list"];
-
-	if (viewStyle == 'grid') {
-		productListClasses.push("ui-product-list--grid");
-	}
+	productListClasses.push(`ui-product-list--${viewStyle}`);
 
 	return (
 		<ul className={productListClasses.join(' ')}>

@@ -39,6 +39,8 @@ const Price: React.FC<PriceProps> = (props) => {
 	// - multiple options (set to lowest price so this can be displayed as "From £X.XX")
 	let currencyCode: string | undefined;
 	let amount: ulong | undefined;
+	
+	// TODO: determine when product has options
 	let hasOptions = false;
 
 	if (override) {
@@ -48,14 +50,14 @@ const Price: React.FC<PriceProps> = (props) => {
 		// NB: This will be replaced again when per-user pricing and the tax resolver is added
 		var tiers = product.calculatedPrice;
 		hasOptions = tiers.length > 1;
-		
+
 		// Get the lowest one:
 		var tier = tiers[0];
 
 		if (hasOptions) {
 			for (var i = 1; i < tiers.length; i++) {
 				var current = tiers[i];
-				
+
 				if (current.amount < tier.amount) {
 					tier = current;
 				}
@@ -65,21 +67,28 @@ const Price: React.FC<PriceProps> = (props) => {
 		currencyCode = locale.currencyCode;
 		amount = lessTax ? tier.amountLessTax : tier.amount;
 	}
-	else
-	{
+	else {
 		return null;
+/*
+		// TEMP - force price display
+		currencyCode = locale ? locale.currencyCode : "GBP";
+
+		if (!currencyCode) {
+			currencyCode = "GBP";
+		}
+
+		amount = 12345;
+*/		
 	}
 
 	// TODO: optional previous price
 	let oldPrice = 0;
 
 	return (
-		<span className="ui-product-view__price">
-			<span className="ui-product-view__price-internal">
-				{hasOptions && <span>{`From`}</span>}
-				{formatCurrency(amount, { currencyCode })}
-				{oldPrice ? <span>{`Was ${formatCurrency(oldPrice, {currencyCode})}`}</span> : null}
-			</span>
+		<span className="ui-product--price">
+			{hasOptions && <span>{`From`}</span>}
+			{formatCurrency(amount, { currencyCode })}
+			{oldPrice ? <span>{`Was ${formatCurrency(oldPrice, { currencyCode })}`}</span> : null}
 		</span>
 	);
 }

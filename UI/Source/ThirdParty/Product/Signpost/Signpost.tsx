@@ -2,7 +2,7 @@ import { Product } from 'Api/Product';
 import Image from 'UI/Image';
 import Link from 'UI/Link';
 import Quantity from 'UI/Product/Quantity';
-import defaultImageRef from './image_placeholder.png';
+//import defaultImageRef from './image_placeholder.png';
 import ProductPrice, { CurrencyAmount } from 'UI/Product/Price';
 import ProductStock from 'UI/Product/Stock';
 
@@ -26,11 +26,6 @@ interface SignpostProps {
 	disableLink?: boolean,
 
 	/**
-	 * quantity within basket
-	 */
-	quantity?: number,
-	
-	/**
 	 * Line item price (in basket)
 	 */
 	priceOverride?: CurrencyAmount,
@@ -46,7 +41,11 @@ interface SignpostProps {
  * @param props React props.
  */
 const Signpost: React.FC<SignpostProps> = (props) => {
-	const { disableLink, quantity, content, hideQuantity, hideOrder, priceOverride } = props;
+	const { disableLink, content, hideQuantity, hideOrder, priceOverride } = props;
+
+	if (!content) {
+		return;
+	}
 
 	// TODO: need an isFeatured flag per product
 	let isFeatured = true;
@@ -54,24 +53,19 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 	// TODO: need an isApproved flag
 	let isApproved = true;
 
-	// TODO: retrieve associated category name
-	// productCategories array?
+	// retrieve associated category name
 	let categoryName = `Category name`;
+
+	if (content.productCategories?.length) {
+		categoryName = content.productCategories[0].name;
+	}
 
 	// TODO: determine when product has options
 	let hasOptions = false;
 
-	function addToOrder() {
-		// TODO
-	}
-
-	function chooseOptions() {
-		// TODO
-	}
-
-	function renderInternal() {
+	function renderInner() {
 		return <>
-			<header className="ui-product-signpost__header">
+			<div className="ui-product-signpost__image">
 				{/* optional featured product header */}
 				{isFeatured && <>
 					<span className="ui-product-signpost__featured">
@@ -80,8 +74,16 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 					</span>
 				</>}
 
-				{/* product image */}
-				<Image size={200} fileRef={content.featureRef || defaultImageRef} />
+				{/* product image
+				  * reference 512px image as we have 3 views:
+				  * list: ~150px
+				  * small thumbnails: ~150px
+				  * large thumbnails: ~322px
+				  * 
+				  * NB: while "no-image" is invalid, this will trigger a broken image;
+				  * UI/Image spots this and replaces this with a placeholder image via CSS
+				  */}
+				<Image size={512} fileRef={content.featureRef || "no-image"} />
 
 				{/* thumbs up icon */}
 				{isApproved && <>
@@ -92,13 +94,17 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 						</span>
 					</div>
 				</>}
-			</header>
+			</div>
 
 			{/* category */}
-			<span className="ui-product-signpost__category">
-				<i className="fr fr-tag"></i>
-				{categoryName}
-			</span>
+			{categoryName && categoryName.length > 0 && <>
+				<span className="ui-product-signpost__category">
+					<i className="fr fr-tag"></i>
+					<span>
+						{categoryName}
+					</span>
+				</span>
+			</>}
 
 			{/* product name */}
 			<span className="ui-product-signpost__name">
@@ -115,34 +121,23 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 
 	return (
 		<div className={disableLink ? "ui-product-signpost ui-product-signpost--disabled" : "ui-product-signpost"}>
-			{disableLink && <>
-				<div className="ui-product-signpost__internal">
-					{renderInternal()}
-				</div>
-			</>}
-			{!disableLink && <>
-				<Link className="ui-product-signpost__internal" href={content.primaryUrl || `/product/${content.slug}`}>
-					{renderInternal()}
-				</Link>
-			</>}
+			<div className="ui-product-signpost__outer">
+				{disableLink && <>
+					<div className="ui-product-signpost__inner">
+						{renderInner()}
+					</div>
+				</>}
+				{!disableLink && <>
+					<Link className="ui-product-signpost__inner" href={content.primaryUrl || `/product/${content.slug}`}>
+						{renderInner()}
+					</Link>
+				</>}
 
-			{/* quantity controls */}
-			{!hideQuantity && !hasOptions && <>
-				<Quantity inBasket={quantity} />
-			</>}
-
-			{!hideOrder && !hasOptions && <>
-				<button type="button" className="btn btn-secondary ui-product-signpost__add" onClick={() => addToOrder()}>
-					{`Add to order`}
-				</button>
-			</>}
-
-			{!hideOrder && hasOptions && <>
-				<button type="button" className="btn btn-secondary ui-product-signpost__choose" onClick={() => chooseOptions()}>
-					{`Choose options`}
-				</button>
-			</>}
-
+				{/* quantity controls */}
+				{!hideQuantity && <>
+					<Quantity product={content} />
+				</>}
+			</div>
 		</div>
 	);
 }

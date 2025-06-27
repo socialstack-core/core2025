@@ -1,7 +1,6 @@
 import { Product } from 'Api/Product';
 import Canvas from 'UI/Canvas';
 import Quantity from 'UI/Product/Quantity';
-import ProductQuantity from 'UI/Payments/ProductQuantity';
 import ProductCarousel from 'UI/Product/Carousel';
 import ProductSpecifications from 'UI/Product/Specifications';
 import Promotion from 'UI/Promotion';
@@ -10,6 +9,13 @@ import ProductAttributes from 'UI/Product/Attributes';
 import ProductPrice from 'UI/Product/Price';
 import ProductStock from 'UI/Product/Stock';
 import ProductSubtitle from 'UI/Product/Subtitle';
+import ProductQuantity from 'UI/Product/Quantity';
+import Button from 'UI/Button';
+
+import { useState } from 'react';
+import Breadcrumb from 'UI/Breadcrumb';
+import ProductHeader from 'UI/Product/Header';
+
 
 /**
  * Props for the View component.
@@ -29,71 +35,127 @@ interface ViewProps {
 const View: React.FC<ViewProps> = (props) => {
 	const { product } = props;
 
-	return (
+	enum ProductTab {
+		About = `About this product`,
+		Details = `Details & Specification`,
+		FAQs = `FAQs`
+	}
+	const productTabs = Object.values(ProductTab);
+
+	const [selectedTab, setSelectedTab] = useState(ProductTab.About);
+
+	// TODO: approved?
+	const isApproved = true;
+
+	// TODO: check for associated info
+	const infoTitle = `Note from Acticare`;
+	const infoDescription = `This product has a lower max weight capacity than most bariatric beds as this is designed for residents who solely need more bed space.`;
+
+	return <>
 		<div className="ui-product-view">
-			<h1 className="ui-product-view__title">
-				{product.name}
-			</h1>
-			<div className="ui-product-view__internal">
-				<div className="ui-product-view__sidebar">
-					{/* product images */}
-					<ProductCarousel product={product} />
+			{/* breadcrumb links */}
+			<Breadcrumb />
 
-					{/* specs / downloads */}
-					<ProductSpecifications />
+			{/* product images */}
+			<ProductCarousel product={product} />
 
-					{/* promo */}
-					<Promotion
-						title={`Get 10% Off Our Bedroom Bestsellers`}
-						description={`Save now on top-rated beds and accessories - Limited time offer`}
-						url={`#`} />
-				</div>
+			{/* featured / title / stock info */}
+			<ProductHeader product={product} />
 
-				<div className="ui-product-view__content">
-					{/* approved / featured */}
-					<header className="ui-product-view__content-header">
-						<span className="ui-product-view__approved">
-							{`Approved`}
-							<i className="fr fr-thumbs-up"></i>
-						</span>
-						<span className="ui-product-view__featured">
-							<i className="fr fr-star"></i>
-							{`Featured product`}
-						</span>
-					</header>
-
-					{/* price */}
-					<ProductPrice product={product} />
-
-					{/* stock info */}
-					<ProductStock product={product} />
-
-					{/* add to basket */}
-					{/* NB: updated UI available as UI/Product/Quantity; needs combining with existing UI/Payments/ProductQuantity */}
-					{/* <Quantity /> */}
-					<ProductQuantity product={product} quantity={1} addText={`Add to basket`} allowMultiple={true} goStraightToCart={true} />
-
-					{/* about */}
+			{/*
+			<TabSet className="ui-product-view__tabs">
+				<Tab label={`About this product`}>
 					<ProductAbout title={`About this product`} product={product} />
-
-					{/* product attributes */} 
+				</Tab>
+				<Tab label={`Details & Specification`}>
 					<ProductAttributes title={`Product details`} product={product} />
-
-					{/* FAQ */}
-					<ProductSubtitle subtitle={`Frequently asked questions`} />
+				</Tab>
+				<Tab label={`FAQs`}>
 					{`:: TODO ::`}
+				</Tab>
+			</TabSet>
+			*/}
 
-					{/* frequently bought with */}
-					<ProductSubtitle subtitle={`Frequently bought with this product`} />
-					{`:: TODO ::`}
+			{/* tab links */}
+			<div className="ui-product-view__tab-links">
+				{productTabs.map((tab, i) => {
+					const linkId = `tab-link${i + 1}`;
+					const panelId = `tab-panel${i + 1}`;
+					const selected = selectedTab === tab ? true : undefined;
 
-					{/* related products */}
-					<ProductSubtitle subtitle={`Similar products`} />
-					{`:: TODO ::`}
-				</div>
+					return <>
+						<div className="ui-product-view__tab-link">
+							<input type="radio" name="months" id={linkId} aria-controls={panelId} checked={selected} />
+							<label htmlFor={linkId}>
+								{tab}
+							</label>
+						</div>
+					</>;
+				})}
 			</div>
+
+			{/* tab panels */}
+			<div className="ui-product-view__tab-panels">
+				{productTabs.map((tab, i) => {
+					const panelId = `tab-panel${i + 1}`;
+
+					return <>
+						<div className="ui-product-view__tab-panel" id={panelId}>
+							{tab == ProductTab.About && <>
+								<ProductAbout title={`About this product`} product={product} />
+							</>}
+
+							{tab == ProductTab.Details && <>
+								<ProductAttributes title={`Product details`} product={product} />
+							</>}
+
+							{tab == ProductTab.FAQs && <>
+								{`:: TODO ::`}
+							</>}
+						</div>
+					</>;
+				})}
+			</div>
+
+			{/* price info */}
+			<div className="ui-product-view__price-info">
+
+				{/* approved? */}
+				{isApproved && <>
+					<div className="ui-product-view__price-info-approved">
+						<i className="fr fr-thumbs-up"></i>
+						{`Approved`}
+					</div>
+				</>}
+
+				{/* product info */}
+				{infoDescription?.length > 0 && <>
+					<Button sm variant="warning" className="ui-product-view__price-info-note" popoverTarget="product_note">
+						<i className="fr fr-exclamation-circle"></i>
+						<span>
+							{infoTitle?.length > 0 ? infoTitle : `Note`}
+						</span>
+					</Button>
+					<div id="product_note" popover="auto">
+						<div className="ui-product-view__price-info-note-header">
+							<i className="fr fr-exclamation-circle"></i>
+							<span>
+								{infoTitle?.length > 0 ? infoTitle : `Note`}
+							</span>
+						</div>
+						{infoDescription}
+					</div>
+				</>}
+
+				{/* price */}
+				<ProductPrice product={product} />
+
+				{/* quantity / add to order */}
+				<ProductQuantity product={product} />
+			</div>
+
 		</div>
-	);
+	</>;
 }
 
 export default View;
