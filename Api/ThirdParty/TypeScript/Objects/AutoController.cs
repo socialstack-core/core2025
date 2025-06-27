@@ -62,16 +62,16 @@ namespace Api.TypeScript.Objects
         public override void ToSource(StringBuilder builder, TypeScriptService svc)
         {
             builder.AppendLine();
-            builder.AppendLine("export class AutoController<T extends Content<uint>, ID> {");
+            builder.AppendLine("export class AutoController<T extends Content<uint>, ID, Includes extends ApiIncludes> {");
 
             builder.AppendLine();
             builder.AppendLine("    protected apiUrl: string;");
             builder.AppendLine();
-            builder.AppendLine("    public includes: ApiIncludes;");
+            builder.AppendLine("    public includes: Includes;");
 
-            builder.AppendLine("    constructor(baseUrl: string = '') {");
+            builder.AppendLine("    constructor(baseUrl: string = '', includes: Includes) {");
             builder.AppendLine("        this.apiUrl = baseUrl?.toLowerCase();");
-            builder.AppendLine("        this.includes = new ApiIncludes();");
+            builder.AppendLine("        this.includes = includes");
             builder.AppendLine("    }");
 
             Type[] getTextTypes = [typeof(void), typeof(ValueTask), typeof(object), typeof(FileContent)];

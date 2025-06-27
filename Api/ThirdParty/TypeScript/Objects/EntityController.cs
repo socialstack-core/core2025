@@ -68,7 +68,7 @@ namespace Api.TypeScript.Objects
         public override void ToSource(StringBuilder builder, TypeScriptService svc)
         {
             builder.AppendLine();
-            builder.AppendLine($"export class {svc.GetGenericSignature(_referenceTypes.entityType)}Api extends AutoController<{svc.GetGenericSignature(_referenceTypes.entityType)},uint>{{");
+            builder.AppendLine($"export class {svc.GetGenericSignature(_referenceTypes.entityType)}Api extends AutoController<{svc.GetGenericSignature(_referenceTypes.entityType)},uint, {svc.GetGenericSignature(_referenceTypes.entityType)}Includes>{{");
 
             var baseUrlRoute = _referenceTypes.controllerType.GetCustomAttribute<RouteAttribute>();
             var baseUrl = baseUrlRoute is not null ? baseUrlRoute.Template : "";
@@ -77,8 +77,7 @@ namespace Api.TypeScript.Objects
 
             builder.AppendLine();
             builder.AppendLine("    constructor(){");
-            builder.AppendLine($"        super('/{baseUrl}');");
-            builder.AppendLine($"        this.includes = new {svc.GetGenericSignature(_referenceTypes.entityType)}Includes();");
+            builder.AppendLine($"        super('/{baseUrl}', new {svc.GetGenericSignature(_referenceTypes.entityType)}Includes());");
             builder.AppendLine("    }");
             builder.AppendLine();
 
