@@ -28,10 +28,27 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
     const includeSet: ApiIncludes[] = [
         shoppingCartApi.includes.productquantities,
         shoppingCartApi.includes.productquantities.product,
-        'productquantities.product.primarycategory',
+        shoppingCartApi.includes.productquantities.product.primaryCategory,
         shoppingCartApi.includes.cartcontents,
         shoppingCartApi.includes.coupon
     ];
+
+    const setCouponInternal = (coupon: string) => {
+        if (!coupon) {
+            return shoppingCartApi.removeCoupon({
+                shoppingCartId: shoppingCart!.id
+            }, includeSet);
+        }
+        return shoppingCartApi.applyCoupon({
+            shoppingCartId: shoppingCart!.id,
+            code: coupon
+        }, includeSet);
+    };
+
+    const setCoupon = (coupon: string) => {
+        return setCouponInternal(coupon)
+            .then(loadCart);
+    };
 
     const loadCart = (cart: ShoppingCart) => {
         // Merge productQuants in to contents.
@@ -149,6 +166,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
                 hasSubscriptions,
                 lessTax,
                 setLessTax,
+                setCoupon,
                 cartContents: shoppingCart?.cartContents
             }}
         >

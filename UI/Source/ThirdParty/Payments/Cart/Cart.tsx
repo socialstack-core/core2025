@@ -4,6 +4,10 @@ import { useRouter } from 'UI/Router';
 import { useCart } from 'UI/Payments/CartSession';
 import ProductTable from 'UI/Payments/ProductTable';
 import { useState } from 'react';
+import { Coupon } from 'Api/Coupon';
+import Input from 'UI/Input';
+import Button from 'UI/Button';
+import Form from 'UI/Form';
 
 /**
  * Props for the Cart component.
@@ -22,8 +26,16 @@ interface CartProps {
 const Cart: React.FC<CartProps> = (props) => {
 	const title = props.title?.length ? props.title : `Shopping Cart`;
 	const { setPage } = useRouter();
-	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading, lessTax } = useCart();
+	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading, lessTax, setCoupon } = useCart();
 	var [showEmptyCartPrompt, setShowEmptyCartPrompt] = useState(null);
+
+	const renderActiveCoupon = (coupon: Coupon) => {
+		const couponTitle = coupon.description;
+
+		return <>
+			{`Active coupon: ${couponTitle}`} <Button onClick={() => setCoupon(null)}>{ `Remove` }</Button>
+		</>
+	};
 
 	return <>
 		<h1 className="shopping-cart__title">
@@ -63,6 +75,19 @@ const Cart: React.FC<CartProps> = (props) => {
 				</Modal>
 			</>
 		}
+		<div>
+			<h1>{`Promo code`}</h1>
+			{
+				shoppingCart?.coupon && renderActiveCoupon(shoppingCart?.coupon)
+			}
+			<div>
+				<Form action={(fields) => {
+					return setCoupon(fields.coupon);
+				}} submitLabel={`Apply`} successMessage={`Coupon applied`} failedMessage={`Unable to apply coupon`}>
+					<Input type='text' name='coupon' placeholder={`Enter a promo code`} />
+				</Form>
+			</div>
+		</div>
 	</>;
 }
 

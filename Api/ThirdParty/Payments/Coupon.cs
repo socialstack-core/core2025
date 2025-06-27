@@ -20,7 +20,12 @@ namespace Api.Payments
 		/// </summary>
         [DatabaseField(Length = 10)]
 		public string Token;
-		
+
+		/// <summary>
+		/// Textual description of this coupon, displayed to users when the coupon is active.
+		/// </summary>
+		public string Description;
+
 		/// <summary>
 		/// The number of people who can use this coupon before it expires.
 		/// 0 indicates there is no limit.
