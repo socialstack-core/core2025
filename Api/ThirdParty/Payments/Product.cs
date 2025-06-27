@@ -4,6 +4,7 @@ using Api.Database;
 using Api.Startup;
 using Api.Translate;
 using Api.Users;
+using Newtonsoft.Json;
 
 namespace Api.Payments
 {
@@ -14,9 +15,6 @@ namespace Api.Payments
 	/// specific pricing and provides with/without tax results.
 	/// </summary>
 
-    [ListAs("Tiers")]
-	[ImplicitFor("Tiers", typeof(Product))]
-
     [ListAs("OptionalExtras", IsPrimary = false)]
     [ImplicitFor("OptionalExtras", typeof(Product))]
 
@@ -25,6 +23,8 @@ namespace Api.Payments
 
     [ListAs("Suggestions", IsPrimary = false)]
     [ImplicitFor("Suggestions", typeof(Product))]
+
+	[HasVirtualField("primaryCategory", typeof(ProductCategory), "PrimaryCategoryId")]
 
 	[HasSecondaryResult("attributeValueFacets", typeof(AttributeValueFacet))]
 	[HasSecondaryResult("productCategoryFacets", typeof(ProductCategoryFacet))]
@@ -110,6 +110,13 @@ namespace Api.Payments
 		/// Indicates if this is a variant product related to a parent base product
 		/// </summary>
 		public uint VariantOfId;
+
+		/// <summary>
+		/// The ID of the primary product category. This is just a convenience field for 
+		/// being the equiv of the first mapping entry, and exists to make it easily includable.
+		/// </summary>
+		[JsonIgnore]
+		public uint PrimaryCategoryId => (uint)Mappings.GetFirst("ProductCategories");
 	}
 
 }

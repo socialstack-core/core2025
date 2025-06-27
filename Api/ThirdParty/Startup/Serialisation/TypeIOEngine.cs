@@ -27,6 +27,103 @@ namespace Api.Startup
 		private static int counter = 1;
 
 		/// <summary>
+		/// If the given property is localized, nullable, or both, then this will 
+		/// unpack it and place either the raw value or its default (e.g. 0) on the stack.
+		/// </summary>
+		/// <param name="generator"></param>
+		/// <param name="contentObjArg"></param>
+		/// <param name="property"></param>
+		/// <param name="ctxArg"></param>
+		/// <returns></returns>
+		public static Type UnpackLocalisedNullable(ILGenerator generator, int contentObjArg, PropertyInfo property, int ctxArg)
+		{
+			var propertyType = property.PropertyType;
+			Type localisedType = null;
+
+			if (propertyType.IsGenericType)
+			{
+				var typeDef = propertyType.GetGenericTypeDefinition();
+
+				if (typeDef == typeof(Localized<>))
+				{
+					localisedType = propertyType;
+					propertyType = propertyType.GetGenericArguments()[0];
+				}
+			}
+
+			// Check if it's a nullable:
+			var origNullable = propertyType;
+			Type nullableType = Nullable.GetUnderlyingType(propertyType);
+
+			if (nullableType != null)
+			{
+				propertyType = nullableType;
+			}
+
+			if (localisedType != null)
+			{
+				// It's localised but can also be nullable.
+				var localVal = generator.DeclareLocal(propertyType);
+
+				generator.Emit(OpCodes.Ldarg, contentObjArg);
+				generator.Emit(OpCodes.Callvirt, property.GetGetMethod());
+				generator.Emit(OpCodes.Stloc, localVal);
+				generator.Emit(OpCodes.Ldloca, localVal);
+
+				// Push the context and a constant 'true'
+				generator.Emit(OpCodes.Ldarg, ctxArg); // context
+				generator.Emit(OpCodes.Ldc_I4_1); // fallback = true
+
+				// Can now call Get:
+				var localisedGetMethod = localisedType.GetMethod(
+					"Get", BindingFlags.Public | BindingFlags.Instance,
+					new Type[] {
+					typeof(Context),
+					typeof(bool)
+				});
+
+				generator.Emit(OpCodes.Callvirt, localisedGetMethod);
+
+				if (nullableType == null)
+				{
+					// The value is on the stack - stop there.
+					return propertyType;
+				}
+
+				// It's also nullable - we'll now need to unpack it by storing it in a local.
+				var nullableLoc = generator.DeclareLocal(origNullable);
+				generator.Emit(OpCodes.Stloc, nullableLoc);
+
+				UnpackNullable(generator, origNullable, propertyType, (ILGenerator gen) => {
+					gen.Emit(OpCodes.Ldloca, nullableLoc);
+				});
+			}
+			else if (nullableType == null)
+			{
+				// It is just a regular value.
+
+				generator.Emit(OpCodes.Ldarg, contentObjArg); // the content obj 
+				generator.Emit(OpCodes.Callvirt, property.GetGetMethod()); // the value 
+
+				// The value is now on the stack.
+				return propertyType;
+			}
+			else
+			{
+				// It's a nullable non-localized value.
+				UnpackNullable(generator, origNullable, propertyType, (ILGenerator gen) => {
+					var localVal = gen.DeclareLocal(propertyType);
+					gen.Emit(OpCodes.Ldarg, contentObjArg);
+					gen.Emit(OpCodes.Callvirt, property.GetGetMethod());
+					gen.Emit(OpCodes.Stloc, localVal);
+					gen.Emit(OpCodes.Ldloca, localVal);
+				});
+			}
+
+			return propertyType;
+		}
+		
+		/// <summary>
 		/// If the given field is localized, nullable, or both, then this will 
 		/// unpack it and place either the raw value or its default (e.g. 0) on the stack.
 		/// </summary>
@@ -106,6 +203,7 @@ namespace Api.Startup
 			}
 			else
 			{
+				// It's a nullable non-localized value.
 				UnpackNullable(generator, origNullable, fieldType, (ILGenerator gen) => {
 					gen.Emit(OpCodes.Ldarg, contentObjArg);
 					gen.Emit(OpCodes.Ldflda, field);

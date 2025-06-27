@@ -504,7 +504,24 @@ public struct MappingData
 			}
 		}
 	}
-	
+
+	/// <summary>
+	/// Gets the first value in the given named mapping.
+	/// </summary>
+	/// <param name="mappingName"></param>
+	/// <returns></returns>
+	public ulong GetFirst(string mappingName)
+	{
+		var mappingSet = Get(mappingName);
+
+		if (mappingSet == null || mappingSet.Count == 0)
+		{
+			return 0;
+		}
+
+		return mappingSet[0];
+	}
+
 	/// <summary>
 	/// Ensures the given set of item IDs are added to the specified map.
 	/// </summary>

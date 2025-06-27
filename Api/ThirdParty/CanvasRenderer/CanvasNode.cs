@@ -1,7 +1,6 @@
 ﻿using Api.Contexts;
 using Api.Eventing;
 using Api.SocketServerLibrary;
-using Api.Templates;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -9,13 +8,12 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
 
-
 namespace Api.CanvasRenderer
 {
+
     /// <summary>
     /// Particular node in the canvas tree.
     /// </summary>
@@ -456,14 +454,18 @@ namespace Api.CanvasRenderer
 
             else if (node.Name.ToLower() == "iframe" && node.Attributes.Contains("src"))
             {
-                var src = node.Attributes.FirstOrDefault(s => s.Name == "src").Value;
+                var src = node.GetAttributeValue("src", "");
                 if (src.StartsWith("https://www.youtube.com/embed/"))
                 {
                     canvasNode = new CanvasNode("UI/Video").With("fileRef", "youtube:" + src.Substring(30));
-                } 
+                }
+                else if (src.StartsWith("https://fast.wistia.net/embed/iframe/"))
+                {
+                    canvasNode = new CanvasNode("UI/Video").With("fileRef", "wistia:" + src.Substring(37));
+                }
                 else
                 {
-                    canvasNode = new CanvasNode(node.Name);
+                    canvasNode = new CanvasNode(node.Name).With("src", src);
                 }
             }
             else
