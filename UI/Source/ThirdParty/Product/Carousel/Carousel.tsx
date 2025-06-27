@@ -1,5 +1,5 @@
 import { Product } from 'Api/Product';
-import { useId } from "react";
+import { useEffect, useId } from "react";
 import Image from 'UI/Image';
 import defaultImageRef from './image_placeholder.png';
 
@@ -19,20 +19,13 @@ interface CarouselProps {
  */
 const Carousel: React.FC<CarouselProps> = (props) => {
 	const { product } = props;
-	const id = useId();
+	let id = "carousel";
 
-	// TODO: determine related images for product
-	const relatedImages = [];
-	/* uncomment for test
-	const relatedImages = [
-		"public:7F9316427F97C7546866B2DE191C5C90/80.jpg",
-		"public:7F9316427F97C7546866B2DE191C5C90/81.jpg",
-		"public:7F9316427F97C7546866B2DE191C5C90/82.jpg",
-		"public:7F9316427F97C7546866B2DE191C5C90/83.jpg",
-	];
-	*/
+	useEffect(() => {
+		//id = useId();
+	}, []);
 
-	const hasRelatedImages = relatedImages?.length > 0;
+	const hasRelatedImages = product.productImages?.length > 0;
 
 	let productImagesClasses = ["ui-product-images"];
 
@@ -45,7 +38,7 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 			{hasRelatedImages && <>
 				{/* hidden radio buttons (these drive image selection) */}
 				<input type="radio" name="carousel" id={`${id}_1`} checked />
-				{relatedImages.map((ref, i) => {
+				{product.productImages?.map((ref, i) => {
 					return <input type="radio" name="carousel" id={`${id}_${i+2}`} />
 				})}
 
@@ -54,10 +47,10 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 					<label htmlFor={`${id}_1`} className="ui-product-images__thumbnail">
 						<Image size={100} fileRef={product.featureRef || defaultImageRef} />
 					</label>
-					{relatedImages.map((ref, i) => {
+					{product.productImages?.map((productImage, i) => {
 						return <>
 							<label htmlFor={`${id}_${i + 2}`} className="ui-product-images__thumbnail">
-								<Image size={100} fileRef={ref || defaultImageRef} />
+								<Image size={100} fileRef={productImage.ref || defaultImageRef} />
 							</label>
 						</>;
 					})}
@@ -75,14 +68,14 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 						<Image size={1024} fileRef={product.featureRef || defaultImageRef} lazyLoad={true} />
 					</div>
 				</details>
-				{relatedImages.map((ref, i) => {
+				{product.productImages?.map((productImage, i) => {
 					return <>
 						<details className="ui-product-images__slide">
 							<summary>
-								<Image size={512} fileRef={ref || defaultImageRef} />
+								<Image size={512} fileRef={productImage.ref || defaultImageRef} />
 							</summary>
 							<div className="ui-product-images__slide-content">
-								<Image size={1024} fileRef={ref || defaultImageRef} lazyLoad={true} />
+								<Image size={1024} fileRef={productImage.ref || defaultImageRef} lazyLoad={true} />
 							</div>
 						</details>
 					</>;

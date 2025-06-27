@@ -11,6 +11,7 @@ using Stripe;
 using static Azure.Core.HttpHeader;
 using Api.Users;
 using Api.Addresses;
+using Newtonsoft.Json.Linq;
 
 namespace Api.Payments
 {
@@ -21,20 +22,25 @@ namespace Api.Payments
 	public partial class ShoppingCartService : AutoService<ShoppingCart>
     {
 		private ProductQuantityService _productQuantities;
+		private PaymentMethodService _paymentMethods;
 		private PurchaseService _purchases;
 		private ProductService _products;
 		private CouponService _coupons;
+		private PriceService _prices;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
 		public ShoppingCartService(ProductQuantityService productQuantities, PurchaseService purchases, 
-			ProductService products, CouponService coupons, AddressService addressService) : base(Events.ShoppingCart)
+			ProductService products, CouponService coupons, AddressService addressService, PriceService prices,
+			PaymentMethodService paymentMethods) : base(Events.ShoppingCart)
         {
 			_productQuantities = productQuantities;
+			_paymentMethods = paymentMethods;
 			_purchases = purchases;
 			_products = products;
 			_coupons = coupons;
+			_prices = prices;
 
 			Events.ShoppingCart.BeforeSettable.AddEventListener((Context context, JsonField<ShoppingCart, uint> field) =>
 			{
@@ -77,25 +83,52 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="cart"></param>
-		/// <param name="payment">
-		/// The payment method to use. If the user does not want to save their method this can just be a "new PaymentMethod()" in memory only instance.
+		/// <param name="paymentMethodInfo">
+		/// The raw JSON payment method info. Can be null in BNPL circumstances.
 		/// </param>
-		public async ValueTask<PurchaseAndAction> Checkout(Context context, ShoppingCart cart, PaymentMethod payment)
+		public async ValueTask<PurchaseAndAction> Checkout(Context context, ShoppingCart cart, JToken paymentMethodInfo)
 		{
 			// Create a purchase (uses the user's locale from context):
-			var purchase = await _purchases.Create(context, new Purchase() {
-				ContentType = "ShoppingCart",
-				ContentId = cart.Id,
-				PaymentMethodId = payment.Id
-			}, DataOptions.IgnorePermissions);
 
-			// Copy the items from the shopping cart to the purchase.
+			// Items are copied from the shopping cart to the purchase.
 			// This prevents any risk of someone manipulating their cart during the fulfilment.
-			var inCart = await GetProducts(context, cart);
-			await _purchases.AddProducts(context, purchase, inCart);
+			var inCart = await GetProductQuantities(context, cart);
 
-			// Attempt to fulfil the purchase now:
-			return await _purchases.Execute(context, purchase, payment);
+			// Calculate the total:
+			var pricingInfo = await _productQuantities.GetPricing(context, inCart, cart.TaxJurisdiction, cart.CouponId);
+
+			var paymentMethod = await _paymentMethods.GetFromJson(context, paymentMethodInfo, pricingInfo.HasSubscriptionProducts);
+			
+			return await _purchases.CreateAndExecute(
+				context, 
+				inCart,
+				pricingInfo,
+				"ShoppingCart", 
+				cart.Id,
+				paymentMethod, 
+
+
+
+				// *severe tax liability danger*
+				false); // Do not change the tax exclusion state unless you really, really, really know what you are doing.
+						// Unless the customer is foreign, you are probably making a mistake.
+						// B2B in the UK is *NOT* tax exempt!
+						// Yes, it is correct to display someone a VAT
+						// free price and then charge them VAT on top of it anyway!
+		}
+
+		/// <summary>
+		/// Calculates the prices for the given cart.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="cart"></param>
+		/// <returns></returns>
+		public async ValueTask<ProductQuantityPricing> GetContentPrices(Context context, ShoppingCart cart)
+		{
+			// Get the pq's:
+			var productQuants = await GetProductQuantities(context, cart);
+
+			return await _productQuantities.GetPricing(context, productQuants, cart.TaxJurisdiction, cart.CouponId);
 		}
 
 		/// <summary>
@@ -104,9 +137,10 @@ namespace Api.Payments
 		/// <param name="context"></param>
 		/// <param name="cart"></param>
 		/// <returns></returns>
-		public async ValueTask<List<ProductQuantity>> GetProducts(Context context, ShoppingCart cart)
+		public async ValueTask<List<ProductQuantity>> GetProductQuantities(Context context, ShoppingCart cart)
 		{
-			return await _productQuantities.Where("ShoppingCartId=?", DataOptions.IgnorePermissions).Bind(cart.Id).ListAll(context);
+			return await _productQuantities
+				.ListBySource(context, cart, "ProductQuantities", DataOptions.IgnorePermissions);
 		}
 
 		/// <summary>
@@ -143,9 +177,10 @@ namespace Api.Payments
 				throw new PublicException("That coupon code does not exist.", "coupon/not_found");
 			}
 
-			if (coupon.ExpiryDateUtc > DateTime.UtcNow)
+			if (coupon.Disabled || (coupon.ExpiryDateUtc.HasValue && coupon.ExpiryDateUtc.Value < System.DateTime.UtcNow))
 			{
-				throw new PublicException("That coupon code has expired.", "coupon/expired");
+				// NB: If max number of people is reached, it is marked as disabled.
+				throw new PublicException("Unfortunately the provided coupon has expired.", "coupon/expired");
 			}
 
 			return await Update(context, cartId, (Context ctx, ShoppingCart toUpdate, ShoppingCart original) => {

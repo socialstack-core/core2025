@@ -1,4 +1,6 @@
-﻿namespace Api.SearchMetaData
+﻿using Stripe;
+
+namespace Api.SearchMetaData
 {
     public class SearchMetaData
     {
@@ -10,6 +12,10 @@
 
     public class MetaDataInclude
     {
+        public string Name { get; set; }
+
+        public string Field { get; set; }
+
         public dynamic[] Values { get; set; }
     }
 

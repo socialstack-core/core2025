@@ -1,24 +1,47 @@
 .ui-product-list {
 	$ui-product-list: &;
 	display: flex;
-	flex-wrap: wrap;
 	list-style: none;
 	padding: 0;
 	margin: 0;
 
+	// render product info horizontally
 	&--list {
-		// TODO
+		flex-direction: column;
+		gap: px_to_rem(24);
 	}
 
-	&--grid {
-		$grid-padding: px_to_rem(8);
-		$grid-gap: px_to_rem(24) - (2 * $grid-padding);
-		$grid-columns: 6;
+	// equates to a gap of 24px, as product signposts each side have 8px padding
+	$grid-gap: px_to_rem(8);
+
+	&--small-thumbs,
+	&--large-thumbs {
 		flex-wrap: wrap;
 		gap: px_to_rem(60) $grid-gap;
+
+		// fudge alignment and width to account for 8px padding
+		transform: translate(-$grid-gap, -$grid-gap);
+		width: calc(100% + (2 * #{$grid-gap}));
+	}
+
+	// max ~6~ 5 small preview images horizontally
+	&--small-thumbs {
+		//$grid-columns: 6; // qty controls too narrow
+		$grid-columns: 5;
 
 		> #{$ui-product-list}__product {
 			width: calc((100% - (($grid-columns - 1) * #{$grid-gap})) / $grid-columns);
 		}
+
+	}
+
+	// max 3 large preview images horizontally
+	&--large-thumbs {
+		$grid-columns: 3;
+
+		> #{$ui-product-list}__product {
+			width: calc((100% - (($grid-columns - 1) * #{$grid-gap})) / $grid-columns);
+		}
+
 	}
 }

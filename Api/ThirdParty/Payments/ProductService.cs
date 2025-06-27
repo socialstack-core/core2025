@@ -19,13 +19,15 @@ namespace Api.Payments
     {
 		private PermalinkService _permalinks;
 		private ProductConfig _config;
+		private PriceService _prices;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public ProductService(PermalinkService permalinks, PageService pages) : base(Events.Product)
+		public ProductService(PermalinkService permalinks, PageService pages, PriceService prices) : base(Events.Product)
         {
 			_permalinks = permalinks;
+			_prices = prices;
 			_config = GetConfig<ProductConfig>();
 
 			InstallAdminPages("Products", "fa:fa-shopping-basket", ["id", "name", "minQuantity"]);
@@ -103,7 +105,7 @@ namespace Api.Payments
 				new PageBuilder()
 				{
 					Key = "primary:product",
-					PrimaryContentIncludes = "productCategories,attributes,attributes.attribute",
+					PrimaryContentIncludes = "productCategories,attributes,attributes.attribute,calculatedPrice",
 					Title = "${product.name}",
 					BuildBody = (PageBuilder builder) =>
 					{
@@ -231,20 +233,28 @@ namespace Api.Payments
 		/// Gets the product tiers for a given product. The result is null if there are none.
 		/// </summary>
 		/// <returns></returns>
-		public async ValueTask<List<Product>> GetTiers(Context context, Product product)
+		public async ValueTask<List<Price>> GetPriceTiers(Context context, Product product)
 		{
 			if (product == null)
 			{
 				return null;
 			}
 
-			var tiers = await ListBySource(context, product, "tiers", DataOptions.IgnorePermissions);
+			// System generated contextual pricing if necessary:
+			List<Price> tiers = null;
+			tiers = await Events.Product.Pricing.Dispatch(context, tiers, product);
+
+			if (tiers == null)
+			{
+				// System default prices (priceTiers mapping on a product)
+				tiers = await _prices.ListBySource(context, product, "priceTiers", DataOptions.IgnorePermissions);
+			}
 
 			if (tiers != null && tiers.Count > 0)
 			{
 				// Tiers is not necessarily sorted, so:
-				tiers.Sort((Product a, Product b) => {
-					return a.MinQuantity.CompareTo(b.MinQuantity);
+				tiers.Sort((Price a, Price b) => {
+					return a.MinimumQuantity.CompareTo(b.MinimumQuantity);
 				});
 			}
 

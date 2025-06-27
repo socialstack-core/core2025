@@ -384,6 +384,20 @@ public struct Localized<T> : ILocalized
 	}
 
 	/// <summary>
+	/// Gets the value for the current locale, returning true if it was able to do so.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="value"></param>
+	/// <returns></returns>
+	public bool TryGet(Context context, out T value)
+	{
+		var localeId = context.LocaleId;
+		var locale = (ContentTypes.Locales != null && localeId <= ContentTypes.Locales.Length ?
+			ContentTypes.Locales[localeId - 1] : null);
+		return TryGet(locale, out value);
+	}
+
+	/// <summary>
 	/// Gets the value for the current locale.
 	/// </summary>
 	/// <param name="context"></param>
@@ -466,6 +480,32 @@ public struct Localized<T> : ILocalized
 		}
 
 		return default;
+	}
+
+	/// <summary>
+	/// Get a specific localised value.
+	/// </summary>
+	/// <param name="locale"></param>
+	/// <param name="value"></param>
+	/// <returns></returns>
+	public bool TryGet(Locale locale, out T value)
+	{
+		if (_values == null)
+		{
+			value = default;
+			return false;
+		}
+		
+		if (locale != null)
+		{
+			if (_values.TryGetValue(locale.Code, out value))
+			{
+				return true;
+			}
+		}
+
+		value = default;
+		return false;
 	}
 
 	/// <summary>

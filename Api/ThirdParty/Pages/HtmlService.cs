@@ -1225,6 +1225,8 @@ namespace Api.Pages
 					response.Headers["Cache-Control"] = "no-store";
 					response.Headers["Pragma"] = "no-cache";
 					RenderBlockPage(writer);
+					await writer.CopyToAsync(response.Body);
+					writer.Release();
 					return true;
 				}
 			}

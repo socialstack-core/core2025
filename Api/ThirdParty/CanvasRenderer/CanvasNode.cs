@@ -16,406 +16,407 @@ using System.Web;
 
 namespace Api.CanvasRenderer
 {
-	/// <summary>
-	/// Particular node in the canvas tree.
-	/// </summary>
-	public class CanvasNode
-	{
-		/// <summary>
-		/// Create a canvas node with optional module name.
-		/// </summary>
-		/// <param name="module"></param>
-		public CanvasNode(string module = null)
-		{
-			Module = module;
-		}
+    /// <summary>
+    /// Particular node in the canvas tree.
+    /// </summary>
+    public class CanvasNode
+    {
+        /// <summary>
+        /// Create a canvas node with optional module name.
+        /// </summary>
+        /// <param name="module"></param>
+        public CanvasNode(string module = null)
+        {
+            Module = module;
+        }
 
-		/// <summary>
-		/// The canvas that the node is a part of.
-		/// </summary>
-		public CanvasDetails Canvas;
+        /// <summary>
+        /// The canvas that the node is a part of.
+        /// </summary>
+        public CanvasDetails Canvas;
 
-		/// <summary>
-		/// The source node. Usually an object.
-		/// </summary>
-		public JToken Source;
+        /// <summary>
+        /// The source node. Usually an object.
+        /// </summary>
+        public JToken Source;
 
-		/// <summary>
-		/// A graph if there is one.
-		/// </summary>
-		public Graph Graph;
+        /// <summary>
+        /// A graph if there is one.
+        /// </summary>
+        public Graph Graph;
 
-		/// <summary>
-		/// The data (attributes) for the node as raw objects, usually strings.
-		/// </summary>
-		public Dictionary<string, object> Data;
-		
-		/// <summary>
-		/// The data store links, if there are any.
-		/// </summary>
-		public Dictionary<string, CanvasDataStoreLink> Links;
+        /// <summary>
+        /// The data (attributes) for the node as raw objects, usually strings.
+        /// </summary>
+        public Dictionary<string, object> Data;
 
-		/// <summary>
-		/// The roots for the node, if any.
-		/// </summary>
-		public Dictionary<string, CanvasNode> Roots;
+        /// <summary>
+        /// The data store links, if there are any.
+        /// </summary>
+        public Dictionary<string, CanvasDataStoreLink> Links;
 
-		/// <summary>
-		/// Pointer (p) to an entry in a datamap (m).
-		/// If it is a non-zero number, then this whole node is to be read from the datamap.
-		/// If it is an object, then particular data values are to be read from the datamap.
-		/// </summary>
-		public uint Pointer;
+        /// <summary>
+        /// The roots for the node, if any.
+        /// </summary>
+        public Dictionary<string, CanvasNode> Roots;
 
-		/// <summary>
-		/// Pointer (p) to an entry in a datamap (m).
-		/// If it is a non-zero number, then this whole node is to be read from the datamap.
-		/// If it is an object, then particular data values are to be read from the datamap.
-		/// </summary>
-		public Dictionary<string, uint> Pointers;
+        /// <summary>
+        /// Pointer (p) to an entry in a datamap (m).
+        /// If it is a non-zero number, then this whole node is to be read from the datamap.
+        /// If it is an object, then particular data values are to be read from the datamap.
+        /// </summary>
+        public uint Pointer;
 
-		/// <summary>
-		/// Any child nodes of a particular canvas node.
-		/// </summary>
-		public List<CanvasNode> Content;
+        /// <summary>
+        /// Pointer (p) to an entry in a datamap (m).
+        /// If it is a non-zero number, then this whole node is to be read from the datamap.
+        /// If it is an object, then particular data values are to be read from the datamap.
+        /// </summary>
+        public Dictionary<string, uint> Pointers;
 
-		/// <summary>
-		/// The module to use. Null if it is a string node.
-		/// </summary>
-		public string Module;
+        /// <summary>
+        /// Any child nodes of a particular canvas node.
+        /// </summary>
+        public List<CanvasNode> Content;
 
-		/// <summary>
-		/// Set if this is a text node.
-		/// </summary>
-		public string StringContent;
+        /// <summary>
+        /// The module to use. Null if it is a string node.
+        /// </summary>
+        public string Module;
 
-		/// <summary>
-		/// Clears everything from this node.
-		/// </summary>
-		public CanvasNode Empty()
-		{
-			Content = null;
-			Pointers = null;
-			Module = null;
-			StringContent = null;
-			Roots = null;
-			Links = null;
-			Data = null;
-			Graph = null;
-			return this;
-		}
+        /// <summary>
+        /// Set if this is a text node.
+        /// </summary>
+        public string StringContent;
 
-		/// <summary>
-		/// Get or create a datamap entry for a field in a graph node.
-		/// </summary>
-		/// <param name="node"></param>
-		/// <param name="outputField"></param>
-		/// <param name="dataMap"></param>
-		/// <returns></returns>
-		public static CanvasGeneratorMapEntry GetDataMapEntry(Executor node, string outputField, List<CanvasGeneratorMapEntry> dataMap)
-		{
-			for (var i = 0; i < dataMap.Count; i++)
-			{
-				var existing = dataMap[i];
-				if (existing.GraphNode == node && existing.Field == outputField)
-				{
-					return existing;
-				}
-			}
+        /// <summary>
+        /// Clears everything from this node.
+        /// </summary>
+        public CanvasNode Empty()
+        {
+            Content = null;
+            Pointers = null;
+            Module = null;
+            StringContent = null;
+            Roots = null;
+            Links = null;
+            Data = null;
+            Graph = null;
+            return this;
+        }
 
-			var cgm = new CanvasGeneratorMapEntry();
-			cgm.GraphNode = node;
-			cgm.Field = outputField;
-			dataMap.Add(cgm);
-			cgm.Id = (uint)dataMap.Count; // ID must be non-zero so we use index+1.
-			node.AddDataMapOutput(cgm);
-			return cgm;
-		}
+        /// <summary>
+        /// Get or create a datamap entry for a field in a graph node.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="outputField"></param>
+        /// <param name="dataMap"></param>
+        /// <returns></returns>
+        public static CanvasGeneratorMapEntry GetDataMapEntry(Executor node, string outputField, List<CanvasGeneratorMapEntry> dataMap)
+        {
+            for (var i = 0; i < dataMap.Count; i++)
+            {
+                var existing = dataMap[i];
+                if (existing.GraphNode == node && existing.Field == outputField)
+                {
+                    return existing;
+                }
+            }
 
-		/// <summary>
-		/// Loads a node from the given newtonsoft object.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="node"></param>
-		/// <param name="canvas"></param>
-		/// <returns></returns>
-		/// <exception cref="NotSupportedException"></exception>
-		public static async ValueTask<CanvasNode> LoadCanvasNode(
-			Context context, 
-			JToken node,
-			CanvasDetails canvas
-		) {
-			if (node == null)
-			{
-				return null;
-			}
+            var cgm = new CanvasGeneratorMapEntry();
+            cgm.GraphNode = node;
+            cgm.Field = outputField;
+            dataMap.Add(cgm);
+            cgm.Id = (uint)dataMap.Count; // ID must be non-zero so we use index+1.
+            node.AddDataMapOutput(cgm);
+            return cgm;
+        }
 
-			var result = new CanvasNode();
-			result.Canvas = canvas;
-			result.Source = node;
+        /// <summary>
+        /// Loads a node from the given newtonsoft object.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="node"></param>
+        /// <param name="canvas"></param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException"></exception>
+        public static async ValueTask<CanvasNode> LoadCanvasNode(
+            Context context,
+            JToken node,
+            CanvasDetails canvas
+        )
+        {
+            if (node == null)
+            {
+                return null;
+            }
 
-			if (node.Type == JTokenType.String)
-			{
-				result.StringContent = node.Value<string>();
-				return result;
-			}
+            var result = new CanvasNode();
+            result.Canvas = canvas;
+            result.Source = node;
 
-			if (node.Type == JTokenType.Array)
-			{
-				throw new NotSupportedException("Canvas with arrays are now only supported if the array is set as a content (c) value.");
-			}
+            if (node.Type == JTokenType.String)
+            {
+                result.StringContent = node.Value<string>();
+                return result;
+            }
 
-			// Here we only care about:
-			// - t(ype)
-			// - d(ata)
-			// - s(trings)
-			// - g(raphs)
-			// - r(oots)
-			// - c(ontent)
+            if (node.Type == JTokenType.Array)
+            {
+                throw new NotSupportedException("Canvas with arrays are now only supported if the array is set as a content (c) value.");
+            }
 
-			// Type
-			var type = node["t"];
+            // Here we only care about:
+            // - t(ype)
+            // - d(ata)
+            // - s(trings)
+            // - g(raphs)
+            // - r(oots)
+            // - c(ontent)
 
-			if (type != null)
-			{
-				result.Module = type.Value<string>();
-			}
+            // Type
+            var type = node["t"];
 
-			// Data
-			var data = node["d"] as JObject;
+            if (type != null)
+            {
+                result.Module = type.Value<string>();
+            }
 
-			if (data != null)
-			{
-				foreach (var kvp in data)
-				{
-					if (result.Data == null)
-					{
-						result.Data = new Dictionary<string, object>();
-					}
+            // Data
+            var data = node["d"] as JObject;
 
-					object val;
+            if (data != null)
+            {
+                foreach (var kvp in data)
+                {
+                    if (result.Data == null)
+                    {
+                        result.Data = new Dictionary<string, object>();
+                    }
 
-					if (kvp.Value.Type == JTokenType.Null)
-					{
-						val = null;
-					}
-					else if (kvp.Value.Type == JTokenType.Boolean)
-					{
-						val = kvp.Value.Value<bool>() ? "true" : "false";
-					}
-					else if (kvp.Value.Type == JTokenType.String)
-					{
-						val = kvp.Value.Value<string>();
-					}
-					else if (kvp.Value.Type == JTokenType.Array)
-					{
-						var arr = kvp.Value as JArray;
+                    object val;
 
-						var strs = new List<string>();
+                    if (kvp.Value.Type == JTokenType.Null)
+                    {
+                        val = null;
+                    }
+                    else if (kvp.Value.Type == JTokenType.Boolean)
+                    {
+                        val = kvp.Value.Value<bool>() ? "true" : "false";
+                    }
+                    else if (kvp.Value.Type == JTokenType.String)
+                    {
+                        val = kvp.Value.Value<string>();
+                    }
+                    else if (kvp.Value.Type == JTokenType.Array)
+                    {
+                        var arr = kvp.Value as JArray;
 
-						foreach (var k in arr)
-						{
-							strs.Add(k == null ? "" : k.Value<string>());
-						}
+                        var strs = new List<string>();
 
-						val = strs.ToArray();
-					}
-					else
-					{
-						val = kvp.Value.ToString();
-					}
+                        foreach (var k in arr)
+                        {
+                            strs.Add(k == null ? "" : k.Value<string>());
+                        }
 
-					result.Data[kvp.Key] = val;
-				}
-			}
+                        val = strs.ToArray();
+                    }
+                    else
+                    {
+                        val = kvp.Value.ToString();
+                    }
 
-			// Strings
-			var str = node["s"];
+                    result.Data[kvp.Key] = val;
+                }
+            }
 
-			if (str != null)
-			{
-				result.StringContent = str.Value<string>();
-			}
+            // Strings
+            var str = node["s"];
 
-			// Graphs
-			var graphData = node["g"];
+            if (str != null)
+            {
+                result.StringContent = str.Value<string>();
+            }
 
-			if (graphData != null)
-			{
-				if (canvas == null || canvas.GraphNodeLoader == null)
-				{
-					throw new Exception("Discovered a graph in a canvas that does not support them. This is typically because a graph is present in something like a template canvas.");
-				}
+            // Graphs
+            var graphData = node["g"];
 
-				// Found a graph. Load it using the canvas-wide graph node loader.
-				var graph = new Graph(graphData, canvas.GraphNodeLoader);
+            if (graphData != null)
+            {
+                if (canvas == null || canvas.GraphNodeLoader == null)
+                {
+                    throw new Exception("Discovered a graph in a canvas that does not support them. This is typically because a graph is present in something like a template canvas.");
+                }
 
-				// If the root node is a component then this canvas node morphs in to that component.
-				var comp = graph.Root as Component;
-				if (comp != null)
-				{
-					// Inline it now.
-					foreach (var kvp in comp.ConstantData)
-					{
-						if (kvp.Key == "componentType")
-						{
-							result.Module = kvp.Value.ToString();
-						}
-						else
-						{
-							if (result.Data == null)
-							{
-								result.Data = new Dictionary<string, object>();
-							}
+                // Found a graph. Load it using the canvas-wide graph node loader.
+                var graph = new Graph(graphData, canvas.GraphNodeLoader);
 
-							string val;
+                // If the root node is a component then this canvas node morphs in to that component.
+                var comp = graph.Root as Component;
+                if (comp != null)
+                {
+                    // Inline it now.
+                    foreach (var kvp in comp.ConstantData)
+                    {
+                        if (kvp.Key == "componentType")
+                        {
+                            result.Module = kvp.Value.ToString();
+                        }
+                        else
+                        {
+                            if (result.Data == null)
+                            {
+                                result.Data = new Dictionary<string, object>();
+                            }
 
-							if (kvp.Value.Type == JTokenType.Null)
-							{
-								val = null;
-							}
-							else if (kvp.Value.Type == JTokenType.Boolean)
-							{
-								val = kvp.Value.Value<bool>() ? "true" : "false";
-							}
-							else if (kvp.Value.Type == JTokenType.String)
-							{
-								val = kvp.Value.Value<string>();
-							}
-							else
-							{
-								val = kvp.Value.ToString();
-							}
+                            string val;
 
-							result.Data[kvp.Key] = val;
-						}
-					}
+                            if (kvp.Value.Type == JTokenType.Null)
+                            {
+                                val = null;
+                            }
+                            else if (kvp.Value.Type == JTokenType.Boolean)
+                            {
+                                val = kvp.Value.Value<bool>() ? "true" : "false";
+                            }
+                            else if (kvp.Value.Type == JTokenType.String)
+                            {
+                                val = kvp.Value.Value<string>();
+                            }
+                            else
+                            {
+                                val = kvp.Value.ToString();
+                            }
 
-					// Each link (non-constant data) becomes a datamap pointer.
-					foreach (var kvp in comp.Links)
-					{
-						if (result.Pointers == null)
-						{
-							result.Pointers = new Dictionary<string, uint>();
-						}
+                            result.Data[kvp.Key] = val;
+                        }
+                    }
 
-						if (canvas == null || canvas.DataMap == null)
-						{
-							throw new Exception("Non-constant data links are in use but not supported by this canvas. " +
-								"This is usually because they are present in e.g. templates.");
-						}
+                    // Each link (non-constant data) becomes a datamap pointer.
+                    foreach (var kvp in comp.Links)
+                    {
+                        if (result.Pointers == null)
+                        {
+                            result.Pointers = new Dictionary<string, uint>();
+                        }
 
-						var cdm = GetDataMapEntry(kvp.Value.SourceNode.AddedAs, kvp.Value.Field, canvas.DataMap);
-						result.Pointers[kvp.Key] = cdm.Id;
-					}
-				}
-				else
-				{
-					result.Graph = graph;
-				}
-			}
+                        if (canvas == null || canvas.DataMap == null)
+                        {
+                            throw new Exception("Non-constant data links are in use but not supported by this canvas. " +
+                                "This is usually because they are present in e.g. templates.");
+                        }
 
-			// Links
-			var links = node["l"] as JObject;
+                        var cdm = GetDataMapEntry(kvp.Value.SourceNode.AddedAs, kvp.Value.Field, canvas.DataMap);
+                        result.Pointers[kvp.Key] = cdm.Id;
+                    }
+                }
+                else
+                {
+                    result.Graph = graph;
+                }
+            }
 
-			if (links != null)
-			{
-				foreach (var kvp in links)
-				{
-					if (result.Links == null)
-					{
-						result.Links = new Dictionary<string, CanvasDataStoreLink>();
-					}
+            // Links
+            var links = node["l"] as JObject;
 
-					var jsonNode = kvp.Value;
-					var fieldJson = jsonNode["field"];
-					var writeJson = jsonNode["write"];
-					var primaryJson = jsonNode["primary"];
+            if (links != null)
+            {
+                foreach (var kvp in links)
+                {
+                    if (result.Links == null)
+                    {
+                        result.Links = new Dictionary<string, CanvasDataStoreLink>();
+                    }
 
-					result.Links[kvp.Key] = new CanvasDataStoreLink(
-						fieldJson == null ? null : fieldJson.Value<string>(),
-						writeJson == null ? false : writeJson.Value<bool>(),
-						primaryJson == null ? false : primaryJson.Value<bool>()
-					);
-				}
-			}
+                    var jsonNode = kvp.Value;
+                    var fieldJson = jsonNode["field"];
+                    var writeJson = jsonNode["write"];
+                    var primaryJson = jsonNode["primary"];
 
-			// Roots
-			var roots = node["r"] as JObject;
+                    result.Links[kvp.Key] = new CanvasDataStoreLink(
+                        fieldJson == null ? null : fieldJson.Value<string>(),
+                        writeJson == null ? false : writeJson.Value<bool>(),
+                        primaryJson == null ? false : primaryJson.Value<bool>()
+                    );
+                }
+            }
 
-			if (roots != null)
-			{
-				foreach (var kvp in roots)
-				{
-					if (result.Roots == null)
-					{
-						result.Roots = new Dictionary<string, CanvasNode>();
-					}
+            // Roots
+            var roots = node["r"] as JObject;
 
-					result.Roots[kvp.Key] = await LoadCanvasNode(context, kvp.Value, canvas);
-				}
-			}
+            if (roots != null)
+            {
+                foreach (var kvp in roots)
+                {
+                    if (result.Roots == null)
+                    {
+                        result.Roots = new Dictionary<string, CanvasNode>();
+                    }
 
-			// Content
-			var content = node["c"];
+                    result.Roots[kvp.Key] = await LoadCanvasNode(context, kvp.Value, canvas);
+                }
+            }
 
-			if (content != null)
-			{
-				// Content can be: an array an object or a string.
-				var array = content as JArray;
+            // Content
+            var content = node["c"];
 
-				if (array != null)
-				{
-					for (var i = 0; i < array.Count; i++)
-					{
-						if (result.Content == null)
-						{
-							result.Content = new List<CanvasNode>();
-						}
+            if (content != null)
+            {
+                // Content can be: an array an object or a string.
+                var array = content as JArray;
 
-						var child = await LoadCanvasNode(context, array[i], canvas);
+                if (array != null)
+                {
+                    for (var i = 0; i < array.Count; i++)
+                    {
+                        if (result.Content == null)
+                        {
+                            result.Content = new List<CanvasNode>();
+                        }
 
-						if (child != null)
-						{
-							result.Content.Add(child);
-						}
-					}
-				}
-				else
-				{
-					// Either a string or object.
-					var child = await LoadCanvasNode(context, content, canvas);
+                        var child = await LoadCanvasNode(context, array[i], canvas);
 
-					if (result.Content == null)
-					{
-						result.Content = new List<CanvasNode>();
-					}
+                        if (child != null)
+                        {
+                            result.Content.Add(child);
+                        }
+                    }
+                }
+                else
+                {
+                    // Either a string or object.
+                    var child = await LoadCanvasNode(context, content, canvas);
 
-					if (child != null)
-					{
-						result.Content.Add(child);
-					}
-				}
-			}
+                    if (result.Content == null)
+                    {
+                        result.Content = new List<CanvasNode>();
+                    }
 
-			// Modules may want to transform this node (such as templates)
-			result = await Events.Page.TransformCanvasNode.Dispatch(context, result);
+                    if (child != null)
+                    {
+                        result.Content.Add(child);
+                    }
+                }
+            }
 
-			return result;
-		}
+            // Modules may want to transform this node (such as templates)
+            result = await Events.Page.TransformCanvasNode.Dispatch(context, result);
+
+            return result;
+        }
 
 
-		/// <summary>
-		/// Convert html into a canvas type object (usually just used for migrations)
-		/// </summary>
-		/// <param name="html"></param>
-		/// <returns></returns>
+        /// <summary>
+        /// Convert html into a canvas type object (usually just used for migrations)
+        /// </summary>
+        /// <param name="html"></param>
+        /// <returns></returns>
         public static CanvasNode HtmlToCanvas(string html)
-		{
-			if (string.IsNullOrWhiteSpace(html))
-			{
-				return new CanvasNode();
-			}
+        {
+            if (string.IsNullOrWhiteSpace(html))
+            {
+                return new CanvasNode();
+            }
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -430,41 +431,55 @@ namespace Api.CanvasRenderer
         /// <returns></returns>
         public static CanvasNode ConvertHtmlNode(HtmlNode node, bool stripWrapper = false)
         {
-			if (node == null || (node.NodeType != HtmlNodeType.Text && node.NodeType != HtmlNodeType.Element && node.NodeType != HtmlNodeType.Document))
+            if (node == null || (node.NodeType != HtmlNodeType.Text && node.NodeType != HtmlNodeType.Element && node.NodeType != HtmlNodeType.Document))
             {
-				return new CanvasNode();
+                return new CanvasNode();
             }
 
-			CanvasNode canvasNode = null;
+            CanvasNode canvasNode = null;
 
-			if (node.NodeType == HtmlNodeType.Document)
-			{
-				// if we only have 1 top level node then optionally strip it and just use the contents (redundant <div>/<p> etc)
-				if (stripWrapper && node.HasChildNodes && node.ChildNodes.Count == 1)
-				{
-					return ConvertHtmlNode(node.ChildNodes[0]);	
+            if (node.NodeType == HtmlNodeType.Document)
+            {
+                // if we only have 1 top level node then optionally strip it and just use the contents (redundant <div>/<p> etc)
+                if (stripWrapper && node.HasChildNodes && node.ChildNodes.Count == 1)
+                {
+                    return ConvertHtmlNode(node.ChildNodes[0]);
                 }
 
                 // outer wrapper 
-				canvasNode = new CanvasNode();
+                canvasNode = new CanvasNode();
             }
-			else if (node.NodeType == HtmlNodeType.Text)
-			{
-                return new CanvasNode() { StringContent = HttpUtility.HtmlDecode(node.InnerText)};
+            else if (node.NodeType == HtmlNodeType.Text)
+            {
+                return new CanvasNode() { StringContent = HttpUtility.HtmlDecode(node.InnerText) };
             }
-			else
-			{
-				canvasNode = new CanvasNode(node.Name);
-			}
+
+            else if (node.Name.ToLower() == "iframe" && node.Attributes.Contains("src"))
+            {
+                var src = node.Attributes.FirstOrDefault(s => s.Name == "src").Value;
+                if (src.StartsWith("https://www.youtube.com/embed/"))
+                {
+                    canvasNode = new CanvasNode("UI/Video").With("fileRef", "youtube:" + src.Substring(30));
+                } 
+                else
+                {
+                    canvasNode = new CanvasNode(node.Name);
+                }
+            }
+            else
+            {
+                canvasNode = new CanvasNode(node.Name);
+            }
+
 
             var StringContent = string.Join(" ", node.ChildNodes
-				.Where(cn => cn.NodeType == HtmlNodeType.Text)
-				.Select(cn => cn.InnerText.Trim()));
+                .Where(cn => cn.NodeType == HtmlNodeType.Text)
+                .Select(cn => cn.InnerText.Trim()));
 
-			if (!string.IsNullOrWhiteSpace(StringContent))
-			{
-				canvasNode.AppendChild(HttpUtility.HtmlDecode(StringContent));
-			}
+            if (!string.IsNullOrWhiteSpace(StringContent))
+            {
+                canvasNode.AppendChild(HttpUtility.HtmlDecode(StringContent));
+            }
 
             foreach (var child in node.ChildNodes)
             {
@@ -485,366 +500,369 @@ namespace Api.CanvasRenderer
         /// </summary>
         /// <param name="leaveOpen">If true, does not write the closing curly bracket</param>
         public string ToJson(bool leaveOpen = false)
-		{
-			var writer = Writer.GetPooled();
-			writer.Start(null);
-			ToJson(writer, leaveOpen);
-			var result = writer.ToUTF8String();
-			writer.Release();
-			return result;
-		}
+        {
+            var writer = Writer.GetPooled();
+            writer.Start(null);
+            ToJson(writer, leaveOpen);
+            var result = writer.ToUTF8String();
+            writer.Release();
+            return result;
+        }
 
-		/// <summary>
-		/// Converts canvas to JSON as bytes.
-		/// </summary>
-		/// <param name="leaveOpen">If true, does not write the closing curly bracket</param>
-		public byte[] ToJsonBytes(bool leaveOpen = false)
-		{
-			var writer = Writer.GetPooled();
-			writer.Start(null);
-			ToJson(writer, leaveOpen);
-			var result = writer.AllocatedResult();
-			writer.Release();
-			return result;
-		}
+        /// <summary>
+        /// Converts canvas to JSON as bytes.
+        /// </summary>
+        /// <param name="leaveOpen">If true, does not write the closing curly bracket</param>
+        public byte[] ToJsonBytes(bool leaveOpen = false)
+        {
+            var writer = Writer.GetPooled();
+            writer.Start(null);
+            ToJson(writer, leaveOpen);
+            var result = writer.AllocatedResult();
+            writer.Release();
+            return result;
+        }
 
-		/// <summary>
-		/// Converts canvas node to JSON.
-		/// </summary>
-		/// <param name="writer"></param>
-		/// <param name="leaveOpen">If true, does not write the closing curly bracket</param>
-		public void ToJson(Writer writer, bool leaveOpen = false)
-		{
-			if (Pointer != 0)
-			{
-				// Numeric pointer - only thing that is permitted in this node is the pointer itself.
-				writer.WriteASCII("{\"p\":");
-				writer.WriteS(Pointer);
+        /// <summary>
+        /// Converts canvas node to JSON.
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="leaveOpen">If true, does not write the closing curly bracket</param>
+        public void ToJson(Writer writer, bool leaveOpen = false)
+        {
+            if (Pointer != 0)
+            {
+                // Numeric pointer - only thing that is permitted in this node is the pointer itself.
+                writer.WriteASCII("{\"p\":");
+                writer.WriteS(Pointer);
 
-				if (!leaveOpen)
-				{
-					writer.Write((byte)'}');
-				}
+                if (!leaveOpen)
+                {
+                    writer.Write((byte)'}');
+                }
 
-				return;
-			}
+                return;
+            }
 
-			if (Graph != null)
-			{
-				writer.WriteASCII("{\"g\":");
-				Graph.ToJson(writer);
-			}
-			else if (StringContent != null)
-			{
-				writer.WriteASCII("{\"s\":");
-				writer.WriteEscaped(StringContent);
-			}
-			else
-			{
-				writer.WriteASCII("{\"t\":");
-				writer.WriteEscaped(Module);
-			}
+            if (Graph != null)
+            {
+                writer.WriteASCII("{\"g\":");
+                Graph.ToJson(writer);
+            }
+            else if (StringContent != null)
+            {
+                writer.WriteASCII("{\"s\":");
+                writer.WriteEscaped(StringContent);
+            }
+            else
+            {
+                writer.WriteASCII("{\"t\":");
+                writer.WriteEscaped(Module);
+            }
 
-			if (Roots != null && Roots.Count > 0)
-			{
-				writer.WriteASCII(",\"r\":{");
+            if (Roots != null && Roots.Count > 0)
+            {
+                writer.WriteASCII(",\"r\":{");
 
-				var first = true;
+                var first = true;
 
-				foreach (var kvp in Roots)
-				{
-					if (first)
-					{
-						first = false;
-					}
-					else
-					{
-						writer.Write((byte)',');
-					}
-					writer.WriteEscaped(kvp.Key);
-					if (kvp.Value == null)
-					{
-						writer.WriteASCII(":null");
-					}
-					else
-					{
-						writer.Write((byte)':');
-						kvp.Value.ToJson(writer);
-					}
-				}
+                foreach (var kvp in Roots)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        writer.Write((byte)',');
+                    }
+                    writer.WriteEscaped(kvp.Key);
+                    if (kvp.Value == null)
+                    {
+                        writer.WriteASCII(":null");
+                    }
+                    else
+                    {
+                        writer.Write((byte)':');
+                        kvp.Value.ToJson(writer);
+                    }
+                }
 
-				writer.Write((byte)'}');
-			}
-			
-			if (Links != null && Links.Count > 0)
-			{
-				writer.WriteASCII(",\"l\":{");
+                writer.Write((byte)'}');
+            }
 
-				var first = true;
+            if (Links != null && Links.Count > 0)
+            {
+                writer.WriteASCII(",\"l\":{");
 
-				foreach (var kvp in Links)
-				{
-					if (first)
-					{
-						first = false;
-					}
-					else
-					{
-						writer.Write((byte)',');
-					}
-					writer.WriteEscaped(kvp.Key);
-					writer.Write((byte)':');
-					writer.WriteASCII(kvp.Value.JsonString);
-				}
+                var first = true;
 
-				writer.Write((byte)'}');
-			}
+                foreach (var kvp in Links)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        writer.Write((byte)',');
+                    }
+                    writer.WriteEscaped(kvp.Key);
+                    writer.Write((byte)':');
+                    writer.WriteASCII(kvp.Value.JsonString);
+                }
 
-			if (Data != null && Data.Count > 0)
-			{
-				writer.WriteASCII(",\"d\":{");
+                writer.Write((byte)'}');
+            }
 
-				var first = true;
+            if (Data != null && Data.Count > 0)
+            {
+                writer.WriteASCII(",\"d\":{");
 
-				foreach (var kvp in Data)
-				{
-					if (first)
-					{
-						first = false;
-					}
-					else
-					{
-						writer.Write((byte)',');
-					}
-					writer.WriteEscaped(kvp.Key);
-					if (kvp.Value == null)
-					{
-						writer.WriteASCII(":null");
-					}
-					else if (kvp.Value.GetType() == typeof(string[]))
-					{
-						writer.WriteASCII(":[");
+                var first = true;
 
-						var strArray = (string[])kvp.Value;
-						var firstStr = true;
+                foreach (var kvp in Data)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        writer.Write((byte)',');
+                    }
+                    writer.WriteEscaped(kvp.Key);
+                    if (kvp.Value == null)
+                    {
+                        writer.WriteASCII(":null");
+                    }
+                    else if (kvp.Value.GetType() == typeof(string[]))
+                    {
+                        writer.WriteASCII(":[");
 
-						foreach (var str in strArray)
-						{
-							if (firstStr)
-							{
-								firstStr = false;
-							}
-							else
-							{
-								writer.Write((byte)',');
-							}
+                        var strArray = (string[])kvp.Value;
+                        var firstStr = true;
 
-							if (str == null)
-							{
-								writer.WriteASCII("null");
-							}
-							else
-							{
-								writer.WriteEscaped(str);
-							}
-						}
+                        foreach (var str in strArray)
+                        {
+                            if (firstStr)
+                            {
+                                firstStr = false;
+                            }
+                            else
+                            {
+                                writer.Write((byte)',');
+                            }
 
-						writer.WriteASCII("]");
-					}
-					else
-					{
-						writer.Write((byte)':');
-						writer.WriteEscaped(kvp.Value.ToString());
-					}
-					
-				}
+                            if (str == null)
+                            {
+                                writer.WriteASCII("null");
+                            }
+                            else
+                            {
+                                writer.WriteEscaped(str);
+                            }
+                        }
 
-				writer.Write((byte)'}');
-			}
+                        writer.WriteASCII("]");
+                    }
+                    else
+                    {
+                        writer.Write((byte)':');
+                        writer.WriteEscaped(kvp.Value.ToString());
+                    }
 
-			var contentCount = Content == null ? 0 : Content.Count;
+                }
 
-			if (contentCount == 1)
-			{
-				writer.WriteASCII(",\"c\":");
-				Content[0].ToJson(writer);
-			}
-			else if (contentCount > 0)
-			{
-				writer.WriteASCII(",\"c\":[");
+                writer.Write((byte)'}');
+            }
 
-				for (var i = 0; i < Content.Count; i++)
-				{
-					if (i != 0)
-					{
-						writer.Write((byte)',');
-					}
-					Content[i].ToJson(writer);
-				}
+            var contentCount = Content == null ? 0 : Content.Count;
 
-				writer.Write((byte)']');
-			}
+            if (contentCount == 1)
+            {
+                writer.WriteASCII(",\"c\":");
+                Content[0].ToJson(writer);
+            }
+            else if (contentCount > 0)
+            {
+                writer.WriteASCII(",\"c\":[");
 
-			// i and ti (ID and TemplateID) are not necessary.
+                for (var i = 0; i < Content.Count; i++)
+                {
+                    if (i != 0)
+                    {
+                        writer.Write((byte)',');
+                    }
+                    Content[i].ToJson(writer);
+                }
 
-			if (Pointers != null && Pointers.Count > 0)
-			{
-				writer.WriteASCII(",\"p\":{");
+                writer.Write((byte)']');
+            }
 
-				var first = true;
+            // i and ti (ID and TemplateID) are not necessary.
 
-				foreach (var kvp in Pointers)
-				{
-					if (first)
-					{
-						first = false;
-					}
-					else
-					{
-						writer.Write((byte)',');
-					}
-					writer.WriteEscaped(kvp.Key);
-					writer.Write((byte)':');
-					writer.WriteS(kvp.Value);
-				}
+            if (Pointers != null && Pointers.Count > 0)
+            {
+                writer.WriteASCII(",\"p\":{");
 
-				writer.Write((byte)'}');
-			}
+                var first = true;
 
-			if (!leaveOpen)
-			{
-				writer.Write((byte)'}');
-			}
-		}
+                foreach (var kvp in Pointers)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        writer.Write((byte)',');
+                    }
+                    writer.WriteEscaped(kvp.Key);
+                    writer.Write((byte)':');
+                    writer.WriteS(kvp.Value);
+                }
 
-		/// <summary>
-		/// Appends string content as a child of this node.
-		/// </summary>
-		/// <param name="stringContent"></param>
-		/// <returns></returns>
-		public CanvasNode AppendChild(string stringContent)
-		{
-			var newNode = new CanvasNode() { StringContent = stringContent };
-			return AppendChild(newNode);
-		}
+                writer.Write((byte)'}');
+            }
 
-		/// <summary>
-		/// Chainable append child.
-		/// </summary>
-		/// <param name="child"></param>
-		/// <returns></returns>
-		public CanvasNode AppendChild(CanvasNode child)
-		{
-			if (Content == null)
-			{
-				Content = new List<CanvasNode>();
-			}
-			Content.Add(child);
-			return this;
-		}
+            if (!leaveOpen)
+            {
+                writer.Write((byte)'}');
+            }
+        }
 
-		/// <summary>
-		/// Json serialization settings for canvases
-		/// </summary>
-		private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
-		{
-			ContractResolver = new DefaultContractResolver
-			{
-				NamingStrategy = new CamelCaseNamingStrategy()
-			},
-			Formatting = Formatting.None
-		};
+        /// <summary>
+        /// Appends string content as a child of this node.
+        /// </summary>
+        /// <param name="stringContent"></param>
+        /// <returns></returns>
+        public CanvasNode AppendChild(string stringContent)
+        {
+            var newNode = new CanvasNode() { StringContent = stringContent };
+            return AppendChild(newNode);
+        }
 
-		/// <summary>
-		/// Sets an attribute of the given name to an optional value in a chainable way.
-		/// </summary>
-		public CanvasNode With(string attrib, object value = null){
-			if(Data == null)
-			{
-				Data = new Dictionary<string, object>();
-			}
-			Data[attrib] = value;
-			return this;
-		}
-		
-		/// <summary>
-		/// Sets an attribute of the given name to being the primary object in a chainable way.
-		/// </summary>
-		public CanvasNode WithPrimaryLink(string attrib){
-			if(Links == null)
-			{
-				Links = new Dictionary<string, CanvasDataStoreLink>();
-			}
+        /// <summary>
+        /// Chainable append child.
+        /// </summary>
+        /// <param name="child"></param>
+        /// <returns></returns>
+        public CanvasNode AppendChild(CanvasNode child)
+        {
+            if (Content == null)
+            {
+                Content = new List<CanvasNode>();
+            }
+            Content.Add(child);
+            return this;
+        }
 
-			Links[attrib] = new CanvasDataStoreLink(null, false, true);
-			return this;
-		}
-		
-		/// <summary>
-		/// Sets an attribute of the given name to being the primary object in a chainable way.
-		/// </summary>
-		public CanvasNode WithLink(string attrib, string field, bool isWriteable){
-			if(Links == null)
-			{
-				Links = new Dictionary<string, CanvasDataStoreLink>();
-			}
+        /// <summary>
+        /// Json serialization settings for canvases
+        /// </summary>
+        private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new CamelCaseNamingStrategy()
+            },
+            Formatting = Formatting.None
+        };
 
-			Links[attrib] = new CanvasDataStoreLink(field, isWriteable, false);
-			return this;
-		}
+        /// <summary>
+        /// Sets an attribute of the given name to an optional value in a chainable way.
+        /// </summary>
+        public CanvasNode With(string attrib, object value = null)
+        {
+            if (Data == null)
+            {
+                Data = new Dictionary<string, object>();
+            }
+            Data[attrib] = value;
+            return this;
+        }
 
-	}
+        /// <summary>
+        /// Sets an attribute of the given name to being the primary object in a chainable way.
+        /// </summary>
+        public CanvasNode WithPrimaryLink(string attrib)
+        {
+            if (Links == null)
+            {
+                Links = new Dictionary<string, CanvasDataStoreLink>();
+            }
 
-	/// <summary>
-	/// A data store link.
-	/// </summary>
-	public struct CanvasDataStoreLink
-	{
-		/// <summary>
-		/// True if it's the write direction. A function is passed to the prop which takes 1 arg, the value to write.
-		/// </summary>
-		public bool Write;
+            Links[attrib] = new CanvasDataStoreLink(null, false, true);
+            return this;
+        }
 
-		/// <summary>
-		/// The field.
-		/// </summary>
-		public string Field;
+        /// <summary>
+        /// Sets an attribute of the given name to being the primary object in a chainable way.
+        /// </summary>
+        public CanvasNode WithLink(string attrib, string field, bool isWriteable)
+        {
+            if (Links == null)
+            {
+                Links = new Dictionary<string, CanvasDataStoreLink>();
+            }
 
-		/// <summary>
-		/// True if write/field are ignored and the primary object is provided to the prop.
-		/// </summary>
-		public bool Primary;
+            Links[attrib] = new CanvasDataStoreLink(field, isWriteable, false);
+            return this;
+        }
 
-		/// <summary>
-		/// A preconstructed json string.
-		/// </summary>
-		public readonly string JsonString;
+    }
 
-		/// <summary>
-		/// Create a new link.
-		/// </summary>
-		/// <param name="field"></param>
-		/// <param name="write"></param>
-		/// <param name="primary"></param>
-		public CanvasDataStoreLink(string field, bool write, bool primary)
-		{
-			JsonString = "{\"write\": " + (write ? "true" :"false") + ",\"primary\": " + (primary ? "true" : "false") + ",\"field\":\"" + field + "\"}";
-		}
-	}
+    /// <summary>
+    /// A data store link.
+    /// </summary>
+    public struct CanvasDataStoreLink
+    {
+        /// <summary>
+        /// True if it's the write direction. A function is passed to the prop which takes 1 arg, the value to write.
+        /// </summary>
+        public bool Write;
 
-	/// <summary>
-	/// Details for the canvas being loaded, if any.
-	/// </summary>
-	public partial class CanvasDetails
-	{
-		/// <summary>
-		/// A graph node loader if one is present.
-		/// </summary>
-		public NodeLoader GraphNodeLoader;
+        /// <summary>
+        /// The field.
+        /// </summary>
+        public string Field;
 
-		/// <summary>
-		/// The data map if one is present.
-		/// </summary>
-		public List<CanvasGeneratorMapEntry> DataMap;
-	}
+        /// <summary>
+        /// True if write/field are ignored and the primary object is provided to the prop.
+        /// </summary>
+        public bool Primary;
+
+        /// <summary>
+        /// A preconstructed json string.
+        /// </summary>
+        public readonly string JsonString;
+
+        /// <summary>
+        /// Create a new link.
+        /// </summary>
+        /// <param name="field"></param>
+        /// <param name="write"></param>
+        /// <param name="primary"></param>
+        public CanvasDataStoreLink(string field, bool write, bool primary)
+        {
+            JsonString = "{\"write\": " + (write ? "true" : "false") + ",\"primary\": " + (primary ? "true" : "false") + ",\"field\":\"" + field + "\"}";
+        }
+    }
+
+    /// <summary>
+    /// Details for the canvas being loaded, if any.
+    /// </summary>
+    public partial class CanvasDetails
+    {
+        /// <summary>
+        /// A graph node loader if one is present.
+        /// </summary>
+        public NodeLoader GraphNodeLoader;
+
+        /// <summary>
+        /// The data map if one is present.
+        /// </summary>
+        public List<CanvasGeneratorMapEntry> DataMap;
+    }
 }

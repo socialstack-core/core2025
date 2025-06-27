@@ -13,8 +13,9 @@ namespace Api.Payments
 	public partial class PurchaseController : AutoController<Purchase>
 	{
 
+		/*
 		/// <summary>
-		/// POST /v1/purchase/submit
+		/// POST /v1/purchase/submit (Obsolete)
 		/// Creates a purchase from a list of submitted items and a payment method.
 		/// The items may also specify they are for a subscription by declaring isSubscribing: true instead of quantity.
 		/// 
@@ -23,7 +24,6 @@ namespace Api.Payments
 		///		items: [
 		///			{product: uintId, quantity: ulong, isSubscribing: bool}
 		///		],
-		///		couponCode: x,
 		///		future - delivery address etc
 		/// }
 		/// 
@@ -174,22 +174,6 @@ namespace Api.Payments
 			else
 			{
 				throw new PublicException("Payment method missing", "payment_method_required");
-			}
-
-			var couponCodeJson = purchaseOrder["couponCode"];
-			Coupon coupon = null;
-
-			if (couponCodeJson != null)
-			{
-				if (couponCodeJson.Type != JTokenType.String)
-				{
-					throw new PublicException("Coupon code provided but it was an invalid type", "coupon_invalid");
-				}
-
-				var couponCode = couponCodeJson.ToString();
-
-				// Attempt to get the coupon:
-				coupon = await Services.Get<CouponService>().Where("Token=?", DataOptions.IgnorePermissions).Bind(couponCode).First(context);
 			}
 
 			var productQuantities = Services.Get<ProductQuantityService>();
@@ -456,5 +440,6 @@ namespace Api.Payments
 			};
 
 		}
+		*/
 	}
 }

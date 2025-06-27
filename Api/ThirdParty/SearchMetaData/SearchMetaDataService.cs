@@ -1,17 +1,13 @@
-﻿using Api.CanvasRenderer;
-using Api.Database;
+﻿using Api.Database;
 using Api.Eventing;
-using Api.Permissions;
 using Api.Startup;
 using Api.Translate;
-using Mysqlx.Crud;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Context = Api.Contexts.Context;
 
@@ -29,7 +25,7 @@ namespace Api.SearchMetaData
         /// <summary>
         /// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
         /// </summary>
-        public SearchMetaDataService(ContentFieldAccessRuleService fieldAccessRuleService)
+        public SearchMetaDataService()
         {
             _cfg = GetConfig<SearchMetaDataConfig>();
 
@@ -54,10 +50,16 @@ namespace Api.SearchMetaData
                     return service;
                 }
 
-                // ensure there is a mapping for the service
-                var mapping = _cfg.Mappings.FirstOrDefault(i => i.Type == service.EntityName);
-                if (mapping == null || string.IsNullOrWhiteSpace(mapping.Includes))
+                // ensure we are configued for the entity
+                var mapping = _cfg.Mappings.FirstOrDefault(i => i.Name == service.EntityName);
+                if (mapping == null)
                 {
+                    return service;
+                }
+
+                if (mapping.FieldNames == null || mapping.FieldNames.Count == 0)
+                {
+                    Log.Warn(LogTag, $"{service.EntityName}Service : Incorrect config (fieldnames)");
                     return service;
                 }
 
@@ -90,7 +92,7 @@ namespace Api.SearchMetaData
 
             if (_cfg.DebugToConsole)
             {
-                Log.Info(LogTag, $"Registering Search Metadata for {service.EntityName}");
+                Log.Info(LogTag, $"{service.EntityName}Service : Registering Search Metadata");
             }
 
             // Content types that are configured for additional metaddata indexing processed here.    
@@ -106,56 +108,61 @@ namespace Api.SearchMetaData
                     metadataText = new HashSet<string>();
                 }
 
-                // extract out any includes for the primaryObject
-                var mapping = _cfg.Mappings.FirstOrDefault(i => i.Type == po.Type);
-
-                if (mapping != null && !string.IsNullOrWhiteSpace(mapping.Includes))
+                // ensure we are configued for the entity (incase has changed since handler was created)
+                var mapping = _cfg.Mappings.FirstOrDefault(i => i.Name == service.EntityName);
+                if (mapping == null || mapping.FieldNames == null || mapping.FieldNames.Count == 0)
                 {
-                    // get all the includes (as per front end calls we get json back initially)
-                    var jsonString = await service.ToJson(ctx, po, mapping.Includes);
+                    return metadataText;
+                }
+
+                // inject the primary object into the metadata 
+                metadataText.UnionWith(ExtractMetaDataStrings(ctx, mapping.FieldNames, po));
+
+                if (mapping.Includes != null && mapping.Includes.Count > 0)
+                {
+                    var uniqueIncludeNames = mapping.Includes
+                        .Where(i => 
+                            !string.IsNullOrWhiteSpace(i.Name) &&
+                            i.FieldNames != null && 
+                            i.FieldNames.Count > 0
+                        )
+                        .Select(i => i.Name)
+                        .Distinct();
+
+                    // get the includes (as per front end calls we get json back initially)
+                    var jsonString = await service.ToJson(ctx, po, string.Join(",", uniqueIncludeNames));
                     var searchMetaData = JsonConvert.DeserializeObject<SearchMetaData>("{\"primaryObject\" : " + jsonString + "}");
 
                     dynamic includedService = null;
                     string includeType = "";
 
-                    // also inject the primary object into the metadata 
-                    if (_cfg.IncludePrimary)
-                    {
-                        metadataText.UnionWith(ExtractAllStringValues(ctx, po));
-                    };
-
                     // map the includes back to real objects
-                    foreach (var include in searchMetaData.Includes.SelectMany(s => s.Values))
+                    foreach (var include in searchMetaData.Includes)
                     {
-                        string typeName = include["type"]?.ToString();
-                        string id = include["id"]?.ToString();
-
-                        if (!string.IsNullOrWhiteSpace(typeName) && !string.IsNullOrWhiteSpace(id))
+                        foreach (var entity in include.Values)
                         {
-                            if (typeName.ToLower() == "user")
-                            {
-                                continue;
-                            }
+                            string typeName = entity["type"]?.ToString();
+                            string id = entity["id"]?.ToString();
 
-                            if (typeName != includeType)
+                            if (!string.IsNullOrWhiteSpace(typeName) && !string.IsNullOrWhiteSpace(id))
                             {
-                                // get the relevant service
-                                includeType = typeName;
-                                includedService = Services.Get($"{includeType}Service");
-                            }
+                                if (typeName != includeType)
+                                {
+                                    // get the relevant service
+                                    includeType = typeName;
+                                    includedService = Services.Get($"{includeType}Service");
+                                }
 
-                            // map into real object so that use field definitions etc 
-                            var dataItem = await includedService.Where("Id=?", DataOptions.IgnorePermissions).Bind(Convert.ChangeType(id, TypeCode.UInt32)).First(ctx);
-                            if (dataItem != null)
-                            {
-                                metadataText.UnionWith(ExtractAllStringValues(ctx, dataItem));
+                                // map into real object so that use field definitions etc 
+                                var dataItem = await includedService.Where("Id=?", DataOptions.IgnorePermissions).Bind(Convert.ChangeType(id, TypeCode.UInt32)).First(ctx);
+                                if (dataItem != null)
+                                {
+                                    var fieldNames = mapping.Includes.FirstOrDefault(i => i.Name.Equals(include.Field,StringComparison.InvariantCultureIgnoreCase))?.FieldNames;
+                                    metadataText.UnionWith(ExtractMetaDataStrings(ctx, fieldNames, dataItem));
+                                }
                             }
                         }
                     }
-                }
-                else if (_cfg.IncludePrimary)
-                {
-                    metadataText.UnionWith(ExtractAllStringValues(ctx, po));
                 }
 
                 return metadataText;
@@ -173,7 +180,7 @@ namespace Api.SearchMetaData
             }, 20);
         }
 
-        private async Task<T> HandleSearchMetaData<T,ID>(Context ctx, T entity, AutoService<T, ID> service)
+        private async Task<T> HandleSearchMetaData<T, ID>(Context ctx, T entity, AutoService<T, ID> service)
             where T : Content<ID>, new()
             where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
         {
@@ -197,38 +204,28 @@ namespace Api.SearchMetaData
             return entity;
         }
 
-
-        /// <summary>
-        /// Locate any string field elements in an object
-        /// </summary>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        private IEnumerable<FieldInfo> GetStringFields<TEntity>(TEntity entity)
-        {
-            return entity.GetType().GetFields().Where(p =>
-            p.FieldType == typeof(String) ||
-            p.FieldType == typeof(string) ||
-            p.FieldType == typeof(Localized<string>) ||
-            p.FieldType == typeof(Localized<JsonString>));
-        }
-
         /// <summary>
         /// Extract any strings from an object
         /// used to extract indexable content from primaryObjects and metadata (includes)
         /// also parses and updates the values in the passed in object 
         /// </summary>
         /// <param name="ctx"></param>
-        /// <param name="instance"></param>
+        /// <param name="fieldNames"></param>
+        /// <param name="entity"></param>
         /// <returns></returns>
-        private IEnumerable<string> ExtractAllStringValues<TEntity>(Context ctx, TEntity instance)
+        private IEnumerable<string> ExtractMetaDataStrings<TEntity>(Context ctx, List<string> fieldNames, TEntity entity)
         {
             var stringValues = new HashSet<string>();
 
-            foreach (var field in GetStringFields(instance))
+            if (fieldNames== null || fieldNames.Count==0)
             {
-                // ignore any coinfigured fields such as slug etc
-                if (_cfg.IgnoredFields.Contains(field.Name, StringComparer.InvariantCultureIgnoreCase))
+                return stringValues;
+            }
+
+            foreach (var field in entity.GetType().GetFields())
+            {
+                // ONLY include configured fields
+                if (!fieldNames.Contains(field.Name, StringComparer.InvariantCultureIgnoreCase))
                 {
                     continue;
                 }
@@ -237,18 +234,18 @@ namespace Api.SearchMetaData
 
                 if (field.FieldType == typeof(Localized<JsonString>))
                 {
-                    value = ((Localized<JsonString>)field.GetValue(instance)).Get(ctx).ValueOf();
+                    value = ((Localized<JsonString>)field.GetValue(entity)).Get(ctx).ValueOf();
                 }
                 else if (field.FieldType == typeof(Localized<string>))
                 {
-                    value = ((Localized<string>)field.GetValue(instance)).Get(ctx);
+                    value = ((Localized<string>)field.GetValue(entity)).Get(ctx);
                 }
                 else
                 {
-                    value = (string)field.GetValue(instance);
+                    value = (string)field.GetValue(entity);
                 }
 
-                // ignore empty strings and any and links and images
+                // ignore empty strings, links or images
                 if (string.IsNullOrWhiteSpace(value) ||
                     value.StartsWith("public:") ||
                     value.StartsWith("private:") ||
@@ -271,7 +268,7 @@ namespace Api.SearchMetaData
                 {
                     if (_cfg.DebugToConsole)
                     {
-                        Log.Info("Search Metadata", $"Plain text value - {instance.GetType().Name} {field.Name} {value}");
+                        Log.Info("Search Metadata", $"Plain text value - {entity.GetType().Name} {field.Name} {value}");
                     }
 
                     stringValues.Add(value);

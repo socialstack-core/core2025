@@ -73,7 +73,7 @@ namespace Api.Eventing
 		/// <summary>
 		/// Set of events for a paymentMethod.
 		/// </summary>
-		public static EventGroup<PaymentMethod> PaymentMethod;
+		public static PaymentMethodEventGroup PaymentMethod;
 
 		/// <summary>
 		/// Set of events for a subscription.
@@ -86,6 +86,19 @@ namespace Api.Eventing
 		public static ProductEventGroup Product;
 	}
 
+	/// <summary>
+	/// Specialised event group for the PaymentMethod event type.
+	/// </summary>
+	public partial class PaymentMethodEventGroup : EventGroup<PaymentMethod>
+	{
+
+		/// <summary>
+		/// Called when checking if BNPL is available to the given context.
+		/// </summary>
+		public EventHandler<BuyNowPayLater> AuthoriseBuyNowPayLater;
+
+	}
+	
 	/// <summary>
 	/// Specialised event group for the DeliveryOption event type.
 	/// </summary>
@@ -110,8 +123,13 @@ namespace Api.Eventing
 		/// </summary>
 		public EventHandler<ProductSearch> Search;
 
+		/// <summary>
+		/// Called when pricing for a product is being established.
+		/// </summary>
+		public EventHandler<List<Price>, Product> Pricing;
+
 	}
-	
+
 	/// <summary>
 	/// Specialised event group for the Purchase type in order to add additional events.
 	/// As usual, instanced automatically by the event handler engine.

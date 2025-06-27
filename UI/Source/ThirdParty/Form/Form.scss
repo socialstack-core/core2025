@@ -1,29 +1,29 @@
 :root {
 	// set defaults
-	--label-color: currentColor;
+	--label-color: #{$default-label-color};
 	--label-font-size: var(--label-md-font-size, #{$default-label-md-font-size});
 	--label-font-weight: var(--label-md-font-weight, #{$default-label-md-font-weight});
 	
-	--field-background: #fff;
-	--field-color: currentColor;
-	--field-border: 1px solid currentColor;
+	--field-background: #{$default-field-background};
+	--field-color: #{$default-field-color};
+	--field-border: #{$default-field-border};
 
-	--field-select-background: #fff;
-	--field-select-color: currentColor;
-	--field-select-border: 1px solid currentColor;
-	--field-select-option-background: #fff;
-	--field-select-icon--dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9' fill='none'%3E%3Cpath d='M15.8 1.66a.69.69 0 000-.96.66.66 0 00-.94 0L8.94 6.74a1.31 1.31 0 01-1.88 0L1.13.7A.66.66 0 00.2.7a.7.7 0 000 .97L6.12 7.7a2.62 2.62 0 003.77 0l5.93-6.04h-.02z' fill='currentColor'/%3E%3C/svg%3E");
-	--field-select-icon--light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9' fill='none'%3E%3Cpath d='M15.8 1.66a.69.69 0 000-.96.66.66 0 00-.94 0L8.94 6.74a1.31 1.31 0 01-1.88 0L1.13.7A.66.66 0 00.2.7a.7.7 0 000 .97L6.12 7.7a2.62 2.62 0 003.77 0l5.93-6.04h-.02z' fill='%23fff'/%3E%3C/svg%3E");
+	--field-select-background: #{$default-field-select-background};
+	--field-select-color: #{$default-field-select-color};
+	--field-select-border: #{$default-field-select-border};
+	--field-select-option-background: #{$default-field-select-option-background};
+	--field-select-icon--dark: #{$default-field-select-icon-dark};
+	--field-select-icon--light: #{$default-field-select-icon-light};
 	--field-select-icon: var(--field-select-icon--dark);
 
-	--field-placeholder-color: currentColor;
-	--field-placeholder-font-style: italic;
-	--field-placeholder-opacity: .6;
+	--field-placeholder-color: #{$default-field-placeholder-color};
+	--field-placeholder-font-style: #{$default-field-placeholder-font-style};
+	--field-placeholder-opacity: #{$default-field-placeholder-opacity};
 	
-	--field-readonly-background: #e8e8e8;
-	--field-disabled-background: #fff;
-	--field-disabled-opacity: .6;
-	--field-text-color: #6c757d; // for small info text / validation messages displayed beneath the field
+	--field-readonly-background: #{$default-field-readonly-background};
+	--field-disabled-background: #{$default-field-disabled-background};
+	--field-disabled-opacity: #{$default-field-disabled-opacity};
+	--field-text-color: #{$default-field-text-color}; // for small info text / validation messages displayed beneath the field
 
 	--field-min-height: var(--field-md-min-height, #{$default-field-md-min-height});
 	--field-padding: var(--field-md-padding, #{$default-field-md-padding});

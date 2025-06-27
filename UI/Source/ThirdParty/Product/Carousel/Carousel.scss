@@ -87,8 +87,17 @@ $max-product-images: 5;
 		}
 		
 		&::-webkit-scrollbar-thumb {
-			background-color: #F0CFE5;
-			border-radius: px_to_rem(5px);
+			background-color: transparent;
+			border-radius: px_to_rem(5);
+			transition: background-color .2s ease;
+		}
+
+		&:hover {
+
+			&::-webkit-scrollbar-thumb {
+				background-color: #aaa;
+			}
+
 		}
 
 	}
@@ -219,7 +228,7 @@ body:has(.ui-product-images__slide[open]) {
 	overflow: hidden;
 }
 
-@media only screen and (min-width: 1400px) {
+@media only screen and (min-width: 600px) {
 	
 	.ui-product-images {
 		$product-images: &;

@@ -26,7 +26,20 @@ namespace Api.Payments
 		/// <summary>
 		/// Set if a coupon was used.
 		/// </summary>
+		[JsonIgnore]
 		public uint CouponId;
+
+		/// <summary>
+		/// Exclude tax on this purchase.
+		/// </summary>
+		[JsonIgnore]
+		public bool ExcludeTax;
+
+		/// <summary>
+		/// The tax jurisdiction of the purchase.
+		/// </summary>
+		[JsonIgnore]
+		public string TaxJurisdiction;
 
 		/// <summary>
 		/// True if this purchase was only authorised, not actually executed.
@@ -65,13 +78,20 @@ namespace Api.Payments
 		public string CurrencyCode;
 
 		/// <summary>
-		/// The total cost in the currency codes native atomic unit.
+		/// The total cost in the currency codes native atomic unit, inclusive of any tax.
 		/// </summary>
 		public ulong TotalCost;
 
 		/// <summary>
+		/// True if any of the products in this purchase are subs.
+		/// </summary>
+		[JsonIgnore]
+		public bool HasSubscriptions;
+
+		/// <summary>
 		/// A field for identifying duplicate purchase requests. Used by the content type.
 		/// </summary>
+		[JsonIgnore]
 		public ulong ContentAntiDuplication;
 
 		/// <summary>

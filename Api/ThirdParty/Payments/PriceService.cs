@@ -44,7 +44,9 @@ namespace Api.Payments
 		/// <returns></returns>
 		public async ValueTask<TaxCalculator> GetTaxCalculator(Context context, string jurisdiction)
 		{
-			if (_taxCalculators == null)
+			var calcs = _taxCalculators;
+
+			if (calcs == null)
 			{
 				// Tax calc is not active.
 				return null;
@@ -63,18 +65,16 @@ namespace Api.Payments
 				}
 			}
 
-			if (!_taxCalculators.TryGetValue(jurisdiction, out TaxCalculator calc))
+			if (!calcs.TryGetValue(jurisdiction, out TaxCalculator calc))
 			{
 				throw new PublicException("Tax calculation is active but jurisdiction is not configured '" + jurisdiction + "'.", "tax/jurisdiction_notfound");
 			}
+
 			return calc;
 		}
 
 		private void UpdateTaxConfig()
 		{
-			// Get the cached locale set:
-			var locales = ContentTypes.Locales;
-
 			var taxConfig = _config.Tax;
 
 			if (taxConfig == null)

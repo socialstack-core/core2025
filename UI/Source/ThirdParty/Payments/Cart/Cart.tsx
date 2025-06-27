@@ -22,14 +22,14 @@ interface CartProps {
 const Cart: React.FC<CartProps> = (props) => {
 	const title = props.title?.length ? props.title : `Shopping Cart`;
 	const { setPage } = useRouter();
-	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading } = useCart();
+	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading, lessTax } = useCart();
 	var [showEmptyCartPrompt, setShowEmptyCartPrompt] = useState(null);
 
 	return <>
 		<h1 className="shopping-cart__title">
 			{title}
 		</h1>
-		{loading ? <Loading /> : <ProductTable shoppingCart={shoppingCart} addToCart={addToCart} />}
+		{loading ? <Loading /> : <ProductTable shoppingCart={shoppingCart} addToCart={addToCart} lessTax={lessTax} />}
 
 		{!cartIsEmpty() && <>
 			<div className="shopping-cart__footer">

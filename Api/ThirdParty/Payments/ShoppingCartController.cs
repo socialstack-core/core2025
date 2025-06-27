@@ -1,5 +1,7 @@
 using Api.Contexts;
+using Api.Startup;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -58,12 +60,64 @@ namespace Api.Payments
                 );
         }
 
-    }
+		/// <summary>
+		/// Checkout the cart.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="checkout"></param>
+		/// <returns></returns>
+		[HttpPost("checkout")]
+		public async ValueTask<PurchaseAndAction?> Checkout(Context context, [FromBody] CheckoutInfo checkout)
+		{
+			var cart = await (_service as ShoppingCartService).Get(context, checkout.ShoppingCartId);
 
-    /// <summary>
-    /// Represents quantity or quantity change in a cart. Only one or the other - not both.
-    /// </summary>
-    public struct CartQuantity
+			if (cart == null)
+			{
+				return null;
+			}
+
+			return await (_service as ShoppingCartService)
+				.Checkout(
+					context,
+					cart,
+					checkout.PaymentMethod
+				);
+		}
+
+	}
+
+	/// <summary>
+	/// Checking out a cart.
+	/// </summary>
+	public struct CheckoutInfo
+	{
+		/// <summary>
+		/// The cart ID.
+		/// </summary>
+		public uint ShoppingCartId;
+
+		/// <summary>
+		/// Delivery address ID if necessary.
+		/// </summary>
+		public uint DeliveryAddressId;
+
+		/// <summary>
+		/// Billing address if necessary.
+		/// </summary>
+		public uint BillingAddressId;
+
+		/// <summary>
+		/// If using a saved payment method, the ID of it or the details for a one off payment use.
+		/// This can be null if it's a free or buy now pay later order. 
+		/// Buy now pay later orders must be available to the user.
+		/// </summary>
+		public JToken PaymentMethod;
+	}
+
+	/// <summary>
+	/// Represents quantity or quantity change in a cart. Only one or the other - not both.
+	/// </summary>
+	public struct CartQuantity
     {
 		/// <summary>
 		/// The delta quantity. Use this or Total.
