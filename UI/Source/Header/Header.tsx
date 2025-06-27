@@ -151,7 +151,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 	const [primaryLinks, setPrimaryLinks] = useState<HeaderLinkProps[]>([]);
 	const { session } = useSession();
-	var { user } = session;
+	var { user, locale } = session;
 
 	const notificationBellSVG = <>
 		<svg viewBox="0 0 12 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -228,12 +228,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	var basketTotal = cartEmpty ? 0 : (lessTax ? cartContents?.totalLessTax : cartContents?.total);
 
 	let basketItems = cartEmpty ? [] : cartContents?.contents;
-	let currencyCode = cartContents?.currencyCode;
-
-	// TEMP
-	if (!currencyCode) {
-		currencyCode = "GBP";
-	}
+	let currencyCode = cartContents?.currencyCode || locale.currencyCode || "GBP";
 
 	basketItems.forEach(cartInfo => {
 		var qty = cartInfo.quantity;
@@ -396,9 +391,9 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 							/>
 						})}
 						{!cartIsEmpty() && <>
-							<a href="/cart" className="btn btn-primary site-header__basket-checkout">
+							<Link href="/cart" variant="primary" className="site-header__basket-checkout">
 								{`View order`}
-							</a>
+							</Link>
 						</>}
 					</div>
 
