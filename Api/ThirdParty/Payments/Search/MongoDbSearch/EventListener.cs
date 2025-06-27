@@ -28,6 +28,7 @@ public class MongoSearchEventListener
 	{
 		bool? atlasIdentityChecked = null;
 		IMongoCollection<Product> productCollection = null;
+		ProductSearchService searchService = null;
 
 		Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
 
@@ -97,6 +98,11 @@ public class MongoSearchEventListener
 			{
 				// Atlas Search pipeline
 
+				if (searchService == null)
+				{
+					searchService = Services.Get<ProductSearchService>();
+				}
+
 				var compoundDoc = new BsonDocument
 				{
 					{ "should", new BsonArray
@@ -157,7 +163,7 @@ public class MongoSearchEventListener
 
 				var searchStage = new BsonDocument
 				{
-					{ "index", "default" },
+					{ "index", searchService.CurrentConfig().AtlasIndex ?? "default" },
 					{ "compound", compoundDoc }
 				};
 

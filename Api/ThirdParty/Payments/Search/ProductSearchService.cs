@@ -142,13 +142,18 @@ public class ProductSearchService : AutoService
 {
 	private bool _searchFallback;
 
+	private ProductSearchServiceConfig _productSearchConfig;
+
 	/// <summary>
 	/// Instanced automatically.
 	/// </summary>
 	/// <param name="products"></param>
 	public ProductSearchService(ProductService products)
 	{
-        Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
+		_productSearchConfig = GetConfig<ProductSearchServiceConfig>();
+
+
+		Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
 
 			if (search.Handled)
 			{
@@ -176,6 +181,15 @@ public class ProductSearchService : AutoService
 			return search;
 		}, 11);
     }
+
+	/// <summary>
+	/// Gets the current configuration. This is a live object - it updates whenever the config does.
+	/// </summary>
+	/// <returns></returns>
+	public ProductSearchServiceConfig CurrentConfig()
+	{
+		return _productSearchConfig;
+	}
 
 	/// <summary>
 	/// Searches products.
