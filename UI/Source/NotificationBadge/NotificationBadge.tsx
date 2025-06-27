@@ -18,6 +18,7 @@ interface NotificationBadgeProps {
  */
 const NotificationBadge: React.FC<NotificationBadgeProps> = (props) => {
 	var { count, icon } = props;
+	const MAX_COUNT = 99;
 
 	if (!icon && count <= 0) {
 		return;
@@ -25,14 +26,14 @@ const NotificationBadge: React.FC<NotificationBadgeProps> = (props) => {
 
 	var notificationClass: string[] = ['notification-badge'];
 
-	if (!icon && count > 99) {
+	if (!icon && count > MAX_COUNT) {
 		notificationClass.push('notification-badge--small');
 	}
 
 	return <>
 		<span className={notificationClass.join(' ')}>
 			{icon}
-			{!icon && count > 0 && count}
+			{!icon && count > 0 && Math.min(count, MAX_COUNT)}
 		</span>
 	</>;
 }
