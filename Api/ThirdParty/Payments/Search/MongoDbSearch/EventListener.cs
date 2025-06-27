@@ -147,11 +147,30 @@ public class MongoSearchEventListener
 							appliedFacets = new List<BsonDocument>();
 						}
 
-						appliedFacets.Add(new BsonDocument("terms", new BsonDocument
+						string mappingPath = "Mappings." + facet.Mapping.ToLower();
+
+						if (search.SearchType == ProductSearchType.Reductive)
 						{
-							{ "path", "Mappings." + facet.Mapping.ToLower() },
-							{ "value", new BsonArray(ids) }
-						}));
+							// this way all the values become "AND" and reduce 
+							// the collection size where a product doesn't meet the criteria.
+							foreach (var id in ids)
+							{
+								appliedFacets.Add(new BsonDocument("term", new BsonDocument
+								{
+									{ "path", mappingPath },
+									{ "value", (long) id }
+								}));
+							}
+						}
+						else
+						{
+							// default behaviour, catches products where any of/ in
+							appliedFacets.Add(new BsonDocument("terms", new BsonDocument
+							{
+								{ "path", mappingPath },
+								{ "value", new BsonArray(ids) }
+							}));
+						}
 					}
 
 					if (appliedFacets != null)
