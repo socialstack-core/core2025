@@ -69,16 +69,6 @@ const Price: React.FC<PriceProps> = (props) => {
 	}
 	else {
 		return null;
-/*
-		// TEMP - force price display
-		currencyCode = locale ? locale.currencyCode : "GBP";
-
-		if (!currencyCode) {
-			currencyCode = "GBP";
-		}
-
-		amount = 12345;
-*/		
 	}
 
 	// TODO: optional previous price

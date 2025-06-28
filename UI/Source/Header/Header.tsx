@@ -228,7 +228,11 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 	var basketTotal = cartEmpty ? 0 : (lessTax ? cartContents?.totalLessTax : cartContents?.total);
 
 	let basketItems = cartEmpty ? [] : cartContents?.contents;
-	let currencyCode = cartContents?.currencyCode || locale.currencyCode || "GBP";
+	let currencyCode = cartContents?.currencyCode || locale.currencyCode;
+
+	if (!currencyCode) {
+		throw new Error('currency reqd.');
+	}
 
 	basketItems.forEach(cartInfo => {
 		var qty = cartInfo.quantity;
