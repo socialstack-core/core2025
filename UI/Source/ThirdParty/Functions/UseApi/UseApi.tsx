@@ -3,26 +3,24 @@ import { useEffect, useState } from 'react';
 
 const useApi = <T,>(loader: () => Promise<T>, deps?: React.DependencyList) => {
     const state = useState<T>(() => {
-        // Todo: attempt to obtain data from SSR content response
+        // SSR hydration logic placeholder
         return null as T;
     });
 
     const [current, setCurrent] = state;
 
     useEffect(() => {
-        loader()
-            .then(val => {
-                if (!val) {
-                    return;
-                }
-                setCurrent(val)
-            });
+        let isCurrent = true;
 
-    // [Lint disabled here] 
-    // Reason: the dependency array expects an array literal, we're
-    // passing dependencies here from the method which
-    // renders this impossible.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        loader().then(val => {
+            if (!val || !isCurrent) return;
+            setCurrent(val);
+        });
+
+        return () => {
+            isCurrent = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, deps);
 
     return state;
