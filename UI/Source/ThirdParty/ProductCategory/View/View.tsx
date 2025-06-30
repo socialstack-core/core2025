@@ -14,6 +14,7 @@ import {
 	SecondaryIncludes
 } from "Api/Includes";
 import { useEffect, useMemo, useState, useRef } from "react";
+import Alert from "UI/Alert";
 
 interface ViewProps {
 	productCategory: ProductCategory;
@@ -359,8 +360,6 @@ const View: React.FC<ViewProps> = ({ productCategory }) => {
 		});
 	}, [products, selectedDirectChildren, directChildren]);
 
-	if (!products) return <Loading />;
-
 	const GBPound = new Intl.NumberFormat('en-GB', {
 		style: 'currency',
 		currency: 'GBP',
@@ -459,7 +458,7 @@ const View: React.FC<ViewProps> = ({ productCategory }) => {
 				</div>
 			</header>
 
-			<ProductList content={products.results} viewStyle={viewStyle} />
+			{products && products.results && products.results.length != 0 ? <ProductList content={products.results} viewStyle={viewStyle} /> : <div><Alert variant={'info'}>No products found</Alert></div>}
 		</div>
 	);
 };
