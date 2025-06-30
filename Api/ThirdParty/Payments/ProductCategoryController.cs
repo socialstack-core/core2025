@@ -118,6 +118,18 @@ namespace Api.Payments
 		{
 			return await (_service as ProductCategoryService).GetParents(context, id);
 		}
+	    
+		/// <summary>
+		/// Gets category descendants as a flat array
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		[HttpGet("{id}/descendants")]
+		public async ValueTask<ContentStream<ProductCategory, uint>> GetDescendants(Context context, [FromRoute] uint id)
+		{
+			return new ContentStream<ProductCategory, uint>(await (_service as ProductCategoryService).GetChildrenAsFlatList(context, id), _service);
+		}
 
 	}
 

@@ -266,6 +266,26 @@ namespace Api.Payments
 		}
 
 		/// <summary>
+		/// Gets all descendants of a category as a flat list.
+		/// </summary>
+		/// <param name="ctx"></param>
+		/// <param name="parentNodeId"></param>
+		/// <returns></returns>
+		public async ValueTask<List<ProductCategory>> GetChildrenAsFlatList(Context ctx, uint parentNodeId)
+		{
+			List<ProductCategory> children = [];
+			
+			var productCategory = await Where("ParentId=?", DataOptions.IgnorePermissions).Bind(parentNodeId).ListAll(ctx);
+
+			foreach (var category in productCategory)
+			{
+				children.Add(category);
+				children.AddRange(await GetChildrenAsFlatList(ctx, category.Id));
+			}
+			return children;
+		}
+
+		/// <summary>
 		/// Gets a tree node for the admin panel at a given category slug path.
 		/// As category slugs are globally unique, only actually the last one is used 
 		/// (unless it is blank, in which case root categories are returned).
