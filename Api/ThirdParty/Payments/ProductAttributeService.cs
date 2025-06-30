@@ -73,9 +73,14 @@ namespace Api.Payments
 			});
 			
 			Events.ProductAttribute.BeforeCreate.AddEventListener(async (ctx, attr) => {
-				if (string.IsNullOrWhiteSpace(attr.Key))
+				if (attr == null)
 				{
-					attr.Key = await SlugGenerator.GenerateUniqueSlug(this, ctx, attr.Name.Get(ctx));
+					return attr;
+				}
+
+				if (string.IsNullOrEmpty(attr.Key))
+				{
+					attr.Key = ToAttributeKey(attr.Name.GetFallback());
 				}
 				
 				await ValidateAttribute(ctx, attr);
@@ -84,6 +89,12 @@ namespace Api.Payments
 			});
 
 			Events.ProductAttribute.BeforeUpdate.AddEventListener(async (Context ctx, ProductAttribute attr, ProductAttribute origAttr) => {
+				
+				if (string.IsNullOrWhiteSpace(attr.Key))
+				{
+					attr.Key = await SlugGenerator.GenerateUniqueSlug(this, ctx, attr.Name.Get(ctx));
+				}
+				
 				await ValidateAttribute(ctx, attr);
 
 				// todo trigger product refresh
@@ -550,20 +561,6 @@ namespace Api.Payments
 						ProductAttributeGroupKey = "warranty"
 					}
 				);
-
-				Events.ProductAttribute.BeforeCreate.AddEventListener((Context context, ProductAttribute attrib) => {
-					if (attrib == null)
-					{
-						return new ValueTask<ProductAttribute>(attrib);
-					}
-
-					if (string.IsNullOrEmpty(attrib.Key))
-					{
-						attrib.Key = ToAttributeKey(attrib.Name.GetFallback());
-					}
-
-					return new ValueTask<ProductAttribute>(attrib);
-				});
 
 				Events.ProductAttribute.AfterCreate.AddEventListener(async (Context context, ProductAttribute attrib) => {
 					if (attrib == null)
