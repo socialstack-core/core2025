@@ -263,6 +263,8 @@ const View: React.FC<ViewProps> = ({ productCategory }) => {
 
 	// Product results
 	const [products] = useApi(() => {
+		if (selectedDirectChildren.length === 0) return Promise.resolve(null);
+
 		return searchApi.faceted({
 				searchType: ProductSearchType.Expansive,
 				appliedFacets: [
@@ -285,7 +287,7 @@ const View: React.FC<ViewProps> = ({ productCategory }) => {
 				new ProductAttributeIncludes().attributes.attribute,
 				new ProductIncludes().attributeValueFacets
 			]);
-	}, [selectedCategoryIds, selectedAttributes]);
+	}, [selectedCategoryIds, selectedAttributes, selectedDirectChildren]);
 
 	// Load attributes into attributeMap on products update
 	useEffect(() => {
