@@ -8,6 +8,8 @@ using Api.PasswordResetRequests;
 using System;
 using Api.Startup;
 using Api.Addresses;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Api.Payments
 {
@@ -34,10 +36,13 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="cart"></param>
+		/// <param name="options"></param>
 		/// <returns></returns>
-		public async ValueTask<List<DeliveryOption>> EstimateDelivery(Context context, ShoppingCart cart)
+		public async ValueTask<List<DeliveryOption>> EstimateDelivery(Context context, ShoppingCart cart, CartEstimation? options = null)
 		{
-			var address = await _addresses.Get(context, cart.AddressId, DataOptions.IgnorePermissions);
+			uint addressId = cart.AddressId != 0 ? cart.AddressId : options == null ? 0 : options.Value.DeliveryAddressId;
+
+			var address = await _addresses.Get(context, addressId, DataOptions.IgnorePermissions);
 
 			if (address == null)
 			{
@@ -108,7 +113,7 @@ namespace Api.Payments
 
 			foreach (var item in estimate.Options)
 			{
-				var estimateJson = Newtonsoft.Json.JsonConvert.SerializeObject(item);
+				var estimateJson = Newtonsoft.Json.JsonConvert.SerializeObject(item, jsonSettings);
 				var opt = await _options.Create(context, new DeliveryOption()
 				{
 					AddressId = targetAddress.Id,
@@ -121,7 +126,19 @@ namespace Api.Payments
 
 			return opts;
 		}
-		
+
+		/// <summary>
+		/// Json serialization settings for delivery options
+		/// </summary>
+		private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+		{
+			ContractResolver = new DefaultContractResolver
+			{
+				NamingStrategy = new CamelCaseNamingStrategy()
+			},
+			Formatting = Formatting.None
+		};
+
 	}
-    
+
 }

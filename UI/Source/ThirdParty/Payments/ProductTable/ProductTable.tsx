@@ -117,7 +117,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 			})}
 			<tr>
 				<td>
-					<strong>{`Total`}</strong>
+					<strong>{lessTax ? `Total (ex VAT)` : `Total`}</strong>
 				</td>
 				<td className="qty-column">
 				</td>
@@ -128,8 +128,21 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 					&nbsp;
 				</td>
 			</tr>
+			{lessTax && <tr>
+				<td>
+					<strong>{`VAT`}</strong>
+				</td>
+				<td className="qty-column">
+				</td>
+				<td className="currency-column" style={{ fontWeight: 'bold' }}>
+					{formatCurrency(pricedCart.total - pricedCart.totalLessTax, { currencyCode })}
+				</td>
+				<td>
+					&nbsp;
+				</td>
+			</tr>}
 			<tr>
-				<td colspan='3'>
+				<td colSpan='3'>
 					{hasAtLeastOneSubscription && <small>
 						<span className="footnote-asterisk"></span> {`Your payment information will be securely stored in order to process future subscription payments. The total stated will also be charged today.`}
 					</small>}

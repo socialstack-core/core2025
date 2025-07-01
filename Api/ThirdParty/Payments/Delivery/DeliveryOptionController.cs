@@ -32,14 +32,25 @@ public partial class DeliveryOptionController : AutoController<DeliveryOption>
 	/// </summary>
 	/// <param name="context"></param>
 	/// <param name="shoppingCartId"></param>
+	/// <param name="options"></param>
 	/// <returns></returns>
-	[HttpGet("estimate/cart/{shoppingCartId}")]
-	public async ValueTask<ContentStream<DeliveryOption, uint>> Estimate(Context context, [FromRoute] uint shoppingCartId)
+	[HttpPost("estimate/cart/{shoppingCartId}")]
+	public async ValueTask<ContentStream<DeliveryOption, uint>> Estimate(Context context, [FromRoute] uint shoppingCartId, [FromBody] CartEstimation options)
 	{
 		var cart = await _carts.Get(context, shoppingCartId);
-		var estimates = await _deliveries.EstimateDelivery(context, cart);
-
+		var estimates = await _deliveries.EstimateDelivery(context, cart, options);
 		return new ContentStream<DeliveryOption, uint>(estimates, _options);
 	}
 
+}
+
+/// <summary>
+/// Used when estimating a cart.
+/// </summary>
+public struct CartEstimation
+{
+	/// <summary>
+	/// Address override.
+	/// </summary>
+	public uint DeliveryAddressId;
 }

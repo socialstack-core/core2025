@@ -1,3 +1,4 @@
+using Api.Addresses;
 using Api.Payments;
 using Api.Permissions;
 using System.Collections.Generic;
@@ -174,4 +175,16 @@ namespace Api.Eventing
 		
 	}
 
+	/// <summary>
+	/// Event group for Addresses.
+	/// </summary>
+	public partial class AddressEventGroup : EventGroup<Address>
+	{
+
+		/// <summary>
+		/// Called when loading up the filter for the cart address book.
+		/// </summary>
+		public EventHandler<Filter<Address, uint>> GetCartAddressFilter;
+
+	}
 }

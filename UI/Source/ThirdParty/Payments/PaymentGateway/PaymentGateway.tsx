@@ -3,34 +3,38 @@ import CardForm from 'UI/Payments/CardForm';
 import {isoConvert} from 'UI/Functions/DateTools';
 import { useState, useEffect } from 'react';
 import paymentMethodApi, { PaymentMethod } from 'Api/PaymentMethod';
+import Default, { DefaultInputType } from 'UI/Input/Default';
+
+type PaymentInputType = DefaultInputType & {
+	updateMode?: boolean;
+}
+
+// Registering 'payment' as being available
+declare global {
+	interface InputPropsRegistry {
+		'payment': PaymentInputType;
+	}
+}
 
 /*
 * Use this as your main interface for collecting card details via <Input type='payment' name='card' />
 * It will vary depending on the gateway(s) available.
 */
-window.inputTypes.payment = (props, _this) => {
-	return <PaymentGateway {...props.field} />;
-};
 
-function hasCardExpired(expiryUtc) {
-	var expiryDate = isoConvert(expiryUtc);
-
-	// treat invalid data as expired
-	if (!(expiryDate instanceof Date)) {
-		return true;
-	}
-	
-	return expiryDate < new Date();
+function hasCardExpired(expiryUtc : Date) {
+	return expiryUtc < new Date();
 }
 
-export default function PaymentGateway(props) {
-	
+const PaymentGateway: React.FC<CustomInputTypeProps<"payment">> = (props) => {
+
+	const { field } = props;
+
 	// If user has saved payment methods, display a dropdown of those or a form to add another one.
 	var [methods, setMethods] = useState<PaymentMethod[] | undefined>();
 	var [selectedMethod, setSelectedMethod] = useState<PaymentMethod | undefined>();
 
 	useEffect(() => {
-		if(!props.updateMode) {
+		if (!field.updateMode) {
 			// Get user's existing cards (Returns "non-sensitive" info only).
 			paymentMethodApi.list().then(response => {
 				var methods = response?.results;
@@ -47,13 +51,13 @@ export default function PaymentGateway(props) {
 					});
 
 					setMethods(methods);
-					setSelectedMethod(methods.length ? methods[0] : null);
+					setSelectedMethod(methods.length ? methods[0] : undefined);
 				}
 			});
 		}
 	}, []);
 	
-	if(!methods && !props.updateMode){
+	if (!methods && !field.updateMode){
 		return <Loading />;
 	}
 	
@@ -73,7 +77,7 @@ export default function PaymentGateway(props) {
 					{methods.map(option => {
 						var expiry = '';
 						var expiryDate = isoConvert(option.expiryUtc as Date);
-						var hasExpired = hasCardExpired(option.expiryUtc);
+						var hasExpired = hasCardExpired(expiryDate);
 
 						if (expiryDate instanceof Date) {
 							expiry = new Intl.DateTimeFormat('en-GB', { month: 'numeric', year: '2-digit' }).format(expiryDate);
@@ -91,17 +95,17 @@ export default function PaymentGateway(props) {
 						</option>;
 					})}
 				</select>
-				<CardForm fieldName={props.name}/>
+				<CardForm fieldName={field.name}/>
 			</>;
 		}else{
 			// User doesn't have any payment methods at all. Display the new method form.
-			return <CardForm fieldName={props.name}/>;
+			return <CardForm fieldName={field.name}/>;
 		}
 	}
 	
 	// Otherwise display the selected card.
 	return <>
-		<CardForm fieldName={props.name} readonly last4={selectedMethod.name} issuer={selectedMethod.issuer} expiry={selectedMethod.expiryUtc} paymentMethodId={selectedMethod.id} />
+		<CardForm fieldName={field.name} readonly last4={selectedMethod.name} issuer={selectedMethod.issuer} expiry={selectedMethod.expiryUtc} paymentMethodId={selectedMethod.id} />
 		<center style={{padding: '1rem'}}>
 			<button onClick={() => {
 				setSelectedMethod(undefined);
@@ -112,3 +116,5 @@ export default function PaymentGateway(props) {
 	</>;
 }
 
+export default PaymentGateway;
+window.inputTypes['payment'] = PaymentGateway;
