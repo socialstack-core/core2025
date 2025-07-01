@@ -107,6 +107,19 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 		});
 	}, [categoryId]);
 
+	useEffect(() => {
+		const newUrl = location.pathname + (query && query.length != 0 ? '?q=' + encodeURIComponent(query) : '');
+		history.replaceState(null, '', newUrl);
+
+		const ev = new CustomEvent('search', {
+			detail: {
+				query
+			}
+		})
+
+		window.dispatchEvent(ev);
+	}, [query]);
+
 	useApi(() => {
 		return productCategoryApi.list({
 			query: 'ParentId=?',
@@ -521,3 +534,10 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 }
 
 export default Header;
+
+
+declare global {
+    interface WindowEventMap {
+        'search': CustomEvent<{ query: string }>;
+    }
+}

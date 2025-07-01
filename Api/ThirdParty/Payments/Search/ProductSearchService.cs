@@ -3,6 +3,7 @@ using Api.Eventing;
 using Api.Startup;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Api.Payments;
@@ -144,16 +145,21 @@ public class ProductSearchService : AutoService
 
 	private ProductSearchServiceConfig _productSearchConfig;
 
+	private ProductCategoryService _categoryService;
+
 	/// <summary>
 	/// Instanced automatically.
 	/// </summary>
 	/// <param name="products"></param>
-	public ProductSearchService(ProductService products)
+	/// <param name="catSvc"></param>
+	public ProductSearchService(ProductService products, ProductCategoryService catSvc)
 	{
 		_productSearchConfig = GetConfig<ProductSearchServiceConfig>();
+		_categoryService = catSvc;
 
 
-		Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
+		Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) =>
+		{
 
 			if (search.Handled)
 			{
@@ -180,7 +186,7 @@ public class ProductSearchService : AutoService
 			search.Products = productSet;
 			return search;
 		}, 11);
-    }
+	}
 
 	/// <summary>
 	/// Gets the current configuration. This is a live object - it updates whenever the config does.
@@ -202,7 +208,7 @@ public class ProductSearchService : AutoService
 	/// <returns></returns>
 	public async ValueTask<ProductSearch> Search(
 		Context context, string query, ProductSearchType searchType, List<ProductSearchAppliedFacet> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
-    {
+	{
 		if (pageOffset < 0)
 		{
 			pageOffset = 0;
@@ -218,17 +224,38 @@ public class ProductSearchService : AutoService
 			pageSize = 100;
 		}
 
-        var search = new ProductSearch(){
+		var search = new ProductSearch()
+		{
 			Query = query,
 			PageIndex = pageOffset,
 			PageSize = pageSize,
 			AppliedFacets = appliedFacets,
 			SearchType = searchType
 		};
+
+		// get a copy of the collection, from there collect children, all products within child categories
+		// need to also be considered.
+		var categoryFacets = search.AppliedFacets?.FindAll(f => f.Mapping.ToLower() == "productcategories").ToArray();
+
+		foreach (var facet in categoryFacets)
+		{
+			var childCategoryTasks = facet.Ids
+				.Select(id => GetChildCategories(context, (uint)id).AsTask())
+				.ToList();
+
+			var results = await Task.WhenAll(childCategoryTasks);
+
+			var allChildCategories = results.SelectMany(childList => childList);
+
+			foreach (var child in allChildCategories)
+			{
+				facet.Ids.Add(child.Id);
+			}
+		}
 		
 		search = await Events.Product.Search.Dispatch(context, search);
-		
-		if(!search.Handled || search.Products == null)
+
+		if (!search.Handled || search.Products == null)
 		{
 			return null;
 		}
@@ -259,7 +286,7 @@ public class ProductSearchService : AutoService
 						}
 					}
 				}
-				
+
 				var attribs = product.Mappings.Get("attributes");
 
 				if (attribs != null)
@@ -286,7 +313,7 @@ public class ProductSearchService : AutoService
 		}
 
 		return search;
-    }
+	}
 
 	private List<ProductCategoryFacet> ToCategoryFacets(Dictionary<ulong, int> uniqueIds)
 	{
@@ -318,5 +345,21 @@ public class ProductSearchService : AutoService
 		}
 
 		return vals;
+	}
+
+	private async ValueTask<List<ProductCategory>> GetChildCategories(Context context, uint ParentId)
+	{
+		var cats = new List<ProductCategory>();
+
+		var all = await _categoryService.Where("ParentId = ?", DataOptions.IgnorePermissions).Bind(ParentId).ListAll(context);
+
+		cats.AddRange(all);
+
+		foreach (var child in all)
+		{
+			cats.AddRange(await GetChildCategories(context, child.Id));
+		}
+
+		return cats;
 	}
 }

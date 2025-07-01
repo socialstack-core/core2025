@@ -1,466 +1,303 @@
-import productCategoryApi, { ProductCategory } from "Api/ProductCategory";
+import {useRouter} from 'UI/Router';
+import useApi from 'UI/Functions/UseApi';
+import searchApi, {ProductSearchType} from 'Api/ProductSearchController';
 import ProductList from 'UI/Product/List';
 import Loading from 'UI/Loading';
-import useApi from "UI/Functions/UseApi";
+import Html from 'UI/Html';
 import Input from 'UI/Input';
-import DualRange from 'UI/DualRange';
-import Promotion from 'UI/Promotion';
-import searchApi, { ProductSearchType } from 'Api/ProductSearchController';
-import {ProductAttribute} from "Api/ProductAttribute";
-import {
-	ProductAttributeIncludes,
-	ProductAttributeValueIncludes,
-	ProductIncludes,
-	SecondaryIncludes
-} from "Api/Includes";
-import { useEffect, useMemo, useState, useRef } from "react";
-import Alert from "UI/Alert";
+import Button from 'UI/Button';
+import FilterList from 'UI/Product/Search/FilterList';
+import {useEffect, useState} from "react";
+import {AttributeFacetGroup, AttributeValueFacet, ProductCategoryFacet} from 'UI/Product/Search/Facets';
+import Link from "UI/Link";
+import {ProductIncludes, SecondaryIncludes} from "Api/Includes";
+import {ProductCategory} from "Api/ProductCategory";
 
+const MAX_VISIBLE_CATEGORIES = 3;
+const MAX_VISIBLE_ATTRIBUTE_OPTIONS = 4;
+
+/**
+ * Props for the Search component.
+ */
 interface ViewProps {
-	productCategory: ProductCategory;
+	productCategory: ProductCategory
 }
 
-type AttributeRecord = {
-	attribute: ProductAttribute;
-	allValues: CountedValue[]
-}
-
-type CountedValue = {
-	valueId: uint,
-	valueText: string,
-	count: number
-}
-
-// Utility function
-const uniqueAttributes = (attrs: ProductAttribute[]): ProductAttribute[] => {
-	const seen = new Set();
-	return attrs.filter((attr) => {
-		if (seen.has(attr.name)) return false;
-		seen.add(attr.name);
-		return true;
-	});
-};
-
 /**
- * CategoriesFilter handles filtering and selection of direct child categories.
+ * The Search React component.
+ * @param props React props.
  */
-const CategoriesFilter: React.FC<{
-	directChildren: ProductCategory[];
-	selectedDirectChildren: number[];
-	setSelectedDirectChildren: React.Dispatch<React.SetStateAction<number[]>>;
-	getTotalProductCount: (id: number) => number;
-	showAllCategories: boolean;
-	setShowAllCategories: React.Dispatch<React.SetStateAction<boolean>>;
-	lastNonZeroCounts: React.MutableRefObject<Record<number, number>>;
-}> = ({
-		  directChildren,
-		  selectedDirectChildren,
-		  setSelectedDirectChildren,
-		  getTotalProductCount,
-		  showAllCategories,
-		  setShowAllCategories,
-		  lastNonZeroCounts
-	  }) => {
-	return (
-		<fieldset>
-			<legend>All product categories</legend>
-			{directChildren.map((category, idx) => {
-				if (idx > 2 && !showAllCategories) return null;
+const View: React.FC<ViewProps> = (props) => {
+	const { pageState } = useRouter();
+	const { query } = pageState;
+	
+	const { productCategory } = props;
+	
+	// acticare design shows these as toggles - see corresponding commented UI below
+	//const [showApprovedOnly, setShowApprovedOnly] = useState();
+	//const [showInStockOnly, setShowInStockOnly] = useState();
 
-				const isChecked = selectedDirectChildren.includes(category.id);
+	// list, thumb or grid view
+	const [viewStyle, setViewStyle] = useState('grid');
 
-				const currentCount = getTotalProductCount(category.id);
-				const displayedCount = currentCount > 0
-					? currentCount
-					: lastNonZeroCounts.current[category.id] ?? 0;
-
-				return (
-					<Input
-						key={category.id}
-						type="checkbox"
-						label={`${category.name}${displayedCount > 0 ? ` (${displayedCount})` : ''}`}
-						checked={isChecked}
-						onChange={(e) => {
-							const checked = (e.target as HTMLInputElement).checked;
-							setSelectedDirectChildren(prev =>
-								checked
-									? [...prev, category.id]
-									: prev.filter(id => id !== category.id)
-							);
-						}}
-					/>
-				);
-			})}
-
-			{directChildren.length > 3 && !showAllCategories && (
-				<button type="button" onClick={() => setShowAllCategories(true)}>
-					Show more categories
-				</button>
-			)}
-		</fieldset>
-	);
-};
-
-/**
- * AttributeFilter renders filters for product attributes with selectable attribute values.
- */
-const AttributeFilter: React.FC<{
-	attributeMap: Record<uint, AttributeRecord>;
-	selectedAttributes: Record<string, ulong[]>;
-	setSelectedAttributes: React.Dispatch<React.SetStateAction<Record<string, ulong[]>>>;
-}> = ({ attributeMap, selectedAttributes, setSelectedAttributes }) => {
-	return (
-		<>
-			{Object.keys(attributeMap).map((attributeId: string) => {
-				const attributeRecord: AttributeRecord | undefined = attributeMap[parseInt(attributeId) as uint];
-				if (!attributeRecord) return null;
-
-				const { attribute, allValues } = attributeRecord;
-
-				if (allValues.length === 0) return null;
-
-				return (
-					<fieldset key={attribute.id}>
-						<legend>{attribute.name}</legend>
-						{allValues.map((value) => {
-							const isChecked = selectedAttributes[attribute.name]?.includes(value.valueId) ?? false;
-
-							return (
-								<Input
-									key={value.valueId}
-									type="checkbox"
-									label={value.valueText + (attribute.units ?? '') + (value.count !== 0 ? ` (${value.count})` : '')}
-									checked={isChecked}
-									onChange={(e) => {
-										const checked = (e.target as HTMLInputElement).checked;
-										const updated = { ...selectedAttributes };
-
-										if (!updated[attribute.name]) {
-											updated[attribute.name] = [];
-										}
-
-										if (checked) {
-											if (!updated[attribute.name].includes(value.valueId)) {
-												updated[attribute.name].push(value.valueId);
-											}
-										} else {
-											updated[attribute.name] = updated[attribute.name].filter(id => id !== value.valueId);
-											if (updated[attribute.name].length === 0) {
-												delete updated[attribute.name];
-											}
-										}
-
-										setSelectedAttributes(updated);
-									}}
-								/>
-							);
-						})}
-					</fieldset>
-				);
-			})}
-		</>
-	);
-};
-
-/**
- * ShowHideFilters contains the checkboxes for showing only approved or in-stock products.
- */
-const ShowHideFilters: React.FC<{
-	showApprovedOnly: boolean;
-	setShowApprovedOnly: React.Dispatch<React.SetStateAction<boolean>>;
-	showInStockOnly: boolean;
-	setShowInStockOnly: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({
-		  showApprovedOnly,
-		  setShowApprovedOnly,
-		  showInStockOnly,
-		  setShowInStockOnly
-	  }) => {
-	return (
-		<fieldset>
-			<legend>Show / hide products</legend>
-			<Input
-				type="checkbox"
-				isSwitch
-				label="Only show approved"
-				value={showApprovedOnly}
-				name="show-approved"
-				noWrapper
-				onChange={(e) => setShowApprovedOnly((e.target as HTMLInputElement).checked)}
-			/>
-			<Input
-				type="checkbox"
-				isSwitch
-				label="Only show in stock"
-				value={showInStockOnly}
-				name="show-in-stock"
-				noWrapper
-				onChange={(e) => setShowInStockOnly((e.target as HTMLInputElement).checked)}
-			/>
-		</fieldset>
-	);
-};
-
-/**
- * ProductCategoryView is the main component for displaying product categories,
- * filters, sorting, view style, and the product list.
- */
-const View: React.FC<ViewProps> = ({ productCategory }) => {
-	const [showApprovedOnly, setShowApprovedOnly] = useState(false);
-	const [showInStockOnly, setShowInStockOnly] = useState(false);
-	const [viewStyle, setViewStyle] = useState<'list' | 'small-thumbs' | 'large-thumbs'>('large-thumbs');
+	// TODO: confirm sort options
 	const [sortOrder, setSortOrder] = useState('most-popular');
+
+	// TODO: make pagination great again
 	const [pagination, setPagination] = useState('page1');
-	const [selectedDirectChildren, setSelectedDirectChildren] = useState<number[]>([]);
-	const [attributeMap, setAttributeMap] = useState<Record<uint, AttributeRecord>>({});
-	const [selectedAttributes, setSelectedAttributes] = useState<Record<string, ulong[]>>({});
-	const [showAllAttributes, setShowAllAttributes] = useState(false);
-	const [showAllCategories, setShowAllCategories] = useState(false);
 
-	const [allDescendants] = useApi(() => {
-		return productCategoryApi.getDescendants(productCategory.id);
-	}, [productCategory]);
+	const [selectedFacets, setSelectedFacets] = useState<Record<uint, uint[]>>({});
 
-	// Build parent → children map
-	const descendantMap = useMemo(() => {
-		const map: Record<number, number[]> = {};
-		if (!allDescendants?.results) return map;
 
-		allDescendants.results.forEach(cat => {
-			if (!map[cat.parentId!]) map[cat.parentId!] = [];
-			map[cat.parentId!]!.push(cat.id);
-		});
-		return map;
-	}, [allDescendants]);
+	const [initialSearch, setInitialSearch] = useState(query?.get("q") || "");
 
-	// Get all IDs under a category (including self)
-	const getDescendantsAndSelfIds = (categoryId: number): number[] => {
-		const ids: number[] = [];
-		const stack = [categoryId];
-		while (stack.length) {
-			const current = stack.pop();
-			if (current === undefined) continue;
-			ids.push(current);
-			const children = descendantMap[current] || [];
-			stack.push(...children);
-		}
-		return ids;
-	};
 
-	// Default select all direct children
+	var initialPageStr = query?.get("page") || "";
+	var initialPageOffset = (parseInt(initialPageStr) || 1) - 1;
+
+	
 	useEffect(() => {
-		if (allDescendants?.results && selectedDirectChildren.length === 0) {
-			const directChildren = allDescendants.results.filter(cat => cat.parentId === productCategory.id);
-			setSelectedDirectChildren(directChildren.map(c => c.id));
+
+		const evListener = (ev: CustomEvent) => {
+			const detail = ev.detail as { query: string };
+			if (detail.query) {
+				setInitialSearch(detail.query);
+			}
 		}
-	}, [allDescendants, selectedDirectChildren, productCategory]);
 
-	// Categories to send to the search API
-	const selectedCategoryIds = useMemo(() => {
-		const allSelected = selectedDirectChildren.flatMap(id => getDescendantsAndSelfIds(id));
-		const unique = new Set<number>([productCategory.id, ...allSelected]);
-		return Array.from(unique);
-	}, [selectedDirectChildren, descendantMap, productCategory.id]);
+		window.addEventListener('search', evListener);
 
-	// Product results
-	const [products] = useApi(() => {
-		if (selectedDirectChildren.length === 0) return Promise.resolve(null);
+		return () => {
+			window.removeEventListener('search', evListener);
+		}
 
+	}, []);
+
+
+	const [resultSet] = useApi(() => {
 		return searchApi.faceted({
-				searchType: ProductSearchType.Expansive,
-				appliedFacets: [
-					{
-						mapping: "productcategories",
-						ids: selectedCategoryIds as int[]
-					},
-					...Object.keys(selectedAttributes ?? {}).filter((map: string) => (selectedAttributes[map] ?? []).length !== 0).map((mapping: string) => {
-						return {
-							mapping: "attributes",
-							ids: selectedAttributes[mapping]
-						};
-					})
-				],
-				query: "",
-				pageSize: 20 as uint,
-				pageOffset: 0 as uint
-			},
-			[
-				new ProductAttributeIncludes().attributes.attribute,
-				new ProductIncludes().attributeValueFacets
-			]);
-	}, [selectedCategoryIds, selectedAttributes, selectedDirectChildren]);
+			query: initialSearch,
+			pageOffset: initialPageOffset as int,
+			searchType: ProductSearchType.Expansive,
+			pageSize: 20 as uint,
+			appliedFacets: [
+				{
+					mapping: "productcategories",
+					ids: [productCategory.id]
+				},
+				...(Object.keys(selectedFacets ?? {}) ?? []).map((attrId => {
 
-	// Load attributes into attributeMap on products update
-	useEffect(() => {
-		const attributesInSet = products?.includes?.find((include: { field: string, values: ulong[] }) => include.field === 'attribute');
-		if (!attributesInSet) return;
+					return {
+						mapping: "attributes",
+						ids: selectedFacets[parseInt(attrId) as uint] || []
+					};
+				}))
+			]
+		}, [
+		// Any normal includes you might need here
+		// 'price',
 
-		const uniqueAttrs = uniqueAttributes(attributesInSet.values);
+		// Plus then includes on the facets (the attribute and category selectors)
+		new ProductIncludes().productCategoryFacets,
+		new ProductIncludes().productCategoryFacets.category,
+		new ProductIncludes().attributeValueFacets.value.attribute.attributeGroup
+	])}, [initialSearch, selectedFacets]);
 
-		const attributeValues = products?.includes?.find((include: { field: string, values: ulong[] }) => include.field === 'attributes');
-
-		const attrMap = { ...attributeMap };
-
-		uniqueAttrs.forEach(attr => {
-			if (!attrMap[attr.id]) {
-				attrMap[attr.id] = {
-					attribute: attr,
-					allValues: []
-				};
-			}
-
-			attributeValues.values
-				.filter((value: { productAttributeId: uint; value: string }) => value.productAttributeId === attr.id)
-				.forEach((value: { productAttributeId: uint; value: string; id: uint }) => {
-					if (attrMap[attr.id].allValues.find((val) => val.valueId === value.id)) return;
-
-					attrMap[attr.id].allValues.push({
-						valueText: value.value,
-						valueId: value.id,
-						count: products?.secondary?.attributeValueFacets?.results?.find((val: { attributeValueId: uint; count: number }) => val.attributeValueId === value.id)?.count ?? 0
-					});
-				});
-		});
-
-		setAttributeMap(attrMap);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [products]);
-
-	// Build flat count map
-	const categoryCountMap = useMemo(() => {
-		const map: Record<number, number> = {};
-		const facets = products?.secondary?.productCategoryFacets?.results ?? [];
-		for (const res of facets) {
-			if (res.count > 0) map[res.productCategoryId] = res.count;
-		}
-		return map;
-	}, [products]);
-
-	// Recursively sum counts for category + all children
-	const getTotalProductCount = (categoryId: number): number => {
-		const allIds = getDescendantsAndSelfIds(categoryId);
-		return allIds.reduce((total, id) => total + (categoryCountMap[id] ?? 0), 0);
+	const resetFilters = () => {
+		
 	};
 
-	// Direct children only for display
-	const directChildren = useMemo(() => {
-		return allDescendants?.results?.filter(cat => cat.parentId === productCategory.id) || [];
-	}, [allDescendants, productCategory]);
+	const showSearchResults = () => {
 
-	// Track last non-zero counts per direct child category
-	const lastNonZeroCounts = useRef<Record<number, number>>({});
+		if (!resultSet) {
+			return <Loading />;
+		}
 
-	// Update lastNonZeroCounts on products or selection change
-	useEffect(() => {
-		directChildren.forEach(cat => {
-			const count = getTotalProductCount(cat.id);
-			if (count > 0) {
-				lastNonZeroCounts.current[cat.id] = count;
+		const facets = resultSet.secondary;
+		const { attributeValueFacets, productCategoryFacets } = facets;
+
+		const categoryFacets = (productCategoryFacets?.results || []) as ProductCategoryFacet[];
+		const attributeFacets = (attributeValueFacets?.results || []) as AttributeValueFacet[];
+
+		// Group attribute facets ("blue (12)") up by the attribute ("Colour") they are for.
+		// Could group again by attribute.attributeGroup ("Material & Design") if necessary.
+
+		var attributeMap = new Map<uint, AttributeFacetGroup>();
+
+		attributeFacets.forEach(facet => {
+			if (!(facet.value?.attribute)) {
+				return;
 			}
-		});
-	}, [products, selectedDirectChildren, directChildren]);
 
-	const GBPound = new Intl.NumberFormat('en-GB', {
-		style: 'currency',
-		currency: 'GBP',
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0
-	});
+			var attribId = facet.value.productAttributeId;
+			var grouping = attributeMap.get(attribId);
+
+			if (!grouping) {
+				grouping = {
+					attribute: facet.value.attribute,
+					facetValues: []
+				} as AttributeFacetGroup;
+
+				attributeMap.set(attribId, grouping);
+			}
+
+			grouping.facetValues.push(facet);
+		});
+
+		var attributeFacetGroups = Array.from(attributeMap.values());
+
+		return <>
+			<div className="ui-product-search__internal">
+				<form className="ui-product-search__filters">
+
+					<Button type="reset" variant="secondary" onClick={() => resetFilters()}>
+						{`Reset all filters`}
+					</Button>
+
+					{/* switch toggle example group */}
+					{/*
+					<fieldset>
+						<legend>
+							{`Toggle`}
+						</legend>
+						<div className="fieldset-content fieldset-content--no-border">
+							<Input type="checkbox" sm isSwitch label={`Toggle 1`} noWrapper />
+							<Input type="checkbox" sm isSwitch label={`Toggle 2`} noWrapper />
+						</div>
+					</fieldset>
+					*/}
+
+					{/* categories */}
+					{categoryFacets.length > 0 && <>
+						<fieldset>
+							<legend>
+								{`Categories`}
+							</legend>
+							<div className="fieldset-content">
+								<CategoryListRenderer facets={categoryFacets} />
+							</div>
+						</fieldset>
+					</>}
+
+					{/* attributes */}
+					{attributeFacetGroups.length > 0 && <>
+						{
+							attributeFacetGroups.map(facet => {
+								// can include primaryUrl etc on facets as well if needed
+								// here though it is (probably, I haven't looked at the designs recently) exclusively a button
+								// which then restricts the search.
+
+								return <>
+									<fieldset key={facet.attribute.id}>
+										<legend>
+											{facet.attribute.name}
+										</legend>
+										<FilterList 
+											facets={facet.facetValues} 
+											maxVisible={MAX_VISIBLE_ATTRIBUTE_OPTIONS}
+											onChange={(values: ulong[]) => {
+												selectedFacets[facet.attribute.id] = values;
+												setSelectedFacets({...selectedFacets});
+											}} 
+										/>
+									</fieldset>
+								</>;
+							})
+						}
+					</>}
+				</form>
+				<ProductList content={resultSet.results} viewStyle={viewStyle} />
+			</div>
+		</>;
+	};
 
 	return (
-		<div className="ui-productcategory-view">
-			<div className="ui-productcategory-view__filters-wrapper">
-				<div className="ui-productcategory-view__filters">
-					<ShowHideFilters
-						showApprovedOnly={showApprovedOnly}
-						setShowApprovedOnly={setShowApprovedOnly}
-						showInStockOnly={showInStockOnly}
-						setShowInStockOnly={setShowInStockOnly}
-					/>
+		<div className="ui-product-search">
+			<header className="ui-product-search__header">
+				<Html tag="h1" className="ui-product-search__title">
+					{productCategory.name}
+				</Html>
+				<fieldset className="ui-product-search__view-options">
+					<Input type="select" aria-label={`Sort by`} value={sortOrder} noWrapper>
+						<option value="most-popular">
+							{`Most popular`}
+						</option>
+					</Input>
 
-					{directChildren.length > 0 && (
-						<CategoriesFilter
-							directChildren={directChildren}
-							selectedDirectChildren={selectedDirectChildren}
-							setSelectedDirectChildren={setSelectedDirectChildren}
-							getTotalProductCount={getTotalProductCount}
-							showAllCategories={showAllCategories}
-							setShowAllCategories={setShowAllCategories}
-							lastNonZeroCounts={lastNonZeroCounts}
-						/>
-					)}
+					{/* replace this with more typical pagination below product list? */}
+					<Input type="select" aria-label={`Show`} value={pagination} noWrapper>
+						<option value="page1">
+							{`20 out of 1,500 products`}
+						</option>
+					</Input>
 
-					<DualRange
-						className="ui-productcategory-view__price"
-						label="Price"
-						numberFormat={GBPound}
-						min={5}
-						max={5000}
-						step={1}
-						defaultFrom={500}
-						defaultTo={3000}
-					/>
-
-					<AttributeFilter
-						attributeMap={attributeMap}
-						selectedAttributes={selectedAttributes}
-						setSelectedAttributes={setSelectedAttributes}
-					/>
-				</div>
-
-				<Promotion
-					title="Get 10% Off Our Bedroom Bestsellers"
-					description="Save now on top-rated beds and accessories - Limited time offer"
-					url="#"
-				/>
-			</div>
-
-			<header className="ui-productcategory-view__header">
-				<Input type="select" aria-label="Sort by" value={sortOrder} noWrapper>
-					<option value="most-popular">Most popular</option>
-				</Input>
-
-				<Input type="select" aria-label="Show" value={pagination} noWrapper>
-					<option value="page1">20 out of 1,500 products</option>
-				</Input>
-
-				<div className="btn-group" role="group" aria-label="Select view style">
-					<Input
-						type="radio"
-						noWrapper
-						label="List"
-						groupIcon="fr-list"
-						groupVariant="primary"
-						checked={viewStyle === 'list'}
-						onChange={() => setViewStyle('list')}
-						name="view-style"
-					/>
-					<Input
-						type="radio"
-						noWrapper
-						label="Small thumbnails"
-						groupIcon="fr-th-list"
-						groupVariant="primary"
-						checked={viewStyle === 'small-thumbs'}
-						onChange={() => setViewStyle('small-thumbs')}
-						name="view-style"
-					/>
-					<Input
-						type="radio"
-						noWrapper
-						label="Large thumbnails"
-						groupIcon="fr-grid"
-						groupVariant="primary"
-						checked={viewStyle === 'large-thumbs'}
-						onChange={() => setViewStyle('large-thumbs')}
-						name="view-style"
-					/>
-				</div>
+					<div className="btn-group ui-btn-group" role="group" aria-label={`Select view style`}>
+						{/* design shows list, small and large thumb views
+						ref: https://www.figma.com/design/VYLC1be2OJRmymw5C0qc7J/Acticare---UX-Designs?node-id=160-3241&t=1CQfqx9zIXjEdPjX-0
+							<Input type="radio" noWrapper label={`List`} groupVariant="primary" value={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
+							<Input type="radio" noWrapper label={`Small thumbnails`} groupVariant="primary" value={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
+							<Input type="radio" noWrapper label={`Large thumbnails`} groupVariant="primary" value={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
+						*/}
+						<Input type="radio" noWrapper label={`List`} groupIcon="fr-th-list" groupVariant="primary" value={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
+						<Input type="radio" noWrapper label={`Grid`} groupIcon="fr-grid" groupVariant="primary" value={viewStyle == 'grid'} onChange={() => setViewStyle('grid')} name="view-style" />
+					</div>
+				</fieldset>
 			</header>
-
-			{products && products.results && products.results.length != 0 ? <ProductList content={products.results} viewStyle={viewStyle} /> : <div><Alert variant={'info'}>No products found</Alert></div>}
+			{showSearchResults()}
 		</div>
 	);
-};
+}
+
+const CategoryListRenderer = (props: { facets: ProductCategoryFacet[] }) => {
+	
+	const [showMore, setShowMore] = useState(false);
+	
+	const { facets } = props;
+
+	const categories = uniqueCategories(facets.map(facet => facet.category));
+	
+	return (
+		<div className={'categories'}>
+			{categories.map((category, idx) => {
+				if (idx > 2 && !showMore) {
+					return;
+				}
+
+				const facet = facets.find(f => f.category.id === category.id);
+
+				return (
+					<Link href={'/category/' + category.slug}>
+						{category.name} ({facet?.count ?? 0})
+					</Link>
+				)
+			})}
+			{categories.length > 2 && <Button
+				type={'button'}
+				onClick={() => setShowMore(!showMore)}
+			>
+				<span>{showMore ? `Show less` : `Show more`}</span>
+			</Button>}
+		</div>
+	)
+}
 
 export default View;
+
+
+/**
+ * Filters and returns a list of unique categories.
+ *
+ * @param {ProductCategory[]} categories - List of attributes
+ * @returns {ProductCategory[]} Unique attributes
+ */
+const uniqueCategories = (categories: ProductCategory[]): ProductCategory[] => {
+	const unique: ProductCategory[] = [];
+	
+	categories.forEach((category) => {
+		if (unique.find(unq => unq.name === category.name)) {
+			return;
+		}
+		unique.push(category);
+	})
+	return unique.sort((a, b) => a.name!.localeCompare(b.name!, undefined, { numeric: true }));;
+};
