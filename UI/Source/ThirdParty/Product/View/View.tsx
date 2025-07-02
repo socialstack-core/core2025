@@ -48,8 +48,8 @@ const View: React.FC<ViewProps> = (props) => {
 	const isApproved = true;
 
 	// TODO: check for associated info
-	const infoTitle = `Note from Acticare`;
-	const infoDescription = `This product has a lower max weight capacity than most bariatric beds as this is designed for residents who solely need more bed space.`;
+	//const infoTitle = `Note from Acticare`;
+	//const infoDescription = `This product has a lower max weight capacity than most bariatric beds as this is designed for residents who solely need more bed space.`;
 
 	return <>
 		<div className="ui-product-view">
@@ -129,7 +129,7 @@ const View: React.FC<ViewProps> = (props) => {
 				</>}
 
 				{/* product info */}
-				{infoDescription?.length > 0 && <>
+				{/*infoDescription?.length > 0 && <>
 					<Button sm variant="warning" className="ui-product-view__price-info-note" popoverTarget="product_note">
 						<i className="fr fr-exclamation-circle"></i>
 						<span>
@@ -145,7 +145,7 @@ const View: React.FC<ViewProps> = (props) => {
 						</div>
 						{infoDescription}
 					</div>
-				</>}
+				</>*/}
 
 				{/* price */}
 				<ProductPrice product={product} />
