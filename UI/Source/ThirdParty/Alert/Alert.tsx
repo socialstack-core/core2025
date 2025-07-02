@@ -56,19 +56,19 @@ const Alert: React.FC<React.PropsWithChildren<AlertProps>> = (props) => {
 		//break;
 
 		case 'success':
-			icon = <Icon type="fa-check-circle" light />;
+			icon = <Icon type="fa-check-circle" lg light />;
 			break;
 
 		case 'danger':
-			icon = <Icon type="fa-times-circle" light />;
+			icon = <Icon type="fa-times-circle" lg light />;
 			break;
 
 		case 'warning':
-			icon = <Icon type="fa-exclamation-triangle" light />;
+			icon = <Icon type="fa-exclamation-triangle" lg light />;
 			break;
 
 		case 'info':
-			icon = <Icon type="fa-info-circle" light />;
+			icon = <Icon type="fa-info-circle" lg light />;
 			break;
 
 		//case 'light':
