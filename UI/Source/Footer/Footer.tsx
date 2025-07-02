@@ -1,6 +1,12 @@
 import Html from 'UI/Html';
 import { getContactLink } from 'UI/Functions/ContactTools';
 import { useState, useEffect } from "react";
+import Image from 'UI/Image';
+import acticareLogoRef from './acticare-logo.svg';
+import mastercardRef from './mastercard.png';
+import paypalRef from './paypal.png';
+import sagePayRef from './sage-pay.png';
+import visaRef from './visa.png';
 
 /**
  * Props for the Footer component.
@@ -11,6 +17,11 @@ interface FooterProps {
 	 * contact number (e.g. "0123 456 7890")
 	 */
 	contactNumber?: string,
+
+	/** 
+	 * The website logo.
+	 */
+	logoRef?: FileRef,
 
 	/** 
 	 * contact link (e.g. "/contact-us")
@@ -59,16 +70,48 @@ interface FooterLinkProps {
 	url: string
 }
 
+interface FooterLogoProps {
+
+	/**
+	 * image ref
+	 */
+	imageRef: string,
+
+	/** 
+	 * alt text
+	 */
+	altText: string,
+
+	/** 
+	 * logo image width
+	 */
+	width: number,
+
+	/** 
+	 * logo image height
+	 */
+	height: number,
+
+	/** 
+	 * optional URL
+	 */
+	url?: string
+}
+
 /**
  * The Footer React component.
  * @param props React props.
  */
-const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, copyrightFrom, copyrightTo, copyright, demo, ...props }) => {
+const Footer: React.FC<FooterProps> = ({ contactNumber, logoRef, contactLink, address, copyrightFrom, copyrightTo, copyright, demo, ...props }) => {
 
 	// temp
 	demo = true;
 
 	if (demo) {
+
+		if (!logoRef) {
+			logoRef = acticareLogoRef;
+		}
 
 		if (!contactNumber?.length) {
 			contactNumber = "0808 189 2044";
@@ -87,52 +130,88 @@ const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, co
 	const contactHref = getContactLink(contactNumber, contactLink);
 	const [primaryLinks, setPrimaryLinks] = useState<FooterLinkProps[]>([]);
 	const [secondaryLinks, setSecondaryLinks] = useState<FooterLinkProps[]>([]);
+	const [logoImages, setLogoImages] = useState<FooterLogoProps[]>([]);
 
 	useEffect(() => {
 		// TODO: retrieve footer links from DB
 		setPrimaryLinks([
 			{
-				label: `About`,
-				url: `/about`
+				label: `Home`,
+				url: '/'
+			},
+			{
+				label: `About Us`,
+				url: '/about'
 			},
 			{
 				label: `What We Offer`,
-				url: `/what-we-offer`
-			},
-			{
-				label: `All products`,
-				url: `/products`
+				url: '/what-we-offer'
 			},
 			{
 				label: `Testimonials`,
-				url: `/testimonials`
+				url: '/testimonials'
 			},
 			{
-				label: `Contact us`,
-				url: `/contact-us`
+				label: `Products`,
+				url: '/products'
+			},
+			{
+				label: `Account Login`,
+				url: '/login'
+			},
+			{
+				label: `Contact`,
+				url: '/contact-us'
 			},
 		]);
 
 		setSecondaryLinks([
 			{
-				label: `Privacy Policy`,
-				url: `/privacy-policy`
+				label: `Returns`,
+				url: '/returns'
 			},
 			{
-				label: `Cyber Security Certificate`,
-				url: `/cyber-security-certificate`
+				label: `Privacy Policy`,
+				url: '/privacy-policy'
 			},
 			{
 				label: `Terms & Conditions`,
-				url: `/terms-and-conditions`
+				url: '/terms-and-conditions'
 			},
 			{
-				label: `Delivery Information`,
-				url: `/delivery`
+				label: `Cyber Security Certificate`,
+				url: '/cyber-security-certificate'
+			},
+		]);
+
+		setLogoImages([
+			{
+				imageRef: sagePayRef,
+				alt: `SagePay`,
+				width: 95,
+				height: 22,
+				//url: ''
 			},
 			{
-				label: `Returns Policy`,
-				url: `/returns`
+				imageRef: mastercardRef,
+				alt: `Mastercard`,
+				width: 38,
+				height: 30,
+				//url: ''
+			},
+			{
+				imageRef: paypalRef,
+				alt: `PayPal`,
+				width: 80,
+				height: 19,
+				//url: ''
+			},
+			{
+				imageRef: visaRef,
+				alt: `Visa`,
+				width: 53,
+				height: 17,
+				//url: ''
 			},
 		]);
 
@@ -175,8 +254,29 @@ const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, co
 		return year;
 	}
 
+	const hasContactInfo = contactHref || address?.length;
+
 	return <div className="site-footer">
 		<div class="site-footer__internal">
+
+			<a href="/" className="site-footer__logo">
+				<Image fileRef={logoRef} />
+			</a>
+
+			{primaryLinks?.length > 0 && <>
+				<menu class="site-footer__primary-links">
+					{primaryLinks.map(link => {
+						return <li>
+							<a href={link.url}>
+								{link.label}
+							</a>
+						</li>;
+					})}
+				</menu>
+			</>}
+
+			{hasContactInfo && <>
+				<div className="site-footer__contact">
 
 			{contactHref && <>
 				<a href={contactHref} class="site-footer__contact-link">
@@ -195,22 +295,15 @@ const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, co
 				</Html>
 			</>}
 
-			{copyright?.length > 0 && <>
-				<p className="site-footer__copyright">
-					&copy; {copyrightYear} {copyright}
-				</p>
+				</div>
 			</>}
 
-			{primaryLinks?.length > 0 && <>
-				<menu class="site-footer__primary-links">
-					{primaryLinks.map(link => {
-						return <li>
-							<a href={link.url}>
-								{link.label}
-							</a>
-						</li>;
+			{logoImages?.length > 0 && <>
+				<div className="site-footer__payment-logos">
+					{logoImages.map(logo => {
+						return <Image fileRef={logo.imageRef} alt={logo.altText} width={logo.width} height={logo.height} />;
 					})}
-				</menu>
+				</div>
 			</>}
 
 			{secondaryLinks?.length > 0 && <>
@@ -223,6 +316,12 @@ const Footer: React.FC<FooterProps> = ({ contactNumber, contactLink, address, co
 						</li>;
 					})}
 				</menu>
+			</>}
+
+			{copyright?.length > 0 && <>
+				<p className="site-footer__copyright">
+					&copy; {copyrightYear} {copyright}
+				</p>
 			</>}
 
 		</div>
