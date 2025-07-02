@@ -1,10 +1,12 @@
 import { Product } from 'Api/Product';
 import Image from 'UI/Image';
 import Link from 'UI/Link';
+import Button from 'UI/Button';
 import Quantity from 'UI/Product/Quantity';
 //import defaultImageRef from './image_placeholder.png';
 import ProductPrice, { CurrencyAmount } from 'UI/Product/Price';
 import ProductStock from 'UI/Product/Stock';
+import { useCart } from 'UI/Payments/CartSession';
 
 /**
  * Props for the Signpost component.
@@ -34,6 +36,16 @@ interface SignpostProps {
 	 * The content to display in this signpost.
 	 */
 	content: Product,
+
+	/**
+	 * label for featured products
+	 */
+	featuredLabel?: string,
+
+	/**
+	 * allow removal from basket
+	 */
+	showRemove?: boolean
 }
 
 /**
@@ -41,7 +53,8 @@ interface SignpostProps {
  * @param props React props.
  */
 const Signpost: React.FC<SignpostProps> = (props) => {
-	const { disableLink, content, hideQuantity, hideOrder, priceOverride } = props;
+	const { disableLink, content, hideQuantity, hideOrder, priceOverride, showRemove } = props;
+	var { addToCart } = useCart();
 
 	if (!content) {
 		return;
@@ -49,6 +62,7 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 
 	// TODO: need an isFeatured flag per product
 	let isFeatured = true;
+	let featuredLabel = props.featuredLabel || `Recommended`;
 
 	// TODO: need an isApproved flag
 	let isApproved = true;
@@ -72,7 +86,7 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 				{isFeatured && <>
 					<span className="ui-product-signpost__featured">
 						<i className="fr fr-star"></i>
-						{`Featured product`}
+						{featuredLabel}
 					</span>
 				</>}
 
@@ -121,14 +135,21 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 		</>;
 	}
 
+	var classNames = ['ui-product-signpost'];
+
+	if (disableLink) {
+		classNames.push('ui-product-signpost--disabled');
+	}
+
 	return (
-		<div className={disableLink ? "ui-product-signpost ui-product-signpost--disabled" : "ui-product-signpost"}>
+		<div className={classNames.join(' ')}>
 			<div className="ui-product-signpost__outer">
 				{disableLink && <>
 					<div className="ui-product-signpost__inner">
 						{renderInner()}
 					</div>
 				</>}
+
 				{!disableLink && <>
 					<Link className="ui-product-signpost__inner" href={content.primaryUrl || `/product/${content.slug}`}>
 						{renderInner()}
@@ -138,6 +159,13 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 				{/* quantity controls */}
 				{!hideQuantity && <>
 					<Quantity product={content} />
+				</>}
+
+				{/* remove (used when viewed within basket) */}
+				{showRemove && <>
+					<Button xs outlined variant="danger" className="ui-product-signpost__remove" title={`Remove`} onClick={() => addToCart(content.id, 0)}>
+						<i className='fr fr-trash-alt' />
+					</Button>
 				</>}
 			</div>
 		</div>
