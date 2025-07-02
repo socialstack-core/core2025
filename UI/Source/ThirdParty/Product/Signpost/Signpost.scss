@@ -2,6 +2,7 @@
 // (e.g. list view / shopping cart)
 .ui-product-signpost {
 	$ui-product-signpost: &;
+	$signpost-padding: px_to_rem(8);
 	container-name: product-signpost;
 	container-type: inline-size;
 
@@ -11,7 +12,7 @@
 		align-items: center;
 		transition: box-shadow .3s ease-in-out;
 		border-radius: px_to_rem(8);
-		padding: px_to_rem(8);
+		padding: $signpost-padding;
 	}
 
 	&__inner,
@@ -45,7 +46,9 @@
 	&__image {
 		grid-area: image;
 		position: relative;
-		width: 100%;
+		//width: 100%; // padded
+		width: calc(100% + (2 * #{$signpost-padding});
+		margin-top: -$signpost-padding;
 		aspect-ratio: 1;
 	}
 
