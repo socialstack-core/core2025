@@ -32,7 +32,7 @@ const Search: React.FC<SearchProps> = (props) => {
 	//const [showInStockOnly, setShowInStockOnly] = useState();
 
 	// list, thumb or grid view
-	const [viewStyle, setViewStyle] = useState('grid');
+	const [viewStyle, setViewStyle] = useState('large-thumbs');
 
 	// TODO: confirm sort options
 	const [sortOrder, setSortOrder] = useState('most-popular');
@@ -183,14 +183,9 @@ const Search: React.FC<SearchProps> = (props) => {
 					</Input>
 
 					<div className="btn-group ui-btn-group" role="group" aria-label={`Select view style`}>
-						{/* design shows list, small and large thumb views
-						ref: https://www.figma.com/design/VYLC1be2OJRmymw5C0qc7J/Acticare---UX-Designs?node-id=160-3241&t=1CQfqx9zIXjEdPjX-0
-							<Input type="radio" noWrapper label={`List`} groupVariant="primary" value={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
-							<Input type="radio" noWrapper label={`Small thumbnails`} groupVariant="primary" value={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
-							<Input type="radio" noWrapper label={`Large thumbnails`} groupVariant="primary" value={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
-						*/}
-						<Input type="radio" noWrapper label={`List`} groupIcon="fr-th-list" groupVariant="primary" value={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
-						<Input type="radio" noWrapper label={`Grid`} groupIcon="fr-grid" groupVariant="primary" value={viewStyle == 'grid'} onChange={() => setViewStyle('grid')} name="view-style" />
+						<Input type="radio" noWrapper label={`List`} groupIcon="fr-list" groupVariant="primary" value={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
+						<Input type="radio" noWrapper label={`Small thumbnails`} groupIcon="fr-th-list" groupVariant="primary" value={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
+						<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
 					</div>
 				</fieldset>
 			</header>
