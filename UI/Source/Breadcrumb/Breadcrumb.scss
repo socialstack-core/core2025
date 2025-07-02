@@ -1,4 +1,5 @@
 .site-breadcrumb {
+	margin-bottom: px_to_rem(20);
 
 	menu {
 		list-style: none;
@@ -7,7 +8,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: px_to_rem(15);
-		background-color: var(--breadcrumb-bg, transparent);
+		background-color: var(--breadcrumb-bg, #ddd);
 		border-radius: px_to_rem(10);
 		width: fit-content;
 	}
@@ -16,11 +17,12 @@
 		font-size: px_to_rem(12);
 		font-weight: normal;
 		text-decoration: none;
-		color: var(--breadcrumb-fg, var(--primary));
+		color: var(--breadcrumb-fg, #000);
 
 		i {
 			font-size: px_to_rem(12);
 			transform: translateY(px_to_rem(-1));
+			color: var(--breadcrumb-icon, var(--primary));
 		}
 
 		&:hover {
