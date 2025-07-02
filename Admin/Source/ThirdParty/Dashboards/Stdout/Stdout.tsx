@@ -32,7 +32,7 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
         var update = () => {
             StdOutApi.getLog({}).then(res => {
 
-                var response = JSON.parse(res) as ApiList<StdEntry>
+                var response = res as unknown as ApiList<StdEntry>
 
                 var results = response.results.reverse();
                 
