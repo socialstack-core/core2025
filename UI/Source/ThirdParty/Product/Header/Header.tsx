@@ -20,7 +20,7 @@ const Header: React.FC<HeaderProps> = (props) => {
 			{isFeatured && <>
 				<div className="ui-product-header__featured">
 					<i className="fr fr-star"></i>
-					{`Featured Product`}
+					{`Recommended`}
 				</div>
 			</>}
 

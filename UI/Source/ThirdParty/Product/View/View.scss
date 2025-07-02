@@ -14,7 +14,7 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 
 // mobile first
 .ui-product-view {
-	color: #aaa;
+	color: var(--secondary);
     display: flex;
 	flex-direction: column;
     gap: px_to_rem(10);

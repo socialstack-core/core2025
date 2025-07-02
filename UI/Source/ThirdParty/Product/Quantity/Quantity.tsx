@@ -1,6 +1,7 @@
 import { Product } from 'Api/Product';
 import { useCart } from 'UI/Payments/CartSession';
 import { useRef, useState, useEffect } from "react";
+import { CurrencyAmount } from 'UI/Product/Price';
 import Button from 'UI/Button';
 
 /**
@@ -18,6 +19,11 @@ interface QuantityProps {
 	 * optional additional classnames
 	 */
 	className?: string,
+
+	/**
+	 * Overriding price to display
+	 */
+	override?: CurrencyAmount,
 }
 
 /**
@@ -30,7 +36,7 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 	const max = 999;
 	const bundle = 1; // if product can only be ordered in multiples of [x]
 
-	const { product, className } = props;
+	const { product, className, override } = props;
 
 	if (!product) {
 		return `Product required`;
@@ -134,12 +140,24 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 		setQuantity(newQty);
 	}
 
+	let disabled = !quantity && !override && !(product?.calculatedPrice && product?.calculatedPrice.length) ? true : undefined;
+
+	if (override) {
+		let overrideAmount = parseInt(override.amount, 10);
+
+		if (overrideAmount <= 0 || isNaN(overrideAmount)) {
+			disabled = true;
+		}	
+
+	}
+
+
 	return (
 		<div className={qtyClasses.join(' ')}>
 			<div className="ui-product-qty__inner">
 				{/* nothing in basket?  show "add" button */}
 				{!quantity && <>
-					<Button sm className="ui-product-qty__add" onClick={() => addToBasket()}>
+					<Button sm className="ui-product-qty__add" onClick={() => addToBasket()} disabled={disabled}>
 						{ctaLabel}
 					</Button>
 				</>}

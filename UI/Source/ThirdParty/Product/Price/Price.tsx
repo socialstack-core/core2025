@@ -1,6 +1,6 @@
 import { Product } from 'Api/Product';
 import { useSession } from 'UI/Session';
-import { formatCurrency } from "UI/Functions/CurrencyTools";
+import { formatCurrency, formatPOA } from "UI/Functions/CurrencyTools";
 import { useCart } from 'UI/Payments/CartSession';
 
 /**
@@ -68,17 +68,24 @@ const Price: React.FC<PriceProps> = (props) => {
 		amount = lessTax ? tier.amountLessTax : tier.amount;
 	}
 	else {
-		return null;
+		currencyCode = locale.currencyCode;
+
+		return (
+			<span className="ui-product-price">
+				{formatPOA({ currencyCode })}
+			</span>
+		);
 	}
 
 	// TODO: optional previous price
 	let oldPrice = 0;
 
 	return (
-		<span className="ui-product--price">
-			{hasOptions && <span>{`From`}</span>}
+		<span className="ui-product-price">
+			{hasOptions && <span className="ui-product-price--from">{`From`}</span>}
 			{formatCurrency(amount, { currencyCode })}
-			{oldPrice ? <span>{`Was ${formatCurrency(oldPrice, { currencyCode })}`}</span> : null}
+			<span>{lessTax ? `ex VAT` : `inc VAT`}</span>
+			{oldPrice ? <span className="ui-product-price--was">{`Was ${formatCurrency(oldPrice, { currencyCode })}`}</span> : null}
 		</span>
 	);
 }
