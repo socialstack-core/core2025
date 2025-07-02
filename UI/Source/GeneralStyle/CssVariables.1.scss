@@ -5,15 +5,21 @@
 	// add project-specific palette colours here, e.g.
 	// --palette-main: #ff0000;
 
-	// overrides for UI/Breadcrumb
-	//--breadcrumb-fg: ...;
 	//--breadcrumb-bg: ...;
+	//--breadcrumb-fg: ...;
+	//--breadcrumb-icon: ...;
+	//--product-qty-bg: #fbf3f8;
+	//--product-qty-fg: var(--palette-dark-pink);
+	//--product-qty-btn-bg: #fff;
+	//--product-qty-btn-fg: var(--palette-pink);
 
-	// WIP
-	/*
-	--product-qty-bg: ...;
-	--product-qty-fg: ...;
-	--product-qty-btn-bg: ...;
-	--product-qty-btn-fg: ...;
-	*/
+	//--featured-bg: var(--palette-light-blue);
+	//--featured-fg: var(--palette-blue);
+	//--featured-font-weight: 800;
+	//--featured-text-transform: uppercase;
+
+	//--approved-bg: var(--palette-light-green);
+	//--approved-fg: var(--palette-green);
+
+	//--divider: var(--palette-light-pink);
 }
