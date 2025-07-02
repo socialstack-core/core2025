@@ -121,6 +121,28 @@
 
 		&__inner {
 			min-width: 0;
+			height: px_to_rem(36);
+		}
+
+		&__add.btn {
+			--btn-font-size: 15;
+		}
+
+		&__update.btn {
+			--btn-font-size: 15;
+			height: px_to_rem(28);
+		}
+
+		&__down.btn,
+		&__up.btn {
+			width: px_to_rem(28);
+			height: px_to_rem(28);
+		}
+
+		&__value {
+			font-size: px_to_rem(16);
+			height: px_to_rem(28);
+			padding: 0 px_to_rem(8);
 		}
 
 	}
