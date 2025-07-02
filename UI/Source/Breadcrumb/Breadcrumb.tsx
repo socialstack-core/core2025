@@ -7,7 +7,7 @@ interface BreadcrumbProps {
 	/**
 	 * Show current page
 	 */
-	includeCurrent: boolean,
+	includeCurrent?: boolean,
 }
 
 
