@@ -33,4 +33,11 @@ else
   echo "No pre-push scripts found in $HOOK_DIR."
 fi
 
+cd ../../
+
+dotnet run git pre-push "$COMMIT_MSG_FILE" || {
+  echo "Dotnet script failed. Aborting commit."
+  exit 1
+}
+
 exit 0

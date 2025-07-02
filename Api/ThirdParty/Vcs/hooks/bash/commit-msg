@@ -32,4 +32,12 @@ else
   echo "No commit-msg scripts found in $HOOK_DIR."
 fi
 
+
+cd ../../
+
+dotnet run git commit-msg "$COMMIT_MSG_FILE" || {
+  echo "Dotnet script failed. Aborting commit."
+  exit 1
+}
+
 exit 0

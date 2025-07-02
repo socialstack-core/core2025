@@ -15,3 +15,5 @@
 /TypeScript
 /Tests/bin
 /Tests/obj
+.idea
+Api/ThirdParty/Vcs/GitService.cs

@@ -1,35 +1,89 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using Api.Configuration;
+using Newtonsoft.Json.Linq;
 
 namespace Api.Vcs
 {
     /// <summary>
-    /// Used for managing git hooks. 
+    /// Provides services for managing Git hooks and interacting with Git repository events.
     /// </summary>
     public partial class GitService : AutoService
     {
-
         /// <summary>
-        /// 
+        /// Initializes a new instance of the <see cref="GitService"/> class and installs Git hooks if needed.
         /// </summary>
         public GitService()
         {
             InstallHooks();
+
+            var gitConfig = AppSettings.GetSection("Git"); 
+
+            if (gitConfig is null)
+            {
+                Log.Error("GIT", "Git configuration section not found in appsettings.json. Please ensure it is configured correctly.");
+                throw new InvalidOperationException("Git configuration section not found in appsettings.json.");
+            }
+
+            GitHooks.PreCommit.AddEventListener(async evt =>
+            {
+
+                if (evt.StagedFiles.Count == 0)
+                {
+                    Log.Error("GIT", "No files staged for commit. Please stage files before committing.");
+                    throw new InvalidOperationException("No files staged for commit. Please stage files before committing.");
+                }
+
+                if (gitConfig is not null)
+                {
+                    foreach (var file in evt.StagedFiles)
+                    {
+
+                        if (
+                            file.StartsWith("Admin/Source/ThirdParty") ||
+                            file.StartsWith("UI/Source/ThirdParty") ||
+                            file.StartsWith("Email/Source/ThirdParty") ||
+                            file.StartsWith("Api/ThirdParty")
+                        )
+                        {
+                            // check appsettings.json to see if edits to the thirdparty directory are allowed
+
+                            if (bool.TryParse(gitConfig["DisableThirdPartyEdits"], out bool disallowEdits) && disallowEdits)
+                            {
+                                Log.Error("GIT", $"Commit blocked: {file} is in a third-party directory and edits are not allowed.");
+                                throw new InvalidOperationException($"Commit blocked: {file} is in a third-party directory and edits are not allowed.");
+                            }
+                            else
+                            {
+                                Log.Info("GIT", $"Commit allowed: {file} is in a third-party directory but edits are permitted by configuration.");
+                            }
+                        }
+                    }
+                }
+
+                return evt;
+            });
+
         }
 
+        /// <summary>
+        /// Installs Git hook scripts into the <c>.git/hooks</c> directory if they are not already installed.
+        /// </summary>
         private void InstallHooks()
         {
             if (IsGitInstalled() && IsNodeInstalled())
             {
-
                 if (!Directory.Exists(".git/hooks"))
                 {
                     Directory.CreateDirectory(".git/hooks");
                 }
 
+                // Skip installation if any hook files other than samples already exist
                 if (Directory.GetFiles(".git/hooks").Any(file => !file.EndsWith(".sample")))
                 {
                     Log.Info("GIT", "Git hooks already installed, skipping");
@@ -38,33 +92,143 @@ namespace Api.Vcs
 
                 Log.Info("GIT", "Installing git hooks");
 
-                string dir ="Api/ThirdParty/Vcs/hooks/bash/";
+                string dir = "Api/ThirdParty/Vcs/hooks/bash/";
 
                 File.Copy(dir + "/commit-msg", ".git/hooks/commit-msg");
                 File.Copy(dir + "/pre-commit", ".git/hooks/pre-commit");
-                File.Copy(dir + "/pre-push"  , ".git/hooks/pre-push");
+                File.Copy(dir + "/pre-push", ".git/hooks/pre-push");
             }
         }
 
         /// <summary>
-        /// Checks whether Git is installed and available in the system PATH.
+        /// Runs the pre-commit hook logic, collecting staged files and author information, 
+        /// then dispatches a <see cref="PreCommitEvent"/>.
         /// </summary>
+        /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+        /// <exception cref="InvalidProgramException">Thrown if Git is not installed or available.</exception>
+        public async ValueTask RunPreCommit()
+        {
+            if (!IsGitInstalled())
+            {
+                throw new InvalidProgramException("Git is not installed or not available in the system PATH.");
+            }
+
+            // Get staged files
+            string staged = RunGitCommand("diff --cached --name-only");
+            List<string> stagedFiles = staged.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            // if (stagedFiles.Count == 0)
+            // {
+            //     throw new InvalidOperationException("No files staged for commit. Please stage files before committing.");
+            // }
+
+            // Get current user name from git config
+            string author = RunGitCommand("config user.name");
+
+            var evt = new PreCommitEvent
+            {
+                Author = author,
+                StagedFiles = stagedFiles
+            };
+
+            await GitHooks.PreCommit.Dispatch(evt);
+        }
+
+        /// <summary>
+        /// Runs the commit message hook logic, reading the commit message and author,
+        /// then dispatches a <see cref="CommitMessageEvent"/>.
+        /// </summary>
+        /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+        public async ValueTask RunCommitMessage()
+        {
+            // Read commit message from file
+            string commitMessage = File.Exists(".git/COMMIT_EDITMSG")
+                ? File.ReadAllText(".git/COMMIT_EDITMSG").Trim()
+                : "[No commit message found]";
+
+            // Get author from Git config
+            string author = RunGitCommand("config user.name");
+
+            var evt = new CommitMessageEvent
+            {
+                CommitMessage = commitMessage,
+                Author = author
+            };
+
+            await GitHooks.CommitMessage.Dispatch(evt);
+        }
+
+        /// <summary>
+        /// Runs the pre-push hook logic, collecting commits being pushed, remote URL, and author,
+        /// then dispatches a <see cref="PrePushEvent"/>.
+        /// </summary>
+        /// <remarks>
+        /// This method reads the refs being pushed from standard input, as provided by Git during the pre-push hook.
+        /// </remarks>
+        /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+        public async ValueTask RunPrePush()
+        {
+            string remoteUrl = RunGitCommand("remote get-url origin");
+            string author = RunGitCommand("config user.name");
+
+            var commits = new HashSet<string>();
+            string line;
+            while ((line = Console.ReadLine()) != null)
+            {
+                var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 4)
+                {
+                    continue;
+                }
+                string localSha = parts[1];
+                string remoteSha = parts[3];
+
+                // Deleted branch? Skip.
+                if (localSha == "0000000000000000000000000000000000000000")
+                    continue;
+
+                // Get commits in push range
+                string revList = RunGitCommand($"rev-list {remoteSha}..{localSha}");
+                foreach (var sha in revList.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    commits.Add(sha);
+                }
+            }
+
+            var evt = new PrePushEvent
+            {
+                Commits = commits.ToList(),
+                RemoteRepository = remoteUrl,
+                Author = author
+            };
+
+            await GitHooks.PrePush.Dispatch(evt);
+        }
+
+        /// <summary>
+        /// Determines whether Git is installed and available in the system PATH.
+        /// </summary>
+        /// <returns><c>true</c> if Git is installed and the current directory is a Git repository; otherwise, <c>false</c>.</returns>
         public bool IsGitInstalled()
         {
             return IsToolAvailable("git", "--version") && Directory.Exists(".git");
         }
 
         /// <summary>
-        /// Checks whether Node.js is installed and available in the system PATH.
+        /// Determines whether Node.js is installed and available in the system PATH.
         /// </summary>
+        /// <returns><c>true</c> if Node.js is installed; otherwise, <c>false</c>.</returns>
         public bool IsNodeInstalled()
         {
             return IsToolAvailable("node", "--version");
         }
 
         /// <summary>
-        /// Runs the specified command to check if a tool is available.
+        /// Checks if the specified tool is available by running it with the provided arguments.
         /// </summary>
+        /// <param name="command">The command or tool name to check.</param>
+        /// <param name="args">Arguments to pass to the command.</param>
+        /// <returns><c>true</c> if the command executes successfully (exit code 0); otherwise, <c>false</c>.</returns>
         private bool IsToolAvailable(string command, string args)
         {
             try
@@ -92,5 +256,30 @@ namespace Api.Vcs
                 return false;
             }
         }
-    } 
+
+        /// <summary>
+        /// Runs a Git command and returns its trimmed standard output.
+        /// </summary>
+        /// <param name="arguments">The arguments to pass to the Git command.</param>
+        /// <returns>The trimmed standard output of the Git command.</returns>
+        private static string RunGitCommand(string arguments)
+        {
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd().Trim();
+            process.WaitForExit();
+            return output;
+        }
+    }
 }

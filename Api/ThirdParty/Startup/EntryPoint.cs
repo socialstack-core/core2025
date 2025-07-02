@@ -9,6 +9,8 @@ using System.Runtime.InteropServices;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Diagnostics.Eventing.Reader;
+using System.Linq;
+using Api.Vcs;
 
 namespace Api.Startup
 {
@@ -33,7 +35,7 @@ namespace Api.Startup
         /// <summary>
         /// The main entry point for your project's API.
         /// </summary>
-        public static void Main()
+        public static void Main(string[] args)
         {
 #if !DEBUG
 			System.Console.WriteLine("API starting up. Log messages can be found in the socialstack log (not here) such that log entries are easier to filter and search.");
@@ -131,6 +133,61 @@ namespace Api.Startup
             Services.Environment = Services.SanitiseEnvironment(env);
             Services.OriginalEnvironment = env;
 
+            if (args.Length != 0)
+            {
+                // this has been added as a switch case to allow for future expansion.
+                // for the meantime though, we only support the "git" arg, this is 
+                // to fire off scripts built in C# as not everyone will have node installed
+                // or be on a specific platform, but we know for certain that C# will be available.
+
+                switch (args[0])
+                {
+                    case "git":
+                    
+                        Services.BuildHost = "git";
+                        Services.RegisterAndStart();
+
+                        // this isn't a GIT replacement, simply fires off when hooks are executed. 
+                        // this allows the ecosystem to run scripts in C# rather than node, which is useful for those who don't have node installed.
+
+                        var svc = Services.Get<GitService>();
+                        string[] validOptions = ["pre-commit", "commit-msg", "pre-push"];
+
+                        if (args.Length == 1)
+                        {
+                            // no follow up args, this should just exit out with an error message.
+                            throw new InvalidOperationException("You must provide an option after 'dotnet run git'. Options are: " + string.Join(", ", validOptions));
+                        }
+
+                        var option = args[1].ToLowerInvariant();
+
+                        if (!validOptions.Contains(option))
+                        {
+                            throw new InvalidOperationException("Invalid option provided after 'dotnet run git'. Options are: " + string.Join(", ", validOptions));
+                        }
+
+                        switch(option)
+                        {
+                            case "pre-commit":
+                                // run pre-commit hooks:
+                                svc.RunPreCommit().GetAwaiter().GetResult();
+                                break;
+                            case "commit-msg":
+                                // run commit-msg hooks:
+                                svc.RunCommitMessage().GetAwaiter().GetResult();
+                                break;
+                            case "pre-push":
+                                // run pre-push hooks:
+                                svc.RunPrePush().GetAwaiter().GetResult();
+                                break;
+                        }
+
+                        break;
+                }
+                // then goto shutdown.
+                return;
+            }
+
             if (Services.HasHostType("web"))
             {
                 // Create a Kestrel host:
@@ -174,7 +231,7 @@ namespace Api.Startup
                 }
 
                 builtHost.WaitForShutdown();
-            } 
+            }
             else
             {
                 // Running without the webserver

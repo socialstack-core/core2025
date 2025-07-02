@@ -34,7 +34,7 @@ namespace Api.Configuration
             // ConfigurationBuilder has a reloadOnChange option which doesn't work as expected
             // So we'll instead use a simpler custom implementation such that we can get realtime reloads
 
-            if (Services.BuildHost == "xunit")
+            if (Services.BuildHost == "xunit" || Services.BuildHost == "git")
             {
                 Configuration = LoadFromJsonFile("../../../../appsettings.json");
             }
