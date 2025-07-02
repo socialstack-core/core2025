@@ -228,6 +228,12 @@ fieldset {
 		@include sizeXl();
 	}
 
+	&.fieldset--bordered {
+		border-radius: px_to_rem(8);
+		border: 1px solid #ced4da;
+		padding: px_to_rem(20);
+	}
+
 }
 
 // NB: Bootstrap allows for field-level sizing (sm/lg);

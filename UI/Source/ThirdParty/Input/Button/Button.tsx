@@ -1,3 +1,5 @@
+import UIButton from 'UI/Button';
+
 type ButtonInputType = React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 // Registering 'button' as being available
@@ -20,17 +22,33 @@ const Button: React.FC<ButtonProps> = (props) => {
 	const { icon, label } = config;
 	const { className, children, ...attribs } = field;
 
+	var defaultLabel = `Button`;
+
+	switch (type) {
+
+		case 'submit':
+			defaultLabel = `Submit`;
+			break;
+
+		case 'reset':
+			defaultLabel = `Reset`;
+			break;
+
+	}
+
 	return (
-		<button
-			type={type}
-			className={className || "btn btn-primary"}
-			{...attribs}
-		>
-			{
-				icon
-			}
-			{label || children || "Submit"}
-		</button>
+		<UIButton type={type} className={className} {...attribs}>
+			{icon && <>
+				{icon}
+				<span>
+					{label || children || defaultLabel}
+				</span>
+			</>}
+
+			{!icon && <>
+				{label || children || defaultLabel}
+			</>}
+		</UIButton>
 	);
 	
 }
