@@ -1,4 +1,5 @@
 import { Product } from 'Api/Product';
+import { useSession } from 'UI/Session';
 import { useCart } from 'UI/Payments/CartSession';
 import { useRef, useState, useEffect } from "react";
 import { CurrencyAmount } from 'UI/Product/Price';
@@ -42,7 +43,10 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 		return `Product required`;
 	}
 
-	var { addToCart, getCartQuantity } = useCart();
+	const { session } = useSession();
+	const { locale } = session;
+
+	var { lessTax, addToCart, getCartQuantity } = useCart();
 	const quantity = getCartQuantity(product.id);
 	const [typedQuantity, setTypedQuantity] = useState(quantity.toString());
 	const [isEditing, setIsEditing] = useState(false);
@@ -140,17 +144,37 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 		setQuantity(newQty);
 	}
 
-	let disabled = !quantity && !override && !(product?.calculatedPrice && product?.calculatedPrice.length) ? true : undefined;
+	let amount: ulong | undefined;
+	let disabled: boolean | undefined;
+
+	// TODO: determine when product has options
+	let hasOptions = false;
 
 	if (override) {
-		let overrideAmount = parseInt(override.amount, 10);
+		amount = override.amount;
+	} else if (product?.calculatedPrice && product?.calculatedPrice.length && locale) {
+		// NB: This will be replaced again when per-user pricing and the tax resolver is added
+		var tiers = product.calculatedPrice;
+		hasOptions = tiers.length > 1;
 
-		if (overrideAmount <= 0 || isNaN(overrideAmount)) {
-			disabled = true;
+		// Get the lowest one:
+		var tier = tiers[0];
+
+		if (hasOptions) {
+			for (var i = 1; i < tiers.length; i++) {
+				var current = tiers[i];
+
+				if (current.amount < tier.amount) {
+					tier = current;
+				}
+			}
 		}	
 
+		amount = lessTax ? tier.amountLessTax : tier.amount;
 	}
-
+	else {
+		disabled = !quantity ? true : undefined;
+	}
 
 	return (
 		<div className={qtyClasses.join(' ')}>

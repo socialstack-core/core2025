@@ -152,10 +152,7 @@ const View: React.FC<ViewProps> = (props) => {
 				<ProductPrice product={product} />
 
 				{/* quantity / add to order */}
-				<ProductQuantity product={product} override={{
-					currencyCode: currencyCode,
-					amount: lessTax ? product.totalLessTax : product.total
-				}} />
+				<ProductQuantity product={product} />
 			</div>
 
 		</div>
