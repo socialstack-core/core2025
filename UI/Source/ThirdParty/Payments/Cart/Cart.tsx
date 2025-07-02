@@ -1,13 +1,13 @@
-import Modal from 'UI/Modal';
 import Loading from 'UI/Loading';
-import { useRouter } from 'UI/Router';
 import { useCart } from 'UI/Payments/CartSession';
 import ProductTable from 'UI/Payments/ProductTable';
+import CartTotal from 'UI/Payments/CartTotal';
 import { useState } from 'react';
 import { Coupon } from 'Api/Coupon';
 import Input from 'UI/Input';
 import Button from 'UI/Button';
 import Form from 'UI/Form';
+import Alert from 'UI/Alert';
 
 /**
  * Props for the Cart component.
@@ -25,68 +25,56 @@ interface CartProps {
  */
 const Cart: React.FC<CartProps> = (props) => {
 	const title = props.title?.length ? props.title : `Shopping Cart`;
-	const { setPage } = useRouter();
 	var { addToCart, emptyCart, shoppingCart, cartIsEmpty, loading, lessTax, setCoupon } = useCart();
-	var [showEmptyCartPrompt, setShowEmptyCartPrompt] = useState(null);
+	var [applyCodeEnabled, setApplyCodeEnabled] = useState(false);
 
 	const renderActiveCoupon = (coupon: Coupon) => {
 		const couponTitle = coupon.description;
 
-		return <>
-			{`Active coupon: ${couponTitle}`} <Button onClick={() => setCoupon(null)}>{ `Remove` }</Button>
-		</>
+		return <Alert type="info">
+			{`Active coupon:`}
+			<pre>
+				${couponTitle}
+			</pre>
+			<Button outlined variant="danger" onClick={() => setCoupon(null)}>{`Remove`}</Button>
+		</Alert>
 	};
 
+	const updateApplyCodeEnabled = (e) => {
+		setApplyCodeEnabled(e.target.value.trim().length);
+	}
+
 	return <>
+		<div className="shopping-cart">
 		<h1 className="shopping-cart__title">
 			{title}
 		</h1>
-		{loading ? <Loading /> : <ProductTable shoppingCart={shoppingCart} addToCart={addToCart} lessTax={lessTax} />}
+
+			{loading && <Loading />}
+
+			{!loading && <>
+				<ProductTable shoppingCart={shoppingCart} addToCart={addToCart} lessTax={lessTax} />
 
 		{!cartIsEmpty() && <>
-			<div className="shopping-cart__footer">
-				<button type="button" className="btn btn-outline-danger" onClick={() => setShowEmptyCartPrompt(true)}>
-					<i className="fal fa-fw fa-trash" />
-					{`Empty Cart`}
-				</button>
-
-				<button type="button" className="btn btn-primary" onClick={() => setPage('/cart/checkout')}>
-					<i className="fal fa-fw fa-credit-card" />
-					{`Checkout`}
-				</button>
-			</div>
-		</>}
-		{
-			showEmptyCartPrompt && <>
-				<Modal visible isSmall className="empty-cart-modal" title={`Empty Cart`} onClose={() => setShowEmptyCartPrompt(false)}>
-					<p>{`This will remove all selected products from your shopping cart.`}</p>
-					<p>{`Are you sure you wish to do this?`}</p>
-					<footer>
-						<button type="button" className="btn btn-outline-danger" onClick={() => setShowEmptyCartPrompt(false)}>
-							{`Cancel`}
-						</button>
-						<button type="button" className="btn btn-danger" onClick={() => {
-							emptyCart();
-							setShowEmptyCartPrompt(false);
-						}}>
-							{`Empty`}
-						</button>
-					</footer>
-				</Modal>
-			</>
-		}
-		<div>
-			<h1>{`Promo code`}</h1>
+					<fieldset className="shopping-cart__promo fieldset--bordered">
+						<legend>
+							{`Have a promotional code? Enter it here`}
+						</legend>
 			{
 				shoppingCart?.coupon && renderActiveCoupon(shoppingCart?.coupon)
 			}
-			<div>
-				<Form action={(fields) => {
+						<Form className="shopping-cart__promo-form" action={(fields) => {
 					return setCoupon(fields.coupon);
-				}} submitLabel={`Apply`} successMessage={`Coupon applied`} failedMessage={`Unable to apply coupon`}>
-					<Input type='text' name='coupon' placeholder={`Enter a promo code`} />
+						}} successMessage={`Coupon applied`} failedMessage={`Unable to apply coupon`}>
+							<Input type='text' name='coupon' placeholder={`Enter promotional code`} noWrapper onChange={(e) => updateApplyCodeEnabled(e)} />
+							<Input type="submit" label={`Apply code`} noWrapper disabled={applyCodeEnabled ? undefined : true} />
 				</Form>
-			</div>
+					</fieldset>
+
+					<CartTotal shoppingCart={shoppingCart} emptyCart={emptyCart} lessTax={lessTax} />
+				</>}
+
+			</>}
 		</div>
 	</>;
 }

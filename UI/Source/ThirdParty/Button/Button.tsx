@@ -21,7 +21,7 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
 	/**
 	 * The button type.
 	 */
-	buttonType?: 'button' | 'reset' | 'submit',
+	type?: 'button' | 'reset' | 'submit',
 
 	/**
 	 * Optional href if it is a link
@@ -66,7 +66,13 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
 	/**
 	 * The style variant, "primary", "secondary" etc. "primary" assumed.
 	 */
-	variant?: string
+	variant?: string,
+
+	/**
+	 * optional external target link to open in a new window when:
+	 * shift-clicking, middle-mouse button clicking or pressing shift+enter / shift+space when focused
+	 */
+	externalLink?: string
 }
 
 /**
@@ -74,11 +80,17 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
  * ref: https://getbootstrap.com/docs/5.0/components/buttons/
  */
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
-	children, className, tag, buttonType, href, variant,
+	children, className, tag, href, variant,
 	disabled, outlined, allowWrap, xs, sm, md, lg, xl, ...props
 }) => {
-	var classes = className ? className.split(" ") : [];
+	let buttonType = props.type || props.buttonType;
+	let externalLink = props.externalLink?.trim();
 
+	if (!externalLink?.length) {
+		externalLink = false;
+	}
+
+	var classes = className ? className.split(" ") : [];
 	var Tag = tag ? tag : "button";
 
 	switch (Tag) {
@@ -146,6 +158,52 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 
 	var btnClass = classes.join(" ");
 
+	const openInNewTab = (url) => {
+
+		if (url.startsWith("//")) {
+			url = url.substring(2);
+		}
+
+		if (url.startsWith("/")) {
+			url = url.substring(1);
+		}
+
+		if (!url.startsWith("http://") && !url.startsWith("https://")) {
+			url = [window.location.origin, url].join("/");
+		}
+
+		window.open(url, "_blank", "noopener noreferrer");
+	};
+
+	function handleMouseDown(e) {
+
+		if (!externalLink) {
+			return;
+		}
+
+		// middle-clicking links works OOTB, so ignore those
+		// only apply this to buttons acting as links
+		if (e.target.nodeName != "A" && variant == "link") {
+
+			if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+				openInNewTab(externalLink);
+			}
+
+		}
+
+	}
+
+	function handleKeyDown(e) {
+
+		if (!externalLink) {
+			return;
+		}
+
+		if ((e.key === 'Enter' || e.key === 'Space') && e.shiftKey) {
+			openInNewTab(externalLink);
+		}
+	}
+
 	return (
 		<Tag className={btnClass}
 			disabled={Tag != "a" && disabled ? true : undefined}
@@ -155,6 +213,8 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 			href={Tag == "a" ? href : undefined}
 			type={Tag == "a" ? undefined : buttonType}
 			role={Tag == "a" ? "button" : undefined}
+			onMouseDown={(e) => handleMouseDown(e)}
+			onKeyDown={(e) => handleKeyDown(e)}
 			{...props}
 		>
 			{children}

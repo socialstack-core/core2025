@@ -34,12 +34,16 @@ const Stock: React.FC<StockProps> = (props) => {
 		<div className="ui-product-stock__wrapper">
 			{!hasOptions && <>
 				<span className="ui-product-stock__sku">
+					{/*
 					<i className="fr fr-barcode"></i>
+					*/}
 					{product.sku}
 				</span>
 				<span className={stockInfoClass.join(' ')}>
 					{stockLevel > 0 && <>
+						{/*
 						<i className="fr fr-check-circle"></i>
+						*/}
 						{`${stockLevel} in stock`}
 					</>}
 					{!stockLevel && <>

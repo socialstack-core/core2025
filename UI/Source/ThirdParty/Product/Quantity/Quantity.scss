@@ -124,12 +124,21 @@
 			height: px_to_rem(36);
 		}
 
+		&__add.btn,
+		&__update.btn,
+		&__down.btn,
+		&__up.btn {
+			min-height: 0 !important;
+		}
+
 		&__add.btn {
 			--btn-font-size: 15;
 		}
 
 		&__update.btn {
-			--btn-font-size: 15;
+			--btn-font-size: 14;
+			--btn-border-radius: 4;
+			--btn-padding: 11;
 			height: px_to_rem(28);
 		}
 

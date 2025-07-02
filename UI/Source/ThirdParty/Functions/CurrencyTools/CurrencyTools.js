@@ -60,7 +60,54 @@ const formatCurrency = (value, options) => {
 
 };
 
+/**
+ * format "price on application" label for missing prices (e.g. "£POA")
+ * @param {any} options
+ * 
+ * options available are:
+ * - currencyDisplay (default: "symbol")
+ *   "symbol": use a localized currency symbol such as €.
+ *   "narrowSymbol": use a narrow format symbol ("$100" rather than "US$100").
+ *   "code": use the ISO currency code.
+ *   "name": use a localized currency name such as "dollar".
+ *   "none" / false: omit currency symbol
+ *   
+ * - currencyCode: defaults to locale.currencyCode
+ * 
+ * for example, to render "POA" in a foreign currency:
+ * formatPOA({ currencyCode: "EUR" })
+ */
+const formatPOA = (options) => {
+	options = options || {};
+	const { currencyCode, localeCode } = options;
+
+	if (!currencyCode) {
+		throw new Error('currency reqd.');
+	}
+
+	var formatter = new Intl.NumberFormat(localeCode, {
+		style: 'currency',
+		currency: currencyCode,
+		currencyDisplay: options.currencyDisplay ? options.currencyDisplay : undefined,
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0
+	});
+
+	const parts = formatter.formatToParts(0);
+
+	// Reconstruct the string, replacing the number with 'POA'
+	const result = parts.map(part => {
+		if (part.type === 'integer' || part.type === 'decimal' || part.type === 'fraction') {
+			return `POA`;
+		}
+		return part.value;
+	}).join('');
+
+	return result;
+};
+
 export {
 	fractionDigits,
-	formatCurrency
+	formatCurrency,
+	formatPOA
 };

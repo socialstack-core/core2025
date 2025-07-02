@@ -28,6 +28,11 @@ interface SearchProps {
 	noBorder?: boolean,
 
 	/**
+	 * Any particular units to display with the filter.
+	 */
+	units?: string,
+
+	/**
 	 * Do something when the filter changes.
 	 */
 	onChange: (values: ulong[]) => void
@@ -87,7 +92,7 @@ const FilterList: React.FC<SearchProps> = ({ facets, searchFilter, noBorder, ...
 						style={{ display: expanded || index < maxVisible ? "flex" : "none" }}
 						type="checkbox"
 						sm
-						label={`${facet[field][subField]} (${facet.count})`}
+						label={`${facet[field][subField]}${props.units ?? ''} (${facet.count})`}
 						noWrapper
 						onChange={(ev) => {
 							const target = ev.target as HTMLInputElement;

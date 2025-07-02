@@ -1,21 +1,14 @@
 import { Product } from 'Api/Product';
-import Canvas from 'UI/Canvas';
-import Quantity from 'UI/Product/Quantity';
 import ProductCarousel from 'UI/Product/Carousel';
-import ProductSpecifications from 'UI/Product/Specifications';
-import Promotion from 'UI/Promotion';
 import ProductAbout from 'UI/Product/About';
 import ProductAttributes from 'UI/Product/Attributes';
 import ProductPrice from 'UI/Product/Price';
-import ProductStock from 'UI/Product/Stock';
-import ProductSubtitle from 'UI/Product/Subtitle';
 import ProductQuantity from 'UI/Product/Quantity';
-import Button from 'UI/Button';
-
 import { useState } from 'react';
 import Breadcrumb from 'UI/Breadcrumb';
 import ProductHeader from 'UI/Product/Header';
-
+import { useCart } from 'UI/Payments/CartSession';
+import { useSession } from 'UI/Session';
 
 /**
  * Props for the View component.
@@ -34,6 +27,12 @@ interface ViewProps {
  */
 const View: React.FC<ViewProps> = (props) => {
 	const { product } = props;
+	var { cartContents, lessTax } = useCart();
+
+	const { session } = useSession();
+	var { locale } = session;
+
+	let currencyCode = cartContents?.currencyCode || locale.currencyCode || "GBP";
 
 	enum ProductTab {
 		About = `About this product`,
@@ -129,7 +128,8 @@ const View: React.FC<ViewProps> = (props) => {
 				</>}
 
 				{/* product info */}
-				{/*infoDescription?.length > 0 && <>
+				{/*
+				{infoDescription?.length > 0 && <>
 					<Button sm variant="warning" className="ui-product-view__price-info-note" popoverTarget="product_note">
 						<i className="fr fr-exclamation-circle"></i>
 						<span>
@@ -145,13 +145,17 @@ const View: React.FC<ViewProps> = (props) => {
 						</div>
 						{infoDescription}
 					</div>
-				</>*/}
+				</>}
+				*/}
 
 				{/* price */}
 				<ProductPrice product={product} />
 
 				{/* quantity / add to order */}
-				<ProductQuantity product={product} />
+				<ProductQuantity product={product} override={{
+					currencyCode: currencyCode,
+					amount: lessTax ? product.totalLessTax : product.total
+				}} />
 			</div>
 
 		</div>

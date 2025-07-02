@@ -44,7 +44,27 @@ interface IconBaseProps {
 	/**
 	 * Character, used internally by the compiler.
 	 */
-	c?:string
+	c?: string,
+
+	/**
+	 * sizing flags
+	 */
+	xxs: Boolean,
+	xs: Boolean,
+	sm: Boolean,
+	md: Boolean,
+	lg: Boolean,
+	xl: Boolean,
+	xxl: Boolean,
+	x2: Boolean,
+	x3: Boolean,
+	x4: Boolean,
+	x5: Boolean,
+	x6: Boolean,
+	x7: Boolean,
+	x8: Boolean,
+	x9: Boolean,
+	x10: Boolean,
 }
 
 /**
@@ -61,7 +81,11 @@ type IconProps = IconBaseProps & {
 }
 
 const Icon: React.FC<IconProps> = (props) => {
-	const { type, light, solid, duotone, regular, brand, fixedWidth, spin, horizontalFlip, c } = props;
+	const {
+		type, light, solid, duotone, regular, brand, fixedWidth, spin, horizontalFlip, c,
+		xxs, xs, sm, md, lg, xl, xxl,
+		x2, x3, x4, x5, x6, x7, x8, x9, x10
+	} = props;
 	
 	var variant = 'fa';
 	
@@ -77,7 +101,41 @@ const Icon: React.FC<IconProps> = (props) => {
 		variant = 'fas';
 	}
 	
-	var className = variant + " ui-icon";
+	var size = '';
+
+	if (xxs) {
+		size = 'fa-2xs';
+	}else if (xs) {
+		size = 'fa-xs';
+	} else if (sm) {
+		size = 'fa-sm';
+	} else if (lg) {
+		size = 'fa-lg';
+	} else if (xl) {
+		size = 'fa-xl';
+	} else if (xxl) {
+		size = 'fa-2xl';
+	} else if (x2) {
+		size = 'fa-2x';
+	} else if (x3) {
+		size = 'fa-3x';
+	} else if (x4) {
+		size = 'fa-4x';
+	} else if (x5) {
+		size = 'fa-5x';
+	} else if (x6) {
+		size = 'fa-6x';
+	} else if (x7) {
+		size = 'fa-7x';
+	} else if (x8) {
+		size = 'fa-8x';
+	} else if (x9) {
+		size = 'fa-9x';
+	} else if (x10) {
+		size = 'fa-10x';
+	}
+
+	var classNames = [variant, size, 'ui-icon'];
 
 	if (!c) {
 		// May need to reconsider this if people specifically target an icon using these class names.
@@ -85,25 +143,25 @@ const Icon: React.FC<IconProps> = (props) => {
 		// It exists such that static icons, which use a tiny highly accelerated subset of icons, 
 		// don't end up being given 2 characters when both the accelerated set and the 
 		// entire set are present (like on the admin panel).
-		className += " " + type;
+		classNames.push(type);
 	}
 
 	if (fixedWidth) {
-		className += " fa-fw";
+		classNames.push("fa-fw");
     }
 
 	if (spin) {
-		className += " fa-spin";
+		classNames.push("fa-spin");
 	}
 
 	if (horizontalFlip) {
-		className += " fa-flip-horizontal";
+		classNames.push("fa-flip-horizontal");
 	}
 
 	// NB: count removal: if you need it, use a wrapping component instead
 	// due to the special case that Icon is to the compiler.
 
-	return <i className={className}>{c}</i>;
+	return <i className={classNames.join(' ')}>{c}</i>;
 }
 
 export default Icon;

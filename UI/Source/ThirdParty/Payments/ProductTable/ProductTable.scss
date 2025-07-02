@@ -1,16 +1,5 @@
 .shopping-cart__table {
-
-	.qty-column {
-		width: px_to_rem(160);
-	}
-
-    .qty-column,
-    .currency-column {
-        text-align: right;
-    }
-
-	.ui-product-qty {
-		width: 100%;
-	}
-
+	list-style: none;
+	margin: 0;
+	padding: 0;
 }

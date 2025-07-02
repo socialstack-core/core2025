@@ -1,0 +1,234 @@
+.site-nav {
+	$site-nav: &;
+
+	&__search {
+		$site-header__search: &;
+		display: flex;
+		align-items: center;
+		flex: 1;
+
+		&-trigger {
+			border-radius: px_to_rem(8);
+			padding: px_to_rem(8) px_to_rem(6);
+			min-height: px_to_rem(44);
+			display: flex;
+			align-items: center;
+
+			svg {
+				width: px_to_rem(20);
+				height: px_to_rem(20);
+			}
+
+		}
+
+		&-wrapper {
+			position: absolute;
+			left: 0;
+			top: var(--site-header-height);
+			right: 0;
+			bottom: auto;
+			border: 0;
+			margin: 0;
+			padding: px_to_rem(4);
+			width: 100vw;
+			box-shadow: 0 px_to_rem(16) px_to_rem(16) 0 rgba(#210818, 25%);
+			opacity: 0;
+			transform: translateY(-100%);
+			transition-property: opacity, transform, overlay, display;
+			transition-duration: .3s;
+			transition-timing-function: ease-in-out;
+			transition-behavior: allow-discrete;
+
+			// NB: for polyfill support
+			// (do not combine with following rule)
+			&.\:popover-open {
+				opacity: 1;
+				transform: none;
+
+				&::backdrop {
+					//background-color: rgba(#210818, 25%);
+				}
+			}
+
+			&:popover-open {
+				opacity: 1;
+				transform: none;
+
+				&::backdrop {
+					//background-color: rgba(#210818, 25%);
+				}
+			}
+
+			&::backdrop {
+				background-color: transparent;
+				transition-property: background-color, overlay, display;
+				transition-duration: .3s;
+				transition-timing-function: ease-in-out;
+				transition-behavior: allow-discrete;
+			}
+
+		}
+
+		input[type="search"] {
+			flex: 1;
+			width: 100%;
+			border-radius: px_to_rem(8);
+			min-height: px_to_rem(44);
+			font-size: px_to_rem(16); // not 15px to avoid zoom-in on iOS
+			padding: px_to_rem(8) px_to_rem(8) px_to_rem(8) px_to_rem(48);
+			background-image: url("data:image/svg+xml, %3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 19'%3E%3Cpath d='M15.4 14.27a8.71 8.71 0 10-1.12 1.12l3.37 3.38a.81.81 0 001.12 0c.32-.3.32-.8 0-1.12l-3.36-3.37zm-6.68 1.56a7.14 7.14 0 010-14.25 7.14 7.14 0 010 14.25z' fill='%23B50E7C' /%3E%3C/svg%3E%0A");
+			background-size: px_to_rem(20) px_to_rem(20);
+			background-repeat: no-repeat;
+			background-position: px_to_rem(16);
+			border: 1px solid transparent;
+			transition: border-color .3s ease-in-out;
+
+			&:hover, &:focus {
+				border-color: var(--primary);
+			}
+
+			&::placeholder {
+				font-size: px_to_rem(14);
+				opacity: .6;
+			}
+		}
+
+		&-dropdown {
+			display: none;
+			position: absolute;
+			min-height: px_to_rem(300);
+			left: 0;
+		    right: 0;
+			top: calc(var(--site-header-height) + #{px_to_rem(60)} + .5rem);
+			background: #fff;
+			box-shadow: 0 0 px_to_rem(16) 0 rgba(#210818, 25%);
+			z-index: 100;
+
+			&:empty {
+				display: none !important;
+			}
+			
+			.search-listing {
+				list-style: none;
+
+				a {
+					text-decoration: none;
+					color: #636464;
+				}
+				li {
+					margin:5px;
+					height:30px;
+					line-height:30px;
+
+					i {
+						width:30px;
+						text-align:center;
+					}
+					&> span {
+						color:#000;
+						font-size:13px;
+
+						b {
+							font-weight: bolder;
+						}
+					}
+					&:hover {
+						background:#cccccc20;
+					}
+				}
+
+				.search-listing-category {
+
+				}
+			}
+		}
+
+		&:focus-within #{$site-header__search}-wrapper:popover-open ~ #{$site-header__search}-dropdown {
+			display: block;
+		}
+
+		&:focus-within #{$site-header__search}-wrapper.\:popover-open ~ #{$site-header__search}-dropdown {
+			display: block;
+		}
+
+	}
+
+}
+
+@starting-style {
+
+	.site-nav {
+
+		&__search-wrapper {
+
+			&.\:popover-open {
+				opacity: 0;
+				transform: translateY(-100%);
+
+				&::backdrop {
+					background-color: transparent;
+				}
+			}
+
+			&:popover-open {
+				opacity: 0;
+				transform: translateY(-100%);
+
+				&::backdrop {
+					background-color: transparent;
+				}
+			}
+
+		}
+
+	}
+
+}
+
+@media only screen and (min-width: 1024px) {
+
+	.site-nav {
+
+		&__search {
+			$site-header__search: &;
+			position: relative;
+
+			&-trigger {
+				display: none;
+			}
+
+			&-wrapper {
+				position: static;
+				padding: 0;
+				display: block;
+				width: 100%;
+				box-shadow: none;
+				opacity: 1;
+				transform: none;
+			}
+
+			input[type="search"] {
+
+				&::placeholder {
+					font-size: px_to_rem(15);
+				}
+
+			}
+
+			&-dropdown {
+				top: 100%;
+			}
+
+			&:focus-within {
+
+				#{$site-header__search}-dropdown {
+					display: block;
+				}
+
+			}
+
+		}
+
+	}
+
+}

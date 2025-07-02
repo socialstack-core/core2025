@@ -81,6 +81,7 @@
     &__internal {
         display: flex;
         align-items: center;
+		gap: px_to_rem(8);
     }
 
     // icon
