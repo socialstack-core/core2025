@@ -10,12 +10,26 @@
 	&__filters {
 		border-radius: px_to_rem(8);
 		padding: px_to_rem(20) px_to_rem(24);
-		background-color: #c8c9c9;
+		//background-color: #c8c9c9;
 		//background-color: var(--secondary);
 		//color: var(--secondary-fg);
+		border: 1px solid #ddd;
 		display: flex;
 		flex-direction: column;
 		gap: px_to_rem(20);
+
+		.form-switch {
+			justify-content: space-between;
+		}
+
+		.form-check.ui-check:not(.form-switch) input[type="checkbox"]:checked ~ .form-check-label {
+			color: var(--secondary);
+			font-weight: 800;
+		}
+
+		.ui-dual-range {
+			--range-track-background: #ddd;
+		}
 
 		fieldset {
 			display: flex;
