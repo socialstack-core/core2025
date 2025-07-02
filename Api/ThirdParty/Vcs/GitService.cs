@@ -83,20 +83,28 @@ namespace Api.Vcs
                     Directory.CreateDirectory(".git/hooks");
                 }
 
-                // Skip installation if any hook files other than samples already exist
-                if (Directory.GetFiles(".git/hooks").Any(file => !file.EndsWith(".sample")))
-                {
-                    Log.Info("GIT", "Git hooks already installed, skipping");
-                    return;
-                }
-
                 Log.Info("GIT", "Installing git hooks");
 
                 string dir = "Api/ThirdParty/Vcs/hooks/bash/";
 
-                File.Copy(dir + "/commit-msg", ".git/hooks/commit-msg");
-                File.Copy(dir + "/pre-commit", ".git/hooks/pre-commit");
-                File.Copy(dir + "/pre-push", ".git/hooks/pre-push");
+                try
+                {
+                    File.Delete(".git/hooks/commit-msg");
+                    File.Delete(".git/hooks/pre-commit");
+                    File.Delete(".git/hooks/pre-push");
+                }
+                catch (IOException ex)
+                {
+                    Log.Error("GIT", "Failed to delete existing commit-msg hook: " + ex.Message);
+                }
+                finally
+                {
+                    File.Copy(dir + "/commit-msg", ".git/hooks/commit-msg");
+                    File.Copy(dir + "/pre-commit", ".git/hooks/pre-commit");
+                    File.Copy(dir + "/pre-push", ".git/hooks/pre-push");
+                    
+                    Log.Info("GIT", "Installed git hooks");
+                }
             }
         }
 
