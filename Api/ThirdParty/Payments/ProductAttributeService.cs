@@ -931,7 +931,7 @@ namespace Api.Payments
 		/// <param name="groups"></param>
 		/// <param name="attribs"></param>
 		/// <returns></returns>
-		private async ValueTask InstallDefaults(
+		public async ValueTask InstallDefaults(
 			Context context,
 			Dictionary<string, ProductAttributeGroup> groups,
 			params ProductAttribute[] attribs)
@@ -985,7 +985,7 @@ namespace Api.Payments
 		/// <param name="context"></param>
 		/// <param name="groups"></param>
 		/// <returns></returns>
-		private async ValueTask<Dictionary<string, ProductAttributeGroup>> InstallDefaultGroups(Context context, params ProductAttributeGroup[] groups)
+		public async ValueTask<Dictionary<string, ProductAttributeGroup>> InstallDefaultGroups(Context context, params ProductAttributeGroup[] groups)
 		{
 			// Get all current cats (fast - from the cache):
 			var all = await _groups.Where("", DataOptions.IgnorePermissions).ListAll(context);

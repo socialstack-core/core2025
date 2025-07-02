@@ -49,7 +49,21 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
         return setCouponInternal(coupon)
             .then(loadCart);
     };
-
+	
+	const getCartId = () : uint => {
+		if(shoppingCart){
+			return shoppingCart.id;
+		}
+		
+		var cartIdStr = store.get('shopping_cart_id') as string;
+		
+		if(!cartIdStr){
+			return 0 as uint;
+		}
+		
+		return parseInt(cartIdStr) as uint;
+	};
+	
     const loadCart = (cart: ShoppingCart) => {
         // Merge productQuants in to contents.
         var { productQuantities, cartContents } = cart;
@@ -167,6 +181,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
                 lessTax,
                 setLessTax,
                 setCoupon,
+				getCartId,
                 cartContents: shoppingCart?.cartContents
             }}
         >

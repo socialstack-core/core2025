@@ -54,6 +54,18 @@ namespace Api.Payments
 				},
 				new PageBuilder()
 				{
+					Url = "/cart/complete",
+					Key = "cart_complete",
+					Title = "Checkout completion",
+					BuildBody = (PageBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasNode("UI/Payments/Complete")
+						);
+					}
+				},
+				new PageBuilder()
+				{
 					Url = "/cart/checkout",
 					Key = "cart_checkout",
 					Title = "Review your cart",

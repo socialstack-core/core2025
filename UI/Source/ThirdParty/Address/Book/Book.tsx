@@ -33,7 +33,7 @@ const Book: React.FC<BookProps> = (props: BookProps) => {
 	const [createCounter, setCreateCounter] = useState<number>(0);
 	const [confirmDelete, setConfirmDelete] = useState<Address | null>(null);
 
-	var addressType = Number.isNaN(Number(props.addressType || 0)) ? 0 : parseInt(props.addressType || 0, 10);
+	var addressType = props.addressType === undefined ? 0 : props.addressType;
 
 	// permissions handle any filtering
 	var addressQuery: any = {
@@ -83,7 +83,7 @@ const Book: React.FC<BookProps> = (props: BookProps) => {
 			<div className="ui-payments-address-book__add">
 				<Form action={addressApi.create} submitLabel={`Add address`}
 				onValues={values => {
-					values.addressType = props.addressType || 1;
+					values.addressType = addressType;
 					return values;
 				}}
 

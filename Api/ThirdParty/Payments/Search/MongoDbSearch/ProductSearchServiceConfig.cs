@@ -10,4 +10,9 @@ namespace Api.Payments;
 public partial class ProductSearchServiceConfig : Config
 {
 	
+	/// <summary>
+	/// The name of the index on atlas to use.
+	/// </summary>
+	public string AtlasIndex {get; set;} = "default";
+	
 }

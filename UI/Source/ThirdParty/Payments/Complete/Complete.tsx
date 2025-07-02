@@ -1,35 +1,42 @@
 import Alert from 'UI/Alert';
-import parseQueryString from 'UI/Functions/ParseQueryString';
-import { useRouter, useSession } from 'UI/Session';
+import { useSession } from 'UI/Session';
+import { useRouter } from 'UI/Router';
+import { useEffect } from 'react';
 
-export default function Complete(props) {
-	const { setPage } = useRouter();
+/**
+ * Props for the Complete component.
+ */
+interface CompleteProps {
+	noSessionUpdate?: boolean;
+}
+
+/**
+ * The Cart React component.
+ * @param props React props.
+ */
+const Complete: React.FC<CompleteProps> = (props) => {
+	const { setPage, pageState } = useRouter();
+	const { query } = pageState;
 	var { sessionReload } = useSession();
 
-	// TODO: SSR compliance with the query str.
-	var queryObj = new URLSearchParams(location.search);
-	
-	React.useEffect(() => {
+	useEffect(() => {
 		
 		if(!props.noSessionUpdate){
 			// Force a session refresh. This is because a payment may have been for a subscription which affects the session state.
-			sessionReload();
+			sessionReload && sessionReload();
 		}
 		
 	}, []);
 	
-	switch (queryObj.get('status')) {
+	switch (query.get('status')) {
 		case 'success':
 			return <div className="payment-complete">
 				<Alert variant='success'>
 					<h2 className="stripe-complete-intent__title">
-						{`Purchase Complete`}
+						{`Order Successful`}
 					</h2>
 					<p>
-						{`Thank you for your purchase!`}&nbsp;&nbsp;
-						<a href='/my-subscriptions' className="alert-link">
-							{`View your subscriptions`}
-						</a>
+						{`Thank you for your order.`}
 					</p>
 				</Alert>
 			</div>;
@@ -53,7 +60,7 @@ export default function Complete(props) {
 						{`Purchase Failed`}
 					</h2>
 					<p>
-						{`Failed to process payment details. Please`} <a href='/checkout' className="alert-link">{`click here`}</a> {`to try another payment method.`}
+						{`Failed to process payment details. Please`} <a href='/cart/checkout' className="alert-link">{`click here`}</a> {`to try another payment method.`}
 					</p>
 				</Alert>
 			</div>;
@@ -64,11 +71,6 @@ export default function Complete(props) {
 					<h2 className="stripe-complete-intent__title">
 						{`Card Update Complete`}
 					</h2>
-					<p>
-						<a href='/my-subscriptions' className="alert-link">
-							{`View your subscriptions`}
-						</a>
-					</p>
 				</Alert>
 			</div>;
 		case 'card-update.failed':
@@ -78,7 +80,7 @@ export default function Complete(props) {
 						{`Card Update Failed`}
 					</h2>
 					<p>
-						{`Failed to process payment details. Please try another payment method.`}
+						{`Failed to process payment details. Please go back and try another payment method.`}
 					</p>
 				</Alert>
 			</div>;
@@ -90,10 +92,4 @@ export default function Complete(props) {
     }
 }
 
-Complete.propTypes = {
-};
-
-Complete.defaultProps = {
-}
-
-Complete.icon='check';
+export default Complete;
