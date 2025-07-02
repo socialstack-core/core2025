@@ -11,6 +11,7 @@ using System.Threading;
 using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using Api.Vcs;
+using System.Diagnostics;
 
 namespace Api.Startup
 {
@@ -185,6 +186,7 @@ namespace Api.Startup
                         break;
                 }
                 // then goto shutdown.
+                System.Environment.Exit(0);
                 return;
             }
 

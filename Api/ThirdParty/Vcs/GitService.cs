@@ -179,33 +179,10 @@ namespace Api.Vcs
             string remoteUrl = RunGitCommand("remote get-url origin");
             string author = RunGitCommand("config user.name");
 
-            var commits = new HashSet<string>();
-            string line;
-            while ((line = Console.ReadLine()) != null)
-            {
-                var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 4)
-                {
-                    continue;
-                }
-                string localSha = parts[1];
-                string remoteSha = parts[3];
-
-                // Deleted branch? Skip.
-                if (localSha == "0000000000000000000000000000000000000000")
-                    continue;
-
-                // Get commits in push range
-                string revList = RunGitCommand($"rev-list {remoteSha}..{localSha}");
-                foreach (var sha in revList.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    commits.Add(sha);
-                }
-            }
 
             var evt = new PrePushEvent
             {
-                Commits = commits.ToList(),
+                Commits = [],
                 RemoteRepository = remoteUrl,
                 Author = author
             };
