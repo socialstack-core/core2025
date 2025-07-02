@@ -101,8 +101,8 @@ const Checkout: React.FC<CheckoutProps> = (props) => {
 			{`Checkout`}
 		</h2>
 			<div className="mb-3">
-				<AddressSelection title={`Delivery Address`} name='delivery' value={deliveryAddress} setValue={setDeliveryAddress} addressType='delivery' />
-			<AddressSelection title={`Billing Address`} name='billing' value={billingAddress} setValue={setBillingAddress} same={true} isSame={sameAsDelivery} setSameAs={setSameAsDelivery} addressType='billing' />
+			<AddressSelection title={`Delivery Address`} name='delivery' savedAddresses={savedAddresses} value={deliveryAddress} setValue={setDeliveryAddress} addressType='delivery' />
+			<AddressSelection title={`Billing Address`} name='billing' savedAddresses={savedAddresses} value={billingAddress} setValue={setBillingAddress} same={true} isSame={sameAsDelivery} setSameAs={setSameAsDelivery} addressType='billing' />
 			<CheckoutSection title={`Delivery date`} enabled={!!deliveryAddress} >
 				{estimates ? <DeliveryEstimates estimates={estimates} value={deliveryDate} setValue={setDeliveryDate} /> : <Loading />}
 				</CheckoutSection>

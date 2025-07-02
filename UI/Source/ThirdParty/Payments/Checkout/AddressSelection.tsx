@@ -4,6 +4,7 @@ import Button from 'UI/Button';
 import { useState, useEffect } from 'react';
 import addressApi, { Address } from 'Api/Address';
 import CheckoutSection from './CheckoutSection';
+import { ApiList } from 'UI/Functions/WebRequest';
 
 /**
  * Props for the Checkout component.
@@ -23,12 +24,15 @@ interface AddressSelectionProps {
 
 	isSame?: boolean;
 
+	savedAddresses: ApiList<Address>;
+
 	addressType: 'delivery' | 'billing';
 }
 
 const AddressSelection: React.FC<AddressSelectionProps> = (props) => {
-	const { title, value, setValue, name, same, isSame, setSameAs, addressType } = props;
-	const [adding, setAdding] = useState(false);
+	const { title, value, setValue, name, same, isSame,
+		setSameAs, addressType, savedAddresses } = props;
+	const [changing, setChanging] = useState(false);
 
 	const addressToLines = (addr: Address) => {
 		var current = [];
@@ -60,7 +64,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = (props) => {
 
 				onSuccess={
 					addr => {
-						setAdding(false);
+						setChanging(false);
 						setValue(addr);
 					}
 				}
@@ -77,18 +81,16 @@ const AddressSelection: React.FC<AddressSelectionProps> = (props) => {
 
 	const renderContents = () => {
 
-		if (value && !adding) {
+		if (value && !changing) {
 
 			return <>
 				{renderAddress(value)}
 				<p>
-					<Button onClick={() => setAdding(true)}>{`Change address`}</Button>
+					<Button onClick={() => setChanging(true)}>{`Change address`}</Button>
 				</p>
 			</>;
 
 		}
-
-		// Todo: selecting an address from savedAddresses if there is options present and !sameAddress
 
 		return <>
 			{same && <div>
@@ -96,7 +98,23 @@ const AddressSelection: React.FC<AddressSelectionProps> = (props) => {
 					setSameAs && setSameAs((e.target as HTMLInputElement).checked);
 				}} label={`Same as delivery address`} />
 			</div>}
-			{(!same || !isSame) && addNewAddress()}
+			{(!same || !isSame) && <>
+				<Input type='select' defaultValue={0} onChange={(e) => {
+					var id = parseInt((e.target as HTMLSelectElement).value);
+					var addr = savedAddresses.results.find(addr => addr.id == id);
+
+					if (addr) {
+						setValue(addr);
+						setChanging(false);
+					}
+				}}>
+					<option value={0}>{`Add a new address`}</option>
+					{savedAddresses.results.map(savedAddress => <option value={savedAddress.id}>
+						{renderAddress(savedAddress)}
+					</option>)}
+				</Input>
+				{addNewAddress()}
+			</>}
 		</>;
 	};
 
