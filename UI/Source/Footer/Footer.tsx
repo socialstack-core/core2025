@@ -2,7 +2,7 @@ import Html from 'UI/Html';
 import { getContactLink } from 'UI/Functions/ContactTools';
 import { useState, useEffect } from "react";
 import Image from 'UI/Image';
-import acticareLogoRef from './acticare-logo.svg';
+import defaultLogoRef from './example-logo.svg';
 import mastercardRef from './mastercard.png';
 import paypalRef from './paypal.png';
 import sagePayRef from './sage-pay.png';
@@ -110,7 +110,7 @@ const Footer: React.FC<FooterProps> = ({ contactNumber, logoRef, contactLink, ad
 	if (demo) {
 
 		if (!logoRef) {
-			logoRef = acticareLogoRef;
+			logoRef = defaultLogoRef;
 		}
 
 		if (!contactNumber?.length) {
