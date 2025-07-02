@@ -2,7 +2,7 @@ import Image from 'UI/Image';
 import Html from 'UI/Html';
 import NotificationBadge from 'UI/NotificationBadge';
 import { useSession } from 'UI/Session';
-import acticareLogoRef from './acticare-logo.svg';
+import defaultLogoRef from './example-logo.png';
 import { getContactLink } from 'UI/Functions/ContactTools';
 import { useState, useEffect, useRef } from "react";
 import { getUrl } from 'UI/FileRef';
@@ -271,7 +271,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 		}
 
 		if (!logoRef) {
-			logoRef = acticareLogoRef;
+			logoRef = defaultLogoRef;
 		}
 
 		if (!message || !message.length) {

@@ -1,7 +1,9 @@
 :root {
 	--site-header-height: #{px_to_rem(110)};
-	--logo-width: #{px_to_rem(113)};
-	--logo-height: #{px_to_rem(27)};
+	--site-header-logo-width: #{px_to_rem(30)};
+	--site-header-logo-height: #{px_to_rem(30)};
+	--site-subheader-bg: #fff;
+	--site-subheader-fg: #000;
 }
 
 .site-nav {
@@ -49,8 +51,8 @@
 
 	&__subheader {
 	    height: px_to_rem(45);
-		background: var(--palette-pink);
-		color: #fff;
+		background: var(--site-subheader-bg, #fff);
+		color: var(--site-subheader-fg, #000);
 		//display: grid;
 		//grid-template-columns: 1fr min(var(--max-width), calc(100vw - (2 * #{px_to_rem(20)}))) 1fr;
 		//grid-template-rows: auto;
@@ -76,8 +78,6 @@
 				gap: px_to_rem(24);
 			}
 
-
-
 		}
 
 	}
@@ -86,11 +86,10 @@
 		//grid-area: logo;
 		display: flex;
 		align-items: center;
-		transform: translateY(px_to_rem(-5));
 
 		img {
-			width: var(--logo-width);
-			height: var(--logo-height);
+			width: var(--site-header-logo-width);
+			height: var(--site-header-logo-height);
 		}
 	}
 
@@ -120,7 +119,7 @@
 			display: flex;
 			gap: px_to_rem(8);
 			font-size: px_to_rem(15);
-			color: var(--palette-pink);
+			color: var(--primary);
 
 			svg {
 				width: px_to_rem(20);
@@ -164,7 +163,7 @@
 			--btn-gap: 8;
 			--btn-font-size: 14;
 			--btn-font-weight: 700;
-			--ui-link-color: #fff;
+			--ui-link-color: currentColor;
 
 			&:hover {
 				text-decoration: underline;
@@ -251,7 +250,7 @@
 			--btn-gap: 8;
 			--btn-font-size: 14;
 			--btn-font-weight: 700;
-			--ui-link-color: #fff;
+			--ui-link-color: currentColor;
 
 			&:hover {
 				text-decoration: underline;
@@ -357,53 +356,6 @@
 
 	}
 
-	/*
-	&__tel {
-		--ui-link-font-size: 14;
-		--ui-link-font-weight: 700;
-		--ui-link-gap: 8;
-		--ui-link-hover: #fff;
-		display: flex;
-		align-items: center;
-		text-decoration: none;
-
-		&:hover {
-			text-decoration: underline;
-		}
-
-		svg {
-			width: px_to_rem(14);
-			height: px_to_rem(14);
-		}
-
-		span {
-			// mimic sr-only
-			position: absolute;
-			width: 1px;
-			height: 1px;
-			padding: 0;
-			margin: -1px;
-			overflow: hidden;
-			clip: rect(0, 0, 0, 0);
-			border: 0;
-		}
-
-	}
-
-	&__delivery {
-		--ui-link-font-size: 14;
-		--ui-link-font-weight: 700;
-		--ui-link-hover: #fff;
-		display: none;
-		text-decoration: none;
-
-		&:hover {
-			text-decoration: underline;
-		}
-
-	}
-	*/
-
 	&__secondary {
 
 		&-wrapper {
@@ -467,7 +419,7 @@
 				--btn-gap: 8;
 				--btn-font-size: 14;
 				--btn-font-weight: 700;
-				--ui-link-color: #fff;
+				--ui-link-color: currentColor;
 			}
 
 			&:hover {
@@ -493,7 +445,7 @@
 			--ui-link-font-size: 14;
 			--ui-link-font-weight: 700;
 			--ui-link-gap: 8;
-			--ui-link-hover: #fff;
+			--ui-link-hover: currentColor;
 			display: flex;
 			align-items: center;
 			text-decoration: none;
