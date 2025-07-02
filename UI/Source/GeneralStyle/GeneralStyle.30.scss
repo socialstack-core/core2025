@@ -47,6 +47,11 @@ html {
 		}
 		*/
 	}
+
+	// default font weight for emboldened items
+	b, strong {
+		font-weight: 700;
+	}
 }
 
 // override Bootstrap default max width
