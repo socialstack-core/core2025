@@ -146,8 +146,8 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 			text-transform: uppercase;
 			font-size: px_to_rem(11);
 			font-weight: 800;
-			color: var(--palette-green);
-			background-color: var(--palette-light-green);
+			background: var(--approved-bg, var(--success));
+			color: var(--approved-fg, var(--success-fg));
 			display: inline-flex;
 			align-items: center;
 			gap: px_to_rem(10);

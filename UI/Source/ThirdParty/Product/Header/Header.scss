@@ -9,8 +9,8 @@
 		text-transform: uppercase;
 		font-size: px_to_rem(11);
 		font-weight: 800;
-		color: var(--palette-blue);
-		background-color: var(--palette-light-blue);
+		background: var(--featured-bg, var(--info));
+		color: var(--featured-fg, var(--info-fg));
 		display: inline-flex;
 		align-items: center;
 		gap: px_to_rem(10);
