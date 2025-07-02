@@ -2,6 +2,7 @@
 	--site-header-height: #{px_to_rem(110)};
 	--site-header-logo-width: #{px_to_rem(30)};
 	--site-header-logo-height: #{px_to_rem(30)};
+	--site-header-logo-transform: none;
 	--site-subheader-bg: #fff;
 	--site-subheader-fg: #000;
 }
@@ -86,6 +87,7 @@
 		//grid-area: logo;
 		display: flex;
 		align-items: center;
+		transform: var(--site-header-logo-transform);
 
 		img {
 			width: var(--site-header-logo-width);
