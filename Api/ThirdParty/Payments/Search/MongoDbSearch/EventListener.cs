@@ -29,6 +29,8 @@ public class MongoSearchEventListener
 		IMongoCollection<Product> productCollection = null;
 		ProductSearchService searchService = null;
 
+		string productCollectionName = MongoDBService.CollectionName("product");
+		
 		Events.Product.Search.AddEventListener(async (Context context, ProductSearch search) => {
 
 			var hasAtlas = atlasIdentityChecked;
@@ -87,7 +89,7 @@ public class MongoSearchEventListener
 			{
 				var dbService = Services.Get<MongoDBService>();
 				var db = dbService.GetConnection();
-				productCollection = db.GetCollection<Product>(MongoDBService.CollectionName("product"));
+				productCollection = db.GetCollection<Product>(productCollectionName);
 			}
 
 			string query = search.Query;
@@ -104,30 +106,33 @@ public class MongoSearchEventListener
 
 				var compoundDoc = new BsonDocument
 				{
-					{ "should", new BsonArray
+				};
+
+				if (!string.IsNullOrEmpty(query))
+				{
+					compoundDoc["should"] = new BsonArray
+					{
+						new BsonDocument("text", new BsonDocument
 						{
-							new BsonDocument("text", new BsonDocument
-							{
-								{ "query", query },
-								{ "path", "Name.en" },
-								{ "score", new BsonDocument
-									{
-										{ "boost", new BsonDocument
-											{
-												{ "value", 2 }
-											}
+							{ "query", query },
+							{ "path", "Name.en" },
+							{ "score", new BsonDocument
+								{
+									{ "boost", new BsonDocument
+										{
+											{ "value", 2 }
 										}
 									}
 								}
-							}),
-							new BsonDocument("text", new BsonDocument
-							{
-								{ "query", query },
-								{ "path", "DescriptionRaw" }
-							})
-						}
-					}
-				};
+							}
+						}),
+						new BsonDocument("text", new BsonDocument
+						{
+							{ "query", query },
+							{ "path", "DescriptionRaw" }
+						})
+					};
+				}
 
 				if (search.AppliedFacets != null)
 				{
@@ -155,20 +160,28 @@ public class MongoSearchEventListener
 							// the collection size where a product doesn't meet the criteria.
 							foreach (var id in ids)
 							{
-								appliedFacets.Add(new BsonDocument("term", new BsonDocument
+								appliedFacets.Add(new BsonDocument("equals", new BsonDocument
 								{
 									{ "path", mappingPath },
-									{ "value", (long) id }
+									{ "value", (long)id }
 								}));
 							}
 						}
 						else
 						{
 							// default behaviour, catches products where any of/ in
-							appliedFacets.Add(new BsonDocument("terms", new BsonDocument
+							var termClauses = ids.Select(id =>
+								new BsonDocument("equals", new BsonDocument
+								{
+									{ "path", mappingPath },
+									{ "value", (long)id }
+								})
+							);
+
+							appliedFacets.Add(new BsonDocument("compound", new BsonDocument
 							{
-								{ "path", mappingPath },
-								{ "value", new BsonArray(ids) }
+								{ "should", new BsonArray(termClauses) },
+								{ "minimumShouldMatch", 1 }
 							}));
 						}
 					}
@@ -182,7 +195,8 @@ public class MongoSearchEventListener
 				var searchStage = new BsonDocument
 				{
 					{ "index", searchService.CurrentConfig().AtlasIndex ?? "default" },
-					{ "compound", compoundDoc }
+					{ "compound", compoundDoc },
+					{ "returnStoredSource", true }
 				};
 
 				var pipeline = new[]
@@ -196,9 +210,19 @@ public class MongoSearchEventListener
 								new BsonDocument("$limit", search.PageSize),
 								new BsonDocument("$project", new BsonDocument
 								{
-									{ "_id", 1 },
-									{ "Name", 1 },
-									{ "Mappings", 1 }
+									{ "_id", 1 }
+								}),
+								new BsonDocument("$lookup", new BsonDocument
+								{
+									{ "from", productCollectionName },
+									{ "localField", "_id" },
+									{ "foreignField", "_id" },
+									{ "as", "fullDoc" },
+								}),
+								new BsonDocument("$unwind", "$fullDoc"),
+								new BsonDocument("$replaceRoot", new BsonDocument
+								{
+									{ "newRoot", "$fullDoc" }
 								})
 							}
 						},
