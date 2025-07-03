@@ -71,6 +71,11 @@ interface CollapsibleProps {
 	 * 
 	 */
 	expanderLeft?: boolean,
+	
+	/**
+	 * 
+	 */
+	expandByButtonOnly?: boolean,
 
 	/**
 	 * Called when the collapsible is opened.
@@ -201,8 +206,6 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 		}
 		if (!alwaysOpen) {
 			props.onClick && props.onClick();
-			e.preventDefault();
-			e.stopPropagation();
 			!noContent && setOpen(!isOpen);
 		} else {
 			e.preventDefault();
@@ -210,20 +213,31 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 		}
 
 	}}>
-		<summary className={summaryClass} onClick={defaultClick && !alwaysOpen ? (e : React.MouseEvent<HTMLElement, MouseEvent>) => {
+		<summary className={summaryClass} onClick={(e : React.MouseEvent<HTMLElement, MouseEvent>) => {
 			if (e.defaultPrevented) {
 				return;
 			}
-			var name = (e.target as HTMLElement).nodeName;
-			if (name != 'SUMMARY' && name != 'DETAILS') {
+
+			if (props.alwaysOpen) {
+				e.preventDefault();
 				return;
 			}
+
+			if (props.expandByButtonOnly) {
+				if (!(e.target as HTMLElement).getAttribute("data-expander")) {
+					e.preventDefault();
+				} else {
+					// Don't run the defaultClick here.
+					return;
+				}
+			}
+
 			defaultClick && defaultClick(e);
-		} : undefined}>
+		}}>
 			{(expanderLeft || hasButtons) && !alwaysOpen &&
-				<div className={iconClass}>
+				<div className={iconClass} data-expander={"self"}>
 					{/* NB: icon classes injected dynamically via CSS */}
-					<i className="far fa-fw"></i>
+					<i className="far fa-fw" data-expander={"self"}></i>
 				</div>
 			}
 			{largeIcon}
