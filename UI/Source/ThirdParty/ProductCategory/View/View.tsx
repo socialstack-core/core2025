@@ -83,14 +83,13 @@ const View: React.FC<ViewProps> = (props) => {
 				}))
 			]
 		}, [
-		// Any normal includes you might need here
-		// 'price',
+			productApi.includes.calculatedprice,
 
-		// Plus then includes on the facets (the attribute and category selectors)
-		new ProductIncludes().productCategoryFacets,
-		new ProductIncludes().productCategoryFacets.category,
-		new ProductIncludes().productCategoryFacets.category.primaryurl,
-		new ProductIncludes().attributeValueFacets.value.attribute.attributeGroup
+			// Plus then includes on the facets (the attribute and category selectors)
+			productApi.includes.productCategoryFacets,
+			productApi.includes.productCategoryFacets.category,
+			productApi.includes.productCategoryFacets.category.primaryurl,
+			productApi.includes.attributeValueFacets.value.attribute.attributeGroup
 	])}, [initialSearch, selectedFacets]);
 
 	

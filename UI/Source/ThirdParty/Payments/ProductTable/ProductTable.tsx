@@ -1,22 +1,27 @@
 import { formatCurrency } from "UI/Functions/CurrencyTools";
-import Loop from 'UI/Loop';
 import Alert from 'UI/Alert';
-import Icon from 'UI/Icon';
-import productApi from 'Api/Product';
 import { recurrenceText } from 'UI/Functions/Payments';
-import { useSession } from 'UI/Session';
 import BasketItem from 'UI/Product/Signpost';
-import Quantity from 'UI/Product/Quantity';
-import Button from 'UI/Button';
-
-const STRATEGY_STD = 0;
-const STRATEGY_STEP1 = 1;
-const STRATEGY_STEPALWAYS = 2;
+import { ShoppingCart } from 'Api/ShoppingCart';
 
 /**
  * Props for the ProductTable component.
  */
-interface ProductTable {
+interface ProductTableProps {
+	/**
+	 * basket contents
+	 */
+	shoppingCart: ShoppingCart,
+
+	/** 
+	 * set true if exclusive of VAT
+	 */
+	lessTax?: boolean,
+
+	/** 
+	 * set true if contents should not be editable
+	 */
+	readOnly?: boolean,
 }
 
 /**
@@ -24,13 +29,12 @@ interface ProductTable {
  * @param props React props.
  */
 const ProductTable: React.FC<ProductTableProps> = (props) => {
-	var { shoppingCart, addToCart, readonly, lessTax } = props;
-	const { session } = useSession();
+	var { shoppingCart, readOnly, lessTax } = props;
 	var pricedCart = shoppingCart?.cartContents;
-	
+
 	if (!pricedCart || !pricedCart.contents.length) {
 		return <Alert type="info">
-			{readonly ? <>
+			{readOnly ? <>
 				{`This purchase is empty`}
 			</> : <>
 				{`Your shopping cart is empty.`}
@@ -38,29 +42,28 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 
 		</Alert>;
 	}
-	
+
 	var itemSet = pricedCart.contents;
 	var currencyCode = pricedCart.currencyCode;
-	var hasAtLeastOneSubscription = pricedCart.hasSubscriptionProducts;
-	
+	//var hasAtLeastOneSubscription = pricedCart.hasSubscriptionProducts;
+
 	return <>
 		<ul className="shopping-cart__table">
 
-			{itemSet.map(lineInfo => {
-				var product = lineInfo.product;
-				var qty = lineInfo.quantity;
-
-				var formattedCost = formatCurrency(lessTax ? lineInfo.totalLessTax : lineInfo.total, { currencyCode });
-
-				if (product.billingFrequency) {
-					formattedCost += ' ' + recurrenceText(product.billingFrequency);
-				}
+			{itemSet.map(lineItem => {
+				var product = lineItem.product;
 
 				// subscription
 				if (product.billingFrequency) {
-
-					// TODO
+					// TODO - either extend UI/Product/Signpost to account for subscriptions,
+					//        or introduce a dedicated version
 					return;
+
+					var formattedCost = formatCurrency(lessTax ? lineItem.totalLessTax : lineItem.total, { currencyCode });
+
+					if (product.billingFrequency) {
+						formattedCost += ' ' + recurrenceText(product.billingFrequency);
+					}
 
 					{/*
 					return <li>
@@ -73,7 +76,7 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 						<td className="currency-column">
 							{formattedCost}
 						</td>
-						{!readonly && <td className="actions-column">
+						{!readOnly && <td className="actions-column">
 							<button type="button" className="btn btn-small btn-outline-danger" title={`Remove`}
 								onClick={() => {
 									addToCart(product.id, 0)
@@ -87,7 +90,15 @@ const ProductTable: React.FC<ProductTableProps> = (props) => {
 
 				// standard quantity of product
 				return <li>
-					<BasketItem content={product} quantity={lineInfo.quantity} disableLink hideOrder showRemove={!readonly} />
+					<BasketItem content={product}
+						disableLink // prevent clicking to view product details - potentially allow this, but open in a new window?
+						priceOverride={{
+							currencyCode: currencyCode,
+							amount: lessTax ? lineItem.totalLessTax : lineItem.total
+						}}
+						qtyOverride={lineItem.quantity}
+						showRemove={!readOnly}
+						readOnly={readOnly} />
 				</li>;
 			})}
 		</ul>

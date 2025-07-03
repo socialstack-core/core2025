@@ -24,7 +24,17 @@ interface QuantityProps {
 	/**
 	 * Overriding price to display
 	 */
-	override?: CurrencyAmount,
+	priceOverride?: CurrencyAmount,
+
+	/**
+	 * Overriding quantity to display
+	 */
+	qtyOverride?: Number,
+
+	/** 
+	 * set true if quantity should be fixed
+	 */
+	readOnly?: boolean,
 }
 
 /**
@@ -37,7 +47,7 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 	const max = 999;
 	const bundle = 1; // if product can only be ordered in multiples of [x]
 
-	const { product, className, override } = props;
+	const { product, className, priceOverride, qtyOverride, readOnly } = props;
 
 	if (!product) {
 		return `Product required`;
@@ -47,7 +57,7 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 	const { locale } = session;
 
 	var { lessTax, addToCart, getCartQuantity } = useCart();
-	const quantity = getCartQuantity(product.id);
+	const quantity = qtyOverride || getCartQuantity(product.id);
 	const [typedQuantity, setTypedQuantity] = useState(quantity.toString());
 	const [isEditing, setIsEditing] = useState(false);
 	//const wrapperRef = useRef(null);
@@ -150,8 +160,8 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 	// TODO: determine when product has options
 	let hasOptions = false;
 
-	if (override) {
-		amount = override.amount;
+	if (priceOverride) {
+		amount = priceOverride.amount;
 	} else if (product?.calculatedPrice && product?.calculatedPrice.length && locale) {
 		// NB: This will be replaced again when per-user pricing and the tax resolver is added
 		var tiers = product.calculatedPrice;
@@ -168,7 +178,7 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 					tier = current;
 				}
 			}
-		}	
+		}
 
 		amount = lessTax ? tier.amountLessTax : tier.amount;
 	}
