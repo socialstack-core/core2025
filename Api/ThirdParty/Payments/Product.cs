@@ -58,6 +58,7 @@ namespace Api.Payments
         /// The slug for product
         /// </summary>
         [DatabaseField(Length = 1000)]
+		[Data("readonly", true)]
         public string Slug;
 
         /// <summary>
