@@ -11,7 +11,7 @@ import Col from 'UI/Column';
 import Input from 'UI/Input';
 import Search from 'UI/Search';
 import uploadApi from 'Api/Upload';
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
 var inputTypes = global.inputTypes = global.inputTypes || {};
 let lastId = 0;
@@ -26,6 +26,7 @@ window.inputTypes['file'] = window.inputTypes['image'] = function (props) {
     return (
         <FileSelector
             {...field}
+            onInputRef={props.onInputRef}
         />
     );
 };
@@ -34,10 +35,15 @@ window.inputTypes['icon'] = function (props) {
 	const { field } = props;
     
     const [icon, setIcon] = useState(field.defaultValue);
+    const ref = React.createRef();
+
+    useEffect(() => {
+        props.onInputRef && props.onInputRef(ref);
+    }, [ref.current]);
     
     return (
         <>
-            <input type={'hidden'} name={field.name} value={icon} />
+            <input type={'hidden'} name={field.name} ref={ref} value={icon} />
             <FileSelector
                 iconOnly
                 {...props}
@@ -56,6 +62,7 @@ window.inputTypes['upload'] = function (props) {
         <FileSelector
             browseOnly
             {...field}
+            onInputRef={props.onInputRef}
         />
     );
 };
@@ -66,6 +73,7 @@ window.inputTypes['nopaging'] = function (props) {
         <FileSelector
             disablePaging
             {...field}
+            onInputRef={props.onInputRef}
         />
     );
 };
@@ -84,6 +92,8 @@ export default class FileSelector extends React.Component {
         this.state = {
             ref: ref
         };
+        
+        this.inputRef = React.createRef();
 
         this.closeUploadModal = this.closeUploadModal.bind(this);
         this.closeEditModal = this.closeEditModal.bind(this);
@@ -355,7 +365,9 @@ export default class FileSelector extends React.Component {
     }
 
     render() {
-
+        
+        this.props.onInputRef && this.props.onInputRef(this.inputRef.current);
+        
         var { searchFilter } = this.state;
 
         var currentRef = this.props.value || this.props.defaultValue;
@@ -580,7 +592,7 @@ export default class FileSelector extends React.Component {
 
             {this.props.name && (
                 // Also contains a hidden input field containing the value
-                <input type="hidden" value={currentRef} name={this.props.name} id={this.props.id} />
+                <input ref={this.inputRef} type="hidden" value={currentRef} name={this.props.name} id={this.props.id} />
             )}
         </div>;
     }

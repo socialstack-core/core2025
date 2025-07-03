@@ -30,7 +30,10 @@ export default class Uploader extends React.Component {
 		}
 
 		this.inputRef = React.createRef();
-
+		
+		if (this.props.onInputRef) {
+			this.props.onInputRef(this.inputRef);
+		}
 		this.state = {
 			loading: false,
 			progressPercent: 0,

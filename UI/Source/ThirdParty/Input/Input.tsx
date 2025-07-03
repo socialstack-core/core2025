@@ -219,7 +219,9 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 		setInputRef(ref);
 		onInputRef && onInputRef(ref);
 		
+		
 		if(ref){
+			console.log(ref);
 			(ref as any).onValidationCheck = updateValidation;
 		}
 	}
@@ -261,6 +263,8 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 				onInputRef={setRef}
 				onChange={props.onChange}
 				onCanvasChange={props.onCanvasChange}
+				required={field.required}
+				validate={props.validate}
 			/>;
 		} else {
 			return <Handler
@@ -273,6 +277,8 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 				inputRef={inputRef}
 				onInputRef={setRef}
 				onChange={props.onChange}
+				required={field.required}
+				validate={props.validate}
 			/>;
 		}
 	}
