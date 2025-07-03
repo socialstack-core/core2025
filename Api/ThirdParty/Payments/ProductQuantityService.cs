@@ -656,7 +656,7 @@ namespace Api.Payments
 			var totalWithTax = totalCost;
 			var totalWithoutTax = totalCost;
 
-			if (taxCalculator != null)
+			if (taxCalculator != null && product.TaxExempt != 1)
 			{
 				totalWithTax = taxCalculator.Apply(totalCost);
 			}

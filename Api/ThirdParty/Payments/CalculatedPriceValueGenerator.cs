@@ -65,7 +65,7 @@ public partial class CalculatedPriceValueGenerator<T, ID> : VirtualFieldValueGen
 
 					ulong amount = amountLessTax;
 
-					if (taxCalculator != null)
+					if (taxCalculator != null && product.TaxExempt != 1)
 					{
 						amount = taxCalculator.Apply(amount);
 					}

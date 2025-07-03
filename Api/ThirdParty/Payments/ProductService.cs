@@ -44,6 +44,8 @@ namespace Api.Payments
 					product.Slug = await SlugGenerator.GenerateUniqueSlug(this, context, product.Name.Get(context));
 				}
 
+				await ValidateProduct(context, product);
+
 				return product;
 			});
 
@@ -72,7 +74,7 @@ namespace Api.Payments
                     field.Hide = true;
                 }
 
-				if (field.Name == "attributes")
+				if (field.Name == "Attributes" || field.Name == "AdditionalAttributes")
 				{
 					field.Module = "Admin/Payments/AttributeSelect";
 				}
@@ -147,7 +149,6 @@ namespace Api.Payments
 				return product;
 			});
 			
-			Events.Product.BeforeCreate.AddEventListener(async (ctx, product) => await ValidateProduct(ctx, product));
 			Events.Product.BeforeUpdate.AddEventListener(ValidateProduct);
 
 			Cache();
@@ -170,11 +171,6 @@ namespace Api.Payments
 				throw new PublicException("The product name cannot be empty.", "product-validation/no-name");
 			}
 
-			if (string.IsNullOrEmpty(product.Sku))
-			{
-				throw new PublicException("The product SKU cannot be empty.", "product-validation/no-sku");
-			}
-			
 			if (string.IsNullOrEmpty(product.Slug))
 			{
 				throw new PublicException("The product slug cannot be empty.", "product-validation/no-slug");

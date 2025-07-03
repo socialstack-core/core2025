@@ -98,9 +98,13 @@ namespace Api.Payments
 				return attr;
 			});
 			
-			Events.ProductCategory.AfterCreate.AddEventListener(async (ctx, attr) => await ClearCache(ctx, attr));
-			Events.ProductCategory.AfterUpdate.AddEventListener(ClearCache);
-			Events.ProductCategory.AfterDelete.AddEventListener(ClearCache);
+			Events.ProductAttribute.AfterCreate.AddEventListener(ClearCache);
+			Events.ProductAttribute.AfterUpdate.AddEventListener(ClearCache);
+			Events.ProductAttribute.AfterDelete.AddEventListener(ClearCache);
+
+			Events.ProductAttributeGroup.AfterCreate.AddEventListener(ClearCache);
+			Events.ProductAttributeGroup.AfterUpdate.AddEventListener(ClearCache);
+			Events.ProductAttributeGroup.AfterDelete.AddEventListener(ClearCache);
 
 			// Install some default content.
 			Events.Service.AfterStart.AddEventListener(async (Context context, object svc) => {
@@ -588,10 +592,16 @@ namespace Api.Payments
 			Cache();
 		}
 
-		private ValueTask<ProductCategory> ClearCache(Context ctx, ProductCategory category)
+		private ValueTask<ProductAttribute> ClearCache(Context ctx, ProductAttribute attrib)
 		{
 			_attributeTree = null;
-			return ValueTask.FromResult(category);
+			return ValueTask.FromResult(attrib);
+		}
+
+		private ValueTask<ProductAttributeGroup> ClearCache(Context ctx, ProductAttributeGroup group)
+		{
+			_attributeTree = null;
+			return ValueTask.FromResult(group);
 		}
 
 		private ValueTask<Role> OnRoleMutate(Context ctx, Role role)
