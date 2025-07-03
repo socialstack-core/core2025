@@ -216,8 +216,12 @@ const ListView = (props: ListViewProps) => {
 			<table className={'table'}>
 				<thead>
 					<tr>
-						<th onClick={() => changeSortOrder('key')}>Name</th>
-						<th onClick={() => changeSortOrder('id')}>ID</th>
+						<th 
+							onClick={() => changeSortOrder('key')}
+						>Name {props.sortField === 'key' ? <i className={props.sortOrder === 'ASC' ? 'fas fa-chevron-down' : 'fas fa-chevron-up'}/> : null}</th>
+						<th 
+							onClick={() => changeSortOrder('id')}
+						>ID {props.sortField === 'id' ? <i className={props.sortOrder === 'ASC' ? 'fas fa-chevron-down' : 'fas fa-chevron-up'}/> : null}</th>
 						<th>Actions</th>
 					</tr>
 				</thead>
