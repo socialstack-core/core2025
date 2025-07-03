@@ -99,6 +99,7 @@ namespace Api.Payments
         /// The raw metadata/content of this product, used for free text search
         /// </summary>
         [Data("readonly", true)]
+		[JsonIgnore]
         public string DescriptionRaw;
 
 		/// <summary>
