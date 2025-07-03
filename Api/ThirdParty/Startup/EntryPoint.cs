@@ -145,13 +145,13 @@ namespace Api.Startup
                 {
                     case "git":
                     
-                        Services.BuildHost = "git";
-                        Services.RegisterAndStart();
+                        // Services.BuildHost = "git";
+                        // Services.RegisterAndStart();
 
                         // this isn't a GIT replacement, simply fires off when hooks are executed. 
                         // this allows the ecosystem to run scripts in C# rather than node, which is useful for those who don't have node installed.
 
-                        var svc = Services.Get<GitService>();
+                        // var svc = Services.Get<GitService>();
                         string[] validOptions = ["pre-commit", "commit-msg", "pre-push"];
 
                         if (args.Length == 1)
