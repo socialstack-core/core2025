@@ -24,7 +24,7 @@ export default class CanvasState{
 		if(value){
 			this.loadCanvas(value, 1);
 		}
-		
+
 		if(!this.node){
 			this.node = {
 				content: [],
@@ -61,7 +61,7 @@ export default class CanvasState{
 				convertedRoot = {content: [convertedRoot]};
 			}
 			
-			if(!convertedRoot.type && !convertedRoot.content && !convertedRoot.graph){
+			if(!convertedRoot.type && !convertedRoot.typeName && !convertedRoot.content && !convertedRoot.graph){
 				convertedRoot = {content: []};
 			}
 			
@@ -69,7 +69,7 @@ export default class CanvasState{
 				convertedRoot = {content: []};
 			}
 			
-			if(convertedRoot.type){
+			if(convertedRoot.type || convertedRoot.typeName){
 				// It becomes a parent:
 				var child = convertedRoot;
 				convertedRoot = {content: [child]};
@@ -245,9 +245,15 @@ export default class CanvasState{
 		if(type){
 			if(type.indexOf('/') != -1){
 				result.typeName = type;
-				result.type = require(type).default;
+
+				try {
+					result.type = require(type).default;
+				} catch {
+					console.warn(type + ' does not exist (editor attempted to load it)');
+				}
+
 				result.typePropTypes = this.propTypeInfo.codeModules[type];
-				var editable = result.type.editable;
+				var editable = result.type?.editable;
 				
 				if(node.t){
 					// OnLoad only invoked on canvas2 nodes.
@@ -282,21 +288,17 @@ export default class CanvasState{
 							var resultRoot = {};
 							var rt = node.r[key];
 							if(Array.isArray(rt)){
-								this.loadCanvasChildren({c: rt}, resultRoot);
+								this.loadCanvasChildren(rt, resultRoot);
 							}else if(!rt){
 								resultRoot = {content: []};
 							}else{
-								resultRoot = {
-									content: [
-										this.convertToNodesFromCanvas(rt)
-									]
-								};
+								resultRoot = this.convertToNodesFromCanvas(rt);
 							}
 							roots[key] = resultRoot;
 						}
 					}
 				}
-				
+
 				// Does the type have any roots that need adding?
 				var rootSet = getRootInfo(result.typePropTypes);
 				
@@ -314,14 +316,6 @@ export default class CanvasState{
 					var resultRoot = {};
 					this.loadCanvasChildren(node, resultRoot);
 					roots.children = resultRoot;
-				}else if(node.content){
-					// Canvas 1 (depr)
-					
-					var converted = this.convertToNodesFromCanvas({type: 'span', content: node.content});
-					
-					var resultRoot = {};
-					roots.children = resultRoot;
-					resultRoot.content = converted.content;
 				}
 				
 				for(var k in roots){
@@ -346,7 +340,7 @@ export default class CanvasState{
 						root.content.push(rootPara);
 					}
 				}
-				
+
 				result.roots = roots;
 				
 			}else{
@@ -360,12 +354,6 @@ export default class CanvasState{
 		}else if(node.c){
 			// a root node
 			this.loadCanvasChildren(node, result);
-		}
-		
-		if(node.i){
-			result.id = node.i;
-		}else if(node.id){
-			result.id = node.id;
 		}
 		
 		if(node.ti){
@@ -817,7 +805,7 @@ export default class CanvasState{
 			
 			return content;
 		}
-		
+
 		var resultNode = {};
 		var attribs = false;
 		
@@ -832,13 +820,13 @@ export default class CanvasState{
 			if(node.graph){
 				resultNode.g = node.graph.structure;
 				attribs = true;
-			}else if(node.type){
+			}else if(node.type || node.typeName){
 				if(typeof node.type == 'string'){
 					resultNode.t = node.type;
 				}else{
 					// Custom components can have data (props) as well.
 					resultNode.t = node.typeName;
-					
+
 					if(node.props){
 						resultNode.d = node.props;
 					}
@@ -876,22 +864,6 @@ export default class CanvasState{
 			}
 		}
 		
-		if(options && options.id){
-			// Only include id if we need to.
-			if(node.id){
-				resultNode.i = node.id;
-				attribs = true;
-			}else{
-				options.id++;
-				resultNode.i = options.id;
-				attribs = true;
-			}	
-		}else if(node.templateId){
-			// This id is required.
-			resultNode.i = node.id;
-			attribs = true;
-		}
-		
 		if(node.templateId){
 			resultNode.ti = node.templateId;
 			attribs = true;
@@ -901,34 +873,8 @@ export default class CanvasState{
 			node.type.editable.onSave(resultNode, node);
 		}
 		
-		if(!resultNode.i && !resultNode.ti && node.type == TEXT){
-			// This is a {c: "text"} node which can be shortformed to just the text:
-			return node.text;
-		}
-		
 		// If it has no attributes at all, return null.
 		return attribs ? resultNode : null;
-	}
-	
-	getMaxId(node, currentMax){
-		if(!node){
-			return;
-		}
-		
-		if(node.id > currentMax){
-			currentMax = node.id;
-		}
-		
-		if(node.content){
-			for(var i=0;i<node.content.length;i++){
-				var check = this.getMaxId(node.content[i], currentMax);
-				if(check > currentMax){
-					currentMax = check;
-				}
-			}
-		}
-		
-		return currentMax;
 	}
 	
 	getTextOnly(node){
@@ -937,7 +883,7 @@ export default class CanvasState{
 			return '';
 		}
 		
-		if(node.type == TEXT){
+		if(node.text){
 			return node.text;
 		}
 		
@@ -965,7 +911,6 @@ export default class CanvasState{
 			typeName: node.typeName,
 			text: node.text,
 			editorState: node.editorState,
-			id: node.id,
 			templateId: node.templateId
 		};
 		
@@ -1032,11 +977,6 @@ export default class CanvasState{
 		var options = {};
 		var snapshot = this.latestSnapshot;
 		
-		if(!withoutIds){
-			// Add IDs in the output if they don't already have them.
-			options.id = this.getMaxId(snapshot.node, 0) || 1;
-		}
-
 		var cfNode = this.toCanvasFormat(snapshot.node, options);
 		
 		if(!cfNode){
