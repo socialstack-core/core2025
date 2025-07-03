@@ -221,7 +221,6 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 		
 		
 		if(ref){
-			// console.log(ref);
 			(ref as any).onValidationCheck = updateValidation;
 		}
 	}

@@ -35,15 +35,15 @@ window.inputTypes['icon'] = function (props) {
 	const { field } = props;
     
     const [icon, setIcon] = useState(field.defaultValue);
-    const ref = React.createRef();
+    const ref = React.useRef(null);
 
     useEffect(() => {
-        props.onInputRef && props.onInputRef(ref);
+        props.onInputRef && props.onInputRef(ref.current);
     }, [ref.current]);
     
     return (
         <>
-            <input type={'hidden'} name={field.name} ref={ref} value={icon} />
+            <input required={props.required} type={'hidden'} name={field.name} ref={ref} value={icon} />
             <FileSelector
                 iconOnly
                 {...props}
