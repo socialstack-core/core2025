@@ -85,9 +85,20 @@ namespace Api.Vcs
 
                 try
                 {
-                    File.Delete(".git/hooks/commit-msg");
-                    File.Delete(".git/hooks/pre-commit");
-                    File.Delete(".git/hooks/pre-push");
+                    if (File.Exists(".git/hooks/commit-msg"))
+                    {
+                        File.Delete(".git/hooks/commit-msg");
+                    }
+
+                    if (File.Exists(".git/hooks/pre-commit"))
+                    {
+                        File.Delete(".git/hooks/pre-commit");
+                    }
+
+                    if (File.Exists(".git/hooks/pre-push"))
+                    {
+                        File.Delete(".git/hooks/pre-push");
+                    }
                 }
                 catch (IOException ex)
                 {
@@ -95,11 +106,11 @@ namespace Api.Vcs
                 }
                 finally
                 {
-                    File.Copy(dir + "/commit-msg", ".git/hooks/commit-msg");
-                    File.Copy(dir + "/pre-commit", ".git/hooks/pre-commit");
-                    File.Copy(dir + "/pre-push", ".git/hooks/pre-push");
+                    // File.Copy(dir + "/commit-msg", ".git/hooks/commit-msg");
+                    // File.Copy(dir + "/pre-commit", ".git/hooks/pre-commit");
+                    // File.Copy(dir + "/pre-push", ".git/hooks/pre-push");
                     
-                    Log.Info("GIT", "Installed git hooks");
+                    // Log.Info("GIT", "Installed git hooks");
                 }
             }
         }
