@@ -26,8 +26,7 @@ namespace Api.Vcs
 
             if (gitConfig is null)
             {
-                Log.Error("GIT", "Git configuration section not found in appsettings.json. Please ensure it is configured correctly.");
-                throw new InvalidOperationException("Git configuration section not found in appsettings.json.");
+                return;
             }
 
             GitHooks.PreCommit.AddEventListener(async evt =>
@@ -39,33 +38,30 @@ namespace Api.Vcs
                     throw new InvalidOperationException("No files staged for commit. Please stage files before committing.");
                 }
 
-                if (gitConfig is not null)
+                
+                foreach (var file in evt.StagedFiles)
                 {
-                    foreach (var file in evt.StagedFiles)
+
+                    if (
+                        file.StartsWith("Admin/Source/ThirdParty") ||
+                        file.StartsWith("UI/Source/ThirdParty") ||
+                        file.StartsWith("Email/Source/ThirdParty") ||
+                        file.StartsWith("Api/ThirdParty")
+                    )
                     {
+                        // check appsettings.json to see if edits to the thirdparty directory are allowed
 
-                        if (
-                            file.StartsWith("Admin/Source/ThirdParty") ||
-                            file.StartsWith("UI/Source/ThirdParty") ||
-                            file.StartsWith("Email/Source/ThirdParty") ||
-                            file.StartsWith("Api/ThirdParty")
-                        )
+                        if (bool.TryParse(gitConfig["DisableThirdPartyEdits"], out bool disallowEdits) && disallowEdits)
                         {
-                            // check appsettings.json to see if edits to the thirdparty directory are allowed
-
-                            if (bool.TryParse(gitConfig["DisableThirdPartyEdits"], out bool disallowEdits) && disallowEdits)
-                            {
-                                Log.Error("GIT", $"Commit blocked: {file} is in a third-party directory and edits are not allowed.");
-                                throw new InvalidOperationException($"Commit blocked: {file} is in a third-party directory and edits are not allowed.");
-                            }
-                            else
-                            {
-                                Log.Info("GIT", $"Commit allowed: {file} is in a third-party directory but edits are permitted by configuration.");
-                            }
+                            Log.Error("GIT", $"Commit blocked: {file} is in a third-party directory and edits are not allowed.");
+                            throw new InvalidOperationException($"Commit blocked: {file} is in a third-party directory and edits are not allowed.");
+                        }
+                        else
+                        {
+                            Log.Info("GIT", $"Commit allowed: {file} is in a third-party directory but edits are permitted by configuration.");
                         }
                     }
                 }
-
                 return evt;
             });
 

@@ -169,18 +169,18 @@ namespace Api.Startup
 
                         switch(option)
                         {
-                            case "pre-commit":
-                                // run pre-commit hooks:
-                                svc.RunPreCommit().GetAwaiter().GetResult();
-                                break;
-                            case "commit-msg":
-                                // run commit-msg hooks:
-                                svc.RunCommitMessage().GetAwaiter().GetResult();
-                                break;
-                            case "pre-push":
-                                // run pre-push hooks:
-                                svc.RunPrePush().GetAwaiter().GetResult();
-                                break;
+                            // case "pre-commit":
+                            //     // run pre-commit hooks:
+                            //     svc.RunPreCommit().GetAwaiter().GetResult();
+                            //     break;
+                            // case "commit-msg":
+                            //     // run commit-msg hooks:
+                            //     svc.RunCommitMessage().GetAwaiter().GetResult();
+                            //     break;
+                            // case "pre-push":
+                            //     // run pre-push hooks:
+                            //     svc.RunPrePush().GetAwaiter().GetResult();
+                            //     break;
                         }
 
                         break;
