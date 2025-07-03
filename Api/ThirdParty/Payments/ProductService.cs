@@ -44,6 +44,8 @@ namespace Api.Payments
 					product.Slug = await SlugGenerator.GenerateUniqueSlug(this, context, product.Name.Get(context));
 				}
 
+				await ValidateProduct(context, product);
+
 				return product;
 			});
 
@@ -147,7 +149,6 @@ namespace Api.Payments
 				return product;
 			});
 			
-			Events.Product.BeforeCreate.AddEventListener(async (ctx, product) => await ValidateProduct(ctx, product));
 			Events.Product.BeforeUpdate.AddEventListener(ValidateProduct);
 
 			Cache();
