@@ -170,11 +170,6 @@ namespace Api.Payments
 				throw new PublicException("The product name cannot be empty.", "product-validation/no-name");
 			}
 
-			if (string.IsNullOrEmpty(product.Sku))
-			{
-				throw new PublicException("The product SKU cannot be empty.", "product-validation/no-sku");
-			}
-			
 			if (string.IsNullOrEmpty(product.Slug))
 			{
 				throw new PublicException("The product slug cannot be empty.", "product-validation/no-slug");
