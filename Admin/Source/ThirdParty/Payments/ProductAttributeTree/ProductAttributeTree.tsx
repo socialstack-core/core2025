@@ -2,7 +2,16 @@ import TreeView, { buildBreadcrumbs } from 'Admin/TreeView';
 import SubHeader from 'Admin/SubHeader';
 import { useRouter } from 'UI/Router';
 import { useState, useEffect } from 'react';
-import productAttributeApi, { ProductAttribute } from 'Api/ProductAttribute';
+import productAttributeApi, {ProductAttribute} from 'Api/ProductAttribute';
+import Input from "UI/Input";
+import {ApiList} from "UI/Functions/WebRequest";
+import Loop from "UI/Loop";
+import Loading from "UI/Loading";
+import Button from "UI/Button";
+import Link from "UI/Link";
+
+type TreeViewType = 'tree' | 'list';
+
 
 export default function ProductAttributeTree(props) {
 	var addUrl = '/en-admin/productattribute/add';
@@ -18,20 +27,149 @@ export default function ProductAttributeTree(props) {
 		'/en-admin/productattribute'
 	);
 	
+	const [viewType, setViewType] = useState<TreeViewType>('tree');
+	const [searchQuery, setSearchQuery] = useState(query.get("q") ?? "");
+	const [attributes, setAttributes] = useState<ApiList<ProductAttribute>>();
+	const [userCanEditAttribute, setUserCanEditAttribute] = useState<boolean>(false);
+	const [sortField, setSortField] = useState<string>('id');
+	const [sortOrder, setSortOrder] = useState<string>('ASC');
+
+	useEffect(() => {
+		
+		if (!attributes) {
+			productAttributeApi.list({
+				pageIndex: 0 as uint, 
+				pageSize: 20 as uint,
+				sort: {
+					field: sortField,
+					direction: sortOrder.toLowerCase()
+				}
+			})
+			.then((response) => {
+				setAttributes(response);
+			})
+		}
+		
+	}, [attributes, sortField, sortOrder]);
+
+	useEffect(() => {
+
+		if (!searchQuery || searchQuery.length == 0) {
+			productAttributeApi.list({
+				pageIndex: 0 as uint,
+				pageSize: 20 as uint,
+				sort: {
+					field: sortField,
+					direction: sortOrder.toLowerCase()
+				}
+			})
+				.then((response) => {
+					setAttributes(response);
+				})
+		}
+
+	}, [searchQuery, sortField, sortOrder]);
+
+	useEffect(() => {
+		
+		if (searchQuery && searchQuery.length != 0) {
+			productAttributeApi.list({
+				pageIndex: 0 as uint,
+				pageSize: 20 as uint,
+				sort: {
+					field: sortField,
+					direction: sortOrder.toLowerCase()
+				},
+				query: "(Name contains ? or Key contains ?)",
+				args: [searchQuery, searchQuery]
+			})
+			.then((response) => {
+				setAttributes(response);
+			})
+		}
+		
+	}, [searchQuery, sortField, sortOrder]);
+	
+	
 	return (
 		<>
 			<SubHeader title={`Edit Product Attributes`} breadcrumbs={breadcrumbs} />
-			<div className="sitemap__wrapper">
+			<div className="sitemap__wrapper product-category-tree">
 				<div className="sitemap__internal">
-					<TreeView onLoadData={(path) => {
+					<div className="page-controls">
+						<div className="btn-group view-toggle" role="group" aria-label="Select view style">
+							<Input
+								type="radio"
+								noWrapper
+								label="Tree"
+								groupIcon="fr-grid"
+								groupVariant="primary"
+								value={viewType === "tree"}
+								onChange={() => setViewType("tree")}
+								name="view-style"
+							/>
+							<Input
+								type="radio"
+								noWrapper
+								label="List"
+								groupIcon="fr-th-list"
+								groupVariant="primary"
+								value={viewType === "list"}
+								onChange={() => setViewType("list")}
+								name="view-style"
+							/>
+						</div>
+						<div className="product-search">
+							<Input
+								type="search"
+								defaultValue={searchQuery}
+								onInput={(ev) => {
+									setSearchQuery((ev.target as HTMLInputElement).value)
+									setViewType("list")
+								}}
+								onFocus={() => {
+									setViewType("list");
+								}}
+								placeholder="Filter attributes"
+							/>
+						</div>
+					</div>
+					
+					{
+						viewType === 'tree' ? 
+						<TreeView onLoadData={(path) => {
 
-						return productAttributeApi
-							.getTreeNodePath(path)
-							.then(resp => {
-								return resp;
-							});
-
-					}} />
+							return productAttributeApi
+								.getTreeNodePath(path)
+								.then(resp => {
+									
+									const anyNode = resp?.self ?? (resp?.children ? resp?.children[0] : null);
+									
+									if (!anyNode)
+									{
+										return resp;
+									}
+									
+									if (!userCanEditAttribute && anyNode.editUrl) {
+										if (!anyNode.editUrl.endsWith('values')) {
+											setUserCanEditAttribute(true);
+										}
+									}
+									return resp;
+								});
+	
+						}} /> : 
+						(attributes ? (
+							<ListView 
+								userCanEdit={userCanEditAttribute} 
+								results={attributes}
+								sortOrder={sortOrder}
+								sortField={sortField}
+								setSortField={(field) => setSortField(field)}
+								setSortDirection={order => setSortOrder(order)}
+							/>
+						) : <Loading />)
+					}
 				</div>
 				{!props.noCreate && <>
 					<footer className="admin-page__footer">
@@ -46,4 +184,61 @@ export default function ProductAttributeTree(props) {
 			</div>
 		</>
 	);
+}
+
+type ListViewProps = { 
+	results: ApiList<ProductAttribute>,
+	userCanEdit: boolean, 
+	sortField: string,
+	sortOrder: string,
+	setSortField: (field: string) => void, 
+	setSortDirection: (direction: string) => void
+};
+
+const ListView = (props: ListViewProps) => {
+	
+	const { results, userCanEdit } = props;
+	
+	const changeSortOrder = (field: string) => {
+		
+		if (field === props.sortField) {
+			// switch dir. 
+			props.setSortDirection(props.sortOrder === 'ASC' ? 'DESC' : 'ASC');
+			return;
+		}
+		
+		props.setSortField(field);
+		props.setSortDirection('ASC');
+	}
+	
+	return (
+		<div className={'admin-page__internal'}>
+			<table className={'table'}>
+				<thead>
+					<tr>
+						<th onClick={() => changeSortOrder('key')}>Name</th>
+						<th onClick={() => changeSortOrder('id')}>ID</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+				{results.results.map((attr) => {
+					return (
+						<tr>
+							<td>{attr.name}</td>
+							<td>{attr.id}</td>
+							<td className={'admin-treeview__actions'}>
+								<Link
+									className={'btn btn-sm btn-outline-primary'}
+									href={'/en-admin/productattribute/' + attr.id + (!userCanEdit ? '/values' : '')}>
+									{`Edit`}
+								</Link>
+							</td>
+						</tr>
+					)
+				})}
+				</tbody>
+			</table>
+		</div>
+	)
 }
