@@ -1,5 +1,6 @@
 import Alert from 'UI/Alert';
 import Input from 'UI/Input';
+import Icon from 'UI/Icon';
 import Graph from 'Admin/CanvasEditor/GraphEditor/Graph';
 import Collapsible from 'UI/Collapsible';
 import Loading from 'UI/Loading';
@@ -99,6 +100,12 @@ function niceGraphName(graph){
 
 function renderStructureNode(node, canvasState, onClick, snapshotState) {
 	var nodeName = node.typeName || node.type;
+
+	if (node.root) {
+		nodeName = node.rootName;
+		node = node.root;
+	}
+
 	var isGridColumn = node.parent && (node.parent.typeName == 'UI/Grid' || node.parent.typeName == 'UI/SiteGrid');
 
 	if (isGridColumn) {
@@ -126,31 +133,31 @@ function renderStructureNode(node, canvasState, onClick, snapshotState) {
 		snapshotState();
 	};
 
-	var hasChildren = node.roots && node.roots.children && node.roots.children.content;
-	var nodeParent = hasChildren ? node.roots.children.content : null;
+	var localChildren;
 
-	// check for v2 canvas (e.g. UI/Grid)
-	if (!hasChildren && node.roots) {
-		nodeParent = Object.values(node.roots);
-
-		nodeParent.forEach(value => {
-			if (value.content) {
-				hasChildren = true;
-            }
-		});
-    }
-
-	if (!hasChildren && node.content && node.content.length) {
-		nodeParent = Object.values(node.content);
-		nodeParent.map(n => {
-			return {
-				content: n
-			}
-		});
-
-		hasChildren = true;
+	if (node.content) {
+		if (Array.isArray(node.content)) {
+			localChildren = [...node.content];
+		} else {
+			localChildren = [node.content];
+		}
+	} else {
+		localChildren = [];
 	}
 
+	// check for v2 canvas (e.g. UI/Grid)
+	if (node.roots) {
+		for (var rootName in node.roots) {
+			var root = node.roots[rootName];
+
+			localChildren.push({
+				rootName,
+				root
+			});
+		}
+    }
+
+	var hasChildren = !!localChildren.length;
 
 	if (!hasChildren) {
 		return <>
@@ -170,7 +177,7 @@ function renderStructureNode(node, canvasState, onClick, snapshotState) {
 
 	var removeButton = {
 		//disabled: false,
-		icon: 'fa fa-fw fa-trash',
+		icon: <Icon type='fa-trash' fullWidth />,
 		text: `Remove`,
 		showLabel: false,
 		variant: 'danger',
@@ -183,8 +190,10 @@ function renderStructureNode(node, canvasState, onClick, snapshotState) {
 		}
 	};
 
-	return <Collapsible title={nodeName} expanderLeft onClick={() => onClick(node)} buttons={isGridColumn ? undefined : [removeButton]}>
-		{nodeParent.map((childNode, i) => {
+	return <Collapsible title={nodeName} expanderLeft open expandByButtonOnly defaultClick={() => {
+		onClick && onClick(node);
+	}} buttons={isGridColumn ? undefined : [removeButton]}>
+		{localChildren.map((childNode, i) => {
 			var itemClass = ['collapsible-content__wrapper'];
 
 			if (childNode == canvasState.selectedNode) {
@@ -845,7 +854,15 @@ class CanvasEditorCore extends React.Component {
 		}else{
 			// Custom component
 			var props = {...node.props, _rte: this};
-			
+
+			if (!node.type) {
+				var typeName = node.typeName;
+
+				return <Alert type='warning'>{
+					`"${typeName}" cannot be previewed as it was not found.`
+				}</Alert>;
+			}
+
 			if(node.roots){
 				var children = null;
 				
