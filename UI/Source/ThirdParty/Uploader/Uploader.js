@@ -602,6 +602,18 @@ export default class Uploader extends React.Component {
 
 		const id = this.props.id || useId();
 
+		const iconClassName = this.props.iconOnly ? (
+			this.props.currentRef && typeof this.props.currentRef === 'string' &&
+			(
+				this.props.currentRef.startsWith("fas:") ||
+				this.props.currentRef.startsWith("far:") ||
+				this.props.currentRef.startsWith("fab:") ||
+				this.props.currentRef.startsWith("fal:")
+			) ?
+				this.props.currentRef.substring(0,3) + " " + this.props.currentRef.substring(4) : 
+				"fal fa-file uploader__file"
+		) : "fal fa-file uploader__file";
+				
 		return <div className={uploaderClass}>
 			<div className={this.props.iconOnly ? "uploader__internal uploader__internal--icon" : "uploader__internal"}>
 
@@ -625,7 +637,7 @@ export default class Uploader extends React.Component {
 
 					{/* has a reference, but isn't an image */}
 					{hasRef && !canShowImage && !canShowVideo && <>
-						<i className="fal fa-file uploader__file" />
+						<i className={iconClassName} />
 					</>}
 
 					{/* has an video  reference */}
@@ -635,6 +647,8 @@ export default class Uploader extends React.Component {
 					{failed && <>
 						<i class="fas fa-times-circle"></i>
 					</>}
+
+					{!hasRef && this.props.iconOnly && <i className={"fal fa-file uploader__file"}/>}
 
 					<span className="uploader__label-internal">
 						{label}

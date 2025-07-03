@@ -11,6 +11,7 @@ import Col from 'UI/Column';
 import Input from 'UI/Input';
 import Search from 'UI/Search';
 import uploadApi from 'Api/Upload';
+import {useState} from "react";
 
 var inputTypes = global.inputTypes = global.inputTypes || {};
 let lastId = 0;
@@ -31,11 +32,21 @@ window.inputTypes['file'] = window.inputTypes['image'] = function (props) {
 
 window.inputTypes['icon'] = function (props) {
 	const { field } = props;
+    
+    const [icon, setIcon] = useState(field.defaultValue);
+    
     return (
-        <FileSelector
-            iconOnly
-            {...props}
-        />
+        <>
+            <input type={'hidden'} name={field.name} value={icon} />
+            <FileSelector
+                iconOnly
+                {...props}
+                onChange={(value) => {
+                    setIcon(value.target.value)
+                }}
+                defaultValue={icon}
+            />
+        </>
     );
 };
 
@@ -117,7 +128,7 @@ export default class FileSelector extends React.Component {
         if (!newRef) {
             newRef = '';
         }
-
+        
         if (newRef.result && newRef.result.ref) {
             // Accept upload objects also.
             newRef = newRef.result.ref;
@@ -493,8 +504,6 @@ export default class FileSelector extends React.Component {
                 }}
                 onSelected={
                     icon => {
-                        console.log("onSelected");
-                        console.log(icon);
                         this.updateValue(null, icon);
                     }
                 }
@@ -504,7 +513,7 @@ export default class FileSelector extends React.Component {
             <Uploader
                 compact={this.props.compact}
                 currentRef={currentRef}
-                originalName={originalName}
+                originalName={this.props.iconOnly ? currentRef : originalName}
                 id={this.props.id || this.newId()}
                 isPrivate={this.props.isPrivate}
                 url={this.props.url}
@@ -551,13 +560,13 @@ export default class FileSelector extends React.Component {
 
                 </>}
                 {hasRef && <>
-                    {<>
+                    {!this.props.iconOnly && <>
                         <a href={fileRef.getUrl(currentRef)} alt={filename} className="btn btn-primary file-selector__link" target="_blank" rel="noopener noreferrer">
                             {`Preview`}
                         </a>
                     </>}
 
-                    {<>
+                    {!this.props.iconOnly && <>
                         <button type="button" className="btn btn-primary file-selector__select" onClick={() => this.showEditModal()}>
                             {`Edit`}
                         </button>
