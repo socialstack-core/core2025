@@ -18,11 +18,6 @@ interface SignpostProps {
 	hideQuantity?: boolean,
 
 	/**
-	 * set true to hide add to order / choose options controls
-	 */
-	hideOrder?: boolean,
-
-	/**
 	 * set true to disable link to product info
 	 */
 	disableLink?: boolean,
@@ -46,6 +41,16 @@ interface SignpostProps {
 	 * allow removal from basket
 	 */
 	showRemove?: boolean
+
+	/**
+	 * 
+	 */
+	readOnly?: boolean,
+
+	/**
+	 * 
+	 */
+	qtyOverride?: Number,
 }
 
 /**
@@ -53,7 +58,7 @@ interface SignpostProps {
  * @param props React props.
  */
 const Signpost: React.FC<SignpostProps> = (props) => {
-	const { disableLink, content, hideQuantity, hideOrder, priceOverride, showRemove } = props;
+	const { disableLink, content, hideQuantity, priceOverride, showRemove, readOnly, qtyOverride } = props;
 	var { addToCart } = useCart();
 
 	if (!content) {
@@ -158,7 +163,7 @@ const Signpost: React.FC<SignpostProps> = (props) => {
 
 				{/* quantity controls */}
 				{!hideQuantity && <>
-					<Quantity product={content} />
+					<Quantity product={content} qtyOverride={qtyOverride} readOnly={readOnly} />
 				</>}
 
 				{/* remove (used when viewed within basket) */}
