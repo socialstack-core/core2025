@@ -72,7 +72,7 @@ namespace Api.Payments
                     field.Hide = true;
                 }
 
-				if (field.Name == "attributes")
+				if (field.Name == "Attributes" || field.Name == "AdditionalAttributes")
 				{
 					field.Module = "Admin/Payments/AttributeSelect";
 				}
