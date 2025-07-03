@@ -78,11 +78,7 @@ namespace Api.Payments
 					return attr;
 				}
 
-				if (string.IsNullOrEmpty(attr.Key))
-				{
-					attr.Key = ToAttributeKey(attr.Name.GetFallback());
-				}
-				
+				// validate and if necessary generate key
 				await ValidateAttribute(ctx, attr);
 								
 				return attr;
@@ -90,11 +86,12 @@ namespace Api.Payments
 
 			Events.ProductAttribute.BeforeUpdate.AddEventListener(async (Context ctx, ProductAttribute attr, ProductAttribute origAttr) => {
 				
-				if (string.IsNullOrWhiteSpace(attr.Key))
+				if (attr == null)
 				{
-					attr.Key = await SlugGenerator.GenerateUniqueSlug(this, ctx, attr.Name.Get(ctx));
+					return attr;
 				}
-				
+			
+				// validate and if necessary generate key
 				await ValidateAttribute(ctx, attr);
 
 				// todo trigger product refresh
