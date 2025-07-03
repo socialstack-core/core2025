@@ -24,7 +24,10 @@ namespace Api.Payments
     [ListAs("Suggestions", IsPrimary = false)]
     [ImplicitFor("Suggestions", typeof(Product))]
 
-	[HasVirtualField("primaryCategory", typeof(ProductCategory), "PrimaryCategoryId")]
+    [ListAs("Variants", IsPrimary = false)]
+    [ImplicitFor("Variants", typeof(Product))]
+
+    [HasVirtualField("primaryCategory", typeof(ProductCategory), "PrimaryCategoryId")]
 
 	[HasSecondaryResult("attributeValueFacets", typeof(AttributeValueFacet))]
 	[HasSecondaryResult("productCategoryFacets", typeof(ProductCategoryFacet))]
@@ -123,7 +126,7 @@ namespace Api.Payments
 		/// <summary>
 		/// Indicates if this is a variant product related to a parent base product
 		/// </summary>
-		public uint VariantOfId;
+		public uint? VariantOfId;
 
 		/// <summary>
 		/// The ID of the primary product category. This is just a convenience field for 

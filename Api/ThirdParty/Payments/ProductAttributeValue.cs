@@ -1,9 +1,6 @@
-using System;
 using Api.Database;
 using Api.Startup;
-using Api.Translate;
 using Api.Users;
-
 
 namespace Api.Payments
 {
@@ -12,9 +9,14 @@ namespace Api.Payments
 	/// A ProductAttributeValue
 	/// </summary>
 	[HasVirtualField("attribute", typeof(ProductAttribute), "ProductAttributeId")]
-	[ListAs("attributes", Explicit = true)]
+	
+	[ListAs("attributes", IsPrimary = false)]
 	[ImplicitFor("attributes", typeof(Product))]
-	public partial class ProductAttributeValue : VersionedContent<uint>
+
+    [ListAs("additionalAttributes", IsPrimary = false)]
+    [ImplicitFor("additionalAttributes", typeof(Product))]
+
+    public partial class ProductAttributeValue : VersionedContent<uint>
 	{
 		/// <summary>
 		/// The attribute that this is a value for.
