@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Api.Startup;
@@ -119,6 +120,8 @@ namespace Api.TypeScript.Objects
                 builder.AppendLine("     * Generated from a .NET type.");
                 builder.AppendLine($"     * @see {{{_referenceType}}}::{{{method.Method.Name}}}");
                 builder.AppendLine($"     * @url '{url}'");
+                builder.AppendLine($"     * @trueReturnType {method.TrueReturnType.Name}");
+                builder.AppendLine($"     * @passedReturnType {method.ReturnType.Name}");
                 builder.AppendLine("     */");
                 builder.Append($"    {TypeScriptService.LcFirst(method.Method.Name)} = (");
 
@@ -198,6 +201,17 @@ namespace Api.TypeScript.Objects
                     {
                         call = $"getOne<{svc.GetGenericSignature(method.ReturnType)}>";
                         builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
+                    }
+                    else if (method.ReturnType.IsGenericTypeDefinition &&
+                             method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    {
+                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
+                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
+                    }
+                    else if (method.ReturnType == typeof(ValueTask) || method.ReturnType == typeof(void))
+                    {
+                        call = $"getText";
+                        builder.Append($"): Promise<string> => {{");
                     }
                     else
                     {

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Api.Startup;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
@@ -164,6 +165,11 @@ namespace Api.TypeScript.Objects
                     {
                         call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
                         builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
+                    }
+                    else if (method.ReturnType == typeof(ValueTask) || method.ReturnType == typeof(void))
+                    {
+                        call = $"getText";
+                        builder.Append($"): Promise<string> => {{");
                     }
                     else
                     {

@@ -44,7 +44,7 @@ namespace Api.TypeScript.Objects
                 // Determine the effective return type
                 var returnAttr = method.GetCustomAttribute<ReturnsAttribute>();
                 var effectiveReturnType = returnAttr != null
-                    ? UnwrapValueTask(method.ReturnType)
+                    ? returnAttr.ReturnType
                     : TypeScriptService.UnwrapTypeNesting(method.ReturnType);
 
                 // Create method representation
@@ -53,7 +53,7 @@ namespace Api.TypeScript.Objects
                     Method = method,
                     RequestUrl = GetRouteTemplate(httpAttr),
                     TrueReturnType = effectiveReturnType,
-                    ReturnType = UnwrapValueTask(method.ReturnType),
+                    ReturnType = returnAttr is not null ? returnAttr.ReturnType : UnwrapValueTask(method.ReturnType),
                     IsApiList = TypeScriptService.IsNestedCollection(method.ReturnType)
                 };
 
