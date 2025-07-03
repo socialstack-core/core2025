@@ -24,6 +24,8 @@ namespace Api.Payments
         /// The name of the product category
         /// </summary>
         [DatabaseField(Length = 200)]
+        [Data("required", true)]
+        [Data("validate", "Required")]
 		public Localized<string> Name;
 
         /// <summary>
@@ -39,6 +41,8 @@ namespace Api.Payments
         [DatabaseField(Length = 200)]
         [Data("type", "canvas")]
         [Data("main", "false")]
+        [Data("required", true)]
+        [Data("validate", "Required")]
         public Localized<string> Description;
 
         /// <summary>
@@ -51,6 +55,8 @@ namespace Api.Payments
         /// The category image ref
         /// </summary>
         [DatabaseField(Length = 300)]
+        [Data("required", true)]
+        [Data("validate", "Required")]
         public string FeatureRef;
 
         /// <summary>
@@ -58,6 +64,8 @@ namespace Api.Payments
         /// </summary>
         [DatabaseField(Length = 300)]
         [Data("type", "icon")]
+        [Data("required", true)]
+        [Data("validate", "Required")]
         public string IconRef;
 
         /// <summary>
