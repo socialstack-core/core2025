@@ -34,6 +34,8 @@ namespace Api.Payments
         /// The unique identifier for product
         /// </summary>
         [DatabaseField(Length = 200)]
+        [Data("required", "true")]
+        [Data("validate", "Required")]
         public string Sku;
 
 		/// <summary>
@@ -47,6 +49,8 @@ namespace Api.Payments
         /// The name of the product
         /// </summary>
         [DatabaseField(Length = 200)]
+        [Data("required", "true")]
+        [Data("validate", "Required")]
 		public Localized<string> Name;
 
         /// <summary>
@@ -99,6 +103,8 @@ namespace Api.Payments
 		/// The feature image ref
 		/// </summary>
 		[DatabaseField(Length = 300)]
+		[Data("required", "true")]
+		[Data("validate", "Required")]
 		public string FeatureRef;
 
 		/// <summary>
