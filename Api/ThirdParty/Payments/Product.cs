@@ -71,10 +71,20 @@ namespace Api.Payments
 		/// </summary>
 		[Module("Admin/Payments/BillingFrequencies")]
 		public uint BillingFrequency;
-		
-		/// <summary>
-		/// The content of this product.
-		/// </summary>
+
+        /// <summary>
+        /// Used to indicate if this product is tax exempt
+        /// 0 = No
+        /// 1 = Yes
+        /// 2 = Eligibility required
+        /// </summary>
+        [Module("Admin/Payments/TaxExempt")]
+        [Data("help", "Identify if the product is tax exempt")]
+        public uint TaxExempt;
+
+        /// <summary>
+        /// The content of this product.
+        /// </summary>
         [Data("type", "canvas")]
         [Data("main", "false")]
         public Localized<JsonString> DescriptionJson;
@@ -98,8 +108,8 @@ namespace Api.Payments
 		/// 2 = Step always. maxQuantity * tierPrice per tier always.
 		/// </summary>
 		[Module("Admin/Payments/PriceStrategies")]
-		[Data("help", "If you're using tiers, this defines the calculation used for the final price.")]
-		public uint PriceStrategy;
+        [Data("help", "If you're using tiers, this defines the calculation used for the final price.")]
+        public uint PriceStrategy;
 
 		/// <summary>
 		/// Available stock. Null indicates it is unlimited.
