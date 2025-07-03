@@ -34,8 +34,6 @@ namespace Api.Payments
         /// The unique identifier for product
         /// </summary>
         [DatabaseField(Length = 200)]
-        [Data("required", "true")]
-        [Data("validate", "Required")]
         public string Sku;
 
 		/// <summary>
