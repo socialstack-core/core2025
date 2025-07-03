@@ -24,6 +24,7 @@ namespace Api.Payments
 			return await (_service as ShoppingCartService)
 				.ApplyCoupon(context,
 					couponInfo.ShoppingCartId,
+					couponInfo.AnonymousCartKey,
 					couponInfo.Code
 				);
 		}
@@ -39,8 +40,32 @@ namespace Api.Payments
 		{
 			return await (_service as ShoppingCartService)
 				.RemoveCoupon(context,
-					couponInfo.ShoppingCartId
+					couponInfo.ShoppingCartId,
+					couponInfo.AnonymousCartKey
 				);
+		}
+
+		/// <summary>
+		/// Loads a cart using anon key.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="cartId"></param>
+		/// <param name="anonKey"></param>
+		/// <returns></returns>
+		[HttpGet("by-key/{cartId}/{anonKey}")]
+		public async ValueTask<ShoppingCart> LoadAnon(Context context, [FromRoute] uint cartId, [FromRoute] string anonKey)
+		{
+			var cart = await (_service as ShoppingCartService)
+				.Get(context,
+					cartId, DataOptions.IgnorePermissions
+				);
+
+			if (cart == null || cart.AnonymousCartKey != anonKey)
+			{
+				return null;
+			}
+
+			return cart;
 		}
 
 		/// <summary>
@@ -56,6 +81,7 @@ namespace Api.Payments
             return await (_service as ShoppingCartService)
                 .AddToCart(context,
 					itemChanges.ShoppingCartId,
+					itemChanges.AnonymousCartKey,
                     itemChanges.Items
                 );
         }
@@ -141,6 +167,11 @@ namespace Api.Payments
 		public uint ShoppingCartId;
 
 		/// <summary>
+		/// Enables anon cart updates. Can be null if you need a new one.
+		/// </summary>
+		public string AnonymousCartKey;
+		
+		/// <summary>
 		/// Items to add/ remove.
 		/// </summary>
 		public List<CartItemChange> Items;
@@ -151,6 +182,11 @@ namespace Api.Payments
     /// </summary>
     public struct RemoveCoupon
 	{
+		/// <summary>
+		/// Enables anon cart updates.
+		/// </summary>
+		public string AnonymousCartKey;
+		
 		/// <summary>
 		/// The shopping cart
 		/// </summary>
@@ -166,6 +202,11 @@ namespace Api.Payments
 		/// The coupon to apply. If this is null, nothing happens.
 		/// </summary>
 		public string Code;
+
+		/// <summary>
+		/// Enables anon cart updates.
+		/// </summary>
+		public string AnonymousCartKey;
 
 		/// <summary>
 		/// The shopping cart

@@ -11,6 +11,11 @@ import {ApiIncludes} from "Api/Includes";
 interface CartContext {
 }
 
+type CartIdToken = {
+    id: uint,
+    anonKey?: string
+};
+
 const CartSession = createContext<CartContext>({
     
 });
@@ -36,11 +41,13 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
     const setCouponInternal = (coupon: string) => {
         if (!coupon) {
             return shoppingCartApi.removeCoupon({
-                shoppingCartId: shoppingCart!.id
+                shoppingCartId: shoppingCart!.id,
+                anonymousCartKey: shoppingCart!.anonymousCartKey,
             }, includeSet);
         }
         return shoppingCartApi.applyCoupon({
             shoppingCartId: shoppingCart!.id,
+            anonymousCartKey: shoppingCart!.anonymousCartKey,
             code: coupon
         }, includeSet);
     };
@@ -50,18 +57,24 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
             .then(loadCart);
     };
 	
-	const getCartId = () : uint => {
+    const getCartId = (): CartIdToken => {
 		if(shoppingCart){
-			return shoppingCart.id;
+            return {
+                id: shoppingCart.id,
+                anonKey: shoppingCart.anonymousCartKey
+            };
 		}
 		
-		var cartIdStr = store.get('shopping_cart_id') as string;
+        var cartIdToken = store.get('shopping_cart_ref') as CartIdToken;
 		
-		if(!cartIdStr){
-			return 0 as uint;
+        if (!cartIdToken){
+            return {
+                id: 0 as uint,
+                anonKey: undefined
+            };
 		}
 		
-		return parseInt(cartIdStr) as uint;
+        return cartIdToken;
 	};
 	
     const loadCart = (cart: ShoppingCart) => {
@@ -81,17 +94,21 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
 
         setShoppingCart(cart);
     };
-
+    
     useEffect(() => {
         var lessTax = store.get("less_tax") as boolean;
         if (lessTax) {
             setLessTaxLocal(true);
         }
 
-        var cartId = store.get('shopping_cart_id') as string;
-        if (cartId) {
-            shoppingCartApi.load(parseInt(cartId) as int, includeSet)
+        var cartRef = store.get('shopping_cart_ref') as CartIdToken;
+
+        if (cartRef) {
+            shoppingCartApi.loadAnon(cartRef.id, cartRef.anonKey || '', includeSet)
                 .then(response => {
+
+                    console.log(cartRef.id, cartRef.anonKey || '');
+
                     loadCart(response);
                     setLoading(false);
                 }).catch(e => {
@@ -145,15 +162,16 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
 
         return shoppingCartApi.changeItems({
             shoppingCartId: shoppingCart?.id || (0 as uint),
+            anonymousCartKey: shoppingCart?.anonymousCartKey,
             items
         }, includeSet).then(cart => {
-            store.set('shopping_cart_id', cart.id.toString());
+            store.set('shopping_cart_ref', { id: cart.id, anonKey: cart.anonymousCartKey });
             loadCart(cart);
             return cart;
         }).catch((e: PublicError) => {
             if (e?.type && e.type == 'cart/not_found') {
                 console.log("Removing old cart reference - try adding again.");
-                store.remove('shopping_cart_id');
+                store.remove('shopping_cart_ref');
                 setShoppingCart(null);
             } else {
                 // rethrow
@@ -163,7 +181,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
     }
 	
     let emptyCart = () => {
-        store.remove('shopping_cart_id');
+        store.remove('shopping_cart_ref');
         setShoppingCart(null);
         setLoading(false);
     };
