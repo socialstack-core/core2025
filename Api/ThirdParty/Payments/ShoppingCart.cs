@@ -24,6 +24,12 @@ namespace Api.Payments
 		public uint Status;
 
 		/// <summary>
+		/// The cart key used to ensure an anon user can actually update/ load this cart.
+		/// </summary>
+		[DatabaseField(Length = 20)]
+		public string AnonymousCartKey;
+
+		/// <summary>
 		/// The target delivery address.
 		/// </summary>
 		public uint AddressId;

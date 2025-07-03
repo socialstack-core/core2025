@@ -12,6 +12,7 @@ using static Azure.Core.HttpHeader;
 using Api.Users;
 using Api.Addresses;
 using Newtonsoft.Json.Linq;
+using Api.PasswordResetRequests;
 
 namespace Api.Payments
 {
@@ -71,6 +72,18 @@ namespace Api.Payments
 				}
 
 				return toUpdate;
+			});
+
+			Events.ShoppingCart.BeforeCreate.AddEventListener((Context context, ShoppingCart cart) => {
+				if (cart == null)
+				{
+					return new ValueTask<ShoppingCart>(cart);
+				}
+
+				// Generate an anon key for update and retrieval of the cart whilst not logged in:
+				cart.AnonymousCartKey = RandomToken.Generate(16);
+
+				return new ValueTask<ShoppingCart>(cart);
 			});
 
 		}
@@ -148,12 +161,21 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="cartId"></param>
+		/// <param name="anonKey"></param>
 		/// <returns></returns>
-		public async ValueTask<ShoppingCart> RemoveCoupon(Context context, uint cartId)
+		public async ValueTask<ShoppingCart> RemoveCoupon(Context context, uint cartId, string anonKey)
 		{
-			return await Update(context, cartId, (Context ctx, ShoppingCart toUpdate, ShoppingCart original) => {
+			var cart = await Get(context, cartId, DataOptions.IgnorePermissions);
+
+			if (cart.AnonymousCartKey != anonKey)
+			{
+				// Nope!
+				return null;
+			}
+
+			return await Update(context, cart, (Context ctx, ShoppingCart toUpdate, ShoppingCart original) => {
 				toUpdate.CouponId = 0;
-			});
+			}, DataOptions.IgnorePermissions);
 		}
 
 		/// <summary>
@@ -161,16 +183,17 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="cartId"></param>
+		/// <param name="anonKey"></param>
 		/// <param name="couponCode"></param>
 		/// <returns></returns>
-		public async ValueTask<ShoppingCart> ApplyCoupon(Context context, uint cartId, string couponCode)
+		public async ValueTask<ShoppingCart> ApplyCoupon(Context context, uint cartId, string anonKey, string couponCode)
 		{
 			if (string.IsNullOrEmpty(couponCode))
 			{
 				return null;
 			}
 
-			var coupon = await _coupons.Where("Token=?").Bind(couponCode).First(context);
+			var coupon = await _coupons.Where("Token=?", DataOptions.IgnorePermissions).Bind(couponCode).First(context);
 
 			if (coupon == null)
 			{
@@ -183,9 +206,17 @@ namespace Api.Payments
 				throw new PublicException("Unfortunately the provided coupon has expired.", "coupon/expired");
 			}
 
+			var cart = await Get(context, cartId, DataOptions.IgnorePermissions);
+
+			if (cart.AnonymousCartKey != anonKey)
+			{
+				// Nope!
+				return null;
+			}
+
 			return await Update(context, cartId, (Context ctx, ShoppingCart toUpdate, ShoppingCart original) => {
 				toUpdate.CouponId = coupon.Id;
-			});
+			}, DataOptions.IgnorePermissions);
 		}
 
 		/// <summary>
@@ -193,9 +224,10 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="cartId"></param>
+		/// <param name="anonKey"></param>
 		/// <param name="itemChanges"></param>
 		/// <returns></returns>
-		public async ValueTask<ShoppingCart> AddToCart(Context context, uint cartId, List<CartItemChange> itemChanges)
+		public async ValueTask<ShoppingCart> AddToCart(Context context, uint cartId, string anonKey, List<CartItemChange> itemChanges)
 		{
 			ShoppingCart cart;
 
@@ -211,9 +243,9 @@ namespace Api.Payments
 			else
 			{
 				// Get the cart:
-				cart = await Get(context, cartId);
+				cart = await Get(context, cartId, DataOptions.IgnorePermissions);
 
-				if (cart == null)
+				if (cart == null || cart.AnonymousCartKey != anonKey)
 				{
 					throw new PublicException("Cart was not found", "cart/not_found");
 				}

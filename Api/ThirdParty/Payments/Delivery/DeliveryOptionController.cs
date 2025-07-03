@@ -32,12 +32,19 @@ public partial class DeliveryOptionController : AutoController<DeliveryOption>
 	/// </summary>
 	/// <param name="context"></param>
 	/// <param name="shoppingCartId"></param>
+	/// <param name="anonKey"></param>
 	/// <param name="options"></param>
 	/// <returns></returns>
-	[HttpPost("estimate/cart/{shoppingCartId}")]
-	public async ValueTask<ContentStream<DeliveryOption, uint>> Estimate(Context context, [FromRoute] uint shoppingCartId, [FromBody] CartEstimation options)
+	[HttpPost("estimate/cart/{shoppingCartId}/by-key/{anonKey}")]
+	public async ValueTask<ContentStream<DeliveryOption, uint>?> Estimate(Context context, [FromRoute] uint shoppingCartId, [FromRoute] string anonKey, [FromBody] CartEstimation options)
 	{
-		var cart = await _carts.Get(context, shoppingCartId);
+		var cart = await _carts.Get(context, shoppingCartId, DataOptions.IgnorePermissions);
+
+		if (cart == null || cart.AnonymousCartKey != anonKey)
+		{
+			return null;
+		}
+
 		var estimates = await _deliveries.EstimateDelivery(context, cart, options);
 		return new ContentStream<DeliveryOption, uint>(estimates, _options);
 	}
