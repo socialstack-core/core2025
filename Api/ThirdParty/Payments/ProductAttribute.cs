@@ -13,8 +13,8 @@ namespace Api.Payments
 	/// <summary>
 	/// A ProductAttribute
 	/// </summary>
-	[ListAs("requiredAttributes", Explicit = true)]
-	[ImplicitFor("requiredAttributes", typeof(ProductCategory))]
+	[ListAs("RequiredAttributes", Explicit = true)]
+	[ImplicitFor("RequiredAttributes", typeof(ProductCategory))]
 	[HasVirtualField("attributeGroup", typeof(ProductAttributeGroup), "ProductAttributeGroupId")]
 	public partial class ProductAttribute : VersionedContent<uint>
 	{

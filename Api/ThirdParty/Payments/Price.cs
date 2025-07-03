@@ -12,8 +12,8 @@ namespace Api.Payments
 	/// <summary>
 	/// A Price
 	/// </summary>
-	[ListAs("priceTiers", Explicit = true)]
-	[ImplicitFor("priceTiers", typeof(Product))]
+	[ListAs("PriceTiers", Explicit = true)]
+	[ImplicitFor("PriceTiers", typeof(Product))]
 	public partial class Price : VersionedContent<uint>
 	{
 		/// <summary>
