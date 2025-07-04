@@ -9,6 +9,7 @@ export type SelectInputType = React.SelectHTMLAttributes<HTMLSelectElement> & {
 	contentType?: string,
 	noSelectionValue?: string,
 	noSelection?: string,
+	clearable?: boolean,
 	displayField?: string,
 	contentTypeValue?: string,
 	filter?: any,
@@ -27,7 +28,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 	const [options, setOptions] = useState<ApiList<Content> | null>(null);
 
 	const { field, validationFailure, onInputRef } = props;
-	let { onChange, contentType, noSelectionValue, children,
+	let { onChange, contentType, noSelectionValue, clearable, children,
 		noSelection, className, defaultValue, value,
 		displayField, contentTypeValue, onDisplay, filter, ...attribs } = field;
 
@@ -96,7 +97,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			className={selectClass}
 			{...attribs}
 		>
-			<option disabled hidden selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
+			<option disabled={clearable ? undefined : true} hidden selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
 				{noSelection}
 			</option>
 			{options.results.map((entry : any) => <option
@@ -124,7 +125,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			onChange={onSelectChange}
 			{...attribs}
 		>
-			<option disabled hidden selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
+			<option disabled={clearable ? undefined : true} hidden selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
 				{noSelection}
 			</option>
 			{children}
