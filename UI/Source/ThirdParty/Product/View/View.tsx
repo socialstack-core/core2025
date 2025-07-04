@@ -2,6 +2,7 @@ import { Product } from 'Api/Product';
 import ProductCarousel from 'UI/Product/Carousel';
 import ProductAbout from 'UI/Product/About';
 import ProductAttributes from 'UI/Product/Attributes';
+import ProductVariants from 'UI/Product/Variants';
 import ProductPrice from 'UI/Product/Price';
 import ProductQuantity from 'UI/Product/Quantity';
 import { useState } from 'react';
@@ -91,7 +92,7 @@ const View: React.FC<ViewProps> = (props) => {
 						</div>
 					</>;
 				})}
-			</div>
+				</div>
 
 			{/* tab panels */}
 			<div className="ui-product-view__tab-panels">
@@ -115,6 +116,13 @@ const View: React.FC<ViewProps> = (props) => {
 					</>;
 				})}
 			</div>
+
+			{product.variants && product.variants.length > 0 && 
+				<div className="ui-product-view__variants">
+					<ProductVariants title={`Product variants`} product={product} />
+				</div>
+			}
+
 
 			{/* price info */}
 			<div className="ui-product-view__price-info">
