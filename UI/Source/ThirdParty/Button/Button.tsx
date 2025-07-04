@@ -29,6 +29,11 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
 	href?: string,
 
 	/**
+	 * True if the link should be opened within a new tab.
+	 */
+	external?: boolean,
+
+	/**
 	 * True if the button should be the extra small style.
 	 */
 	xs?: boolean,
@@ -80,7 +85,7 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
  * ref: https://getbootstrap.com/docs/5.0/components/buttons/
  */
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
-	children, className, tag, href, variant,
+	children, className, tag, href, external, variant,
 	disabled, outlined, allowWrap, xs, sm, md, lg, xl, ...props
 }) => {
 	let buttonType = props.type || props.buttonType;
@@ -211,6 +216,8 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 			aria-disabled={disabled ? "true" : undefined}
 			tabIndex={disabled ? -1 : undefined}
 			href={Tag == "a" ? href : undefined}
+			target={href && external ? "_blank" : undefined}
+			rel={href && external ? "noopener noreferrer" : undefined}
 			type={Tag == "a" ? undefined : buttonType}
 			role={Tag == "a" ? "button" : undefined}
 			onMouseDown={(e) => handleMouseDown(e)}

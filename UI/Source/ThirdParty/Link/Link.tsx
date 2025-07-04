@@ -59,12 +59,16 @@ interface LinkProps extends React.HTMLAttributes<HTMLAnchorElement> {
 	/**
 	 * The style variant, "primary", "secondary" etc. no style (i.e. basic link) assumed.
 	 */
-	variant?: string
+	variant?: string,
 
+	/**
+	 * True if the link should be opened within a new tab.
+	 */
+	external?: boolean,
 }
 
 const Link: React.FC<React.PropsWithChildren<LinkProps>> = ({
-	children, className, href, variant,
+	children, className, href, variant, external,
 	disabled, outlined, noWrap, xs, sm, md, lg, xl, ...attribs
 }) => {
 	const { session } = useSession();
@@ -152,7 +156,10 @@ const Link: React.FC<React.PropsWithChildren<LinkProps>> = ({
 
 	var linkClass = classes.join(" ");
 
-	return <a href={url} inert={disabled ? true : undefined} className={linkClass} {...attribs}>
+	return <a href={url} inert={disabled ? true : undefined} className={linkClass}
+		target={external ? "_blank" : undefined}
+		rel={external ? "noopener noreferrer" : undefined}
+		{...attribs}>
 		{children}
 	</a>;
 }
