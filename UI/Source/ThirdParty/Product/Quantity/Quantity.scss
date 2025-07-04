@@ -20,6 +20,16 @@
 
 	}
 
+	&--readonly {
+
+		#{$ui-product-qty}__down,
+		#{$ui-product-qty}__update,
+		#{$ui-product-qty}__up {
+			display: none;
+		}
+
+	}
+
 	&--edit {
 
 		#{$ui-product-qty}__update.btn {

@@ -47,8 +47,6 @@ export default class AttributeSelect extends React.Component {
 			
 			productAttributeValueApi.list(filter, [productAttributeValueApi.includes.attribute]).then(response => {
 				
-				console.log("ProductAttributeValue", response);
-
 				// Loading the values and preserving order:
 				var idLookup = {};
 				response.results.forEach(r => {idLookup[r.id+''] = r;});

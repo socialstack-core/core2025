@@ -65,7 +65,7 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 
 	const ctaLabel = props.ctaLabel?.length ? props.ctaLabel : `Add to order`;
 
-	const setQuantity = (newQty : int) => {
+	const setQuantity = (newQty: int) => {
 		addToCart(product.id, newQty, false);
 	};
 
@@ -104,6 +104,10 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 
 	if (!quantity) {
 		qtyClasses.push("ui-product-qty--none");
+	}
+
+	if (readOnly) {
+		qtyClasses.push("ui-product-qty--readonly");
 	}
 
 	if (isEditing) {
@@ -190,23 +194,24 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 		<div className={qtyClasses.join(' ')}>
 			<div className="ui-product-qty__inner">
 				{/* nothing in basket?  show "add" button */}
-				{!quantity && <>
+				{!quantity && !readOnly && <>
 					<Button sm className="ui-product-qty__add" onClick={() => addToBasket()} disabled={disabled}>
 						{ctaLabel}
 					</Button>
 				</>}
 
-				{!isEditing && <>
+				{!isEditing && !readOnly && <>
 					<Button sm className="ui-product-qty__down" aria-label={`Reduce quantity`} onClick={() => reduceQuantity()}>
 						<i className={quantity > 1 ? "fr fr-minus" : "fr fr-trash-alt"}></i>
 					</Button>
 				</>}
 
 				<div className="ui-product-qty__value-wrapper" /*ref={wrapperRef}*/>
-					<input ref={inputRef} type="number" value={typedQuantity} className="ui-product-qty__value" noWrapper
-						min="0" max={max} step={bundle} onFocus={() => setIsEditing(true)} onInput={
-							(e) => setTypedQuantity(e.target.value)
-						} onKeyDown={(e) => {
+					<input ref={inputRef} type="number" value={typedQuantity} className="ui-product-qty__value"
+						min="0" max={max} step={bundle} disabled={readOnly} 
+						onFocus={() => setIsEditing(true)}
+						onInput={(e) => setTypedQuantity(e.target.value)}
+						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
 								updateTypedQuantity();
 								(e.target as HTMLElement).blur();
@@ -218,7 +223,7 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 					</Button>
 				</div>
 
-				{!isEditing && <>
+				{!isEditing && !readOnly && <>
 					<Button sm className="ui-product-qty__up" aria-label={`Increase quantity`} onClick={() => increaseQuantity()}>
 						<i className="fr fr-plus"></i>
 					</Button>
