@@ -40,7 +40,6 @@ type SecondaryIncludes = {
 const View: React.FC<ViewProps> = (props) => {
 	const { productCategory } = props;
 	
-	const [showApprovedOnly, setShowApprovedOnly] = useState(false);
 	const [showInStockOnly, setShowInStockOnly] = useState(false);
 	
 	const [viewStyle, setViewStyle] = useState('large-thumbs');
@@ -73,7 +72,6 @@ const View: React.FC<ViewProps> = (props) => {
 			minPrice: minPrice,
 			maxPrice: maxPrice,
 			inStockOnly: showInStockOnly,
-			approvedStockOnly: showApprovedOnly,
 			appliedFacets: [
 				{
 					mapping: "productcategories",
@@ -96,7 +94,7 @@ const View: React.FC<ViewProps> = (props) => {
 			productApi.includes.productCategoryFacets.category,
 			productApi.includes.productCategoryFacets.category.primaryurl,
 			productApi.includes.attributeValueFacets.value.attribute.attributeGroup
-	])}, [selectedFacets, minPrice, maxPrice, showApprovedOnly, showInStockOnly]);
+	])}, [selectedFacets, minPrice, maxPrice, showInStockOnly]);
 
 
 	if (!products) {
@@ -152,7 +150,6 @@ const View: React.FC<ViewProps> = (props) => {
 						<legend>
 							{`Show / hide products`}
 						</legend>
-						<Input type="checkbox" onChange={(ev) => setShowApprovedOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show approved`} value={showApprovedOnly} name="show-approved" noWrapper />
 						<Input type="checkbox" onChange={(ev) => setShowInStockOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show in stock`} value={showInStockOnly} name="show-in-stock" noWrapper />
 					</fieldset>
 

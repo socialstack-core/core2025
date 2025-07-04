@@ -164,11 +164,6 @@ public class ProductSearchRequest
 	public double MaxPrice = 5000;
 	
 	/// <summary>
-	/// Approved stock only
-	/// </summary>
-	public bool ApprovedStockOnly = false;
-	
-	/// <summary>
 	/// In stock only.
 	/// </summary>
 	public bool InStockOnly = false;
