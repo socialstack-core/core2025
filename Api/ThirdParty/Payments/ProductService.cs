@@ -84,7 +84,12 @@ namespace Api.Payments
                     field.Module = "Admin/Payments/ProductCategorySelect";
                 }
 
-                return new ValueTask<JsonField<Product, uint>>(field);
+				if (field.Name == "Variants")
+				{
+					field.Module = "Admin/Payments/Variants/ValueEditor";
+				}
+
+				return new ValueTask<JsonField<Product, uint>>(field);
             });
 
 			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
