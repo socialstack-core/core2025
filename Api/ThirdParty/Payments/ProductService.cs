@@ -141,11 +141,26 @@ namespace Api.Payments
 				// If a specific page for this product exists, it will ultimately pick that.
 				var linkTarget = permalinks.CreatePrimaryTargetLocator(this, product);
 
+				Product parentProduct = null;
+
+				if (product.VariantOfId.HasValue && product.VariantOfId.Value != 0)
+				{
+					parentProduct = await Get(context, product.VariantOfId.Value);
+
+					if (parentProduct == null)
+					{
+						throw new PublicException(
+							"Product is a variant of #" + product.VariantOfId + " but that product does not exist.", 
+							"product/parent_not_found"
+						);
+					}
+				}
+
 				await permalinks.Create(
 					context,
 					new Permalink()
 					{
-						Url = GetInitialProductUrl(product),
+						Url = GetInitialProductUrl(product, parentProduct),
 						Target = linkTarget
 					},
 					DataOptions.IgnorePermissions
@@ -189,9 +204,16 @@ namespace Api.Payments
 		/// Use the primaryUrl system instead of calling this directly.
 		/// </summary>
 		/// <param name="product"></param>
+		/// <param name="parentProduct">Present if the product is a variant.</param>
 		/// <returns></returns>
-		private string GetInitialProductUrl(Product product)
+		private string GetInitialProductUrl(Product product, Product parentProduct)
 		{
+			if (parentProduct != null)
+			{
+				// Product is a variant of parentProduct.
+				return "/product/" + parentProduct.Slug + "?sku=" + product.Sku;
+			}
+
 			return "/product/" + product.Slug;
 		}
 
@@ -207,14 +229,39 @@ namespace Api.Payments
 			var allProducts = await Where("", DataOptions.IgnorePermissions).ListAll(context);
 			var links = new List<PermalinkUrlTarget>();
 
+			// Created if any variants exist
+			Dictionary<uint, Product> lookup = null;
+
+
 			foreach (var product in allProducts)
 			{
 				// Permalink target which will be for whichever page wants to handle a product as its primary content.
 				// If a specific page for this product exists, it will ultimately pick that.
 				var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, product);
 
+				Product parentProduct = null;
+				if (product.VariantOfId.HasValue && product.VariantOfId.Value != 0)
+				{
+					if (lookup == null)
+					{
+						lookup = new Dictionary<uint, Product>();
+
+						foreach (var prod in allProducts)
+						{
+							lookup[prod.Id] = prod;
+						}
+					}
+
+					if (!lookup.TryGetValue(product.VariantOfId.Value, out parentProduct))
+					{
+						// Invalid variant!
+						Log.Warn(LogTag, "Invalid variant: " + product.Id + " is a variant of #" + product.VariantOfId.Value + " but that parent product doesn't exist.");
+						continue;
+					}
+				}
+
 				var permalinkInfo = new PermalinkUrlTarget() {
-					Url = GetInitialProductUrl(product),
+					Url = GetInitialProductUrl(product, parentProduct),
 					Target = linkTarget
 				};
 
