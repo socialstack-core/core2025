@@ -50,7 +50,7 @@ public partial class ProductSearchController : AutoController
 	[HttpPost("faceted")]
 	public async ValueTask<ContentStream<Product, uint>?> Faceted(Context context, [FromBody] ProductSearchRequest request)
 	{
-		var resultSet = await _productSearchService.Search(context, request.Query, request.SearchType, request.AppliedFacets, request.PageOffset);
+		var resultSet = await _productSearchService.Search(context, request.Query, request.SearchType, request.InStockOnly, request.AppliedFacets, request.PageOffset);
 
 		if (resultSet == null)
 		{

@@ -110,6 +110,11 @@ public class ProductSearch
 	/// Defaults to 5000, maximum price.
 	/// </summary>
 	public double MaxPrice = 5000;
+	
+	/// <summary>
+	/// In stock only.
+	/// </summary>
+	public bool InStockOnly = false;
 }
 
 /// <summary>
@@ -217,7 +222,7 @@ public class ProductSearchService : AutoService
 	/// <param name="pageSize"></param>
 	/// <returns></returns>
 	public async ValueTask<ProductSearch> Search(
-		Context context, string query, ProductSearchType searchType, List<ProductSearchAppliedFacet> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
+		Context context, string query, ProductSearchType searchType, bool inStockOnly = false, List<ProductSearchAppliedFacet> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
 	{
 		if (pageOffset < 0)
 		{
@@ -240,7 +245,8 @@ public class ProductSearchService : AutoService
 			PageIndex = pageOffset,
 			PageSize = pageSize,
 			AppliedFacets = appliedFacets,
-			SearchType = searchType
+			SearchType = searchType,
+			InStockOnly =  inStockOnly
 		};
 
 		// get a copy of the collection, from there collect children, all products within child categories
