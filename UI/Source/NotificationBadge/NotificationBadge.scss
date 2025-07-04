@@ -1,6 +1,6 @@
 .notification-badge {
-	background: var(--danger);
-    color: var(--danger-fg);
+	background: var(--notification-badge-bg, var(--danger));
+    color: var(--notification-badge-fg, var(--danger-fg));
     width: px_to_rem(24);
     height: px_to_rem(24);
     border-radius: 50%;
