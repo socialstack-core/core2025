@@ -39,8 +39,10 @@ type SecondaryIncludes = {
  */
 const View: React.FC<ViewProps> = (props) => {
 	const { productCategory } = props;
-	const [showApprovedOnly, setShowApprovedOnly] = useState();
-	const [showInStockOnly, setShowInStockOnly] = useState();
+	
+	const [showApprovedOnly, setShowApprovedOnly] = useState(false);
+	const [showInStockOnly, setShowInStockOnly] = useState(false);
+	
 	const [viewStyle, setViewStyle] = useState('large-thumbs');
 	const [sortOrder, setSortOrder] = useState('most-popular');
 	const [pagination, setPagination] = useState('page1');
@@ -70,6 +72,8 @@ const View: React.FC<ViewProps> = (props) => {
 			pageSize: 20 as uint,
 			minPrice: minPrice,
 			maxPrice: maxPrice,
+			inStockOnly: showInStockOnly,
+			approvedStockOnly: showApprovedOnly,
 			appliedFacets: [
 				{
 					mapping: "productcategories",
@@ -92,7 +96,7 @@ const View: React.FC<ViewProps> = (props) => {
 			productApi.includes.productCategoryFacets.category,
 			productApi.includes.productCategoryFacets.category.primaryurl,
 			productApi.includes.attributeValueFacets.value.attribute.attributeGroup
-	])}, [query?.get("q") , selectedFacets, minPrice, maxPrice]);
+	])}, [selectedFacets, minPrice, maxPrice, showApprovedOnly, showInStockOnly]);
 
 
 	if (!products) {
@@ -148,8 +152,8 @@ const View: React.FC<ViewProps> = (props) => {
 						<legend>
 							{`Show / hide products`}
 						</legend>
-						<Input type="checkbox" isSwitch flipped label={`Only show approved`} value={showApprovedOnly} name="show-approved" noWrapper />
-						<Input type="checkbox" isSwitch flipped label={`Only show in stock`} value={showInStockOnly} name="show-in-stock" noWrapper />
+						<Input type="checkbox" onChange={(ev) => setShowApprovedOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show approved`} value={showApprovedOnly} name="show-approved" noWrapper />
+						<Input type="checkbox" onChange={(ev) => setShowInStockOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show in stock`} value={showInStockOnly} name="show-in-stock" noWrapper />
 					</fieldset>
 
 					{showableCategories.length != 0 && <>

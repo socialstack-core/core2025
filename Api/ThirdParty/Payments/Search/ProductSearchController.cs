@@ -162,6 +162,16 @@ public class ProductSearchRequest
 	/// Defaults to 5000, maximum price.
 	/// </summary>
 	public double MaxPrice = 5000;
+	
+	/// <summary>
+	/// Approved stock only
+	/// </summary>
+	public bool ApprovedStockOnly = false;
+	
+	/// <summary>
+	/// In stock only.
+	/// </summary>
+	public bool InStockOnly = false;
 }
 
 /// <summary>
