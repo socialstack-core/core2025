@@ -97,7 +97,8 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			className={selectClass}
 			{...attribs}
 		>
-			<option disabled={clearable ? undefined : true} hidden selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
+			<option disabled={clearable ? undefined : true} hidden={clearable ? undefined : true}
+				selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
 				{noSelection}
 			</option>
 			{options.results.map((entry : any) => <option
@@ -125,7 +126,8 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			onChange={onSelectChange}
 			{...attribs}
 		>
-			<option disabled={clearable ? undefined : true} hidden selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
+			<option disabled={clearable ? undefined : true} hidden={clearable ? undefined : true}
+				selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
 				{noSelection}
 			</option>
 			{children}
