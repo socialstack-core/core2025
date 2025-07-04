@@ -1,8 +1,10 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import Loop from "UI/Loop";
 import productCategoryApi from 'Api/ProductCategory';
 import Link from "UI/Link";
 import RecentSearches from "UI/Header/RecentSearches";
+import {useRouter} from "UI/Router";
+import Debounce from "UI/Functions/Debounce";
 
 /**
  * Props for the Search component.
@@ -33,22 +35,51 @@ const highlightMatch = (text: string, query: string) => {
 const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 	
 	const [query, setQuery] = useState('');
+	const { setPage, pageState } = useRouter();
 	
 	if (!searchPlaceholder || !searchPlaceholder.length) {
 		searchPlaceholder = `Search by name, category or code`
 	}
+	
+	const debounce = useRef(
+		new Debounce(
+			(query: string) => {
+				
+				let hasAddedQuery = false;
+				
+				const items:string[] = [];
+
+				pageState.query.forEach((item) => {
+
+					if (!item.includes('=')) {
+						return;
+					}
+					
+					if (item.startsWith("q=")) {
+						hasAddedQuery = true;
+						items.push('q=' + encodeURIComponent(query));
+					}
+					else {
+						items.push(item);
+					}
+				})
+				
+				if (!hasAddedQuery) {
+					items.push('q=' + encodeURIComponent(query));
+				}
+
+				setPage('?' + items.filter(Boolean).join('&'));
+			}, 
+			2000
+		)
+	);
 
 	useEffect(() => {
-		const newUrl = location.pathname + (query && query.length != 0 ? '?q=' + encodeURIComponent(query) : '');
-		history.replaceState(null, '', newUrl);
-
-		const ev = new CustomEvent('search', {
-			detail: {
-				query
-			}
-		})
-
-		window.dispatchEvent(ev);
+		
+		if (query.length != 0) {
+			debounce.current.handle(query);
+		}
+		
 	}, [query]);
 
 
@@ -65,7 +96,7 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 				*/}
 			</button>
 			<div className="site-nav__search-wrapper" popover="auto" id="search_popover">
-				<input type="search" placeholder={searchPlaceholder} onInput={(ev) => setQuery((ev.target as HTMLInputElement).value)} />
+				<input type="search" placeholder={searchPlaceholder} defaultValue={pageState.query.has('q') ? pageState.query.get('q')! : ''} onInput={(ev) => setQuery((ev.target as HTMLInputElement).value)} />
 			</div>
 			<div className="site-nav__search-dropdown">
 				{(!query || query.length == 0) && (

@@ -93,24 +93,6 @@ const View: React.FC<ViewProps> = (props) => {
 			productApi.includes.attributeValueFacets.value.attribute.attributeGroup
 	])}, [initialSearch, selectedFacets]);
 
-	
-	useEffect(() => {
-
-		const evListener = (ev: CustomEvent) => {
-			const detail = ev.detail as { query: string };
-			if (detail.query) {
-				setInitialSearch(detail.query);
-			}
-		}
-
-		window.addEventListener('search', evListener);
-
-		return () => {
-			window.removeEventListener('search', evListener);
-		}
-
-	}, []);
-
 
 	if (!products) {
 		return <Loading />;
