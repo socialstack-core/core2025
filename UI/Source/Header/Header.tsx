@@ -232,8 +232,8 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 		return productCategoryApi.list({
 			query: 'ParentId=?',
 			args: [categoryId as uint],
-			pageSize: 10 as int,
-			pageIndex: 1 as int,
+			pageSize: 50 as int,
+			pageIndex: 0 as int,
 			sort: {
 				field: "id",
 				direction: "desc"

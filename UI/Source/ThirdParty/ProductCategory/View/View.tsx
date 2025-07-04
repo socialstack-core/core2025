@@ -48,7 +48,6 @@ const View: React.FC<ViewProps> = (props) => {
 	const { pageState } = useRouter();
 	const { query } = pageState;
 	const [selectedFacets, setSelectedFacets] = useState<Record<uint, uint[]>>({});
-	const [initialSearch, setInitialSearch] = useState(query?.get("q") || "");
 
 	
 	// TODO: calculate lowest and highest price
@@ -65,7 +64,7 @@ const View: React.FC<ViewProps> = (props) => {
 
 	const [products] = useApi(() => {
 		return searchApi.faceted({
-			query: initialSearch,
+			query: query?.get("q") ?? '',
 			pageOffset: initialPageOffset as int,
 			searchType: ProductSearchType.Expansive,
 			pageSize: 20 as uint,
@@ -91,7 +90,7 @@ const View: React.FC<ViewProps> = (props) => {
 			productApi.includes.productCategoryFacets.category,
 			productApi.includes.productCategoryFacets.category.primaryurl,
 			productApi.includes.attributeValueFacets.value.attribute.attributeGroup
-	])}, [initialSearch, selectedFacets]);
+	])}, [query?.get("q") , selectedFacets]);
 
 
 	if (!products) {
