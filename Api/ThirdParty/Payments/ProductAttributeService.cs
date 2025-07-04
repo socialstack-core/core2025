@@ -271,6 +271,26 @@ namespace Api.Payments
 					},
 					new ProductAttribute
 					{
+						Name = new Localized<string>("Diameter"),
+						ProductAttributeType = 2, // double
+						Units = "mm",
+						ProductAttributeGroupKey = "dimensions"
+					},					
+					new ProductAttribute
+					{
+						Name = new Localized<string>("Volume"),
+						ProductAttributeType = 2, // double
+						Units = "ml",
+						ProductAttributeGroupKey = "dimensions"
+					},
+                    new ProductAttribute
+                    {
+                        Name = new Localized<string>("Shape"),
+                        ProductAttributeType = 3, // text (round,square)
+                        ProductAttributeGroupKey = "dimensions"
+                    },					
+					new ProductAttribute
+					{
 						Name = new Localized<string>("Net Weight"),
 						ProductAttributeType = 2, // double
 						Units = "kg",
