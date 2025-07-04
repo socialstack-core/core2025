@@ -104,10 +104,7 @@ public class MongoSearchEventListener
 					searchService = Services.Get<ProductSearchService>();
 				}
 
-				var compoundDoc = new BsonDocument
-				{
-				};
-
+				var compoundDoc = new BsonDocument();
 				if (!string.IsNullOrEmpty(query))
 				{
 					compoundDoc["should"] = new BsonArray
@@ -134,10 +131,10 @@ public class MongoSearchEventListener
 					};
 				}
 
+				List<BsonDocument> filterClauses = new();
+
 				if (search.AppliedFacets != null)
 				{
-					List<BsonDocument> appliedFacets = null;
-
 					foreach (var facet in search.AppliedFacets)
 					{
 						var ids = facet.Ids;
@@ -147,20 +144,13 @@ public class MongoSearchEventListener
 							continue;
 						}
 
-						if (appliedFacets == null)
-						{
-							appliedFacets = new List<BsonDocument>();
-						}
-
 						string mappingPath = "Mappings." + facet.Mapping.ToLower();
 
 						if (search.SearchType == ProductSearchType.Reductive)
 						{
-							// this way all the values become "AND" and reduce 
-							// the collection size where a product doesn't meet the criteria.
 							foreach (var id in ids)
 							{
-								appliedFacets.Add(new BsonDocument("equals", new BsonDocument
+								filterClauses.Add(new BsonDocument("equals", new BsonDocument
 								{
 									{ "path", mappingPath },
 									{ "value", (long)id }
@@ -169,7 +159,6 @@ public class MongoSearchEventListener
 						}
 						else
 						{
-							// default behaviour, catches products where any of/ in
 							var termClauses = ids.Select(id =>
 								new BsonDocument("equals", new BsonDocument
 								{
@@ -178,18 +167,38 @@ public class MongoSearchEventListener
 								})
 							);
 
-							appliedFacets.Add(new BsonDocument("compound", new BsonDocument
+							filterClauses.Add(new BsonDocument("compound", new BsonDocument
 							{
 								{ "should", new BsonArray(termClauses) },
 								{ "minimumShouldMatch", 1 }
 							}));
 						}
 					}
+				}
 
-					if (appliedFacets != null)
+				if (search.InStockOnly)
+				{
+					filterClauses.Add(new BsonDocument("compound", new BsonDocument
 					{
-						compoundDoc["filter"] = new BsonArray(appliedFacets);
-					}
+						{ "must", new BsonArray
+							{
+								new BsonDocument("exists", new BsonDocument
+								{
+									{ "path", "InStock" }
+								}),
+								new BsonDocument("range", new BsonDocument
+								{
+									{ "path", "InStock" },
+									{ "gt", 0 }
+								})
+							}
+						}
+					}));
+				}
+
+				if (filterClauses.Count > 0)
+				{
+					compoundDoc["filter"] = new BsonArray(filterClauses);
 				}
 
 				var searchStage = new BsonDocument
@@ -306,6 +315,16 @@ public class MongoSearchEventListener
 						{
 							childFilters.Add(Builders<Product>.Filter.In("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
 						}
+					}
+					
+					if (search.InStockOnly)
+					{
+						childFilters.Add(
+							Builders<Product>.Filter.And(
+								Builders<Product>.Filter.Exists("InStock", true),
+								Builders<Product>.Filter.Ne("InStock", 0)
+							)
+						);
 					}
 
 					filter = Builders<Product>.Filter.And(childFilters);
