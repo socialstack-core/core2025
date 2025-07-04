@@ -84,6 +84,7 @@ const View: React.FC<ViewProps> = (props) => {
 			]
 		}, [
 			productApi.includes.calculatedprice,
+			productApi.includes.primaryCategory,
 
 			// Plus then includes on the facets (the attribute and category selectors)
 			productApi.includes.productCategoryFacets,
