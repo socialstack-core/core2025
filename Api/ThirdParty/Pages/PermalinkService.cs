@@ -210,7 +210,12 @@ namespace Api.Pages
 											urlLookup.Add(linkUrl, specificId);
 										}
 
-										getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, pTargetService, specificContentId));
+										if (linkUrl != null && !linkUrl.Contains('?'))
+										{
+											// Sources with query strings are only added to the reverse lookup.
+
+											getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, pTargetService, specificContentId));
+										}
 									}
 								}
 							}
@@ -258,8 +263,12 @@ namespace Api.Pages
 									primaryContentService = Services.Get(page.PrimaryContentType + "Service");
 								}
 
-								getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, primaryContentService, specificContentId));
+								if (linkUrl != null && !linkUrl.Contains('?'))
+								{
+									// Sources with query strings are only added to the reverse lookup.
 
+									getNode.AddCustomBehaviour(linkUrl, new PageTerminalBehaviour(page, primaryContentService, specificContentId));
+								}
 							}
 						}
 					}
@@ -267,6 +276,12 @@ namespace Api.Pages
 					for(var i=0;i<sources.Count;i++)
 					{
 						var src = sources[i];
+
+						if (src != null && src.Url != null && src.Url.Contains('?'))
+						{
+							// Sources with query strings are only added to the reverse lookup.
+							continue;
+						}
 
 						if (i == 0)
 						{
