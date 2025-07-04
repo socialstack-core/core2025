@@ -100,6 +100,16 @@ public class ProductSearch
 	/// Is this search reductive or expansive.
 	/// </summary>
 	public ProductSearchType SearchType;
+	
+	/// <summary>
+	/// Defaults to 0, minimum price.
+	/// </summary>
+	public double MinPrice = 0;
+	
+	/// <summary>
+	/// Defaults to 5000, maximum price.
+	/// </summary>
+	public double MaxPrice = 5000;
 }
 
 /// <summary>

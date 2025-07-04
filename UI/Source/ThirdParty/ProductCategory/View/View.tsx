@@ -44,6 +44,8 @@ const View: React.FC<ViewProps> = (props) => {
 	const [viewStyle, setViewStyle] = useState('large-thumbs');
 	const [sortOrder, setSortOrder] = useState('most-popular');
 	const [pagination, setPagination] = useState('page1');
+	const [minPrice, setMinPrice] = useState<double>(0);
+	const [maxPrice, setMaxPrice] = useState<double>(5000);
 
 	const { pageState } = useRouter();
 	const { query } = pageState;
@@ -51,13 +53,11 @@ const View: React.FC<ViewProps> = (props) => {
 
 	
 	// TODO: calculate lowest and highest price
-	let lowestPrice = 5;
+	let lowestPrice = 1;
 	let highestPrice = 5000;
 	let step = 1;
 	//let step = Math.round((highestPrice - lowestPrice) / 20);
 
-	let fromPrice = 500;
-	let toPrice = 3000;
 
 	var initialPageStr = query?.get("page") || "";
 	var initialPageOffset = (parseInt(initialPageStr) || 1) - 1;
@@ -68,6 +68,8 @@ const View: React.FC<ViewProps> = (props) => {
 			pageOffset: initialPageOffset as int,
 			searchType: ProductSearchType.Expansive,
 			pageSize: 20 as uint,
+			minPrice: minPrice,
+			maxPrice: maxPrice,
 			appliedFacets: [
 				{
 					mapping: "productcategories",
@@ -90,7 +92,7 @@ const View: React.FC<ViewProps> = (props) => {
 			productApi.includes.productCategoryFacets.category,
 			productApi.includes.productCategoryFacets.category.primaryurl,
 			productApi.includes.attributeValueFacets.value.attribute.attributeGroup
-	])}, [query?.get("q") , selectedFacets]);
+	])}, [query?.get("q") , selectedFacets, minPrice, maxPrice]);
 
 
 	if (!products) {
@@ -127,10 +129,7 @@ const View: React.FC<ViewProps> = (props) => {
 		grouping.facetValues.push(facet);
 	});
 
-	var attributeFacetGroups = Array.from(attributeMap.values());
-
-
-	const productCategories = categoryFacets.map(f => f.category);
+	const attributeFacetGroups = Array.from(attributeMap.values());
 
 	let GBPound = new Intl.NumberFormat('en-GB', {
 		style: 'currency',
@@ -163,8 +162,20 @@ const View: React.FC<ViewProps> = (props) => {
 						</fieldset>
 					</>}
 
-					<DualRange className="ui-productcategory-view__price" label={`Price`} numberFormat={GBPound}
-						min={lowestPrice} max={highestPrice} step={step} defaultFrom={fromPrice} defaultTo={toPrice} />
+					<DualRange 
+						className="ui-productcategory-view__price" 
+						label={`Price`} 
+						numberFormat={GBPound}
+						min={lowestPrice} 
+						max={highestPrice} 
+						step={step} 
+						defaultFrom={minPrice} 
+						defaultTo={maxPrice} 
+						onChange={(from: number, to: number) => {
+							setMinPrice(from);
+							setMaxPrice(to);
+						}}
+					/>
 					
 					{/* attributes */}
 					{attributeFacetGroups.length > 0 && <>

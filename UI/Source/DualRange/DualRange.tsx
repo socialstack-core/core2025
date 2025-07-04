@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import {useEffect, useId, useState } from "react";
 
 /**
  * Props for the DualRange component.
@@ -13,7 +13,8 @@ interface DualRangeProps {
 	step?: number,
 	defaultFrom?: number,
 	defaultTo?: number,
-	numberFormat?: Intl.NumberFormat
+	numberFormat?: Intl.NumberFormat,
+	onChange: (min: number, max: number) => void,
 }
 
 const DEFAULT_MIN_RANGE = 0;
@@ -24,7 +25,7 @@ const DEFAULT_MAX_RANGE = 100;
  * @param props React props.
  */
 const DualRange: React.FC<DualRangeProps> = (props) => {
-	const { label, min, max, step, defaultFrom, defaultTo, numberFormat } = props;
+	const { label, min, max, step, defaultFrom, defaultTo, numberFormat, onChange } = props;
 
 	const minValue = min || DEFAULT_MIN_RANGE;
 	const maxValue = max || DEFAULT_MAX_RANGE;
@@ -32,6 +33,10 @@ const DualRange: React.FC<DualRangeProps> = (props) => {
 
 	const [fromValue, setFromValue] = useState(defaultFrom || minValue);
 	const [toValue, setToValue] = useState(defaultTo || maxValue);
+	
+	useEffect(() => {
+		props.onChange(fromValue, toValue);
+	}, [fromValue, toValue]);
 
 	const id = useId();
 	const fromId = `from_${id}`;
