@@ -207,11 +207,11 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 				</>}
 
 				<div className="ui-product-qty__value-wrapper" /*ref={wrapperRef}*/>
-					<input ref={inputRef} type="number" value={typedQuantity} className="ui-product-qty__value" noWrapper
-						min="0" max={max} step={bundle} readOnly={readOnly}
-						onFocus={() => setIsEditing(true)} onInput={
-							(e) => setTypedQuantity(e.target.value)
-						} onKeyDown={(e) => {
+					<input ref={inputRef} type="number" value={typedQuantity} className="ui-product-qty__value"
+						min="0" max={max} step={bundle} disabled={readOnly} 
+						onFocus={() => setIsEditing(true)}
+						onInput={(e) => setTypedQuantity(e.target.value)}
+						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
 								updateTypedQuantity();
 								(e.target as HTMLElement).blur();
