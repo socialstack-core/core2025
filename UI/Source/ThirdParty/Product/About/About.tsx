@@ -15,6 +15,11 @@ interface AboutProps {
 	 * The content to display
 	 */
 	product: Product,
+
+	/**
+	 * The current selected variant if there is one.
+	 */
+	currentVariant?: Product,
 }
 
 /**
@@ -22,13 +27,13 @@ interface AboutProps {
  * @param props React props.
  */
 const About: React.FC<AboutProps> = (props) => {
-	const { title, product } = props;
+	const { title, product, currentVariant } = props;
 
 	return <>
 		<ProductSubtitle subtitle={title} />
 		<div className="ui-product-view__about">
 			<Canvas>
-				{product.descriptionJson}
+				{currentVariant?.descriptionJson || product.descriptionJson}
 			</Canvas>
 		</div>
 	</>;

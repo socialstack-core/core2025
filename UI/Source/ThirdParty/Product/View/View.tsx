@@ -2,7 +2,6 @@ import { Product } from 'Api/Product';
 import ProductCarousel from 'UI/Product/Carousel';
 import ProductAbout from 'UI/Product/About';
 import ProductAttributes from 'UI/Product/Attributes';
-import ProductVariants from 'UI/Product/Variants';
 import ProductPrice from 'UI/Product/Price';
 import ProductQuantity from 'UI/Product/Quantity';
 import { useState } from 'react';
@@ -10,6 +9,7 @@ import Breadcrumb from 'UI/Breadcrumb';
 import ProductHeader from 'UI/Product/Header';
 import { useCart } from 'UI/Payments/CartSession';
 import { useSession } from 'UI/Session';
+import { useRouter } from 'UI/Router';
 
 /**
  * Props for the View component.
@@ -32,7 +32,13 @@ const View: React.FC<ViewProps> = (props) => {
 
 	const { session } = useSession();
 	var { locale } = session;
-
+	const { pageState, setPage } = useRouter();
+	const { query, url } = pageState;
+	
+	// Selected variant (if any) is..
+	const variantSku = query?.get("sku");
+	const currentVariant: Product | undefined = variantSku ? product.variants?.find(prod => prod.sku == variantSku) : undefined;
+	
 	let currencyCode = cartContents?.currencyCode || locale.currencyCode || "GBP";
 
 	enum ProductTab {
@@ -60,7 +66,38 @@ const View: React.FC<ViewProps> = (props) => {
 			<ProductCarousel product={product} />
 
 			{/* featured / title / stock info */}
-			<ProductHeader product={product} />
+			<ProductHeader product={product} currentVariant={currentVariant} onSelectVariant={variant => {
+
+				// Change the URL if needed. This triggers a re-render at this upper level which then ultimately
+				// collects the variant and anything else necessary.
+				// This way it is driven by url state and also pretty minimal, 
+				// ensuring that the selected product is shareable.
+				if (variant?.sku == variantSku) {
+					return;
+				}
+
+				var nextQuery = new URLSearchParams(query);
+				if (variant) {
+					nextQuery.set("sku", variant.sku || '');
+				} else {
+					nextQuery.delete("sku");
+				}
+
+				const currentUrl = url.split('?')[0];
+
+				var qs = nextQuery.toString();
+				let nextUrl = currentUrl;
+
+				if (qs && qs.length) {
+					nextUrl += '?' + qs;
+				}
+
+				// Todo: router needs the ability to change query string without
+				// causing a refresh. This will primarily fix a weird jank that you'll experience 
+				// if you edit the dropdowns from an ?sku= page 
+				// (it will cause a page load and the set of dropdowns will probably all be empty) 
+				setPage(nextUrl);
+			}} />
 
 			{/*
 			<TabSet className="ui-product-view__tabs">
@@ -102,11 +139,11 @@ const View: React.FC<ViewProps> = (props) => {
 					return <>
 						<div className="ui-product-view__tab-panel" id={panelId}>
 							{tab == ProductTab.About && <>
-								<ProductAbout title={`About this product`} product={product} />
+								<ProductAbout title={`About this product`} product={product} currentVariant={currentVariant} />
 							</>}
 
 							{tab == ProductTab.Details && <>
-								<ProductAttributes title={`Product details`} product={product} />
+								<ProductAttributes title={`Product details`} product={product} currentVariant={currentVariant} />
 							</>}
 
 							{tab == ProductTab.FAQs && <>
@@ -116,14 +153,7 @@ const View: React.FC<ViewProps> = (props) => {
 					</>;
 				})}
 			</div>
-
-			{product.variants && product.variants.length > 0 && 
-				<div className="ui-product-view__variants">
-					<ProductVariants title={`Product variants`} product={product} />
-				</div>
-			}
-
-
+			
 			{/* price info */}
 			<div className="ui-product-view__price-info">
 
@@ -157,10 +187,10 @@ const View: React.FC<ViewProps> = (props) => {
 				*/}
 
 				{/* price */}
-				<ProductPrice product={product} />
+				<ProductPrice product={currentVariant || product} />
 
-				{/* quantity / add to order */}
-				<ProductQuantity product={product} />
+				{/* quantity / add to order, only present if there is no variants or a variant is selected. */}
+				{(!(product.variants?.length) || currentVariant) && <ProductQuantity product={currentVariant || product} />}
 			</div>
 
 		</div>

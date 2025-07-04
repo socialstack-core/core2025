@@ -13,6 +13,11 @@ interface AttributesProps {
 	 * The product containing attributes to display.
 	 */
 	product: Product;
+
+	/**
+	 * A selected variant if any.
+	 */
+	currentVariant?: Product;
 }
 
 /**
@@ -30,8 +35,13 @@ type AttributeValue = {
  *
  * @param props React component props.
  */
-const Attributes: React.FC<AttributesProps> = ({ title, product }) => {
-	const { attributes } = product;
+const Attributes: React.FC<AttributesProps> = ({ title, product, currentVariant }) => {
+	let { attributes } = product;
+
+	if (currentVariant?.attributes?.length) {
+		// Use the full set of a variants attributes:
+		attributes = currentVariant.attributes;
+	}
 
 	/**
 	 * Build a map of attribute names to their associated values , grouped by attribute type
