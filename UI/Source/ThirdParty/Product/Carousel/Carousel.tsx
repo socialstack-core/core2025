@@ -33,6 +33,15 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 		productImagesClasses.push("ui-product-images--single");
 	}
 
+	function handleLightboxClick(e) {
+
+		// close if clicking the background and not the image
+		if (e.target == e.currentTarget) {
+			e.target.parentElement.removeAttribute("open");
+		}
+
+	}
+
 	return (
 		<div className={productImagesClasses.join(' ')}>
 			{hasRelatedImages && <>
@@ -64,7 +73,7 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 					<summary>
 						<Image size={512} fileRef={product.featureRef || defaultImageRef} />
 					</summary>
-					<div className="ui-product-images__slide-content">
+					<div className="ui-product-images__slide-content" onClick={(e) => handleLightboxClick(e)}>
 						<Image size={1024} fileRef={product.featureRef || defaultImageRef} lazyLoad={true} />
 					</div>
 				</details>
@@ -74,7 +83,7 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 							<summary>
 								<Image size={512} fileRef={productImage.ref || defaultImageRef} />
 							</summary>
-							<div className="ui-product-images__slide-content">
+							<div className="ui-product-images__slide-content" onClick={(e) => handleLightboxClick(e)}>
 								<Image size={1024} fileRef={productImage.ref || defaultImageRef} lazyLoad={true} />
 							</div>
 						</details>

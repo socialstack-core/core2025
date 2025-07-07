@@ -186,6 +186,7 @@ $max-product-images: 5;
 		}
 		
 		&[open] {
+			z-index: 2000;
 			
 			&::after {
 				content: none;
