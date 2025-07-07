@@ -1507,12 +1507,15 @@ public partial class AutoService
 	/// <returns></returns>
 	public ContentFields GetContentFields()
 	{
-		if (_contentFields == null)
+		var cf = _contentFields;
+
+		if (cf == null)
 		{
-			_contentFields = new ContentFields(this);
+			cf = new ContentFields(this);
+			_contentFields = cf;
 		}
 
-		return _contentFields;
+		return cf;
 	}
 
 	/// <summary>
