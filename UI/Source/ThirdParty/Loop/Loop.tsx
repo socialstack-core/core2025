@@ -255,6 +255,11 @@ export interface LoopProps<T extends Content<uint>, I extends ApiIncludes> {
 	 */
 	reverse?: boolean,
 
+	/**
+	 * Is there a custom change handler, like URL based for instance.
+	 * @param pageIndex
+	 */
+	customChangeHandler?: (pageIndex: number) => void;
 }
 
 /**
@@ -262,7 +267,7 @@ export interface LoopProps<T extends Content<uint>, I extends ApiIncludes> {
  */
 const Loop = <T extends Content<uint>, I extends ApiIncludes>(props: LoopProps<T, I>) => {
 
-	const [pageIndex, setPageIndex] = useState(props.defaultPage || 1);
+	const [pageIndex, setPageIndex] = useState(props.filter?.pageIndex || props.defaultPage || 1);
 	const [totalResults, setTotalResults] = useState(0);
 	const [errored, setErrored] = useState<PublicError | null>(null);
 
@@ -453,16 +458,23 @@ const Loop = <T extends Content<uint>, I extends ApiIncludes>(props: LoopProps<T
 		pageSize={pageSize}
 		showInput={showInput}
 		maxLinks={maxLinks}
-		pageIndex={pageIndex}
+		pageIndex={props.filter?.pageIndex || pageIndex}
 		totalResults={totalResults}
-		onChange={pageIndex => {
-			load(pageIndex).then(res => {
-				setResults(res);
-			});
-			if (!noScroll) {
-				window.scrollTo(0, 0);
+		onChange={(pageIndex: number) => {
+			
+			if (props.customChangeHandler) {
+				props.customChangeHandler(pageIndex)
+			}else {
+				load(pageIndex).then(res => {
+					setResults(res);
+				});
+				if (!noScroll) {
+					window.scrollTo(0, 0);
+				}
 			}
 		}}
+		urlUpdating={Boolean(props.customChangeHandler)}
+		key={filterStr}
 	/>;
 
 	var result = [];

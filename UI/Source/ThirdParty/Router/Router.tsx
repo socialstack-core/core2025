@@ -266,44 +266,55 @@ const Router: React.FC<{}> = () => {
 		}
 	});
 	
+	const changeQuery = (query: URLSearchParams) => {
+		const currentUrlParts = pageState.url.split('?');
+		const currentUrl = currentUrlParts[0];
+		const currentParams = new URLSearchParams(currentUrlParts[1] || '');
+		const nextQuery = new URLSearchParams(query);
+
+		// Check if the parameters are different
+		const paramsAreDifferent = (() => {
+			const currentEntries = Array.from(currentParams.entries());
+			const nextEntries = Array.from(nextQuery.entries());
+
+			if (currentEntries.length !== nextEntries.length) return true;
+
+			for (const [key, value] of currentEntries) {
+				if (nextQuery.get(key) !== value) return true;
+			}
+
+			for (const [key, value] of nextEntries) {
+				if (currentParams.get(key) !== value) return true;
+			}
+
+			return false;
+		})();
+
+		if (!paramsAreDifferent) {
+			// Don't navigate if there's no change
+			return;
+		}
+
+		const qs = nextQuery.toString();
+		const nextUrl = qs ? `${currentUrl}?${qs}` : currentUrl;
+
+		go(nextUrl);
+	}
+	
 	return <routerCtx.Provider
 			value={{
 				canGoBack,
 				pageState,
 				setPage: go,
-				changeQuery: (query: URLSearchParams) => {
-					const currentUrlParts = pageState.url.split('?');
-					const currentUrl = currentUrlParts[0];
-					const currentParams = new URLSearchParams(currentUrlParts[1] || '');
-					const nextQuery = new URLSearchParams(query);
+				changeQuery,
+				updateQuery: (update: URLSearchParams) => {
+					const existingQuery = pageState.query;
 
-					// Check if the parameters are different
-					const paramsAreDifferent = (() => {
-						const currentEntries = Array.from(currentParams.entries());
-						const nextEntries = Array.from(nextQuery.entries());
-
-						if (currentEntries.length !== nextEntries.length) return true;
-
-						for (const [key, value] of currentEntries) {
-							if (nextQuery.get(key) !== value) return true;
-						}
-
-						for (const [key, value] of nextEntries) {
-							if (currentParams.get(key) !== value) return true;
-						}
-
-						return false;
-					})();
-
-					if (!paramsAreDifferent) {
-						// Don't navigate if there's no change
-						return;
+					for (const [key, value] of Array.from(update.entries())) {
+						existingQuery.set(key, value);
 					}
-
-					const qs = nextQuery.toString();
-					const nextUrl = qs ? `${currentUrl}?${qs}` : currentUrl;
-
-					go(nextUrl);
+					
+					changeQuery(existingQuery)
 				}
 			}}
 		>

@@ -21,6 +21,7 @@ export type SearchProps<T extends Content<uint>> = {
     className?: string;
     'data-theme'?: string;
     endpoint?: (filter?: ListFilter, includes?: ApiIncludes) => Promise<ApiList<T>>;
+    onInput: (value: string) => void
 };
 
 type NoFieldWhereQuery = {
@@ -107,6 +108,9 @@ const Search = <T extends Content<uint>,>(props: SearchProps<T>) => {
                 value={props.searchText}
                 placeholder={props.placeholder || 'Search...'}
                 type="text"
+                onInput={(e) => {
+                    props.onInput((e.target as HTMLInputElement).value)
+                }}
                 onKeyUp={(e) => {
                     fetchResults((e.target as HTMLInputElement).value); 
                 }}

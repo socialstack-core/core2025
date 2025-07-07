@@ -13,8 +13,11 @@ import Modal from 'UI/Modal';
 import * as fileRef from 'UI/FileRef';
 import MultiSelect from 'Admin/MultiSelect';
 import uploadApi, { Upload } from 'Api/Upload';
-import { useState, useEffect } from 'react';
+import {useState, useMemo} from 'react';
 import { Tag } from 'Api/Tag';
+import {useRouter} from "UI/Router";
+import Debounce from "UI/Functions/Debounce";
+import {ListFilter} from "Api/Content";
 
 var fields = ['id', 'originalName'];
 var searchFields = ['originalName', 'alt', 'author', 'id'];
@@ -38,17 +41,65 @@ type UploadModal = {
     originalName?: string
 };
 
+const getIntegerSearchParam = (name: string, currentParams: URLSearchParams, fallback: number) => {
+
+    if (!currentParams.has(name)) {
+        return fallback;
+    }
+
+    let value: number = parseInt(currentParams.get(name)!);
+
+    if (Number.isNaN(value))
+    {
+        return fallback;
+    }
+    return value;
+}
+
 const MediaCenter = (props) => {
+    
+    // added in updateQuery and pageState to allow state hydration 
+    // from the query params, allows the nice use of back buttons
+    // so that the search filter and page size, index are all 
+    // tracked, 
+    const { updateQuery, pageState } = useRouter();
+    
+    // when searching, and going back the user doesn't want to go back
+    // per character basis, so debounce essentially stops this
+    // happening and allows only intentional searches fromn being 
+    // held in history.
+    const debounce = useMemo(() => new Debounce((query: string) => {
+        
+        const newQParam = new URLSearchParams();
+        newQParam.set("q", query)
+        newQParam.set("page", "1");
+        
+        updateQuery(newQParam)
+    }, 1500), [])
+    
+    
     const [sorter, setSort] = useState({ field: 'id', direction: 'desc' });
+    
+    // this has been added as it is used in the filter creation, which needs to 
+    // exist in this component due to the field queried in the media center (originalName) 
+    // isn't the conventional field that's queried across the board, that's commonly 'name'
+    // and instead of hacking in a filterFieldName, this has been designed in a way 
+    // where the filters are passed down to Loop, as Loop does support the filters.
+    const [pageIndex] = useState<uint>(getIntegerSearchParam('page', pageState.query, props.defaultPage || 1) as uint)
+    
+    // page size is held in the URL too, under the param "limit" as seen below, it falls back to 20, the reason 
+    // no mutating method has been declared here is it doesn't need to exist, when the param for this is changed,
+    // the URL changes, which then in effect triggers the re-render needed to update this value. 
+    const [pageSize] = useState<uint>(getIntegerSearchParam('limit', pageState.query, 20) as uint);
+    
     const [bulkSelections, setBulkSelections] = useState<Record<int, boolean> | null>(null);
     const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
     const [uploadModal, setUploadModal] = useState<UploadModal | null>(null);
     const [deleting, setDeleting] = useState<boolean>(false);
     const [deleteCount, setDeleteCount] = useState<number>(0);
     const [deleteFailed, setDeleteFailed] = useState<boolean>(false);
-    const [searchFilter, setSearchFilter] = useState<string | null>(null);
+    const [searchFilter, setSearchFilter] = useState<string | null>(pageState.query.get("q"));
     const [filterTagId, setFilterTagId] = useState<uint | null>(null);
-    const [uploads, setUploads] = useState<Upload[] | null>(null);
 
     let sort = sorter;
 
@@ -56,64 +107,6 @@ const MediaCenter = (props) => {
         // Restore to id sort:
         sort = { field: 'id', direction: 'desc' };
     }
-
-    useEffect(() => {
-        var combinedFilter = {};
-
-        if (!combinedFilter.sort && sort) {
-            combinedFilter.sort = sort;
-        }
-
-        if (filterTagId) {
-            combinedFilter.query = "Tags contains ?"
-            combinedFilter.args = [];
-            combinedFilter.args.push(filterTagId);
-        }
-
-        if (searchFilter && searchFilter.length > 0 && searchFields) {
-            var searchQuery = '';
-            var searchQueryArgs = [];
-            var searchDelimiter = '';
-
-            for (var i = 0; i < searchFields.length; i++) {
-
-                var field = searchFields[i];
-                var fieldNameUcFirst = field.charAt(0).toUpperCase() + field.slice(1);
-
-                if (fieldNameUcFirst == "Id") {
-                    if (/^\d+$/.test(searchFilter)) {
-
-                        searchQuery = searchQuery + searchDelimiter + fieldNameUcFirst + " =?"
-                        searchQueryArgs.push(searchFilter);
-                        searchDelimiter = ' OR ';
-                    }
-                } else {
-                    searchQuery = searchQuery + searchDelimiter + fieldNameUcFirst + " contains ?"
-                    searchQueryArgs.push(searchFilter);
-
-                    searchDelimiter = ' OR ';
-                }
-            }
-
-            if (searchQuery.length > 0) {
-                if (!combinedFilter.query) {
-                    combinedFilter.query = searchQuery;
-                    combinedFilter.args = searchQueryArgs;
-                } else {
-                    combinedFilter.query = combinedFilter.query + ' AND (' + searchQuery + ')';
-                    searchQueryArgs.forEach(arg => combinedFilter.args.push(arg));
-                }
-            }
-        }
-
-        combinedFilter.pageSize = 60;
-
-        uploadApi.list(combinedFilter, [uploadApi.includes.tags]).then(uploads => {
-            setUploads(uploads.results);
-            setBulkSelections(null);
-        });
-
-    }, [filterTagId, searchFilter, sorter, deleteCount]);
 
     const showRef = (ref: string, size: number = 256) => {
         var parsedRef = fileRef.parse(ref);
@@ -597,19 +590,88 @@ const MediaCenter = (props) => {
     
     var selectedCount = getSelectedCount();
     
+    // here we build up the filter that the loop component uses. 
+    // a query will not always be present, however we do always 
+    // have a start and a page limit, so these exist as absolutes.
+    const filter: Partial<ListFilter> = {
+        pageSize,
+        pageIndex
+    } 
+    
+    // when a string is empty, in an if condition, it's executed as false, 
+    // which means this AST branch doesn't execute, however, when a 
+    // string holds a value, it's executed as true, meaning
+    // we can validly pass a string in an if condition.
+    // when a search value exists, we make the filter query the originalName, 
+    // which is what is shown under the file's preview. 
+    if (searchFilter) {
+        filter.query = 'originalName contains ?';
+        filter.args = [searchFilter]
+    }
+    
     return <>
-		<SubHeader title={`Uploads`} breadcrumbs={[
-			{
-				title: `Uploads`
-			}
-		]} onQuery={(where, query) => {
-			setSearchFilter(query);
-		}}/>
+		<SubHeader 
+            title={`Uploads`} 
+            breadcrumbs={[
+                {
+                    title: `Uploads`
+                }
+            ]} 
+            // altered this now to debounce. 
+            onQuery={(where, query) => {
+                
+            }}
+            onInput={(query) => {
+                debounce.handle(query);
+            }}
+            // made sure the current '?q=' value is held in here 
+            // should one exist.
+            defaultSearchValue={searchFilter || ''}
+        />
 		<div className="admin-page__content">
 			<div className="admin-page__internal">
-                {renderTags(uploads)}
+                <Input 
+                    // added an input to change the results per page value
+                    // this doesn't mutate any state, this causes a URL change
+                    // which then re-renders the page. 
+                    type={'select'}
+                    label={`Results per page`}
+                    onChange={(ev) => {
+                        
+                        const target: HTMLSelectElement = ev.target as HTMLSelectElement;
+                        
+                        const params = new URLSearchParams();
+                        params.set("limit", target.value);
+                        
+                        updateQuery(params);
+                        
+                    }}
+                >
+                    <option selected={pageSize === 20} value={20}>20</option>
+                    <option selected={pageSize === 50} value={50}>50</option>
+                    <option selected={pageSize === 75} value={75}>75</option>
+                    <option selected={pageSize === 100} value={100}>100</option>
+                </Input>
+                {/*{renderTags(uploads)}*/}
                 <div className="media-center__list">
-                    {uploads ? uploads.map(renderEntry) : <Loading />}
+                    <Loop
+                        // enables pagination
+                        paged
+                        // iterates over uploadApi.list 
+                        over={uploadApi}
+                        // set the key based off index
+                        key={'page-' + pageIndex}
+                        // pass the generated filter based off the current query string
+                        filter={filter}
+                        // specify a custom page change handler.
+                        customChangeHandler={(pageNumber: number) => {
+                            const pgUp = new URLSearchParams();
+                            pgUp.set("page", pageNumber.toString());
+                            updateQuery(pgUp);
+                        }}
+                    >
+                        {renderEntry}
+                    </Loop>
 				</div>
 				{confirmDelete && renderConfirmDelete(selectedCount)}
 				{uploadModal && renderUploadModal()}

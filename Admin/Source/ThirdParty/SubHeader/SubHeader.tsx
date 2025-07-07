@@ -33,6 +33,17 @@ interface SubHeaderProps {
 	 * Provide this to distinguish the page type on the sub header.
 	 */
 	pageType?: AutoFormType
+
+	/**
+	 * The default search value.
+	 */
+	defaultSearchValue?: string,
+
+	/**
+	 * onQuery is fired when results are fetched, this is for when the input changes.
+	 * @param value
+	 */
+	onInput?: (value: string) => void,
 }
 
 /**
@@ -91,6 +102,10 @@ const SubHeader: React.FC<React.PropsWithChildren<SubHeaderProps>> = (props) => 
 							className="admin-page__search"
 							placeholder={`Search..`}
 							onQuery={props.onQuery}
+							searchText={props.defaultSearchValue}
+							onInput={(value: string) => {
+								props.onInput && props.onInput(value);
+							}}
 						/>			
 				)
 			}
