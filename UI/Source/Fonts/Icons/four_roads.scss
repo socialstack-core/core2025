@@ -296,6 +296,14 @@
   content: "\f013";
 }
 
+.fr-download::before {
+  content: "\f019";
+}
+
+.fr-refresh::before {
+  content: "\f01e";
+}
+
 .fr-lock::before {
   content: "\f023";
 }
@@ -332,6 +340,10 @@
   content: "\f059";
 }
 
+.fr-information-circle::before {
+  content: "\f05a";
+}
+
 .fr-arrow-right::before {
   content: "\f061";
 }
@@ -360,8 +372,16 @@
   content: "\f08e";
 }
 
+.fr-unlock::before {
+  content: "\f09c";
+}
+
 .fr-credit-card::before {
   content: "\f09d";
+}
+
+.fr-tasks::before {
+  content: "\f0ae";
 }
 
 .fr-users::before {
@@ -386,6 +406,10 @@
 
 .fr-thumbs-up::before {
   content: "\f164";
+}
+
+.fr-shopping-basket::before {
+  content: "\f291";
 }
 
 .fr-trash-alt::before {
@@ -432,8 +456,10 @@
   content: "\f466";
 }
 
+.fr-luggage-cart::before {
+  content: "\f59d";
+}
+
 .fr-phone-alt::before {
   content: "\f879";
 }
-
-
