@@ -5,6 +5,7 @@ import ProductAttributeValueApi from "Api/ProductAttributeValue";
 import Input from "UI/Input";
 import Button from "UI/Button";
 import Image from "UI/Image";
+import Alert from "UI/Alert";
 import Icon from "UI/Icon";
 import Link from "UI/Link";
 import Video from "UI/Video";
@@ -57,12 +58,31 @@ const ValueEditor: React.FC = (props) => {
 		setValue(value.filter(v => v != variant));
 	};
 	
+	// Variants can only be added to a created product currently.
+	// This is such that the variants themselves are createable with VariantOfId
+	// and thus end up with the correct permalink.
+	const canAddVariants = !!(props.currentContent?.id);
+	
+	if(!canAddVariants){
+		return <div className="variants-value-editor">
+		{props.label && !props.hideLabel && (
+			<label className="form-label">
+				{props.label}
+			</label>
+		)}
+		<Alert type='info'>
+			{`To add variants please create the product first or save it as a draft.`}
+		</Alert>
+		</div>;
+	}
+	
     return <div className="variants-value-editor">
 		{props.label && !props.hideLabel && (
 			<label className="form-label">
 				{props.label}
 			</label>
 		)}
+		
 		<ul className="variants-value-editor__entries">
 			{value.map(variant => <VariantEditor variant={variant} onRemove={onRemove}/>)}
 		</ul>

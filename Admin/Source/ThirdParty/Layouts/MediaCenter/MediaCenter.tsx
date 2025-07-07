@@ -106,7 +106,8 @@ const MediaCenter = (props) => {
             }
         }
 
-        // combinedFilter.pageSize = 60;
+        combinedFilter.pageSize = 60;
+
         uploadApi.list(combinedFilter, [uploadApi.includes.tags]).then(uploads => {
             setUploads(uploads.results);
             setBulkSelections(null);
