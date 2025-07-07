@@ -10,6 +10,9 @@ import ProductHeader from 'UI/Product/Header';
 import { useCart } from 'UI/Payments/CartSession';
 import { useSession } from 'UI/Session';
 import { useRouter } from 'UI/Router';
+import Button from 'UI/Button';
+import ProductVariants from 'UI/Product/Variants';
+import { CurrencyAmount } from 'UI/Product/Price';
 
 /**
  * Props for the View component.
@@ -28,7 +31,7 @@ interface ViewProps {
  */
 const View: React.FC<ViewProps> = (props) => {
 	const { product } = props;
-	var { cartContents, lessTax } = useCart();
+	var { cartContents } = useCart();
 
 	const { session } = useSession();
 	var { locale } = session;
@@ -38,9 +41,10 @@ const View: React.FC<ViewProps> = (props) => {
 	// Selected variant (if any) is..
 	const variantSku = query?.get("sku");
 	const currentVariant: Product | undefined = variantSku ? product.variants?.find(prod => prod.sku == variantSku) : undefined;
-	
-	let currencyCode = cartContents?.currencyCode || locale.currencyCode || "GBP";
 
+	let currencyCode = cartContents?.currencyCode || locale?.currencyCode || "GBP";
+
+	// NB: if additional tabs are required, be sure to update $tab-count accordingly (see View.scss)
 	enum ProductTab {
 		About = `About this product`,
 		Details = `Details & Specification`,
@@ -53,9 +57,12 @@ const View: React.FC<ViewProps> = (props) => {
 	// TODO: approved?
 	const isApproved = true;
 
-	// TODO: check for associated info
-	//const infoTitle = `Note from Acticare`;
-	//const infoDescription = `This product has a lower max weight capacity than most bariatric beds as this is designed for residents who solely need more bed space.`;
+	// variant checks
+	const hasVariants = product.variants?.length;
+	const fromPrice: CurrencyAmount = {
+		currencyCode: currencyCode,
+		amount: hasVariants ? Math.min(...product.variants.map(product => product.calculatedPrice[0]?.amount ?? Infinity)) : null
+	};
 
 	return <>
 		<div className="ui-product-view">
@@ -66,38 +73,7 @@ const View: React.FC<ViewProps> = (props) => {
 			<ProductCarousel product={product} />
 
 			{/* featured / title / stock info */}
-			<ProductHeader product={product} currentVariant={currentVariant} onSelectVariant={variant => {
-
-				// Change the URL if needed. This triggers a re-render at this upper level which then ultimately
-				// collects the variant and anything else necessary.
-				// This way it is driven by url state and also pretty minimal, 
-				// ensuring that the selected product is shareable.
-				if (variant?.sku == variantSku) {
-					return;
-				}
-
-				var nextQuery = new URLSearchParams(query);
-				if (variant) {
-					nextQuery.set("sku", variant.sku || '');
-				} else {
-					nextQuery.delete("sku");
-				}
-
-				const currentUrl = url.split('?')[0];
-
-				var qs = nextQuery.toString();
-				let nextUrl = currentUrl;
-
-				if (qs && qs.length) {
-					nextUrl += '?' + qs;
-				}
-
-				// Todo: router needs the ability to change query string without
-				// causing a refresh. This will primarily fix a weird jank that you'll experience 
-				// if you edit the dropdowns from an ?sku= page 
-				// (it will cause a page load and the set of dropdowns will probably all be empty) 
-				setPage(nextUrl);
-			}} />
+			<ProductHeader product={product} currentVariant={currentVariant} />
 
 			{/*
 			<TabSet className="ui-product-view__tabs">
@@ -165,29 +141,57 @@ const View: React.FC<ViewProps> = (props) => {
 					</div>
 				</>}
 
-				{/* product info */}
-				{/*
-				{infoDescription?.length > 0 && <>
-					<Button sm variant="warning" className="ui-product-view__price-info-note" popoverTarget="product_note">
-						<i className="fr fr-exclamation-circle"></i>
+				{/* product variants */}
+				{hasVariants && <>
+					<Button sm variant="primary" outlined className="ui-product-view__price-info-variants" popoverTarget="product_variants">
+						<i className="fr fr-tasks"></i>
 						<span>
-							{infoTitle?.length > 0 ? infoTitle : `Note`}
+							{`Options`}
 						</span>
 					</Button>
-					<div id="product_note" popover="auto">
-						<div className="ui-product-view__price-info-note-header">
-							<i className="fr fr-exclamation-circle"></i>
+					<div id="product_variants" popover="auto">
+						<div className="ui-product-view__price-info-variants-header">
 							<span>
-								{infoTitle?.length > 0 ? infoTitle : `Note`}
+								{`Please select options`}
 							</span>
 						</div>
-						{infoDescription}
+						<ProductVariants product={product} currentVariant={currentVariant} onChange={variant => {
+
+							// Change the URL if needed. This triggers a re-render at this upper level which then ultimately
+							// collects the variant and anything else necessary.
+							// This way it is driven by url state and also pretty minimal, 
+							// ensuring that the selected product is shareable.
+							if (variant?.sku == variantSku) {
+								return;
+							}
+
+							var nextQuery = new URLSearchParams(query);
+							if (variant) {
+								nextQuery.set("sku", variant.sku || '');
+							} else {
+								nextQuery.delete("sku");
+							}
+
+							const currentUrl = url.split('?')[0];
+
+							var qs = nextQuery.toString();
+							let nextUrl = currentUrl;
+
+							if (qs && qs.length) {
+								nextUrl += '?' + qs;
+							}
+
+							// Todo: router needs the ability to change query string without
+							// causing a refresh. This will primarily fix a weird jank that you'll experience 
+							// if you edit the dropdowns from an ?sku= page 
+							// (it will cause a page load and the set of dropdowns will probably all be empty) 
+							setPage(nextUrl);
+						}} />
 					</div>
 				</>}
-				*/}
 
 				{/* price */}
-				<ProductPrice product={currentVariant || product} />
+				<ProductPrice product={currentVariant || product} override={hasVariants && !currentVariant ? fromPrice : undefined} isFrom={!!hasVariants && !currentVariant} />
 
 				{/* quantity / add to order, only present if there is no variants or a variant is selected. */}
 				{(!(product.variants?.length) || currentVariant) && <ProductQuantity product={currentVariant || product} />}
