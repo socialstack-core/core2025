@@ -270,7 +270,41 @@ const Router: React.FC<{}> = () => {
 			value={{
 				canGoBack,
 				pageState,
-				setPage: go
+				setPage: go,
+				changeQuery: (query: URLSearchParams) => {
+					const currentUrlParts = pageState.url.split('?');
+					const currentUrl = currentUrlParts[0];
+					const currentParams = new URLSearchParams(currentUrlParts[1] || '');
+					const nextQuery = new URLSearchParams(query);
+
+					// Check if the parameters are different
+					const paramsAreDifferent = (() => {
+						const currentEntries = Array.from(currentParams.entries());
+						const nextEntries = Array.from(nextQuery.entries());
+
+						if (currentEntries.length !== nextEntries.length) return true;
+
+						for (const [key, value] of currentEntries) {
+							if (nextQuery.get(key) !== value) return true;
+						}
+
+						for (const [key, value] of nextEntries) {
+							if (currentParams.get(key) !== value) return true;
+						}
+
+						return false;
+					})();
+
+					if (!paramsAreDifferent) {
+						// Don't navigate if there's no change
+						return;
+					}
+
+					const qs = nextQuery.toString();
+					const nextUrl = qs ? `${currentUrl}?${qs}` : currentUrl;
+
+					go(nextUrl);
+				}
 			}}
 		>
 		{

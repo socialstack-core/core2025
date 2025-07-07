@@ -8,6 +8,7 @@ export interface PageState extends PageStateResult {
 
 export interface RouterContext {
 	setPage: (url: string) => void;
+	changeQuery: (query: URLSearchParams) => void;
 	pageState: PageState;
 	canGoBack: () => boolean;
 }
@@ -15,7 +16,8 @@ export interface RouterContext {
 const routerCtx = createContext<RouterContext>({
 	setPage: (url: string) => { },
 	canGoBack: () => false,
-	pageState: {}
+	pageState: {},
+	changeQuery: (query: URLSearchParams) => {},
 } as RouterContext);
 
 export { routerCtx };
