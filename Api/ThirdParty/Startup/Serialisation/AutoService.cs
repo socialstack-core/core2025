@@ -30,7 +30,7 @@ public partial class AutoService<T, ID>
 	/// <summary>
 	/// {"total": 
 	/// </summary>
-	private static readonly byte[] TotalHeader = new byte[] { (byte)']', (byte)',', (byte)'"', (byte)'t', (byte)'o', (byte)'t', (byte)'a', (byte)'l', (byte)'"', (byte)':' };
+	private static readonly byte[] TotalHeader = new byte[] { (byte)']', (byte)',', (byte)'"', (byte)'t', (byte)'o', (byte)'t', (byte)'a', (byte)'l', (byte)'R', (byte)'e', (byte)'s', (byte)'u', (byte)'l', (byte)'t', (byte)'s', (byte)'"', (byte)':' };
 
 	/// <summary>
 	/// ,"results": (comes after total)
@@ -284,7 +284,7 @@ public partial class AutoService<T, ID>
 		{
 			if (includeTotal)
 			{
-				writer.Write(TotalHeader, 0, 10);
+				writer.Write(TotalHeader, 0, 17);
 				writer.WriteS(total);
 
 				if (!leaveOpen)
@@ -315,7 +315,7 @@ public partial class AutoService<T, ID>
 
 			if (includeTotal)
 			{
-				writer.Write(TotalHeader, 0, 10);
+				writer.Write(TotalHeader, 0, 17);
 				writer.WriteS(total);
 			}
 			else
