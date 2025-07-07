@@ -75,7 +75,7 @@ const MediaCenter = (props) => {
         newQParam.set("page", "1");
         
         updateQuery(newQParam)
-    }, 1500), [])
+    }), [])
     
     
     const [sorter, setSort] = useState({ field: 'id', direction: 'desc' });
