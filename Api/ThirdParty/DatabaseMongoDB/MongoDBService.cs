@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Api.Permissions;
 using Api.Contexts;
 using System.Reflection.Metadata;
+using MongoDB.Bson;
 
 
 namespace Api.Database;
@@ -189,7 +190,20 @@ public partial class MongoDBService : AutoService
 
 		var index = 0;
 
-		var cursor = await collection.FindAsync(filter);
+		var findOptions = new FindOptions<INSTANCE_TYPE>
+		{
+			Limit = (filterA.PageSize > 0 ? filterA.PageSize : null),
+			Skip = (filterA.PageSize > 0 ? filterA.PageSize * filterA.Offset : 0),
+		};
+
+		if (filterA.SortField != null)
+		{
+			findOptions.Sort = filterA.SortAscending
+			? Builders<INSTANCE_TYPE>.Sort.Ascending(filterA.SortField.Name)
+			: Builders<INSTANCE_TYPE>.Sort.Descending(filterA.SortField.Name);
+		}
+
+		var cursor = await collection.FindAsync(filter, findOptions);
 
 		while (await cursor.MoveNextAsync())
 		{

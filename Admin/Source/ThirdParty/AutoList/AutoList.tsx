@@ -319,7 +319,7 @@ const AutoList : React.FC<React.PropsWithChildren<AutoListProps>> = (props) => {
 						}
 
 						return results;
-					}} onHeader={renderHeader}>
+					}} onHeader={renderHeader} paged>
 					{renderEntry}
 				</Table>
 				{confirmDelete && renderConfirmDelete(selectedCount)}

@@ -453,16 +453,6 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 			pageIndex = pageIndexJToken.Value<int>();
 		}
 
-		if (pageSize.HasValue)
-		{
-			filter.SetPage(pageIndex.HasValue ? pageIndex.Value : 0, pageSize.Value);
-		}
-		else if (pageIndex.HasValue)
-		{
-			// Default page size used
-			filter.SetPage(pageIndex.Value);
-		}
-
 		var includeTotalJToken = newtonsoft["includeTotal"];
 		bool? includeTotal = null;
 
@@ -474,6 +464,18 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 		if (includeTotal.HasValue)
 		{
 			filter.IncludeTotal = includeTotal.Value;
+		}
+
+		if (pageSize.HasValue)
+		{
+			filter.SetPage(pageIndex.HasValue ? pageIndex.Value : 0, pageSize.Value);
+			filter.IncludeTotal = true;
+		}
+		else if (pageIndex.HasValue)
+		{
+			// Default page size used
+			filter.SetPage(pageIndex.Value);
+			filter.IncludeTotal = true;
 		}
 
 		var sort = newtonsoft["sort"] as JObject;
@@ -542,6 +544,11 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 			}
 		}
 
+		if (filterConfig.IncludeTotal.HasValue)
+		{
+			filter.IncludeTotal = filterConfig.IncludeTotal.Value;
+		}
+
 		// Handle universal pagination:
 		var pageSize = filterConfig.PageSize;
 		var pageIndex = filterConfig.PageIndex;
@@ -549,16 +556,13 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 		if (pageSize != 0)
 		{
 			filter.SetPage(pageIndex, pageSize);
+			filter.IncludeTotal = true;
 		}
 		else if (pageIndex != 0)
 		{
 			// Default page size used
 			filter.SetPage(pageIndex);
-		}
-
-		if (filterConfig.IncludeTotal.HasValue)
-		{
-			filter.IncludeTotal = filterConfig.IncludeTotal.Value;
+			filter.IncludeTotal = true;
 		}
 
 		if (filterConfig.Sort.HasValue)
