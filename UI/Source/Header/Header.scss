@@ -317,8 +317,7 @@
 			padding: px_to_rem(24) px_to_rem(20);
 			width: 100vw;
 			max-width: px_to_rem(340);
-			height: 100vh;
-			height: 100dvh;
+			height: auto;
 			box-shadow: px_to_rem(16) 0 px_to_rem(16) 0 rgba(#210818, 25%);
 			transform: translateX(-100%);
 			transition-property: transform, overlay, display;
