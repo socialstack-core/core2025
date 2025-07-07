@@ -258,6 +258,7 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 				help={help}
 				icon={icon}
 				field={field}
+				id={id}
 				inputRef={inputRef}
 				onInputRef={setRef}
 				onChange={props.onChange}
@@ -273,6 +274,7 @@ const Input = <T extends keyof InputPropsRegistry>(props: InputProps<T>) => {
 				help={help}
 				icon={icon}
 				field={field}
+				id={id}
 				inputRef={inputRef}
 				onInputRef={setRef}
 				onChange={props.onChange}
