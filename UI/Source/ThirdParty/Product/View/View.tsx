@@ -5,7 +5,7 @@ import ProductAttributes from 'UI/Product/Attributes';
 import ProductPrice from 'UI/Product/Price';
 import ProductQuantity from 'UI/Product/Quantity';
 import { useState } from 'react';
-import Breadcrumb from 'UI/Breadcrumb';
+import Breadcrumb, { Crumb } from 'UI/Breadcrumb';
 import ProductHeader from 'UI/Product/Header';
 import { useCart } from 'UI/Payments/CartSession';
 import { useSession } from 'UI/Session';
@@ -67,7 +67,14 @@ const View: React.FC<ViewProps> = (props) => {
 	return <>
 		<div className="ui-product-view">
 			{/* breadcrumb links */}
-			<Breadcrumb />
+			{product.breadcrumb && <Breadcrumb crumbs={product.breadcrumb.map(crumb => {
+
+				return {
+					name: crumb.name,
+					href: crumb.primaryUrl
+				} as Crumb;
+
+			})} />}
 
 			{/* product images */}
 			<ProductCarousel product={product} />

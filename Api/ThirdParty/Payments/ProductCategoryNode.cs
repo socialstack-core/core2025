@@ -31,7 +31,7 @@ public class ProductCategoryNode
 	public List<ProductNode> Products { get; set; } = new();
 
 	/// <summary>
-	/// Local field exposing fully expanded slug for the category (based on category structure)
+	/// The collapsed set of parent categories including Category itself.
 	/// </summary>
-	public string FullPathSlug { get; set; }
+	public List<ProductCategory> BreadcrumbCategories;
 }
