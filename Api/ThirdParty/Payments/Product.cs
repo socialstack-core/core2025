@@ -89,9 +89,20 @@ namespace Api.Payments
         public uint TaxExempt;
 
         /// <summary>
-        /// The content of this product.
+        /// Used to indicate the availability of the product
+        /// 0 = Yes
+        /// 1 = Pre order
+        /// 2 = No (permanently)
+        /// 3 = No (awaiting stock)
         /// </summary>
-        [Data("type", "canvas")]
+        [Module("Admin/Payments/Availability")]
+        [Data("help", "Identify if the product is currently available")]
+        public uint Availability;
+
+        /// <summary>
+		/// The content of this product.
+		/// </summary>
+		[Data("type", "canvas")]
         [Data("main", "false")]
         public Localized<JsonString> DescriptionJson;
 
