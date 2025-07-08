@@ -10,6 +10,7 @@ export interface RouterContext {
 	setPage: (url: string) => void;
 	changeQuery: (query: Record<string, string>) => void;
 	updateQuery: (query: Record<string, string>) => void;
+	removeQueryItems: (items: string[]) => void;
 	pageState: PageState;
 	canGoBack: () => boolean;
 }
@@ -20,6 +21,7 @@ const routerCtx = createContext<RouterContext>({
 	pageState: {},
 	changeQuery: (query: Record<string, string>) => {},
 	updateQuery: (query: Record<string, string>) => {},
+	removeQueryItems: (items: string[]) => {}
 } as RouterContext);
 
 export { routerCtx };

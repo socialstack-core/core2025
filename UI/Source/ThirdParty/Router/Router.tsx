@@ -321,6 +321,22 @@ const Router: React.FC<{}> = () => {
 					
 					changeQuery(urlParams);
 
+				},
+				removeQueryItems: (items: string[]) => {
+					const change: Record<string, any> = {};
+
+					const currentEntries = Array.from(pageState.query.entries());
+
+					for (const [key, value] of currentEntries) {
+						
+						if (items.includes(key)) {
+							continue;
+						}
+						
+						change[key] = value;
+					}
+					
+					changeQuery(change);
 				}
 			}}
 		>
