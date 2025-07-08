@@ -169,7 +169,51 @@ namespace Api.Payments
 				return product;
 			});
 			
-			Events.Product.BeforeUpdate.AddEventListener(ValidateProduct);
+			Events.Product.BeforeUpdate.AddEventListener(async (Context context, Product toUpdate, Product original) => {
+
+				if (toUpdate == null)
+				{
+					return null;
+				}
+
+				// Validate:
+				await ValidateProduct(context, toUpdate);
+
+				Product parentProduct = null;
+
+				if (toUpdate.VariantOfId.HasValue && toUpdate.VariantOfId.Value != 0)
+				{
+					parentProduct = await Get(context, toUpdate.VariantOfId.Value);
+
+					if (parentProduct == null)
+					{
+						throw new PublicException(
+							"Product is a variant of #" + toUpdate.VariantOfId + " but that product does not exist.",
+							"product/parent_not_found"
+						);
+					}
+				}
+
+				// Did the slug, sku or parent state change?
+				if (
+					toUpdate.VariantOfId != original.VariantOfId || // Variant of changed (usually to/from 0)
+					(toUpdate.Slug != original.Slug && toUpdate.VariantOfId == 0) || // Slug changed and not a variant
+					(toUpdate.Sku != original.Sku && toUpdate.VariantOfId != 0) // Sku changed and is a variant
+				) {
+
+					// Update the permalink. It's possible that this will attempt to create a duplicate
+					// in which case it functionally acts like the requested one is the new canonical link.
+					var permalinkInfo = new PermalinkUrlTarget()
+					{
+						Url = GetInitialProductUrl(toUpdate, parentProduct),
+						Target = _permalinks.CreatePrimaryTargetLocator(this, toUpdate)
+					};
+
+					await _permalinks.BulkCreate(context, [permalinkInfo]);
+				}
+
+				return toUpdate;
+			});
 
 			Cache();
 		}
@@ -180,10 +224,9 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="product"></param>
-		/// <param name="original"></param>
 		/// <returns></returns>
 		/// <exception cref="PublicException"></exception>
-		private ValueTask<Product> ValidateProduct(Context context, Product product, Product original = null)
+		private ValueTask<Product> ValidateProduct(Context context, Product product)
 		{
 
 			if (string.IsNullOrEmpty(product.Name.Get(context)))
@@ -195,7 +238,6 @@ namespace Api.Payments
 			{
 				throw new PublicException("The product slug cannot be empty.", "product-validation/no-slug");
 			}
-			
 			
 			return ValueTask.FromResult(product);
 		}

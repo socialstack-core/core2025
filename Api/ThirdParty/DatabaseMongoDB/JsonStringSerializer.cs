@@ -48,7 +48,14 @@ public class JsonStringSerializer : IBsonSerializer<JsonString>
         var doc = BsonDocumentSerializer.Instance.Deserialize(context);
 
         // Convert the BsonDocument back into a JSON string
-        var json = doc.ToJson(new JsonWriterSettings { OutputMode = JsonOutputMode.RelaxedExtendedJson });
+        var json = doc.ToJson(new JsonWriterSettings {
+            OutputMode = JsonOutputMode.RelaxedExtendedJson,
+            // Turning on indentation but setting the chars to
+            // blank eliminates most of the default spaces it adds.
+			Indent = true,
+			NewLineChars = "",
+			IndentChars = ""
+		});
 
         return new JsonString(json);
     }

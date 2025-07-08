@@ -1,9 +1,13 @@
+using Api.Translate;
+using Google.Protobuf.WellKnownTypes;
+using System;
+
 namespace Api.Database;
 
 /// <summary>
 /// Exists as a type alias for textual JSON fields.
 /// </summary>
-public struct JsonString
+public struct JsonString : IEquatable<JsonString>, IEquatable<string>
 {
 	/// <summary>
 	/// The raw value.
@@ -25,6 +29,55 @@ public struct JsonString
 			_value = val;
 		}
 	}
+
+	/// <summary>
+	/// True if the jsonString values are equal.
+	/// </summary>
+	/// <param name="other"></param>
+	/// <returns></returns>
+	public bool Equals(JsonString other)
+	{
+		return _value == other._value;
+	}
+
+	/// <summary>
+	/// True if the jsonString values are equal.
+	/// </summary>
+	/// <param name="other"></param>
+	/// <returns></returns>
+	public bool Equals(string other)
+	{
+		return _value == other;
+	}
+
+	/// <summary>
+	/// True if the given object equals this jsonString instance.
+	/// </summary>
+	/// <param name="obj"></param>
+	/// <returns></returns>
+	public override bool Equals(object obj) => obj is JsonString other && _value == other._value;
+
+	/// <summary>
+	/// Gets a hashcode for this JsonString instance.
+	/// </summary>
+	/// <returns></returns>
+	public override int GetHashCode() => _value == null ? 0 : _value.GetHashCode();
+
+	/// <summary>
+	/// Equals operator for jsonstrings.
+	/// </summary>
+	/// <param name="left"></param>
+	/// <param name="right"></param>
+	/// <returns></returns>
+	public static bool operator ==(JsonString left, JsonString right) => left._value == right._value;
+
+	/// <summary>
+	/// Not equals operator for jsonstrings.
+	/// </summary>
+	/// <param name="left"></param>
+	/// <param name="right"></param>
+	/// <returns></returns>
+	public static bool operator !=(JsonString left, JsonString right) => (left._value != right._value);
 
 	/// <summary>
 	/// The JSON string - can be null.

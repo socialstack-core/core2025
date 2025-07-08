@@ -27,7 +27,7 @@ public interface ILocalized
 /// The type is often string but you can localise anything else - IDs etc.
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public struct Localized<T> : ILocalized
+public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 {
 	/// <summary>
 	/// Parses the given JSON as a Localized struct, then boxes it. 
@@ -315,6 +315,45 @@ public struct Localized<T> : ILocalized
 		value = success ? (T)parsed : default;
 		return success;
 	}
+
+	/// <summary>
+	/// True if the localized objects are equal.
+	/// </summary>
+	/// <param name="other"></param>
+	/// <returns></returns>
+	public bool Equals(Localized<T> other)
+	{
+		return Localized<T>.Equals(this, other);
+	}
+
+	/// <summary>
+	/// True if the given object equals this localized instance.
+	/// </summary>
+	/// <param name="obj"></param>
+	/// <returns></returns>
+	public override bool Equals(object obj) => obj is Localized<T> other && Equals(other);
+
+	/// <summary>
+	/// Gets a hashcode for this localized instance.
+	/// </summary>
+	/// <returns></returns>
+	public override int GetHashCode() => _values == null ? 0 : _values.GetHashCode();
+
+	/// <summary>
+	/// Equals operator for Localized types.
+	/// </summary>
+	/// <param name="left"></param>
+	/// <param name="right"></param>
+	/// <returns></returns>
+	public static bool operator ==(Localized<T> left, Localized<T> right) => Equals(left, right);
+
+	/// <summary>
+	/// Not equals operator for Localized types.
+	/// </summary>
+	/// <param name="left"></param>
+	/// <param name="right"></param>
+	/// <returns></returns>
+	public static bool operator !=(Localized<T> left, Localized<T> right) => !Equals(left, right);
 
 	/// <summary>
 	/// The underlying locale code to value lookup.
