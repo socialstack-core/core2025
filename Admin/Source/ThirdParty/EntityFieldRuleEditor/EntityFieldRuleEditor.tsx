@@ -31,6 +31,10 @@ const EntityFieldRuleEditor: React.FC<EntityFieldRuleEditorProps> = ({ entity: i
 
   
   const fetchRules = useCallback(() => {
+    
+    if (!role) {
+      return;
+    }
     ContentFieldAccessRuleApi.list({
       query: "entityName = ? AND roleId = ?",
       args: [entity?.instanceName!, role.id],
