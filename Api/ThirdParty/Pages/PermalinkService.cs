@@ -27,7 +27,17 @@ namespace Api.Pages
 		public PermalinkService(PageService pages) : base(Events.Permalink)
         {
 			Events.Permalink.BeforeUpdate.AddEventListener((Context context, Permalink toUpdate, Permalink orig) => {
-				throw new PublicException("Permalinks cannot be edited", "permalink/is-permanent");
+				if (toUpdate == null)
+				{
+					return new ValueTask<Permalink>(toUpdate);
+				}
+				
+				if (toUpdate.Url != orig.Url || toUpdate.Target != orig.Target)
+				{
+					throw new PublicException("Permalinks cannot be edited", "permalink/is-permanent");
+				}
+
+				return new ValueTask<Permalink>(toUpdate);
 			});
 
 			Events.Permalink.AfterCreate.AddEventListener((Context context, Permalink link) => {
@@ -104,12 +114,20 @@ namespace Api.Pages
 				return new ValueTask<Page>(page);
 			});
 
-			Events.Page.AfterDelete.AddEventListener((Context context, Page page) =>
+			Events.Page.AfterDelete.AddEventListener(async (Context context, Page page) =>
 			{
+				if (page == null)
+				{
+					return null;
+				}
+
+				// Delete permalinks:
+				await DeleteLinksTo(context, page);
+
 				// Need to update the two caches. We'll just wipe them for now:
 				Router.RequestRebuild();
 
-				return new ValueTask<Page>(page);
+				return page;
 			});
 
 			Events.Page.Received.AddEventListener((Context context, Page page, int mode) => {
@@ -120,11 +138,6 @@ namespace Api.Pages
 				return new ValueTask<Page>(page);
 			});
 		
-			Events.Permalink.AfterDelete.AddEventListener((Context context, Permalink link) => {
-				_srcDictionary = null;
-				return new ValueTask<Permalink>(link);
-			});
-
 			Events.Router.CollectRoutes.AddEventListener(async (Context context, RouterBuilder builder) => {
 
 				// Get the 404 page:
@@ -317,6 +330,30 @@ namespace Api.Pages
 		private Dictionary<string, List<Permalink>> _srcDictionary;
 
 		/// <summary>
+		/// Deletes all permalinks to a given page.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="page"></param>
+		/// <returns></returns>
+		public async ValueTask DeleteLinksTo(Context context, Page page)
+		{
+			// Any permalink with a target of "page:{pageId}"
+			var links = await Where("Target=?", DataOptions.IgnorePermissions)
+				.Bind("page:" + page.Id)
+				.ListAll(context);
+
+			if (links == null)
+			{
+				return;
+			}
+
+			foreach (var link in links)
+			{
+				await Delete(context, link, DataOptions.IgnorePermissions);
+			}
+		}
+
+		/// <summary>
 		/// Creates a target string for a permalink which points at the primary page for the given piece of content. See Permalink.Target for more info.
 		/// These permalinks are of the form "primary:user:x" or "primary:user" if the object is null. When the routing tree is being updated, they are resolved 
 		/// to the actual target page which would either be the fallback primary user page or a specific one if it exists.
@@ -491,17 +528,19 @@ namespace Api.Pages
 			}
 		}
 
-		private bool ContainsSource(string src, List<Permalink> links)
+		private int IndexOfSource(string src, List<Permalink> links)
 		{
-			foreach (var link in links)
+			for(var i=0;i<links.Count;i++)
 			{
+				var link = links[i];
+
 				if (link.Url == src)
 				{
-					return true;
+					return i;
 				}
 			}
 
-			return false;
+			return -1;
 		}
 
 		/// <summary>
@@ -546,8 +585,20 @@ namespace Api.Pages
 				// These are also blocked by the database using a unique index.
 				if (set.TryGetValue(link.Target, out List<Permalink> sources))
 				{
-					if (ContainsSource(link.Url, sources))
+					var linkIndex = IndexOfSource(link.Url, sources);
+
+					if (linkIndex == 0)
 					{
+						// It's already the canonical link.
+						continue;
+					}
+					else if (linkIndex > 0)
+					{
+						// It exists but as the non-canonical link.
+						// Update it to set its createdUtc to now:
+						await Update(context, sources[linkIndex], (Context ctx, Permalink toUpdate, Permalink orig) => {
+							toUpdate.CreatedUtc = DateTime.UtcNow;
+						}, DataOptions.IgnorePermissions);
 						continue;
 					}
 				}
