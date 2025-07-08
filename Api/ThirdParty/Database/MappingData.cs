@@ -419,12 +419,12 @@ public struct MappingData
 		if (typeof(ID) == typeof(uint))
 		{
 			var uid = id as uint?;
-			Remove(mappingName, uid.Value);
+			Remove(mappingName, (ulong)uid.Value);
 		}
 		else if (typeof(ID) == typeof(ulong))
 		{
 			var uid = id as ulong?;
-			Remove(mappingName, uid.Value);
+			Remove(mappingName, (ulong)uid.Value);
 		}
 		else
 		{
