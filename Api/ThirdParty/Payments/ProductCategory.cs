@@ -42,7 +42,7 @@ namespace Api.Payments
         [Data("type", "canvas")]
         [Data("main", "false")]
         [Data("required", true)]
-        [Data("validate", "Required")]
+        [Data("validate", "CanvasRequired")]
         public Localized<string> Description;
 
         /// <summary>
