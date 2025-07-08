@@ -7,12 +7,9 @@ import ProductQuantity from 'UI/Product/Quantity';
 import { useState } from 'react';
 import Breadcrumb, { Crumb } from 'UI/Breadcrumb';
 import ProductHeader from 'UI/Product/Header';
-import { useCart } from 'UI/Payments/CartSession';
-import { useSession } from 'UI/Session';
 import { useRouter } from 'UI/Router';
 import Button from 'UI/Button';
 import ProductVariants from 'UI/Product/Variants';
-import { CurrencyAmount } from 'UI/Product/Price';
 
 /**
  * Props for the View component.
@@ -31,10 +28,6 @@ interface ViewProps {
  */
 const View: React.FC<ViewProps> = (props) => {
 	const { product } = props;
-	var { cartContents, lessTax } = useCart();
-
-	const { session } = useSession();
-	var { locale } = session;
 	const { pageState, setPage } = useRouter();
 	const { query, url } = pageState;
 	
@@ -42,13 +35,12 @@ const View: React.FC<ViewProps> = (props) => {
 	const variantSku = query?.get("sku");
 	const currentVariant: Product | undefined = variantSku ? product.variants?.find(prod => prod.sku == variantSku) : undefined;
 
-	let currencyCode = cartContents?.currencyCode || locale?.currencyCode || "GBP";
-
 	// NB: if additional tabs are required, be sure to update $tab-count accordingly (see View.scss)
 	enum ProductTab {
 		About = `About this product`,
 		Details = `Details & Specification`,
-		FAQs = `FAQs`
+		// hide FAQs tab until we have content to show
+		//FAQs = `FAQs`
 	}
 	const productTabs = Object.values(ProductTab);
 
@@ -58,13 +50,20 @@ const View: React.FC<ViewProps> = (props) => {
 	const isApproved = true;
 
 	// variant checks
-	const hasVariants = product.variants?.length;
+	const hasVariants = product.variants?.length > 0;
 
-	const fromPrice: CurrencyAmount = {
-		currencyCode: currencyCode,
-		amount: hasVariants ? Math.min(
-			...product.variants.map(product => lessTax ? product.calculatedPrice[0]?.amountLessTax ?? Infinity : product.calculatedPrice[0]?.amount ?? Infinity)) : null
-	};
+	var sortedPrices = hasVariants ? product.variants.map(product => {
+		if (!product?.calculatedPrice?.length) {
+			return null;
+		}
+
+		// The highest tier is always the cheapest per-unit price
+		return product.calculatedPrice[product.calculatedPrice.length - 1];
+	})
+		.filter(price => !!price) // strip the nulls
+		.sort((a, b) => a.amount - b.amount) : null;
+
+	var cheapestPrice = sortedPrices?.length ? sortedPrices[0] : null;
 
 	return <>
 		<div className="ui-product-view">
@@ -200,7 +199,7 @@ const View: React.FC<ViewProps> = (props) => {
 				</>}
 
 				{/* price */}
-				<ProductPrice product={currentVariant || product} override={hasVariants && !currentVariant ? fromPrice : undefined} isFrom={!!hasVariants && !currentVariant} />
+				<ProductPrice product={currentVariant || product} override={hasVariants && !currentVariant ? cheapestPrice : undefined} isFrom={!!hasVariants && !currentVariant} />
 
 				{/* quantity / add to order, only present if there is no variants or a variant is selected. */}
 				{(!(product.variants?.length) || currentVariant) && <ProductQuantity product={currentVariant || product} />}
