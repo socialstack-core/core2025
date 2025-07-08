@@ -1,5 +1,10 @@
 import Link from 'UI/Link';
 
+export type Crumb = {
+	name: string,
+	href: string
+};
+
 /**
  * Props for the Breadcrumb component.
  */
@@ -8,35 +13,33 @@ interface BreadcrumbProps {
 	 * Show current page
 	 */
 	includeCurrent?: boolean,
-}
 
+	crumbs?: Crumb[]
+}
 
 /**
  * The Breadcrumb React component.
  * @param props React props.
  */
 const Breadcrumb: React.FC<BreadcrumbProps> = (props) => {
-	const { includeCurrent } = props;
+	const { includeCurrent, crumbs } = props;
+
+	if (!crumbs) {
+		return null;
+	}
 
 	return <nav className="site-breadcrumb">
-		{/* TODO: hardcoded for now to get _something_ on the UI :P */}
 		<menu>
-			<li>
-				<Link href="/" className="site-breadcrumb__item">
-					<i className="fr fr-arrow-90"></i>
-					<span>
-						{`Profiling Beds`}
-					</span>
-				</Link>
-			</li>
-			<li>
-				<Link href="/" className="site-breadcrumb__item">
-					<i className="fr fr-arrow-90"></i>
-					<span>
-						{`Standard Profiling Beds`}
-					</span>
-				</Link>
-			</li>
+			{
+				crumbs.map(crumb => <li>
+					<Link href={crumb.href} className="site-breadcrumb__item">
+						<i className="fr fr-arrow-90"></i>
+						<span>
+							{crumb.name}
+						</span>
+					</Link>
+				</li>)
+			}
 			{includeCurrent && <>
 				<li>
 					<span className="site-breadcrumb__item site-breadcrumb__item--current">
