@@ -18,12 +18,16 @@ namespace Api.Translate
 		/// The name.
 		/// </summary>
 		[Data("hint", "The name of the locale")]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public Localized<string> Name;
 
 		/// <summary>
 		/// Usually a 5 letter locale code e.g. "en_GB". May also be just 2 e.g. "fr".
 		/// </summary>
 		[Data("hint", "The primary locale code, usually a 5 letter locale code e.g. 'en_GB'. May also be just 2 e.g. 'fr' or client specific such as 'en-en'")]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public string Code;
 
 		/// <summary>

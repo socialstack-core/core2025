@@ -1,4 +1,5 @@
 using System;
+using Api.AutoForms;
 using Api.Database;
 using Api.Translate;
 using Api.Users;
@@ -16,6 +17,8 @@ namespace Api.PublishGroups
         /// The internal name of the group, used internally by admins only
         /// </summary>
         [DatabaseField(Length = 200)]
+        [Data("required", true)]
+        [Data("validate", "Required")]
 		public string Name;
 
 		/// <summary>

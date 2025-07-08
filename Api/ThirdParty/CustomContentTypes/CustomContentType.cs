@@ -19,6 +19,8 @@ namespace Api.CustomContentTypes
 		/// The name of the type, used by socialstack.
 		/// </summary>
 		[Module(Hide = true)]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public string Name;
 
 		/// <summary>

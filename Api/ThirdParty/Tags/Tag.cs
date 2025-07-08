@@ -1,4 +1,5 @@
 using System;
+using Api.AutoForms;
 using Api.Database;
 using Api.Startup;
 using Api.Translate;
@@ -17,6 +18,8 @@ namespace Api.Tags
 		/// The name of the tag in the site default language.
 		/// </summary>
 		[DatabaseField(Length = 200)]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public Localized<string> Name;
 		
 		/// <summary>

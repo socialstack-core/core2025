@@ -22,6 +22,8 @@ namespace Api.Payments
         /// The name of the product attribute
         /// </summary>
         [DatabaseField(Length = 200)]
+        [Data("required", true)]
+        [Data("validate", "Required")]
 		public Localized<string> Name;
 
 		/// <summary>
@@ -33,6 +35,8 @@ namespace Api.Payments
 		/// <summary>
 		/// The group that this attribute is in.
 		/// </summary>
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public uint ProductAttributeGroupId;
 
 		/// <summary>
@@ -41,6 +45,8 @@ namespace Api.Payments
 		/// variants and each one has its own potentially localised price.
 		/// </summary>
 		[Module("Admin/Payments/AttributeTypes")]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public int ProductAttributeType;
 
 		/// <summary>

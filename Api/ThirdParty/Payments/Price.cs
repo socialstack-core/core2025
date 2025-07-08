@@ -20,6 +20,8 @@ namespace Api.Payments
 		/// The amount in the target currency.
 		/// </summary>
 		[Data("help", "A whole number in the smallest unit of the currency (pence/ cents).")]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public Localized<uint> Amount;
 		
 		/// <summary>

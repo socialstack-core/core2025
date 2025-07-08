@@ -1,4 +1,5 @@
 using System;
+using Api.AutoForms;
 using Api.Database;
 using Api.Startup;
 using Api.Translate;
@@ -31,6 +32,8 @@ namespace Api.Payments
         /// The name of the attribute group e.g. "Dimensions".
         /// </summary>
         [DatabaseField(Length = 200)]
+        [Data("required", true)]
+        [Data("validate", "Required")]
 		public Localized<string> Name;
 
 		/// <summary>

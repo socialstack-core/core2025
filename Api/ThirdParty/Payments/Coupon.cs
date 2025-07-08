@@ -19,6 +19,8 @@ namespace Api.Payments
 		/// The token.
 		/// </summary>
         [DatabaseField(Length = 10)]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public string Token;
 
 		/// <summary>
@@ -58,7 +60,7 @@ namespace Api.Payments
 		/// <summary>
 		/// A price indicating a specific discount.
 		/// </summary>
-		[Data("help", "Optional fixed amount discount. For example, £5 off if you spend £20 or more.")]
+		[Data("help", "Optional fixed amount discount. For example, ï¿½5 off if you spend ï¿½20 or more.")]
 		public Localized<uint> DiscountFixedAmount;
 
 		/// <summary>

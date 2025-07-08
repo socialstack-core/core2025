@@ -1,4 +1,5 @@
-﻿using Api.Database;
+﻿using Api.AutoForms;
+using Api.Database;
 using Api.Translate;
 using Api.Users;
 
@@ -14,23 +15,31 @@ namespace Api.Emails
 		/// </summary>
 		[DatabaseIndex]
 		[DatabaseField(Length = 80)]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public string Key;
 
 		/// <summary>
 		/// The internal name for this template.
 		/// </summary>
 		[DatabaseField(Length = 200)]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public string Name;
 		
 		/// <summary>
 		/// Email subject - can be overriden by document title when rendering the body.
 		/// </summary>
 		[DatabaseField(Length = 200)]
+		[Data("required", true)]
+		[Data("validate", "Required")]
 		public Localized<string> Subject;
 		
 		/// <summary>
 		/// The canvas JSON for this email. This also outputs the emails subject too (as the document title).
 		/// </summary>
+		[Data("required", true)]
+		[Data("validate", "CanvasRequired")]
 		public Localized<JsonString> BodyJson;
 
 		/// <summary>

@@ -21,11 +21,16 @@ namespace Api.Permissions
 		/// <summary>
 		/// The nice name of the role, usually in the site default language.
 		/// </summary>
+		[Data("required", true)]
+		[Data("validate", "Required")]
         public string Name;
 		/// <summary>
 		///  The role key - usually the lowercase, underscores instead of spaces variant of the first set name.
 		///  This shouldn't change after it has been set.
 		/// </summary>
+		/// 
+		[Data("required", true)]
+		[Data("validate", "Required")]
         public string Key;
 		
 		/// <summary>
