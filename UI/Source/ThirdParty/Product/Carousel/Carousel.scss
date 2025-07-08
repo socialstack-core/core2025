@@ -8,7 +8,7 @@ $max-product-images: 5;
 	grid-template-areas: 
 		"thumbnails slides";
 	gap: px_to_rem(10);
-	height: px_to_rem(279);
+	//height: px_to_rem(279);
 	user-select: none;
 
 	&--single {
@@ -130,7 +130,7 @@ $max-product-images: 5;
 	&__slides {
 		grid-area: slides;
 		width: 100%;
-		height: px_to_rem(279);
+		//height: px_to_rem(279);
 	}
 	
 	&__slide {
@@ -234,6 +234,7 @@ body:has(.ui-product-images__slide[open]) {
 	.ui-product-images {
 		$product-images: &;
 		width: px_to_rem(344);
+		//height: px_to_rem(279);
 		height: auto;
 		grid-template-rows: px_to_rem(344) px_to_rem(92);
 		grid-template-columns: auto;
@@ -263,6 +264,7 @@ body:has(.ui-product-images__slide[open]) {
 		&__slides {
 			grid-area: slides;
 			height: px_to_rem(344);
+			//height: px_to_rem(279);
 		}    
 		
 		&__slide {

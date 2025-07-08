@@ -228,7 +228,7 @@ const Variants: React.FC<VariantsProps> = ({ title, product, onChange, currentVa
 	const attribWithValues = getAttributesWithValues(selectedValues, variants);
 
 	return (
-		<>
+		<div className="ui-product-view__variants">
 			{/* Optional title header */}
 			{title && (
 				<h2 className="ui-product-view__subtitle">
@@ -236,7 +236,7 @@ const Variants: React.FC<VariantsProps> = ({ title, product, onChange, currentVa
 				</h2>
 			)}
 			<AttributeSelectors attributes={attribWithValues} onSelect={selectAttribute} />
-		</>
+		</div>
 	);
 };
 

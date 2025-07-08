@@ -567,7 +567,7 @@ namespace Api.Payments
 			// calculate all the node full paths
 			foreach (var category in roots)
 			{
-				SetNodeSlugs(category);
+				FinalizeCategoryNode(category);
 			}
 
 			if (includeProducts)
@@ -656,18 +656,34 @@ namespace Api.Payments
 			return string.Join(separator, slugs.Select(ToSlug));
 		}
 
-		private void SetNodeSlugs(ProductCategoryNode node)
+		private void FinalizeCategoryNode(ProductCategoryNode node)
 		{
-			if (node != null)
+			if (node == null || node.Category == null)
 			{
-				node.FullPathSlug = BuildNodeSlugPath(node);
+				return;
+			}
+			
+			// Handle this node first
+			if (node.Parent == null)
+			{
+				node.BreadcrumbCategories = new List<ProductCategory>() {
+					node.Category
+				};
+			}
+			else
+			{
+				node.BreadcrumbCategories = new List<ProductCategory>(node.Parent.BreadcrumbCategories);
 
-				if (node.Children.Count > 0)
+				// Add itself:
+				node.BreadcrumbCategories.Add(node.Category);
+			}
+
+			// And handle any of its children next:
+			if (node.Children.Count > 0)
+			{
+				foreach (var child in node.Children)
 				{
-					foreach (var child in node.Children)
-					{
-						SetNodeSlugs(child);
-					}
+					FinalizeCategoryNode(child);
 				}
 			}
 		}

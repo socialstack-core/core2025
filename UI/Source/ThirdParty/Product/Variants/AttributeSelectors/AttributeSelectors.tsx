@@ -26,15 +26,12 @@ interface AttributeSelectorsProps {
 const AttributeSelectors: React.FC<AttributeSelectorsProps> = (props) => {
 	const { attributes, onSelect } = props;
 
-	return <div>
+	return <fieldset className="fieldset--xs">
 		{attributes.map(attrInfo => {
 			const { attribute, selected } = attrInfo;
 
 			return <div key={attribute.id}>
-				<label>
-					{attribute.name}
-				</label>
-				<Input type="select" onChange={e => {
+				<Input type="select" label={attribute.name} noSelection={`Select an option ...`} clearable onChange={e => {
 					const strId = (e.target as HTMLSelectElement).value;
 
 					if (!strId) {
@@ -48,7 +45,6 @@ const AttributeSelectors: React.FC<AttributeSelectorsProps> = (props) => {
 					}
 
 				}}>
-					<option value={0} selected={!selected}>{`Select an option..`}</option>
 					{
 						attrInfo.values.map(attrValue => {
 							return <option value={attrValue.id} selected={attrValue.id == selected}>
@@ -60,7 +56,7 @@ const AttributeSelectors: React.FC<AttributeSelectorsProps> = (props) => {
 			</div>
 
 		})}
-	</div>
+	</fieldset>
 };
 
 export default AttributeSelectors;

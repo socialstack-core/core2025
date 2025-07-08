@@ -79,7 +79,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			return <Loading />;
 		}
 
-		return <select
+		return <select id={props.id}
 			ref={(el: HTMLSelectElement) => onInputRef && onInputRef(el)}
 			onInput={(e) => {
 				const select = e.target as HTMLSelectElement;
@@ -118,7 +118,7 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 	}
 
 	return (
-		<select
+		<select id={props.id}
 			ref={(el: HTMLSelectElement) => onInputRef && onInputRef(el)}
 			onInput={onSelectChange}
 			value={selectDefaultValue}

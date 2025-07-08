@@ -15,7 +15,12 @@ interface PriceProps {
 	/**
 	 * Overriding price to display
 	 */
-	override?: CurrencyAmount
+	override?: CurrencyAmount,
+
+	/**
+	 * true if this a "from" price (i.e. the product has variants)
+	 */
+	isFrom?: boolean
 }
 
 export interface CurrencyAmount {
@@ -28,7 +33,7 @@ export interface CurrencyAmount {
  * @param props React props.
  */
 const Price: React.FC<PriceProps> = (props) => {
-	const { product, override } = props;
+	const { product, override, isFrom } = props;
 	const { session } = useSession();
 	const { lessTax } = useCart();
 	const { locale } = session;
@@ -39,13 +44,12 @@ const Price: React.FC<PriceProps> = (props) => {
 	// - multiple options (set to lowest price so this can be displayed as "From £X.XX")
 	let currencyCode: string | undefined;
 	let amount: ulong | undefined;
-	
-	// TODO: determine when product has options
 	let hasOptions = false;
 
 	if (override) {
 		currencyCode = override.currencyCode;
 		amount = override.amount;
+		hasOptions = !!isFrom;
 	} else if (product?.calculatedPrice && product?.calculatedPrice.length && locale) {
 		// NB: This will be replaced again when per-user pricing and the tax resolver is added
 		var tiers = product.calculatedPrice;
