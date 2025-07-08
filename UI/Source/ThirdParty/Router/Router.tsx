@@ -266,39 +266,38 @@ const Router: React.FC<{}> = () => {
 		}
 	});
 	
-	const changeQuery = (query: URLSearchParams) => {
-		const currentUrlParts = pageState.url.split('?');
-		const currentUrl = currentUrlParts[0];
-		const currentParams = new URLSearchParams(currentUrlParts[1] || '');
-		const nextQuery = new URLSearchParams(query);
-
-		// Check if the parameters are different
-		const paramsAreDifferent = (() => {
-			const currentEntries = Array.from(currentParams.entries());
-			const nextEntries = Array.from(nextQuery.entries());
-
-			if (currentEntries.length !== nextEntries.length) return true;
-
-			for (const [key, value] of currentEntries) {
-				if (nextQuery.get(key) !== value) return true;
+	const changeQuery = (query: Record<string, string>) => {
+		
+		const urlParams = new URLSearchParams();
+	
+		let hasChanged = false;
+		let currentUrl = pageState.url.split('?')[0];
+		
+		if (!currentUrl) {
+			return;
+		}
+		
+		Object.keys(query).forEach((key: string) => {
+			
+			if (!pageState.query.has(key)) {
+				hasChanged = true;
 			}
-
-			for (const [key, value] of nextEntries) {
-				if (currentParams.get(key) !== value) return true;
+			if (query[key] !== pageState.query.get(key)) {
+				hasChanged = true;
 			}
-
-			return false;
-		})();
-
-		if (!paramsAreDifferent) {
-			// Don't navigate if there's no change
+			urlParams.set(key, query[key])
+		})
+		
+		if (!hasChanged) {
+			// noop.
 			return;
 		}
 
-		const qs = nextQuery.toString();
+		const qs = urlParams.toString();
 		const nextUrl = qs ? `${currentUrl}?${qs}` : currentUrl;
 
 		go(nextUrl);
+		
 	}
 	
 	return <routerCtx.Provider
@@ -307,14 +306,21 @@ const Router: React.FC<{}> = () => {
 				pageState,
 				setPage: go,
 				changeQuery,
-				updateQuery: (update: URLSearchParams) => {
-					const existingQuery = pageState.query;
+				updateQuery: (update: Record<string, string>) => {
+					
+					const urlParams:Record<string, string> = {};
+					const currentEntries = Array.from(pageState.query.entries());
 
-					for (const [key, value] of Array.from(update.entries())) {
-						existingQuery.set(key, value);
+					for (const [key, value] of currentEntries) {
+						urlParams[key] = value;
 					}
 					
-					changeQuery(existingQuery)
+					Object.keys(update).forEach((key: string) => {
+						urlParams[key] = update[key]
+					})
+					
+					changeQuery(urlParams);
+
 				}
 			}}
 		>

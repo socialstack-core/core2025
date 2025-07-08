@@ -70,9 +70,10 @@ const MediaCenter = (props) => {
     // held in history.
     const debounce = useMemo(() => new Debounce((query: string) => {
         
-        const newQParam = new URLSearchParams();
-        newQParam.set("q", query)
-        newQParam.set("page", "1");
+        const newQParam = {
+            q: query,
+            page: "1"
+        }
         
         updateQuery(newQParam)
     }), [])
@@ -639,11 +640,7 @@ const MediaCenter = (props) => {
                     onChange={(ev) => {
                         
                         const target: HTMLSelectElement = ev.target as HTMLSelectElement;
-                        
-                        const params = new URLSearchParams();
-                        params.set("limit", target.value);
-                        
-                        updateQuery(params);
+                        updateQuery({ limit: target.value });
                         
                     }}
                 >
@@ -665,9 +662,7 @@ const MediaCenter = (props) => {
                         filter={filter}
                         // specify a custom page change handler.
                         customChangeHandler={(pageNumber: number) => {
-                            const pgUp = new URLSearchParams();
-                            pgUp.set("page", pageNumber.toString());
-                            updateQuery(pgUp);
+                            updateQuery({ page: pageNumber.toString() });
                         }}
                     >
                         {renderEntry}
