@@ -33,46 +33,62 @@ const SubmitForm = (e: React.FormEvent<HTMLFormElement>) => {
  * @param values
  * @returns A promise which is rejected if any of the fields have validation errors.
  */
-const collectFieldValue = (field: any, values: Record<string, any>) : Promise<void> => {
-	return new Promise((success, reject) => {
-		if (!field.name || field.type == 'submit' || (field.type == 'radio' && !field.checked)) {
+const collectFieldValue = (field: any, values: Record<string, any>): Promise<void> => {
+	
+	return new Promise((resolve, reject) => {
+		
+		if (!field.name || field.type === 'submit' || (field.type === 'radio' && !field.checked)) {
 			// Not a field we care about.
-			success();
+			resolve();
 			return;
 		}
 
-		var name: string = field.name as string;
-
-		if (field.onValidationCheck) {
-			var valError = field.onValidationCheck(field) as PublicError;
-
-			if (valError) {
-				reject(valError);
-				return;
-			}
-		}
-
-		var value = field.type == 'checkbox' ? field.checked : field.value;
+		const name: string = field.name;
+		let value = field.type === 'checkbox' ? field.checked : field.value;
 
 		if (field.onGetValue) {
-			value = field.onGetValue(value, field);
+			try {
+				value = field.onGetValue(value, field);
+			} catch (err) {
+				reject(err);
+				return;
+			}
 
-			if (value && value.then && typeof value.then === 'function') {
-				// It's a promise.
-				// Must wait for all of these before proceeding.
-				value.then((val: string) => {
+			const ogvPromise = value && typeof value.then === 'function'
+				? value
+				: Promise.resolve(value);
+
+			ogvPromise
+				.then((val: any) => {
 					field.value = val;
 					values[name] = val;
-					success();
-				});
-			} else {
-				field.value = value;
-			}
-		}
 
-		values[name] = value;
-		success();
+					if (field.onValidationCheck) {
+						const valError = field.onValidationCheck(field) as PublicError;
+						if (valError) {
+							return reject(valError);
+						}
+					}
+
+					resolve();
+				})
+				.catch(reject);
+		} else {
+			values[name] = value;
+
+			// Final validation
+			if (field.onValidationCheck) {
+				const valError = field.onValidationCheck(field) as PublicError;
+				if (valError) {
+					reject(valError);
+					return;
+				}
+			}
+
+			resolve();
+		}
 	});
-}
+};
+
 
 export default SubmitForm;
