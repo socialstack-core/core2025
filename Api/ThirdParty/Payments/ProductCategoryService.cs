@@ -59,6 +59,7 @@ namespace Api.Payments
 				{
 					Key = "primary:productcategory",
 					Title = "${productcategory.name}",
+					PrimaryContentIncludes = "calculatedPrice",
 					BuildBody = (PageBuilder builder) =>
 					{
 						return builder.AddTemplate(
