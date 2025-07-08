@@ -31,7 +31,7 @@ interface ViewProps {
  */
 const View: React.FC<ViewProps> = (props) => {
 	const { product } = props;
-	var { cartContents } = useCart();
+	var { cartContents, lessTax } = useCart();
 
 	const { session } = useSession();
 	var { locale } = session;
@@ -59,9 +59,11 @@ const View: React.FC<ViewProps> = (props) => {
 
 	// variant checks
 	const hasVariants = product.variants?.length;
+
 	const fromPrice: CurrencyAmount = {
 		currencyCode: currencyCode,
-		amount: hasVariants ? Math.min(...product.variants.map(product => product.calculatedPrice[0]?.amount ?? Infinity)) : null
+		amount: hasVariants ? Math.min(
+			...product.variants.map(product => lessTax ? product.calculatedPrice[0]?.amountLessTax ?? Infinity : product.calculatedPrice[0]?.amount ?? Infinity)) : null
 	};
 
 	return <>
