@@ -134,6 +134,21 @@ public partial class PageBuilder
 	}
 
 	/// <summary>
+	/// Overrides the applied template with the named one if a template is present (doing nothing and returning false otherwise).
+	/// </summary>
+	/// <param name="templateName"></param>
+	public bool SetTemplate(string templateName)
+	{
+		if (_body == null || _body.Module != "Admin/Template")
+		{
+			return false;
+		}
+
+		_body.With("templateKey", templateName);
+		return true;
+	}
+
+	/// <summary>
 	/// The node to add additional generic content to. If AddTemplate was used, then the content root 
 	/// is actually the main body area of the template. Otherwise, it is the root itself.
 	/// </summary>

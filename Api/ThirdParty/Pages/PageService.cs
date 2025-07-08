@@ -12,6 +12,7 @@ using Api.Startup.Routing;
 using Api.Automations;
 using Api.Translate;
 using Api.Database;
+using Newtonsoft.Json.Linq;
 
 namespace Api.Pages
 {
@@ -341,7 +342,62 @@ namespace Api.Pages
 				}
 			}
 		}
-		
+
+		/// <summary>
+		/// Compares the given localized JsonString values which can vary in textual value 
+		/// (e.g. because one came from the DB and contains specific spacing patterns) but actually be structurally the same.
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns></returns>
+		private bool DeepJsonEquals(Localized<JsonString> a, Localized<JsonString> b)
+		{
+			if (a.Count != b.Count)
+			{
+				return false;
+			}
+
+			foreach (var kvp in a.Values)
+			{
+				var strA = kvp.Value;
+				if (!b.TryGet(kvp.Key, out JsonString strB))
+				{
+					// Key not present in B - quit.
+					return false;
+				}
+
+				// Get the json strings:
+				var jsonA = strA.ValueOf();
+				var jsonB = strB.ValueOf();
+
+				var aEmpty = string.IsNullOrEmpty(jsonA);
+
+				if (aEmpty != string.IsNullOrEmpty(jsonB))
+				{
+					// One empty and the other is not.
+					return false;
+				}
+
+				if (aEmpty)
+				{
+					// They're both empty.
+					continue;
+				}
+
+				// Both not empty
+				var tokenA = JToken.Parse(jsonA);
+				var tokenB = JToken.Parse(jsonB);
+
+				if (!JToken.DeepEquals(tokenA, tokenB))
+				{
+					return false;
+				}
+			}
+
+			// All keys passed the deepEquals check.
+			return true;
+		}
+
 		/// <summary>
 		/// Installs the given page(s). It checks if they exist by their InstallKey, and if not, creates them.
 		/// </summary>
@@ -374,13 +430,22 @@ namespace Api.Pages
 				existingPagesLookup[pg.Key] = pg;
 			}
 
+			#if DEBUG
+			var buildTime = DateTime.UtcNow;
+			#else
+			var buildTime = new DateTime(Services.Get<FrontendCodeService>().Version);
+			#endif
+
 			// For each page to consider for install..
 			foreach (var builder in builders)
 			{
-				// If it doesn't already exist, create it.
-				if (existingPagesLookup.ContainsKey(builder.Key))
+				// If it already exists, consider updating it.
+				if (existingPagesLookup.TryGetValue(builder.Key, out Page existingPage))
 				{
-					continue;
+					if (existingPage.LastInstallBuildTimeUtc >= buildTime)
+					{
+						continue;
+					}
 				}
 
 				// Start building:
@@ -389,7 +454,81 @@ namespace Api.Pages
 				await Events.Page.BeforePageInstall.Dispatch(context, builder);
 				builder.Page.BodyJson = new Localized<JsonString>(new JsonString(builder.Body.ToJson()));
 
-				await Create(context, builder.Page, DataOptions.IgnorePermissions);
+				if (existingPage != null)
+				{
+					// Has it changed?
+					if (
+						existingPage.PrimaryContentIncludes == builder.Page.PrimaryContentIncludes && 
+						existingPage.PrimaryContentType == builder.Page.PrimaryContentType && 
+						DeepJsonEquals(builder.Page.BodyJson, existingPage.BodyJson))
+					{
+						// Nope!
+						continue;
+					}
+
+					// Are there any revisions of the page since the last time it was checked?
+					var revId = existingPage.LastInstallRevisionId.HasValue ? existingPage.LastInstallRevisionId.Value : 0;
+
+					var pageRevisions = await Revisions
+						.Where("Id>=? and ContentId=?", DataOptions.IgnorePermissions)
+						.Bind(revId)
+						.Bind((ulong)existingPage.Id)
+						.ListAll(context);
+
+					// Sort by ID just to be sure:
+					pageRevisions.Sort((a, b) => a.Id.CompareTo(b.Id));
+
+					var highestRevisionId = pageRevisions.Count > 0 ? pageRevisions[pageRevisions.Count - 1].Id : 0;
+
+					// In most instances there should be 1 or 2 revisions in the set.
+					// The first = the one where Id==LastInstallRevisionId
+					// The second = the one created by calling Update or Create itself
+					int skipRevisions = 0;
+
+					if (pageRevisions.Count > 0)
+					{
+						if (pageRevisions[0].Id == revId)
+						{
+							// Skip the next revision.
+							skipRevisions = 2;
+						}
+						else
+						{
+							// Skip the first revision only.
+							skipRevisions = 1;
+						}
+					}
+
+					var hasAdditionalRevisions = (pageRevisions.Count - skipRevisions) > 0;
+
+					if (hasAdditionalRevisions)
+					{
+						// User edits identified.
+						// This effectively permanently blocks the installer from running currently.
+						continue;
+					}
+
+					// The code retains control over the page and it can now be updated.
+					Log.Info(LogTag, "Updated page '" + existingPage.Key + "'");
+
+					await Update(context, existingPage, (Context ctx, Page toUpdate, Page original) => {
+
+						toUpdate.PrimaryContentIncludes = builder.Page.PrimaryContentIncludes;
+						toUpdate.BodyJson = builder.Page.BodyJson;
+						toUpdate.PrimaryContentType = builder.Page.PrimaryContentType;
+
+						// Might be just the body/ includes/ both.
+						toUpdate.LastInstallRevisionId = highestRevisionId;
+						toUpdate.LastInstallBuildTimeUtc = buildTime;
+
+					}, DataOptions.IgnorePermissions);
+				}
+				else
+				{
+					builder.Page.LastInstallBuildTimeUtc = buildTime;
+					builder.Page.LastInstallRevisionId = 0;
+					await Create(context, builder.Page, DataOptions.IgnorePermissions);
+				}
 			}
 		}
 
