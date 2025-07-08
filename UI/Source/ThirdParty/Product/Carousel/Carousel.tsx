@@ -42,6 +42,24 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 
 	}
 
+	function renderImage(ref) {
+
+		if (ref) {
+			return <>
+				<details className="ui-product-images__slide">
+					<summary>
+						<Image size={512} fileRef={ref} />
+					</summary>
+					<div className="ui-product-images__slide-content" onClick={(e) => handleLightboxClick(e)}>
+						<Image size={1024} fileRef={ref} lazyLoad={true} />
+					</div>
+				</details>
+			</>;
+		}
+
+		return <Image size={512} fileRef={defaultImageRef} className="ui-product-images__slide ui-product-images__slide--empty" />;
+	}
+
 	return (
 		<div className={productImagesClasses.join(' ')}>
 			{hasRelatedImages && <>
@@ -69,25 +87,9 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 
 			{/* larger image preview with full-size preview on click */}
 			<div className="ui-product-images__slides">
-				<details className="ui-product-images__slide">
-					<summary>
-						<Image size={512} fileRef={product.featureRef || defaultImageRef} />
-					</summary>
-					<div className="ui-product-images__slide-content" onClick={(e) => handleLightboxClick(e)}>
-						<Image size={1024} fileRef={product.featureRef || defaultImageRef} lazyLoad={true} />
-					</div>
-				</details>
+				{renderImage(product.featureRef)}
 				{product.productImages?.map((productImage, i) => {
-					return <>
-						<details className="ui-product-images__slide">
-							<summary>
-								<Image size={512} fileRef={productImage.ref || defaultImageRef} />
-							</summary>
-							<div className="ui-product-images__slide-content" onClick={(e) => handleLightboxClick(e)}>
-								<Image size={1024} fileRef={productImage.ref || defaultImageRef} lazyLoad={true} />
-							</div>
-						</details>
-					</>;
+					return renderImage(productImage.ref);
 				})}
 			</div>
 		</div>
