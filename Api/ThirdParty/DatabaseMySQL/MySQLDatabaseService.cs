@@ -323,14 +323,16 @@ namespace Api.Database
 			{
 				if (srcObject is IHaveTimestamps revRow)
 				{
+					var now = DateTime.UtcNow;
+
 					if (revRow.GetEditedUtc() == DateTime.MinValue)
 					{
-						revRow.SetEditedUtc(DateTime.UtcNow);
+						revRow.SetEditedUtc(now);
 					}
 
 					if (revRow.GetCreatedUtc() == DateTime.MinValue)
 					{
-						revRow.SetCreatedUtc(DateTime.UtcNow);
+						revRow.SetCreatedUtc(now);
 					}
 				}
 			}

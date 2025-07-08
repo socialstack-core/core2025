@@ -17,6 +17,7 @@ using System.Reflection;
 using MongoDB.Bson.Serialization.Conventions;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.Metrics;
+using Api.Users;
 
 namespace Api.DatabaseMongoDB
 {
@@ -297,6 +298,21 @@ namespace Api.DatabaseMongoDB
 
 			eventGroup.Create.AddEventListener(async (Context context, T entity) =>
 			{
+				if (entity is IHaveTimestamps revRow)
+				{
+					var now = DateTime.UtcNow;
+
+					if (revRow.GetEditedUtc() == DateTime.MinValue)
+					{
+						revRow.SetEditedUtc(now);
+					}
+
+					if (revRow.GetCreatedUtc() == DateTime.MinValue)
+					{
+						revRow.SetCreatedUtc(now);
+					}
+				}
+
 				if (entity.Id.Equals(default))
 				{
 					// Explicit ID has been provided otherwise.
@@ -328,6 +344,21 @@ namespace Api.DatabaseMongoDB
 
 				foreach (var entity in entities)
 				{
+					if (entity is IHaveTimestamps revRow)
+					{
+						var now = DateTime.UtcNow;
+
+						if (revRow.GetEditedUtc() == DateTime.MinValue)
+						{
+							revRow.SetEditedUtc(now);
+						}
+
+						if (revRow.GetCreatedUtc() == DateTime.MinValue)
+						{
+							revRow.SetCreatedUtc(now);
+						}
+					}
+
 					if (entity.Id.Equals(default))
 					{
 						idsToCollect++;
