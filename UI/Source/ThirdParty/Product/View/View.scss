@@ -295,8 +295,9 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 		}
 
 		&__price-info {
-			position: sticky;
-			top: calc(var(--site-header-height) + #{px_to_rem(20)});
+			position: static;
+			//position: sticky;
+			//top: calc(var(--site-header-height) + #{px_to_rem(20)});
 			min-height: 0;
 			z-index: auto;
 			display: flex;
@@ -381,6 +382,9 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 			". . tab-panels .";
 
 		.site-breadcrumb {
+			position: sticky;
+			top: calc(var(--site-header-height) + #{px_to_rem(20)});
+
 			//grid-area: breadcrumbs;
 			//order: 0;
 
@@ -422,6 +426,8 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 		}
 
 		&__price-info {
+			position: sticky;
+			top: calc(var(--site-header-height) + #{px_to_rem(20)});
 
 			.ui-product-price {
 
