@@ -6,6 +6,7 @@ using Api.Contexts;
 using Api.Eventing;
 using Api.Startup;
 using System;
+using System.Linq;
 using Api.Pages;
 using Api.CanvasRenderer;
 
@@ -214,8 +215,55 @@ namespace Api.Payments
 
 				return toUpdate;
 			});
+			
+			Events.Product.BeforeCreate.AddEventListener(async (ctx, product) =>
+			{
+				await UpdateProductCategoryMapping(ctx, product);	
+				return product;
+			});
+			Events.Product.BeforeUpdate.AddEventListener(async (ctx, product, original) =>
+			{
+				await UpdateProductCategoryMapping(ctx, product);
+				return product;
+			});
 
 			Cache();
+		}
+
+		private async ValueTask UpdateProductCategoryMapping(Context context, Product product)
+		{
+			// couldn't add as a dep due to circular ref
+			var _categories = Services.Get<ProductCategoryService>();
+			
+			// contains all the uint => PCNode mappings, can be null too.
+			var tree = await _categories.GetLookup(context);
+			
+			var allCats = new List<ulong>();
+
+			var mappings = product.Mappings.Get("productcategories");
+
+			if (mappings is null)
+			{
+				product.Mappings.Remove("childOfCategories");
+				return;
+			}
+
+			foreach (var catId in mappings)
+			{
+				if (!tree.TryGetValue((uint) catId, out var categoryNode))
+				{
+					continue;
+				}
+				if (categoryNode?.BreadcrumbCategories is null || categoryNode.BreadcrumbCategories.Count == 0)
+				{
+					continue;
+				}
+				
+				allCats.AddRange(categoryNode.BreadcrumbCategories.Select(category => (ulong) category.Id));
+			}
+			
+			product.Mappings.Set("childOfCategories", allCats.Distinct().ToList());
+			
 		}
 		
 		/// <summary>

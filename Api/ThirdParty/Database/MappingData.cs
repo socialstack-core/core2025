@@ -405,6 +405,24 @@ public struct MappingData
 
 		Remove<ID>(mappingName, item.Id);
 	}
+	
+	/// <summary>
+	/// Removes an empty mapping 
+	/// </summary>
+	/// <param name="mappingName"></param>
+	public void Remove(string mappingName)
+	{
+		if (_values == null)
+		{
+			return;
+		}
+		_values.Remove(mappingName.ToLower());
+		if(_values.Count == 0){
+			_values = null;
+		}
+	}
+
+
 
 	/// <summary>
 	/// Ensures the given content ID is removed from the specified map.
@@ -636,10 +654,17 @@ public struct MappingData
 	/// <param name="values"></param>
 	public void Set(string mappingName, List<ulong> values)
 	{
+		if (values == null || values.Count == 0)
+		{
+			Remove(mappingName);
+			return;
+		}
+		
 		if (_values == null)
 		{
 			_values = new();
 		}
+
 
 		_values[mappingName.ToLower()] = values;
 	}

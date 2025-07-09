@@ -248,30 +248,10 @@ public class ProductSearchService : AutoService
 			SearchType = searchType,
 			InStockOnly =  inStockOnly
 		};
-
-		// get a copy of the collection, from there collect children, all products within child categories
-		// need to also be considered.
-		var categoryFacets = search.AppliedFacets?.FindAll(f => f.Mapping.ToLower() == "productcategories").ToArray();
-
-		foreach (var facet in categoryFacets)
-		{
-			var childCategoryTasks = facet.Ids
-				.Select(id => GetChildCategories(context, (uint)id).AsTask())
-				.ToList();
-
-			var results = await Task.WhenAll(childCategoryTasks);
-
-			var allChildCategories = results.SelectMany(childList => childList);
-
-			foreach (var child in allChildCategories)
-			{
-				facet.Ids.Add(child.Id);
-			}
-		}
 		
 		search = await Events.Product.Search.Dispatch(context, search);
-
-		if (!search.Handled || search.Products == null)
+		
+		if(!search.Handled || search.Products == null)
 		{
 			return null;
 		}
@@ -361,21 +341,5 @@ public class ProductSearchService : AutoService
 		}
 
 		return vals;
-	}
-
-	private async ValueTask<List<ProductCategory>> GetChildCategories(Context context, uint ParentId)
-	{
-		var cats = new List<ProductCategory>();
-
-		var all = await _categoryService.Where("ParentId = ?", DataOptions.IgnorePermissions).Bind(ParentId).ListAll(context);
-
-		cats.AddRange(all);
-
-		foreach (var child in all)
-		{
-			cats.AddRange(await GetChildCategories(context, child.Id));
-		}
-
-		return cats;
 	}
 }
