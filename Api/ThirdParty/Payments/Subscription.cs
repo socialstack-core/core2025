@@ -58,6 +58,21 @@ namespace Api.Payments
 		/// The payment method to use when billing this subscription.
 		/// </summary>
 		public uint PaymentMethodId;
+		
+		/// <summary>
+		/// If physical products and user chooses method, the delivery option.
+		/// </summary>
+		public uint DeliveryOptionId;
+		
+		/// <summary>
+		/// If physical products, the target address.
+		/// </summary>
+		public uint DeliveryAddressId;
+
+		/// <summary>
+		/// The billing address to use.
+		/// </summary>
+		public uint BillingAddressId;
 
 		/// <summary>
 		/// The subscription locale. Currency is selected based on this.

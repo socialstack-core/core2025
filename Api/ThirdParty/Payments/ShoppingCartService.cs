@@ -24,6 +24,7 @@ namespace Api.Payments
     {
 		private ProductQuantityService _productQuantities;
 		private PaymentMethodService _paymentMethods;
+		private AddressService _addressService;
 		private PurchaseService _purchases;
 		private ProductService _products;
 		private CouponService _coupons;
@@ -37,6 +38,7 @@ namespace Api.Payments
 			PaymentMethodService paymentMethods) : base(Events.ShoppingCart)
         {
 			_productQuantities = productQuantities;
+			_addressService = addressService;
 			_paymentMethods = paymentMethods;
 			_purchases = purchases;
 			_products = products;
@@ -59,16 +61,27 @@ namespace Api.Payments
 				return new ValueTask<JsonField<ShoppingCart, uint>>(field);
 			});
 
-			Events.ShoppingCart.BeforeUpdate.AddEventListener(async (Context context, ShoppingCart toUpdate, ShoppingCart original) => {
-
+			Events.Purchase.BeforeUpdate.AddEventListener(async (Context context, Purchase toUpdate, Purchase original) =>
+			{
 				if (toUpdate == null)
 				{
-					return toUpdate;
+					return null;
 				}
 
-				if (toUpdate.AddressId != original.AddressId && toUpdate.AddressId != 0)
+				// If the purchase is transitioning and is for a shopping cart, then we will potentially update the cart itself.
+				// This is ultimately such that the users cart empties out.
+				if (toUpdate.ContentType == "ShoppingCart" && 
+					toUpdate.Status != original.Status && 
+					toUpdate.Status >= 200 && toUpdate.Status <= 299)
 				{
-					toUpdate.TaxJurisdiction = await addressService.GetTaxJurisdiction(context, toUpdate.AddressId);
+					var cart = await Get(context, toUpdate.ContentId, DataOptions.IgnorePermissions);
+
+					if (cart != null && !cart.CheckedOut)
+					{
+						await Update(context, cart, (Context ctx, ShoppingCart cartToUpdate, ShoppingCart origCart) => {
+							cartToUpdate.CheckedOut = true;
+						}, DataOptions.IgnorePermissions);
+					}
 				}
 
 				return toUpdate;
@@ -96,38 +109,56 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="cart"></param>
-		/// <param name="paymentMethodInfo">
-		/// The raw JSON payment method info. Can be null in BNPL circumstances.
+		/// <param name="checkoutInfo">
+		/// General checkout options such as delivery address (if one is necessary) etc.
 		/// </param>
-		public async ValueTask<PurchaseAndAction> Checkout(Context context, ShoppingCart cart, JToken paymentMethodInfo)
+		public async ValueTask<PurchaseAndAction> Checkout(Context context, ShoppingCart cart, CheckoutInfo checkoutInfo)
 		{
 			// Create a purchase (uses the user's locale from context):
+
+			var paymentMethodInfo = checkoutInfo.PaymentMethod;
+
+			// Billing addr sets the final tax jurisdiction if one is set:
+			var billingAddress = checkoutInfo.BillingAddressId == 0 ? null : 
+					await _addressService.Get(context, checkoutInfo.BillingAddressId, DataOptions.IgnorePermissions);
+			
+			// Get the tax jurisdiction:
+			var taxJurisdiction = billingAddress == null ? cart.TaxJurisdiction : 
+				await _addressService.GetTaxJurisdiction(context, billingAddress);
 
 			// Items are copied from the shopping cart to the purchase.
 			// This prevents any risk of someone manipulating their cart during the fulfilment.
 			var inCart = await GetProductQuantities(context, cart);
 
 			// Calculate the total:
-			var pricingInfo = await _productQuantities.GetPricing(context, inCart, cart.TaxJurisdiction, cart.CouponId);
+			var pricingInfo = await _productQuantities.GetPricing(context, inCart, taxJurisdiction, cart.CouponId);
 
 			var paymentMethod = await _paymentMethods.GetFromJson(context, paymentMethodInfo, pricingInfo.HasSubscriptionProducts);
-			
-			return await _purchases.CreateAndExecute(
-				context, 
-				inCart,
+
+			var purchaseResult = await _purchases.CreateAndExecute(
+				context,
 				pricingInfo,
-				"ShoppingCart", 
+				"ShoppingCart",
 				cart.Id,
-				paymentMethod, 
+				paymentMethod,
 
 
 
 				// *severe tax liability danger*
-				false); // Do not change the tax exclusion state unless you really, really, really know what you are doing.
-						// Unless the customer is foreign, you are probably making a mistake.
-						// B2B in the UK is *NOT* tax exempt!
-						// Yes, it is correct to display someone a VAT
-						// free price and then charge them VAT on top of it anyway!
+				false, // Do not change the tax exclusion state unless you really, really, really know what you are doing.
+					   // Unless the customer is foreign, you are probably making a mistake.
+					   // B2B in the UK is *NOT* tax exempt!
+					   // Yes, it is correct to display someone a VAT
+					   // free price and then charge them VAT on top of it anyway!
+
+				checkoutInfo.DeliveryAddressId,
+				checkoutInfo.BillingAddressId,
+				checkoutInfo.DeliveryOptionId
+			);
+			// The cart itself will have its status updated when the purchase transitions
+			// (i.e. after any action has concluded).
+
+			return purchaseResult;
 		}
 
 		/// <summary>
@@ -167,7 +198,7 @@ namespace Api.Payments
 		{
 			var cart = await Get(context, cartId, DataOptions.IgnorePermissions);
 
-			if (cart.AnonymousCartKey != anonKey)
+			if (cart.AnonymousCartKey != anonKey || cart.CheckedOut)
 			{
 				// Nope!
 				return null;
@@ -208,7 +239,7 @@ namespace Api.Payments
 
 			var cart = await Get(context, cartId, DataOptions.IgnorePermissions);
 
-			if (cart.AnonymousCartKey != anonKey)
+			if (cart.AnonymousCartKey != anonKey || cart.CheckedOut)
 			{
 				// Nope!
 				return null;
@@ -220,7 +251,7 @@ namespace Api.Payments
 		}
 
 		/// <summary>
-		/// Adds the given product to the cart.
+		/// Adds the given product to the cart. Will spawn new carts when necessary.
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="cartId"></param>
@@ -229,26 +260,28 @@ namespace Api.Payments
 		/// <returns></returns>
 		public async ValueTask<ShoppingCart> AddToCart(Context context, uint cartId, string anonKey, List<CartItemChange> itemChanges)
 		{
-			ShoppingCart cart;
+			ShoppingCart cart = null;
 
-			if (cartId == 0)
-			{
-				// Spawn a new cart now.
-				var locale = await context.GetLocale();
-
-				cart = await Create(context, new ShoppingCart() {
-					TaxJurisdiction = locale.DefaultTaxJurisdiction
-				}, DataOptions.IgnorePermissions);
-			}
-			else
+			if (cartId != 0)
 			{
 				// Get the cart:
 				cart = await Get(context, cartId, DataOptions.IgnorePermissions);
 
-				if (cart == null || cart.AnonymousCartKey != anonKey)
+				if (cart == null || cart.AnonymousCartKey != anonKey || cart.CheckedOut)
 				{
-					throw new PublicException("Cart was not found", "cart/not_found");
+					cart = null;
 				}
+			}
+
+			if (cart == null)
+			{
+				// Spawn a new cart.
+				var locale = await context.GetLocale();
+
+				cart = await Create(context, new ShoppingCart()
+				{
+					TaxJurisdiction = locale.DefaultTaxJurisdiction
+				}, DataOptions.IgnorePermissions);
 			}
 
 			// Carts aren't cached but we'll copy it anyway just in case a site does choose to cache them.
@@ -280,7 +313,6 @@ namespace Api.Payments
 				// Update the carts editedUtc such that other checkout
 				// features are aware that the cart has changed.
 				toUpdate.EditedUtc = DateTime.UtcNow;
-				toUpdate.DeliveryOptionId = 0;
 
 				// Set the PQ's:
 				toUpdate.Mappings.Set("ProductQuantities", quantities);
@@ -328,11 +360,6 @@ namespace Api.Payments
 			if (!quantity.Delta.HasValue && !quantity.Total.HasValue)
 			{
 				throw new PublicException("Please specify a quantity. It can either be a specific total quantity or a change in the quantity.", "quantity/missing");
-			}
-
-			if (cart.Status != 0)
-			{
-				throw new PublicException("Cannot modify a cart after it has been checked out.", "cart/closed");
 			}
 
 			// Check if this product is already in this cart:

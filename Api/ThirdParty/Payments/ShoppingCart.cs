@@ -18,10 +18,10 @@ namespace Api.Payments
 	public partial class ShoppingCart : VersionedContent<uint>
 	{
 		/// <summary>
-		/// A shopping cart in the "pending payment" or "payment completed" state is immutable.
+		/// True if the cart has been checked out. It's immutable at that point.
 		/// It could, however, be cloned. This is if someone wants to buy the same thing again for example.
 		/// </summary>
-		public uint Status;
+		public bool CheckedOut;
 
 		/// <summary>
 		/// The cart key used to ensure an anon user can actually update/ load this cart.
@@ -30,24 +30,12 @@ namespace Api.Payments
 		public string AnonymousCartKey;
 
 		/// <summary>
-		/// The target delivery address.
-		/// </summary>
-		public uint AddressId;
-
-		/// <summary>
-		/// The currently selected delivery option ID, if 
-		/// this cart contains any physical delivery items and one is selected.
-		/// </summary>
-		public uint DeliveryOptionId;
-
-		/// <summary>
 		/// An applied coupon, if any. Not directly settable but can be included.
 		/// </summary>
 		public uint CouponId;
 
 		/// <summary>
-		/// The established tax jurisdiction for this shopping cart.
-		/// If a delivery address is unknown then the users locale is used as an initial value.
+		/// The established tax jurisdiction for this shopping cart (based on the context at the time the cart was created).
 		/// </summary>
 		[JsonIgnore]
 		public string TaxJurisdiction;

@@ -641,7 +641,7 @@ namespace Api.Payments
 			var pricingInfo = await _productQuantities.GetPricing(context, inSub, subscription.TaxJurisdiction, subscription.CouponId);
 
 			return await _purchases.CreateAndExecute(
-                userContext, inSub, pricingInfo, "Subscription", 
+                userContext, pricingInfo, "Subscription", 
                 subscription.Id, method, 
                 
                 // **don't change this false unless you know what you're doing and the site has been set up accordingly!
@@ -649,6 +649,10 @@ namespace Api.Payments
                 // B2B VAT registered corps in the UK for example still charge VAT to each other.
                 false, 
                 
+                subscription.DeliveryAddressId,
+                subscription.BillingAddressId,
+                subscription.DeliveryOptionId,
+
                 timePeriodKey
             );
         }

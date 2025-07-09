@@ -21,6 +21,12 @@ public class DeliveryFakeOptionService : AutoService
 	public DeliveryFakeOptionService()
 	{
 
+		Events.PaymentMethod.AuthoriseBuyNowPayLater.AddEventListener((Context context, BuyNowPayLater bnpl) => {
+			// Authorized for all logged in users here.
+			bnpl.Authorized = true;
+			return new ValueTask<BuyNowPayLater>(bnpl);
+		});
+
 		Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 		{
 			if (builder == null)

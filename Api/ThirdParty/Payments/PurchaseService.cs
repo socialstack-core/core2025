@@ -151,8 +151,11 @@ namespace Api.Payments
 			
 			Events.Purchase.BeforeCreate.AddEventListener(async (Context context, Purchase purchase) => {
 
-				// Ensure paymentGatewayId is set:
-				await EnsureGatewayId(context, purchase);
+				if (!purchase.BuyNowPayLater)
+				{
+					// Ensure paymentGatewayId is set:
+					await EnsureGatewayId(context, purchase);
+				}
 
 				// Ensure a locale is set:
 				if (purchase.LocaleId == 0)
@@ -248,34 +251,35 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="toPurchase"></param>
-		/// <param name="productQuantities"></param>
+		/// <param name="productAndPricing"></param>
 		/// <returns>True if at least 1 was added.</returns>
-		public async ValueTask<bool> AddProductsUnsaved(Context context, Purchase toPurchase, IEnumerable<ProductQuantity> productQuantities)
+		public async ValueTask<bool> AddProductsUnsaved(Context context, Purchase toPurchase, ProductQuantityPricing productAndPricing)
 		{
-			if (productQuantities == null || toPurchase == null)
+			if (productAndPricing == null || toPurchase == null)
+			{
+				return false;
+			}
+
+			var contents = productAndPricing.Contents;
+
+			if (contents == null)
 			{
 				return false;
 			}
 
 			var atLeastOne = false;
 
-			foreach (var pq in productQuantities)
+			foreach (var pq in contents)
 			{
-				// Must clone it:
+				// Must clone it and set the ordered totals:
 				var purchaseQuantity = new ProductQuantity()
 				{
 					ProductId = pq.ProductId,
 					Quantity = pq.Quantity,
+					OrderedCurrencyCode = productAndPricing.CurrencyCode,
+					OrderedTotal = productAndPricing.Total,
+					OrderedTotalLessTax = productAndPricing.TotalLessTax
 				};
-
-				// Inform that the given product quantity is being added to a purchase and is ready to be charged.
-				// This is the place to inject usage based on reading some other dataset(s).
-				purchaseQuantity = await Events.ProductQuantity.BeforeAddToPurchase.Dispatch(context, purchaseQuantity, toPurchase);
-
-				if (purchaseQuantity == null)
-				{
-					continue;
-				}
 
 				var result = await _prodQuantities.Create(context, purchaseQuantity, DataOptions.IgnorePermissions);
 				
@@ -383,7 +387,6 @@ namespace Api.Payments
 		/// Creates a purchase and immediately proceeds to executing it.
 		/// </summary>
 		/// <param name="context"></param>
-		/// <param name="items"></param>
 		/// <param name="pricingInfo"></param>
 		/// <param name="contentTypeName"></param>
 		/// <param name="contentId"></param>
@@ -392,14 +395,24 @@ namespace Api.Payments
 		/// For example, a UK VAT registered business selling to another VAT registered business in the EU can exclude tax but must use the VEIS system.
 		/// UK B2B is not tax exempt in this way.</param>
 		/// <param name="dupeKey"></param>
+		/// <param name="deliveryAddressId"></param>
+		/// <param name="billingAddressId"></param>
+		/// <param name="deliveryOptionId"></param>
 		/// <returns></returns>
-		public async ValueTask<PurchaseAndAction> CreateAndExecute(Context context, IEnumerable<ProductQuantity> items, ProductQuantityPricing pricingInfo, string contentTypeName, uint contentId, PaymentMethod paymentMethod, bool excludeTax, ulong dupeKey = 0)
+		public async ValueTask<PurchaseAndAction> CreateAndExecute(
+			Context context, ProductQuantityPricing pricingInfo, 
+			string contentTypeName, uint contentId, 
+			PaymentMethod paymentMethod, bool excludeTax, 
+			uint deliveryAddressId, uint billingAddressId, uint deliveryOptionId, 
+			ulong dupeKey = 0)
 		{
 			var locale = await context.GetLocale();
 
 			// Throw if the info has any error info in it (such as invalid coupons, pricing issues etc).
 			_prodQuantities.RequireNoErrors(pricingInfo);
-			
+
+			var toPay = excludeTax ? pricingInfo.TotalLessTax : pricingInfo.Total;
+
 			var purchase = new Purchase()
 			{
 				TaxJurisdiction = pricingInfo.TaxJurisdiction,
@@ -410,14 +423,20 @@ namespace Api.Payments
 				ContentAntiDuplication = dupeKey,
 				HasSubscriptions = pricingInfo.HasSubscriptionProducts,
 				// Tax exclusions are highly regulated. Do not use unless you know the relevant laws.
-				TotalCost = excludeTax ? pricingInfo.TotalLessTax : pricingInfo.Total,
 				ExcludeTax = excludeTax,
+				TotalCost = pricingInfo.Total,
+				TotalCostLessTax = pricingInfo.TotalLessTax,
+				DeliveryAddressId = deliveryAddressId,
+				BillingAddressId = billingAddressId,
+				DeliveryOptionId = deliveryOptionId,
+				BuyNowPayLater = paymentMethod == null,
+				Status = paymentMethod == null ? (uint)(toPay == 0 ? 202 : 201): 0, // Straight to completion. Free stuff goes to 202, bnpl unpaid 201.
 				PaymentMethodId = paymentMethod == null ? 0 : paymentMethod.Id
 			};
 
 			// Copying in the product set - this creates new ones, it *does not* use the same PQ Id.
 			// This is to avoid modding the quantity during the payment being processed:
-			await AddProductsUnsaved(context, purchase, items);
+			await AddProductsUnsaved(context, purchase, pricingInfo);
 
 			// Save & create:
 			purchase = await Create(context, purchase, DataOptions.IgnorePermissions);
@@ -452,7 +471,9 @@ namespace Api.Payments
 				};
 			}
 
-			if (purchase.TotalCost == 0)
+			var toPay = purchase.ExcludeTax ? purchase.TotalCostLessTax : purchase.TotalCost;
+
+			if (toPay == 0)
 			{
 				if (purchase.HasSubscriptions)
 				{
@@ -476,8 +497,10 @@ namespace Api.Payments
 					}
 
 					// Ask the gateway to authorise:
-					return await gateway.AuthorisePurchase(purchase, new ProductCost() { 
-						Amount = purchase.TotalCost,
+					return await gateway.AuthorisePurchase(purchase, new ProductCost()
+					{
+						// Legal liability danger - do not set ExcludeTax to true unless you know what you are doing.
+						Amount = toPay,
 						CurrencyCode = purchase.CurrencyCode
 					}, paymentMethod);
 				}
@@ -517,7 +540,8 @@ namespace Api.Payments
 
 			// Ask the gateway to do the thing:
 			return await gateway.ExecutePurchase(purchase, new ProductCost() {
-				Amount = purchase.TotalCost,
+				// Legal liability danger - do not set ExcludeTax to true unless you know what you are doing.
+				Amount = toPay,
 				CurrencyCode = purchase.CurrencyCode
 			}, paymentMethod);
 		}

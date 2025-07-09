@@ -449,8 +449,8 @@ namespace Api.Payments
 				// It might have instantly completed or instantly failed. We can find out from the status:
 				toUpdate.Status = 101;
 				toUpdate.TotalCost = totalCost.Amount;
+				toUpdate.TotalCostLessTax = totalCost.AmountLessTax;
 				toUpdate.CurrencyCode = totalCost.CurrencyCode;
-
 			});
 
 			var gatewayTokenCustomerEnd = paymentMethod.GatewayToken.IndexOf('/');

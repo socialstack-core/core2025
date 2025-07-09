@@ -167,12 +167,6 @@ namespace Api.Eventing
 	public partial class ProductQuantityEventGroup : EventGroup<ProductQuantity>
 	{
 
-		/// <summary>
-		/// Called just before a given item is about to be added to a purchase for charging.
-		/// This event is the best place to the purchase with e.g. usage stats for the given product if the site is using a "use now pay later" mechanism.
-		/// </summary>
-		public EventHandler<ProductQuantity, Purchase> BeforeAddToPurchase;
-		
 	}
 
 	/// <summary>

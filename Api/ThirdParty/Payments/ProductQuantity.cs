@@ -27,6 +27,21 @@ namespace Api.Payments
 		/// The quantity.
 		/// </summary>
 		public ulong Quantity;
+
+		/// <summary>
+		/// The line item total (incl tax). Present only on Purchases.
+		/// </summary>
+		public ulong OrderedTotal;
+
+		/// <summary>
+		/// The line item total (excl tax). Present only on Purchases.
+		/// </summary>
+		public ulong OrderedTotalLessTax;
+
+		/// <summary>
+		/// The ordered currency code. Present only on Purchases.
+		/// </summary>
+		public string OrderedCurrencyCode;
 	}
 
 }

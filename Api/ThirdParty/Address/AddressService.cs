@@ -47,6 +47,22 @@ public partial class AddressService : AutoService<Address>
 	public async ValueTask<string> GetTaxJurisdiction(Context context, uint addressId)
 	{
 		var addr = await Get(context, addressId);
+		return await GetTaxJurisdiction(context, addr);
+	}
+
+	/// <summary>
+	/// Gets the ISO 3166 tax jurisdiction of the given address.
+	/// </summary>
+	/// <param name="context"></param>
+	/// <param name="address"></param>
+	/// <returns></returns>
+	public async ValueTask<string> GetTaxJurisdiction(Context context, Address address)
+	{
+		if (address == null)
+		{
+			var locale = await context.GetLocale();
+			return locale.DefaultTaxJurisdiction;
+		}
 
 		// Todo! Can be e.g. specific US states etc.
 		return "GB";

@@ -60,7 +60,7 @@ namespace Api.Payments
 					cartId, DataOptions.IgnorePermissions
 				);
 
-			if (cart == null || cart.AnonymousCartKey != anonKey)
+			if (cart == null || cart.AnonymousCartKey != anonKey || cart.CheckedOut)
 			{
 				return null;
 			}
@@ -70,7 +70,7 @@ namespace Api.Payments
 
 		/// <summary>
 		/// Adds or removes items from the specified cart. The contextual user must have access to the cart.
-		/// If the cart ID is zero, a new cart will be spawned and returned.
+		/// If the cart ID is zero, or the current cart is invalid/ checked out, a new cart will be spawned and returned.
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="itemChanges"></param>
@@ -87,7 +87,7 @@ namespace Api.Payments
         }
 
 		/// <summary>
-		/// Checkout the cart.
+		/// Checkout the cart. Fails if the cart is already checked out etc.
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="checkout"></param>
@@ -97,7 +97,7 @@ namespace Api.Payments
 		{
 			var cart = await (_service as ShoppingCartService).Get(context, checkout.ShoppingCartId);
 
-			if (cart == null)
+			if (cart == null || cart.CheckedOut)
 			{
 				return null;
 			}
@@ -106,7 +106,7 @@ namespace Api.Payments
 				.Checkout(
 					context,
 					cart,
-					checkout.PaymentMethod
+					checkout
 				);
 		}
 
@@ -123,6 +123,11 @@ namespace Api.Payments
 		public uint ShoppingCartId;
 
 		/// <summary>
+		/// Anon cart key (albeit users are expected to be logged in, but they still won't own the cart).
+		/// </summary>
+		public string AnonymousCartKey;
+
+		/// <summary>
 		/// Delivery address ID if necessary.
 		/// </summary>
 		public uint DeliveryAddressId;
@@ -131,6 +136,11 @@ namespace Api.Payments
 		/// Billing address if necessary.
 		/// </summary>
 		public uint BillingAddressId;
+		
+		/// <summary>
+		/// Delivery option if necessary.
+		/// </summary>
+		public uint DeliveryOptionId;
 
 		/// <summary>
 		/// If using a saved payment method, the ID of it or the details for a one off payment use.

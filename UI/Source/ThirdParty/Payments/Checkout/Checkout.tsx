@@ -174,75 +174,86 @@ const Checkout: React.FC<CheckoutProps> = (props) => {
 						{estimates ? <DeliveryEstimates estimates={estimates} value={deliveryDate} setValue={setDeliveryDate} /> : <Loading />}
 					</CheckoutSection>
 				</li>
-
-				<li className={currentStep < CheckoutStep.PaymentMethod ? "payment-checkout__step--disabled" : ""}>
-					{/* payment method */}
-					<CheckoutSection title={`Payment method`} enabled={currentStep >= CheckoutStep.PaymentMethod} >
-						{deferPayment ? <>
-							{`Buy now pay later: This order will be billed to your account.`}
-						</> :
-							<Input type='payment' name='paymentMethod' label='Payment method' validate={['Required']} />
-						}
-					</CheckoutSection>
-				</li>
-
-				<li className={currentStep < CheckoutStep.TermsConditions ? "payment-checkout__step--disabled" : ""}>
-					{/* terms and conditions / privacy policy */}
-					<CheckoutSection title={`Review terms`} enabled={currentStep >= CheckoutStep.TermsConditions}>
-						{/*
-						<Input type="checkbox" className="payment-checkout__terms"
-							checked={acceptedTerms ? true : undefined}
-							onChange={e => setAcceptedTerms(e.target.checked)} label={<>
-							{`By placing your order you agree to both the `}
-							<Link href="/terms-and-conditions" external>
-								{`terms and conditions`}
-							</Link>
-							{` and `}
-							<Link href="/privacy-policy" external>
-								{`privacy policy`}
-							</Link>.
-						</>} />
-						*/}
-						<p>
-							{`Please note, by placing your order you agree to both the `}
-							<Link href="/terms-and-conditions" external>
-								{`terms and conditions`}
-							</Link>
-							{` and `}
-							<Link href="/privacy-policy" external>
-								{`privacy policy`}
-							</Link>.
-						</p>
-					</CheckoutSection>
-				</li>
-
 			</ol>
-
-			<Form 
+			<Form
 				action={shoppingCartApi.checkout}
 				failedMessage={`Unable to purchase`}
 				loadingMessage={`Purchasing..`}
+				onValues={vals => {
+					var cartRef = getCartId();
+					vals.shoppingCartId = cartRef.id;
+					vals.anonymousCartKey = cartRef.anonKey;
+					vals.billingAddressId = ((sameAsDelivery ? deliveryAddress?.id : billingAddress?.id) || 0) as int;
+					vals.deliveryAddressId = (deliveryAddress?.id || 0) as int;
+					vals.deliveryOptionId = (deliveryDate?.id || 0) as int;
+
+					return vals;
+				}}
 				onSuccess={info => {
-				
-					// Clear cart:
-					emptyCart();
-				
-					if (info?.action){
+
+					if (info?.action) {
 						// Go to it now:
 						window.location.href = info.action;
 					} else {
 						var status = info?.purchase?.status || 0;
 
-						if (status >= 200 && status < 300){
+						if (status >= 200 && status < 300) {
+							// Clear cart:
+							emptyCart();
+
 							setPage('/cart/complete?status=success');
-						}else if(status < 300){
+						} else if (status < 300) {
 							setPage('/cart/complete?status=pending');
-						}else{
+						} else {
 							setPage('/cart/complete?status=failed');
 						}
 					}
 				}}
 			>
+				<ol>
+					<li className={currentStep < CheckoutStep.PaymentMethod ? "payment-checkout__step--disabled" : ""}>
+						{/* payment method */}
+						<CheckoutSection title={`Payment method`} enabled={currentStep >= CheckoutStep.PaymentMethod} >
+							{deferPayment ? <>
+								{`Buy now pay later: This order will be billed to your account.`}
+							</> :
+								<Input type='payment' name='paymentMethod' label='Payment method' validate={['Required']} />
+							}
+						</CheckoutSection>
+					</li>
+
+					<li className={currentStep < CheckoutStep.TermsConditions ? "payment-checkout__step--disabled" : ""}>
+						{/* terms and conditions / privacy policy */}
+						<CheckoutSection title={`Review terms`} enabled={currentStep >= CheckoutStep.TermsConditions}>
+							{/*
+							<Input type="checkbox" className="payment-checkout__terms"
+								checked={acceptedTerms ? true : undefined}
+								onChange={e => setAcceptedTerms(e.target.checked)} label={<>
+								{`By placing your order you agree to both the `}
+								<Link href="/terms-and-conditions" external>
+									{`terms and conditions`}
+								</Link>
+								{` and `}
+								<Link href="/privacy-policy" external>
+									{`privacy policy`}
+								</Link>.
+							</>} />
+							*/}
+							<p>
+								{`Please note, by placing your order you agree to both the `}
+								<Link href="/terms-and-conditions" external>
+									{`terms and conditions`}
+								</Link>
+								{` and `}
+								<Link href="/privacy-policy" external>
+									{`privacy policy`}
+								</Link>.
+							</p>
+						</CheckoutSection>
+					</li>
+
+				</ol>
+
 				<div className="payment-checkout__footer">
 					<Button type="submit" disabled={currentStep < CheckoutStep.TermsConditions || !acceptedTerms ? true : undefined}>
 						<i className="fal fa-fw fa-credit-card" />

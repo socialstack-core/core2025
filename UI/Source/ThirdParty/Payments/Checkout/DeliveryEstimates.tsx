@@ -36,7 +36,7 @@ const DeliveryEstimates: React.FC<DeliveryEstimatesProps> = (props) => {
 			// For example, you can choose to get things as soon as possible with 5/6 items showing up tomorrow
 			// and 1/6 the day after. Or you can choose to get all 6 the day after.
 
-			return <Input type="radio" name={"delivery"} value={estimate.id.toString()} checked={value?.id == estimate.id} noWrapper
+			return <Input type="radio" name={"delivery_estimate"} value={estimate.id.toString()} checked={value?.id == estimate.id} noWrapper
 				onChange={() => setValue(estimate)}
 				label={estimateDetail.deliveries.map(deliveryInfo => {
 					// DeliveryInfo C# type, in DeliveryEstimate.cs

@@ -38,9 +38,9 @@ namespace Api.Payments
 		/// <param name="cart"></param>
 		/// <param name="options"></param>
 		/// <returns></returns>
-		public async ValueTask<List<DeliveryOption>> EstimateDelivery(Context context, ShoppingCart cart, CartEstimation? options = null)
+		public async ValueTask<List<DeliveryOption>> EstimateDelivery(Context context, ShoppingCart cart, CartEstimation options)
 		{
-			uint addressId = cart.AddressId != 0 ? cart.AddressId : options == null ? 0 : options.Value.DeliveryAddressId;
+			uint addressId = options.DeliveryAddressId;
 
 			var address = await _addresses.Get(context, addressId, DataOptions.IgnorePermissions);
 
@@ -61,6 +61,12 @@ namespace Api.Payments
 			var currentOpts = await _options
 				.Where("ShoppingCartId=?", DataOptions.IgnorePermissions)
 				.Bind(cart.Id).ListAll(context);
+
+			if (cart.CheckedOut)
+			{
+				// Readonly
+				return currentOpts;
+			}
 
 			// If the cart itself has not changed since the last estimate
 			// then return the prior set.
