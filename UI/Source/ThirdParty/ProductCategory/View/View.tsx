@@ -1,4 +1,4 @@
-import productCategoryApi, { ProductCategory } from "Api/ProductCategory";
+import {ProductCategory} from "Api/ProductCategory";
 import CategoryFilters from 'UI/ProductCategory/Filters';
 import ProductList from 'UI/Product/List';
 import Loading from 'UI/Loading';
@@ -7,11 +7,10 @@ import useApi from "UI/Functions/UseApi";
 import Input from 'UI/Input';
 import DualRange from 'UI/DualRange';
 import Promotion from 'UI/Promotion';
-import { useEffect, useState } from "react";
-import searchApi, { ProductSearchType } from "Api/ProductSearchController";
-import { ProductIncludes } from "Api/Includes";
-import { useRouter } from "UI/Router";
-import { AttributeFacetGroup, AttributeValueFacet, ProductCategoryFacet } from "UI/Product/Search/Facets";
+import {useState} from "react";
+import searchApi, {ProductSearchType, SortDirection} from "Api/ProductSearchController";
+import {useRouter} from "UI/Router";
+import {AttributeFacetGroup, AttributeValueFacet, ProductCategoryFacet} from "UI/Product/Search/Facets";
 import FilterList from "UI/Product/Search/FilterList";
 
 /**
@@ -72,6 +71,10 @@ const View: React.FC<ViewProps> = (props) => {
 			minPrice: minPrice,
 			maxPrice: maxPrice,
 			inStockOnly: showInStockOnly,
+			sortOrder: {
+				field: "_id",
+				direction: SortDirection.DESC
+			},
 			appliedFacets: [
 				{
 					mapping: "productcategories",

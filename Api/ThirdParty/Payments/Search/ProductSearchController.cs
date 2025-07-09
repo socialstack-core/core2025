@@ -50,7 +50,15 @@ public partial class ProductSearchController : AutoController
 	[HttpPost("faceted")]
 	public async ValueTask<ContentStream<Product, uint>?> Faceted(Context context, [FromBody] ProductSearchRequest request)
 	{
-		var resultSet = await _productSearchService.Search(context, request.Query, request.SearchType, request.InStockOnly, request.AppliedFacets, request.PageOffset);
+		var resultSet = await _productSearchService.Search(
+			context, 
+			request.Query, 
+			request.SearchType, 
+			request.SortOrder, 
+			request.InStockOnly, 
+			request.AppliedFacets, 
+			request.PageOffset
+		);
 
 		if (resultSet == null)
 		{
@@ -167,7 +175,10 @@ public class ProductSearchRequest
 	/// In stock only.
 	/// </summary>
 	public bool InStockOnly = false;
+	
+	public SortOrder SortOrder;
 }
+
 
 /// <summary>
 /// An enum to set whether the query is reductive or expansive. 

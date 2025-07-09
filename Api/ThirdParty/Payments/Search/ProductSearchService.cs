@@ -115,6 +115,11 @@ public class ProductSearch
 	/// In stock only.
 	/// </summary>
 	public bool InStockOnly = false;
+	
+	/// <summary>
+	/// The sort order.
+	/// </summary>
+	public SortOrder SortOrder;
 }
 
 /// <summary>
@@ -222,7 +227,7 @@ public class ProductSearchService : AutoService
 	/// <param name="pageSize"></param>
 	/// <returns></returns>
 	public async ValueTask<ProductSearch> Search(
-		Context context, string query, ProductSearchType searchType, bool inStockOnly = false, List<ProductSearchAppliedFacet> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
+		Context context, string query, ProductSearchType searchType,  SortOrder sort, bool inStockOnly = false,List<ProductSearchAppliedFacet> appliedFacets = null, int pageOffset = 0, int pageSize = 50)
 	{
 		if (pageOffset < 0)
 		{
@@ -246,7 +251,8 @@ public class ProductSearchService : AutoService
 			PageSize = pageSize,
 			AppliedFacets = appliedFacets,
 			SearchType = searchType,
-			InStockOnly =  inStockOnly
+			InStockOnly =  inStockOnly,
+			SortOrder = sort
 		};
 		
 		search = await Events.Product.Search.Dispatch(context, search);
@@ -342,4 +348,17 @@ public class ProductSearchService : AutoService
 
 		return vals;
 	}
+}
+
+
+public struct SortOrder
+{
+	public string Field;
+
+	public SortDirection Direction;
+}
+
+public enum SortDirection
+{
+	ASC, DESC
 }

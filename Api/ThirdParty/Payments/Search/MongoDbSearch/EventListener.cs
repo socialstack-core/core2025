@@ -218,6 +218,7 @@ public class MongoSearchEventListener
 				var pipeline = new[]
 				{
 					new BsonDocument("$search", searchStage),
+					new BsonDocument("$sort", new BsonDocument(search.SortOrder.Field, search.SortOrder.Direction == SortDirection.ASC ? 1 : -1)),
 					new BsonDocument("$facet", new BsonDocument
 					{
 						{ "products", new BsonArray
@@ -259,7 +260,7 @@ public class MongoSearchEventListener
 								new BsonDocument("$count", "count")
 							}
 						}
-					})
+					}),
 				};
 
 				var cursor = await productCollection.AggregateAsync<BsonDocument>(pipeline);
@@ -292,7 +293,6 @@ public class MongoSearchEventListener
 				// Non-atlas search - doesn't perform fulltext search or return facets.
 				// Basic facets are instead derived from the (paginated) returned product set only
 				// (that happens in ProductSearchService).
-
 				var filter = Builders<Product>.Filter.Or(
 					Builders<Product>.Filter.Regex("Name.en", new BsonRegularExpression(query, "i")),
 					Builders<Product>.Filter.Regex("DescriptionRaw", new BsonRegularExpression(query, "i"))
@@ -335,10 +335,24 @@ public class MongoSearchEventListener
 					}
 
 					filter = Builders<Product>.Filter.And(childFilters);
+					
 				}
+				
+				var sortBuilder = Builders<Product>.Sort;
+
+				SortDefinition<Product> sortDefinition;
+
+				
+				var field = search.SortOrder.Field;
+				var direction = search.SortOrder.Direction == SortDirection.ASC;
+
+				sortDefinition = direction
+					? sortBuilder.Ascending(field)
+					: sortBuilder.Descending(field);
 
 				var products = await productCollection
 					.Find(filter)
+					.Sort(sortDefinition)
 					.Limit(search.PageSize)
 					.ToListAsync();
 

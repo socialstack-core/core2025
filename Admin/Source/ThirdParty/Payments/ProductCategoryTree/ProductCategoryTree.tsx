@@ -8,7 +8,7 @@ import Loading from "UI/Loading";
 import { MultiSelectBox } from "./MultiSelect";
 
 import productCategoryApi, {ProductCategory} from "Api/ProductCategory";
-import searchApi, {ProductSearchAppliedFacet, ProductSearchType} from "Api/ProductSearchController";
+import searchApi, {ProductSearchAppliedFacet, ProductSearchType, SortDirection} from "Api/ProductSearchController";
 import { ProductIncludes} from "Api/Includes";
 import ProductApi, { Product } from "Api/Product";
 import { ApiList } from "UI/Functions/WebRequest";
@@ -16,6 +16,8 @@ import { ProductAttribute } from "Api/ProductAttribute";
 import { ProductAttributeValue } from "Api/ProductAttributeValue";
 import Link from "UI/Link";
 import Button from "UI/Button";
+import {SortField} from "Admin/AutoList";
+import Time from "UI/Time";
 
 /**
  * Props for the ProductCategoryTree component
@@ -158,6 +160,8 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 	const [pageOffset, setPageOffset] = useState(0);
 	const [attributeFacets, setAttributeFacets] = useState<ProductSearchAppliedFacet[]>(hydrateFacets());
 	const [loading, setLoading] = useState<boolean>(false);
+	
+	const [sortOrder, setSortOrder] = useState<SortField>({ field: '_id', direction: 'asc' });
 
 	const { pageState } = useRouter();
 	
@@ -180,7 +184,11 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 				ids: categoryFacets
 			}
 		],
-		searchType: ProductSearchType.Reductive
+		searchType: ProductSearchType.Reductive,
+		sortOrder: {
+			field: sortOrder.field,
+			direction: sortOrder.direction === 'asc' ? SortDirection.ASC : SortDirection.DESC
+		}
 	};
 
 	useEffect(() => {
@@ -214,7 +222,7 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 				setSearchResults(response);
 				setLoading(false);
 			});
-	}, [props.query, attributeFacets]);
+	}, [props.query, attributeFacets, sortOrder]);
 
 	useEffect(() => {
 		
@@ -237,7 +245,16 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 		
 	}, [props.query]);
 	
-	
+	const changeSortField = (field: string) => {
+		if (field == sortOrder.field) {
+			sortOrder.direction = sortOrder.direction === 'asc' ? 'desc' : 'asc';
+			setSortOrder({...sortOrder});
+			return;
+		}
+		setSortOrder({
+			field, direction: 'asc'
+		})
+	}
 
 	return (
 		<div className="admin-page__internal">
@@ -261,13 +278,46 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 							value={attributeFacets}
 						/>
 					)}
-					<table className="table">
+					<table className="table products-table">
 						<thead>
 						<tr>
-							<th>Id</th>
+							<th 
+								onClick={() => changeSortField('_id')}
+								className={sortOrder.field === '_id' ? 'active' : ''}
+							>
+								Id
+								{sortOrder.field === '_id' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
+							</th>
 							<th>Image</th>
-							<th>Name</th>
-							<th>SKU</th>
+							<th 
+								onClick={() => changeSortField('Name.en')}
+								className={sortOrder.field === 'name.en' ? 'active' : ''}
+							>
+								Name
+								{sortOrder.field === 'name.en' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
+							</th>
+							<th 
+								onClick={() => changeSortField('Sku')}
+								className={sortOrder.field === 'Sku' ? 'active' : ''}
+							>
+								SKU
+								{sortOrder.field === 'Sku' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
+							</th>
+							<th
+								onClick={() => changeSortField('CreatedUtc')}
+								className={sortOrder.field === 'CreatedUtc' ? 'active' : ''}
+							>
+								Created
+								{sortOrder.field === 'CreatedUtc' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
+							</th>
+							<th
+								onClick={() => changeSortField('EditedUtc')}
+								className={sortOrder.field === 'EditedUtc' ? 'active' : ''}
+							>
+								Created
+								{sortOrder.field === 'EditedUtc' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
+							</th>
+
 							<th>Actions</th>
 						</tr>
 						</thead>
@@ -278,6 +328,8 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 								<td>{product.featureRef ? <Image fileRef={product.featureRef} /> : "No image available"}</td>
 								<td>{product.name}</td>
 								<td>{product.sku}</td>
+								<td><Time date={product.createdUtc} /></td>
+								<td><Time date={product.editedUtc} /></td>
 								<td>
 									<Link href={'/en-admin/product/' + product.id}>
 										<Button>{`Edit product`}</Button>
