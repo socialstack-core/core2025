@@ -78,7 +78,7 @@ const View: React.FC<ViewProps> = (props) => {
 			})} />}
 
 			{/* product images */}
-			<ProductCarousel product={product} />
+			<ProductCarousel product={product} currentVariant={currentVariant}/>
 
 			{/* featured / title / stock info */}
 			<ProductHeader product={product} currentVariant={currentVariant} />

@@ -11,6 +11,7 @@ interface CarouselProps {
 	 * The content to display in this signpost.
 	 */
 	product: Product,
+	currentVariant?: Product
 }
 
 /**
@@ -18,14 +19,17 @@ interface CarouselProps {
  * @param props React props.
  */
 const Carousel: React.FC<CarouselProps> = (props) => {
-	const { product } = props;
+	const { product, currentVariant } = props;
+
 	let id = "carousel";
 
 	useEffect(() => {
 		//id = useId();
 	}, []);
 
-	const hasRelatedImages = product.productImages?.length > 0;
+	var activeProduct = currentVariant || product;
+
+	const hasRelatedImages = activeProduct.productImages?.length > 0;
 
 	let productImagesClasses = ["ui-product-images"];
 
@@ -65,7 +69,7 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 			{hasRelatedImages && <>
 				{/* hidden radio buttons (these drive image selection) */}
 				<input type="radio" name="carousel" id={`${id}_1`} checked />
-				{product.productImages?.map((ref, i) => {
+				{activeProduct.productImages?.map((ref, i) => {
 					return <input type="radio" name="carousel" id={`${id}_${i+2}`} />
 				})}
 
@@ -74,7 +78,7 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 					<label htmlFor={`${id}_1`} className="ui-product-images__thumbnail">
 						<Image size={100} fileRef={product.featureRef || defaultImageRef} />
 					</label>
-					{product.productImages?.map((productImage, i) => {
+					{activeProduct.productImages?.map((productImage, i) => {
 						return <>
 							<label htmlFor={`${id}_${i + 2}`} className="ui-product-images__thumbnail">
 								<Image size={100} fileRef={productImage.ref || defaultImageRef} />
@@ -87,7 +91,7 @@ const Carousel: React.FC<CarouselProps> = (props) => {
 
 			{/* larger image preview with full-size preview on click */}
 			<div className="ui-product-images__slides">
-				{renderImage(product.featureRef)}
+				{renderImage(activeProduct.featureRef)}
 				{product.productImages?.map((productImage, i) => {
 					return renderImage(productImage.ref);
 				})}
