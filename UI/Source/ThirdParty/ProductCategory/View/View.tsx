@@ -42,7 +42,7 @@ const View: React.FC<ViewProps> = (props) => {
 	const [showInStockOnly, setShowInStockOnly] = useState(false);
 	
 	const [viewStyle, setViewStyle] = useState('large-thumbs');
-	const [sortOrder, setSortOrder] = useState('most-popular');
+	const [sortOrder, setSortOrder] = useState('relevance');
 	const [pagination, setPagination] = useState('page1');
 	const [minPrice, setMinPrice] = useState<double>(1);
 	const [maxPrice, setMaxPrice] = useState<double>(5000);
@@ -73,7 +73,7 @@ const View: React.FC<ViewProps> = (props) => {
 			maxPrice: maxPrice,
 			inStockOnly: showInStockOnly,
 			sortOrder: {
-				field: "_id",
+				field: "relevance",
 				direction: SortDirection.DESC
 			},
 			appliedFacets: [
@@ -216,8 +216,8 @@ const View: React.FC<ViewProps> = (props) => {
 
 			<header className="ui-productcategory-view__header">
 				<Input type="select" aria-label={`Sort by`} value={sortOrder} noWrapper>
-					<option value="most-popular">
-						{`Most popular`}
+					<option value="relevance">
+						{`Relevance`}
 					</option>
 				</Input>
 
@@ -229,9 +229,9 @@ const View: React.FC<ViewProps> = (props) => {
 				</Input>
 
 				<div className="btn-group ui-btn-group" role="group" aria-label={`Select view style`}>
-					<Input type="radio" noWrapper label={`List`} groupIcon="fr-list" groupVariant="primary" value={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
-					<Input type="radio" noWrapper label={`Small thumbnails`} groupIcon="fr-th-list" groupVariant="primary" value={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
-					<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
+					<Input type="radio" noWrapper label={`List`} groupIcon="fr-list" groupVariant="primary" value='list' checked={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
+					<Input type="radio" noWrapper label={`Small thumbnails`} groupIcon="fr-th-list" groupVariant="primary" value='small-thumbs' checked={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
+					<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value='large-thumbs' checked={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
 				</div>
 			</header>
 

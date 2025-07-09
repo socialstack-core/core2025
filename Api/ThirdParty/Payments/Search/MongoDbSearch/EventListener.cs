@@ -105,6 +105,7 @@ public class MongoSearchEventListener
 				}
 
 				var compoundDoc = new BsonDocument();
+
 				if (!string.IsNullOrEmpty(query))
 				{
 					compoundDoc["should"] = new BsonArray
@@ -129,6 +130,8 @@ public class MongoSearchEventListener
 							{ "path", "DescriptionRaw" }
 						})
 					};
+
+					compoundDoc["minimumShouldMatch"] = 1;
 				}
 
 				List<BsonDocument> filterClauses = new();
@@ -215,11 +218,7 @@ public class MongoSearchEventListener
 					{ "returnStoredSource", true }
 				};
 
-				var pipeline = new[]
-				{
-					new BsonDocument("$search", searchStage),
-					new BsonDocument("$sort", new BsonDocument(search.SortOrder.Field, search.SortOrder.Direction == SortDirection.ASC ? 1 : -1)),
-					new BsonDocument("$facet", new BsonDocument
+				var facetStage = new BsonDocument("$facet", new BsonDocument
 					{
 						{ "products", new BsonArray
 							{
@@ -260,8 +259,21 @@ public class MongoSearchEventListener
 								new BsonDocument("$count", "count")
 							}
 						}
-					}),
-				};
+					});
+
+				// Relevance mode (default)
+				var pipeline = (string.IsNullOrEmpty(search.SortOrder.Field) || search.SortOrder.Field == "relevance") ? new[] {
+					new BsonDocument("$search", searchStage),
+					facetStage
+				} :
+				[
+					new BsonDocument("$search", searchStage),
+					new BsonDocument(
+						"$sort",
+						new BsonDocument(search.SortOrder.Field, search.SortOrder.Direction == SortDirection.ASC ? 1 : -1)
+					),
+					facetStage,
+				];
 
 				var cursor = await productCollection.AggregateAsync<BsonDocument>(pipeline);
 				var doc = await cursor.FirstOrDefaultAsync();
@@ -346,15 +358,28 @@ public class MongoSearchEventListener
 				var field = search.SortOrder.Field;
 				var direction = search.SortOrder.Direction == SortDirection.ASC;
 
-				sortDefinition = direction
-					? sortBuilder.Ascending(field)
-					: sortBuilder.Descending(field);
+				List<Product> products;
 
-				var products = await productCollection
-					.Find(filter)
-					.Sort(sortDefinition)
-					.Limit(search.PageSize)
-					.ToListAsync();
+				if (string.IsNullOrEmpty(field) || field == "relevance")
+				{
+					// Non-atlas search doesn't support relevance so this is just the default lack of sorting.
+					products = await productCollection
+						.Find(filter)
+						.Limit(search.PageSize)
+						.ToListAsync();
+				}
+				else
+				{
+					sortDefinition = direction
+						? sortBuilder.Ascending(field)
+						: sortBuilder.Descending(field);
+
+					products = await productCollection
+						.Find(filter)
+						.Sort(sortDefinition)
+						.Limit(search.PageSize)
+						.ToListAsync();
+				}
 
 				search.Total = products.Count;
 				search.Products = products;

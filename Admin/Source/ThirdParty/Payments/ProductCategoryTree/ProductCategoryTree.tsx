@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "UI/Router";
 import SubHeader from "Admin/SubHeader";
 import TreeView, { buildBreadcrumbs } from "Admin/TreeView";
@@ -18,6 +18,7 @@ import Link from "UI/Link";
 import Button from "UI/Button";
 import {SortField} from "Admin/AutoList";
 import Time from "UI/Time";
+import Debounce from "UI/Functions/Debounce";
 
 /**
  * Props for the ProductCategoryTree component
@@ -52,6 +53,18 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 
 
 	const breadcrumbs = buildBreadcrumbs("/en-admin/product", "Products", path, "/en-admin/product");
+
+	const setSearchQueryRef = useRef(setSearchQuery);
+
+	const debounce = useRef(
+		new Debounce(
+			(query: string) => {
+				setSearchQueryRef.current(query);
+			}
+		)
+	);
+
+	setSearchQueryRef.current = setSearchQuery;
 
 	const addProductUrl = "/en-admin/product/add";
 	const addCategoryUrl = "/en-admin/productcategory/add";
@@ -88,8 +101,8 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 						<Input
 							type="search"
 							defaultValue={searchQuery}
-							onInput={(ev) => {
-								setSearchQuery((ev.target as HTMLInputElement).value)
+							onChange={(ev) => {
+								debounce.current.handle((ev.target as HTMLInputElement).value)
 								setViewType("list")
 							}}
 							onFocus={() => {
@@ -161,7 +174,7 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 	const [attributeFacets, setAttributeFacets] = useState<ProductSearchAppliedFacet[]>(hydrateFacets());
 	const [loading, setLoading] = useState<boolean>(false);
 	
-	const [sortOrder, setSortOrder] = useState<SortField>({ field: '_id', direction: 'asc' });
+	const [sortOrder, setSortOrder] = useState<SortField>({ field: null, direction: 'asc' }); // relevance by default
 
 	const { pageState } = useRouter();
 	
@@ -210,7 +223,9 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 		
 		const url = location.pathname + '?query=' + props.query + facetStr;
 		history.replaceState(null, '',url);
-		
+
+		setLoading(true);
+
 		searchApi
 			.faceted(queryPayload, [
 				new ProductIncludes().attributeValueFacets,
@@ -282,11 +297,11 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 						<thead>
 						<tr>
 							<th 
-								onClick={() => changeSortField('_id')}
-								className={sortOrder.field === '_id' ? 'active' : ''}
+								onClick={() => changeSortField('Id')}
+								className={sortOrder.field === 'Id' ? 'active' : ''}
 							>
 								Id
-								{sortOrder.field === '_id' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
+								{sortOrder.field === 'Id' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
 							</th>
 							<th>Image</th>
 							<th 
