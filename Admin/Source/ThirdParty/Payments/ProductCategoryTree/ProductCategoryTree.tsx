@@ -160,6 +160,12 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 	const [loading, setLoading] = useState<boolean>(false);
 
 	const { pageState } = useRouter();
+	
+	let categoryFacets = attributeFacets.filter(item => item.mapping == 'category').flatMap(attr => attr.ids) as ulong[];
+	
+	if (categoryFacets.length == 0) {
+		categoryFacets.push(1); // top level category.
+	}
 
 	const queryPayload = {
 		query: props.query,
@@ -171,7 +177,7 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 			},
 			{
 				mapping: "productcategories",
-				ids: attributeFacets.filter(item => item.mapping == 'category').flatMap(attr => attr.ids) as ulong[]
+				ids: categoryFacets
 			}
 		],
 		searchType: ProductSearchType.Reductive
