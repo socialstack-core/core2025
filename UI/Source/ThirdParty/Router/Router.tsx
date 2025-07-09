@@ -72,13 +72,61 @@ const Router: React.FC<{}> = () => {
 			goNow(url);
 		}
 	}
+
+	const internalSetQueryOnly = (url: string) => {
+		const parts = url.split('?');
+		const query = new URLSearchParams((parts.length > 1) ? parts[1] : '');
+		var pgState = { ...pageState, url, query };
+		console.log(pgState);
+		setPage(pgState);
+	}
 	
-	function goNow(url : string) {
+	function urlChangeMode(url: string) {
+		var current = pageState.url;
+
+		if (url == current) {
+			// Unchanged.
+			return 0;
+		}
+
+		// Only QS?
+		var targetPagePart = url?.split('?')[0];
+		var currentPagePart = current?.split('?')[0];
+
+		if (targetPagePart != currentPagePart) {
+			// Main page nav
+			return 1;
+		}
+
+		// QS only change
+		return 2;
+	}
+
+	function goNow(url: string) {
 		if (useDefaultNav(hashMode ? '' : document.location.pathname, url)){
 			document.location = url;
 			return;
 		}
-		
+
+		var changeMode = urlChangeMode(url);
+
+		console.log("change mode", changeMode, url, pageState.url);
+
+		if (changeMode == 0) {
+			// Noop
+			return;
+		}
+
+		if (changeMode == 2) {
+			// QS only - push and update the query only.
+			window.history.pushState({
+				scrollTop: 0
+			}, '', hashMode ? '#' + url : url);
+
+			internalSetQueryOnly(url);
+			return;
+		}
+
 		// Store the scroll position:
 		var html = document.body.parentNode as HTMLHtmlElement;
 		window.history.replaceState({
@@ -139,7 +187,7 @@ const Router: React.FC<{}> = () => {
 			triggerEvent(res);
 		});
 	}
-	
+
 	const onPopState = (e : PopStateEvent) => {
 		var newScrollTarget : ScrollTarget | null = null;
 		
@@ -149,8 +197,20 @@ const Router: React.FC<{}> = () => {
 				y: e.state.scrollTop
 			};
 		}
-		
-		setPageState(currentUrl()).then(() => {
+
+		const url = currentUrl();
+		const changeMode = urlChangeMode(url);
+
+		if (changeMode == 0) {
+			// No change
+			return;
+		} else if (changeMode == 2) {
+			// QS only
+			internalSetQueryOnly(url);
+			return;
+		}
+
+		setPageState(url).then(() => {
 			setScrollTarget(newScrollTarget);
 		});
 	}
@@ -266,31 +326,10 @@ const Router: React.FC<{}> = () => {
 		}
 	});
 	
-	const changeQuery = (query: Record<string, string>) => {
-		const urlParams = new URLSearchParams();
-	
-		let hasChanged = false;
+	const changeQuery = (urlParams: URLSearchParams) => {
 		let currentUrl = pageState.url.split('?')[0];
-		
-		Object.keys(query).forEach((key: string) => {
-			
-			if (!pageState.query.has(key)) {
-				hasChanged = true;
-			}
-			if (query[key] !== pageState.query.get(key)) {
-				hasChanged = true;
-			}
-			urlParams.set(key, query[key])
-		})
-		
-		if (!hasChanged) {
-			// noop.
-			return;
-		}
-
 		const qs = urlParams.toString();
 		const nextUrl = qs ? `${currentUrl}?${qs}` : currentUrl;
-
 		go(nextUrl);
 	}
 	
@@ -301,36 +340,21 @@ const Router: React.FC<{}> = () => {
 				setPage: go,
 				changeQuery,
 				updateQuery: (update: Record<string, string>) => {
-					
-					const urlParams:Record<string, string> = {};
-					const currentEntries = Array.from(pageState.query.entries());
-
-					for (const [key, value] of currentEntries) {
-						urlParams[key] = value;
-					}
-					
+					const urlParams = new URLSearchParams(pageState.query);
 					Object.keys(update).forEach((key: string) => {
-						urlParams[key] = update[key]
-					})
-					
+						var value = update[key];
+						if (value) {
+							urlParams.set(key, value);
+						} else {
+							urlParams.delete(key);
+						}
+					});
 					changeQuery(urlParams);
-
 				},
 				removeQueryItems: (items: string[]) => {
-					const change: Record<string, any> = {};
-
-					const currentEntries = Array.from(pageState.query.entries());
-
-					for (const [key, value] of currentEntries) {
-						
-						if (items.includes(key)) {
-							continue;
-						}
-						
-						change[key] = value;
-					}
-					
-					changeQuery(change);
+					const urlParams = new URLSearchParams(pageState.query);
+					items.forEach(item => urlParams.delete(item));
+					changeQuery(urlParams);
 				}
 			}}
 		>

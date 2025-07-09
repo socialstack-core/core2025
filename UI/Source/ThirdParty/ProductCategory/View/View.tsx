@@ -44,7 +44,7 @@ const View: React.FC<ViewProps> = (props) => {
 	const [viewStyle, setViewStyle] = useState('large-thumbs');
 	const [sortOrder, setSortOrder] = useState('most-popular');
 	const [pagination, setPagination] = useState('page1');
-	const [minPrice, setMinPrice] = useState<double>(0);
+	const [minPrice, setMinPrice] = useState<double>(1);
 	const [maxPrice, setMaxPrice] = useState<double>(5000);
 
 	const { pageState } = useRouter();
@@ -61,10 +61,11 @@ const View: React.FC<ViewProps> = (props) => {
 
 	var initialPageStr = query?.get("page") || "";
 	var initialPageOffset = (parseInt(initialPageStr) || 1) - 1;
+	const searchText = query?.get("q") ?? '';
 
 	const [products] = useApi(() => {
 		return searchApi.faceted({
-			query: query?.get("q") ?? '',
+			query: searchText,
 			pageOffset: initialPageOffset as int,
 			searchType: ProductSearchType.Expansive,
 			pageSize: 20 as uint,
@@ -97,7 +98,8 @@ const View: React.FC<ViewProps> = (props) => {
 			productApi.includes.productCategoryFacets.category,
 			productApi.includes.productCategoryFacets.category.primaryurl,
 			productApi.includes.attributeValueFacets.value.attribute.attributeGroup
-	])}, [selectedFacets, minPrice, maxPrice, showInStockOnly]);
+		])
+	}, [selectedFacets, minPrice, maxPrice, showInStockOnly, searchText]);
 
 
 	if (!products) {

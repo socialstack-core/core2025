@@ -10,6 +10,8 @@ const useApi = <T,>(loader: () => Promise<T>, deps?: React.DependencyList) => {
     const [current, setCurrent] = state;
 
     useEffect(() => {
+        setCurrent(null);
+
         loader()
             .then(val => {
                 if (!val) {

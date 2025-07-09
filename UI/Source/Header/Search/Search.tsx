@@ -33,30 +33,30 @@ const highlightMatch = (text: string, query: string) => {
  * @param props React props.
  */
 const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
-	
-	const [query, setQuery] = useState('');
+
 	const { setPage, pageState, updateQuery } = useRouter();
+	const [query, setQuery] = useState(() => pageState.query?.get('q'));
 	
 	if (!searchPlaceholder || !searchPlaceholder.length) {
 		searchPlaceholder = `Search by name, category or code`
 	}
-	
+
+	const updateQueryRef = useRef(updateQuery);
 	const debounce = useRef(
 		new Debounce(
 			(query: string) => {
-				updateQuery({q: query});
+				updateQueryRef.current({q: query});
 			}
 		)
 	);
 
 	useEffect(() => {
-		
-		if (query.length != 0) {
-			debounce.current.handle(query);
-		}
-		
-	}, [query]);
+		updateQueryRef.current = updateQuery;
+	}, [updateQuery]);
 
+	useEffect(() => {
+		debounce.current.handle(query);
+	}, [query]);
 
 	return (
 		<div className="site-nav__search">

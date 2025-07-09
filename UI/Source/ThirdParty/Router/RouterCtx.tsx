@@ -8,7 +8,7 @@ export interface PageState extends PageStateResult {
 
 export interface RouterContext {
 	setPage: (url: string) => void;
-	changeQuery: (query: Record<string, string>) => void;
+	changeQuery: (query: URLSearchParams) => void;
 	updateQuery: (query: Record<string, string>) => void;
 	removeQueryItems: (items: string[]) => void;
 	pageState: PageState;
@@ -19,7 +19,7 @@ const routerCtx = createContext<RouterContext>({
 	setPage: (url: string) => { },
 	canGoBack: () => false,
 	pageState: {},
-	changeQuery: (query: Record<string, string>) => {},
+	changeQuery: (query: URLSearchParams) => {},
 	updateQuery: (query: Record<string, string>) => {},
 	removeQueryItems: (items: string[]) => {}
 } as RouterContext);
