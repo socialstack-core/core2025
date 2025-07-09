@@ -73,6 +73,9 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 					setQuery(qs);
 				}} />
 			</div>
+			{/*
+			suggestions disabled until they're more relevant/ contextual and the dropdown itself doesn't get in the way of the main results
+			
 			<div className="site-nav__search-dropdown">
 				{(!query || query.length == 0) && (
 					<RecentSearches />
@@ -106,7 +109,7 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 						</Loop>
 					</div>
 				)}
-			</div>
+			</div>*/}
 		</div>
 	);
 }
