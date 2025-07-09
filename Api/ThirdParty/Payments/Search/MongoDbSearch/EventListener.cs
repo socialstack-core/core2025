@@ -144,7 +144,14 @@ public class MongoSearchEventListener
 							continue;
 						}
 
-						string mappingPath = "Mappings." + facet.Mapping.ToLower();
+						var lcName = facet.Mapping.ToLower();
+
+						if (lcName == "productcategories")
+						{
+							lcName = "childofcategories";
+						}
+
+						string mappingPath = "Mappings." + lcName;
 
 						if (search.SearchType == ProductSearchType.Reductive)
 						{
