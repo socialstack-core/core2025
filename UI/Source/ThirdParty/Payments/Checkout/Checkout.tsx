@@ -32,10 +32,11 @@ interface CheckoutProps {
 const Checkout: React.FC<CheckoutProps> = (props) => {
 	const { canPayLater } = props;
 	const { session } = useSession();
-	const { setPage } = useRouter();
+	const { setPage, pageState } = useRouter();
+	const { query } = pageState;
 	var { shoppingCart, cartIsEmpty, emptyCart, addToCart, lessTax, getCartId } = useCart();
 	
-	const deferPayment = canPayLater ? canPayLater(session) : false;
+	const deferPayment = query?.get("card") ? false : true; // canPayLater ? canPayLater(session) : false;
 	const [deliveryAddress, setDeliveryAddress] = useState<Address | undefined>();
 	const [sameAsDelivery, setSameAsDelivery] = useState<boolean>(true);
 	const [billingAddress, setBillingAddress] = useState<Address | undefined>();
