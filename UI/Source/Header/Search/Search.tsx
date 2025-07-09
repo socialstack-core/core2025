@@ -35,7 +35,7 @@ const highlightMatch = (text: string, query: string) => {
 const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 	
 	const [query, setQuery] = useState('');
-	const { setPage, pageState } = useRouter();
+	const { setPage, pageState, updateQuery } = useRouter();
 	
 	if (!searchPlaceholder || !searchPlaceholder.length) {
 		searchPlaceholder = `Search by name, category or code`
@@ -44,33 +44,8 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 	const debounce = useRef(
 		new Debounce(
 			(query: string) => {
-				
-				let hasAddedQuery = false;
-				
-				const items:string[] = [];
-
-				pageState.query.forEach((item) => {
-
-					if (!item.includes('=')) {
-						return;
-					}
-					
-					if (item.startsWith("q=")) {
-						hasAddedQuery = true;
-						items.push('q=' + encodeURIComponent(query));
-					}
-					else {
-						items.push(item);
-					}
-				})
-				
-				if (!hasAddedQuery) {
-					items.push('q=' + encodeURIComponent(query));
-				}
-
-				setPage('?' + items.filter(Boolean).join('&'));
-			}, 
-			2000
+				updateQuery({q: query});
+			}
 		)
 	);
 
