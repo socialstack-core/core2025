@@ -61,26 +61,42 @@ const Book: React.FC<BookProps> = (props: BookProps) => {
 	};
 
 	return (
-		<div className="ui-payments-address-book">
-			<div className="ui-payments-address-book__list">
-				{
-					addressList.results.map((address: Address) => {
-
-						return <div>
-							<p>
-								Is default billing: {address.isDefaultBillingAddress ? 'Yes' : 'No'}
-							</p>
-							<p>
-								Is default delivery: {address.isDefaultDeliveryAddress ? 'Yes' : 'No'}
-							</p>
+		<div className="ui-address-book">
+			<h1 className="ui-address-book__title">
+				{`Edit addresses`}
+			</h1>
+			<ul className="ui-address-book__list">
+				{addressList.results.map((address: Address) => {
+					return <li className="ui-address-book__item">
+						<header className="ui-address-book__item-header">
+							{address.isDefaultBillingAddress && <>
+								<span className="ui-address-book__item-default">
+									<i className="fr fr-check-circle"></i>
+									{`Default billing address`}
+								</span>
+							</>}
+							{address.isDefaultDeliveryAddress && <>
+								<span className="ui-address-book__item-default">
+									<i className="fr fr-check-circle"></i>
+									{`Default delivery address`}
+								</span>
+							</>}
+						</header>
+						{addressToLines(address).map(line => <div>{line}</div>)}
+						<footer className="ui-address-book__item-footer">
+							{/* TODO */}
+							{/*<Button onClick={() => ...}>{`Edit`}</Button>*/}
 							<Button onClick={() => setConfirmDelete(address)}>{`Delete`}</Button>
-							{addressToLines(address).map(line => <div>{line}</div>)}
-						</div>
+						</footer>
+					</li>
 
-					})
-				}
-			</div>
-			<div className="ui-payments-address-book__add">
+				})}
+			</ul>
+
+			<section className="ui-address-book__add">
+				<h2 className="ui-address-book__subtitle">
+					{`Add new address`}
+				</h2>
 				<Form action={addressApi.create} submitLabel={`Add address`}
 				onValues={values => {
 					values.addressType = addressType;
@@ -89,18 +105,16 @@ const Book: React.FC<BookProps> = (props: BookProps) => {
 
 				onSuccess={
 					() => setCreateCounter(createCounter+1)
-				}
-
-				>
-					<Input type='text' name='line1' label='Address Line 1' />
-					<Input type='text' name='line2' label='Address Line 2' />
-					<Input type='text' name='line3' label='Address Line 3' />
-					<Input type='text' name='city' label='City' />
-					<Input type='text' name='postcode' label='Postcode' />
-					<Input type='checkbox' name='isDefaultBillingAddress' label='Set as default billing address' />
-					<Input type='checkbox' name='IsDefaultDeliveryAddress' label='Set as default shipping address' />
+				}>
+					<Input type='text' name='line1' label={`Address Line 1`} />
+					<Input type='text' name='line2' label={`Address Line 2`} />
+					<Input type='text' name='line3' label={`Address Line 3`} />
+					<Input type='text' name='city' label={`City`} />
+					<Input type='text' name='postcode' label={`Postcode`} />
+					<Input type='checkbox' name='isDefaultBillingAddress' label={`Set as default billing address`} />
+					<Input type='checkbox' name='IsDefaultDeliveryAddress' label={`Set as default shipping address`} />
 				</Form>
-			</div>
+			</section>
 			{
 				confirmDelete && <ConfirmModal
 					confirmVariant={'danger'}
