@@ -6,7 +6,7 @@
 	padding: 2rem 4.5rem 2rem 4rem;
 	font-size: px_to_rem(14);
 	font-weight: 500;
-	width: px_to_rem(380);
+	width: px_to_rem(280);
 	max-width: 100%;
 	position: relative;
 	font-size: px_to_rem(15);
@@ -28,4 +28,12 @@
 		background-repeat: no-repeat;
 		opacity: .2;
 	}
+}
+
+@media only screen and (min-width: 600px) {
+
+	.payment-checkout__address {
+		width: px_to_rem(380);
+	}
+
 }
