@@ -474,23 +474,23 @@ namespace Api.CanvasRenderer
             }
 
 
-            var StringContent = string.Join(" ", node.ChildNodes
-                .Where(cn => cn.NodeType == HtmlNodeType.Text)
-                .Select(cn => cn.InnerText.Trim()));
+            //var StringContent = string.Join(" ", node.ChildNodes
+            //    .Where(cn => cn.NodeType == HtmlNodeType.Text)
+            //    .Select(cn => cn.InnerText.Trim()));
 
-            if (!string.IsNullOrWhiteSpace(StringContent))
-            {
-                canvasNode.AppendChild(HttpUtility.HtmlDecode(StringContent));
-            }
+            //if (!string.IsNullOrWhiteSpace(StringContent))
+            //{
+            //    canvasNode.AppendChild(HttpUtility.HtmlDecode(StringContent));
+            //}
 
             foreach (var child in node.ChildNodes)
             {
-                if (child.NodeType == HtmlNodeType.Element)
-                {
+                //if (child.NodeType == HtmlNodeType.Element)
+                //{
                     var childCanvas = ConvertHtmlNode(child);
                     if (childCanvas != null)
                         canvasNode.AppendChild(childCanvas);
-                }
+                //}
             }
 
             return canvasNode;

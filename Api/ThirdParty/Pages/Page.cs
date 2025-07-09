@@ -3,6 +3,7 @@ using Api.AutoForms;
 using Api.Database;
 using Api.Translate;
 using Api.Users;
+using Newtonsoft.Json;
 
 namespace Api.Pages
 {
@@ -25,6 +26,18 @@ namespace Api.Pages
 		/// Primary keys on the admin panel are prefixed with "admin_".
 		/// </summary>
 		public string Key;
+
+		/// <summary>
+		/// The latest RevisionId at the point of page install.
+		/// </summary>
+		[JsonIgnore]
+		public uint? LastInstallRevisionId;
+		
+		/// <summary>
+		/// The latest build time that an install check happened.
+		/// </summary>
+		[JsonIgnore]
+		public DateTime? LastInstallBuildTimeUtc;
 
 		/// <summary>
 		/// The type of content that this page will attempt to load using information from the URL. 

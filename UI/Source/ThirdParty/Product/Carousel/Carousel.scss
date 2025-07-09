@@ -134,10 +134,23 @@ $max-product-images: 5;
 	}
 	
 	&__slide {
+		$product-images-slide: &;
 		display: none;
 		position: relative;
 		z-index: 1;
 		
+		> .ui-image {
+			width: 100%;
+			border-radius: px_to_rem(10);
+		}
+
+		&#{$product-images-slide}--empty {
+
+			&::after {
+				content: none;
+			}
+		}
+
 		summary {
 			list-style: none;
 			width: 100%;

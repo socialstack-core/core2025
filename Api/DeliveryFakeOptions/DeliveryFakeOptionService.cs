@@ -1,8 +1,10 @@
 using Api.Contexts;
 using Api.Eventing;
+using Api.Pages;
 using Api.Payments;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Api.DeliveryFakeOptions;
 
@@ -18,6 +20,22 @@ public class DeliveryFakeOptionService : AutoService
 	/// </summary>
 	public DeliveryFakeOptionService()
 	{
+
+		Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
+		{
+			if (builder == null)
+			{
+				return new ValueTask<PageBuilder>(builder);
+			}
+
+			// - Add the container for all frontend pages -
+			if (!builder.IsAdmin)
+			{
+				builder.SetTemplate("site_default_contained");
+			}
+
+			return new ValueTask<PageBuilder>(builder);
+		});
 
 		Events.DeliveryOption.Estimate.AddEventListener(async (Context context, DeliveryEstimates estimates) => {
 

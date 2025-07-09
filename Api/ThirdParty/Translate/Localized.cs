@@ -522,6 +522,39 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 	}
 
 	/// <summary>
+	/// Get by locale code.
+	/// </summary>
+	/// <param name="localeCode"></param>
+	/// <returns></returns>
+	public T Get(string localeCode)
+	{
+		if (_values == null)
+		{
+			return default;
+		}
+
+		_values.TryGetValue(localeCode, out T value);
+		return value;
+	}
+
+	/// <summary>
+	/// Get by locale code.
+	/// </summary>
+	/// <param name="localeCode"></param>
+	/// <param name="value"></param>
+	/// <returns></returns>
+	public bool TryGet(string localeCode, out T value)
+	{
+		if (_values == null)
+		{
+			value = default;
+			return false;
+		}
+
+		return _values.TryGetValue(localeCode, out value);
+	}
+
+	/// <summary>
 	/// Get a specific localised value.
 	/// </summary>
 	/// <param name="locale"></param>
