@@ -83,9 +83,6 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 	var checkClass = classes.join(" ");
 	var inputClass = "form-check-input" + (solid ? " form-check-input--solid" : "");
 
-	const value = (!!field.value) || field.checked;
-	const defaultValue = (!!field.defaultValue) || field.defaultChecked;
-
 	// grouped radio button - requires different markup
 	// ref: https://getbootstrap.com/docs/5.1/components/button-group/#checkbox-and-radio-button-groups
 	if (groupVariant) {
@@ -98,8 +95,6 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 				onInput={onChange}
 				{...attribs}
 				id={id}
-				checked={value}
-				defaultChecked={defaultValue}
 			/>
 			<label className={`btn btn-outline-${groupVariant}`} htmlFor={id}>
 				{groupIcon ? <>
@@ -112,9 +107,7 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 
 	return (
 		<div className={field.readOnly ? '' : checkClass} style={style}>
-			{field.readOnly ? (
-				(value === undefined ? defaultValue : value) ? <b>{`Yes (readonly) `}</b> : <b>{`No (readonly) `}</b>
-			) : <input
+			<input
 					ref={(el) => onInputRef && onInputRef(el as HTMLElement)}
 					className={inputClass}
 					aria-describedby={helpFieldId}
@@ -123,11 +116,9 @@ const Checkbox: React.FC<CheckboxProps> = (props) => {
 					{...attribs}
 					role={isSwitch ? "switch" : undefined}
 					id={id}
-					checked={value}
-					defaultChecked={defaultValue}
 					// haptic support for Safari
 					switch={isSwitch ? true : undefined}
-			/>}
+			/>
 			<label className="form-check-label" htmlFor={id}>
 				{label}
 			</label>
