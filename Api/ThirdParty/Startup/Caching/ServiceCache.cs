@@ -168,7 +168,7 @@ namespace Api.Startup{
 				}
 
 				total = set.Count;
-				HandleSorting(set, filterA.SortField.FieldInfo, filterA.SortAscending);
+				HandleSorting(context, set, filterA.SortField.FieldInfo, filterA.SortAscending);
 
 				var rowStart = filterA.Offset;
 
@@ -232,7 +232,7 @@ namespace Api.Startup{
 			return total;
 		}
 
-		private void HandleSorting(List<T> set, FieldInfo sort, bool ascend)
+		private void HandleSorting(Context context, List<T> set, FieldInfo sort, bool ascend)
 		{		
 			set.Sort((a, b) => {
 					
