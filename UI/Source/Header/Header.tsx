@@ -199,10 +199,11 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 			const body = document.body;
 
 			body.style.position = 'fixed';
+			body.style.scrollBehavior = 'auto';
 			body.style.top = `-${scrollY}px`;
 			body.style.left = '0';
 			body.style.right = '0';
-			body.style.overflow = 'hidden';
+			//body.style.overflow = 'hidden';
 			body.dataset.scrollY = String(scrollY);
 
 			return () => {
@@ -211,8 +212,9 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 				body.style.top = '';
 				body.style.left = '';
 				body.style.right = '';
-				body.style.overflow = '';
+				//body.style.overflow = '';
 				window.scrollTo(0, y);
+				body.style.scrollBehavior = 'smooth';
 				delete body.dataset.scrollY;
 			};
 		}, [lock]);

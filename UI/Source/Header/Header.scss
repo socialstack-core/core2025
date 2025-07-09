@@ -308,8 +308,9 @@
 			position: fixed;
 			color: var(--primary);
 			left: 0;
-			//top: 0;
-			top: calc(var(--site-header-height) - var(--page-scroll-y));
+			// no need to account for page scroll position as header is using position: sticky
+			//top: calc(var(--site-header-height) - var(--page-scroll-y));
+			top: var(--site-header-height);
 			right: 0;
 			bottom: 0;
 			border: 0;
@@ -592,7 +593,7 @@
 
 				}
 
-				&--hide-mobile {
+				&--hide-mobile.ui-link {
 					display: block;
 				}
 
@@ -733,7 +734,7 @@
 
 // for popover polyfill support (do not merge with following rule)
 body:has(.site-nav__primary-wrapper.\:popover-open) {
-	padding-right: var(--vertical-scroll-width, 0);
+	//padding-right: var(--vertical-scroll-width, 0);
 
 	#content {
 		@include blurFilter();
@@ -745,7 +746,7 @@ body:has(.site-nav__primary-wrapper.\:popover-open) {
 }
 
 body:has(.site-nav__primary-wrapper:popover-open) {
-	padding-right: var(--vertical-scroll-width, 0);
+	//padding-right: var(--vertical-scroll-width, 0);
 
 	#content {
 		@include blurFilter();
