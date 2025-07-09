@@ -12,7 +12,7 @@ type RadioInputType = DefaultInputType & {
 	groupIcon?: string,
 	solid?: boolean,
 	value?: boolean,
-	defaultValue?: boolean
+	defaultValue?: boolean,
 }
 
 // Registering 'radio' as being available
@@ -73,9 +73,6 @@ const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 	var radioClass = classes.join(" ");
 	var inputClass = "form-check-input" + (solid ? " form-check-input--solid" : "");
 
-	const value = (!!field.value) || field.checked;
-	const defaultValue = (!!field.defaultValue) || field.defaultChecked;
-
 	// grouped radio button - requires different markup
 	// ref: https://getbootstrap.com/docs/5.1/components/button-group/#checkbox-and-radio-button-groups
 	if (groupVariant) {
@@ -88,8 +85,6 @@ const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 				onInput={onChange}
 				{...attribs}
 				id={id}
-				checked={value}
-				defaultChecked={defaultValue}
 			/>
 			<label className={`btn ui-btn btn-outline-${groupVariant}`} htmlFor={id}>
 				{groupIcon ? <>
@@ -102,20 +97,14 @@ const Radio: React.FC<CustomInputTypeProps<"radio">> = (props) => {
 
 	return (
 		<div className={attribs.readOnly ? '' : radioClass}>
-			{attribs.readOnly ? (
-				(value === undefined ? defaultValue : value) ? <b>Yes (readonly) </b> : <b>No (readonly) </b>
-			) : 
-				<input
-					ref={(el: HTMLInputElement) => onInputRef && onInputRef(el)}
-					className={inputClass}
-					aria-describedby={helpFieldId}
-					type="radio"
-					onInput={onChange}
-					{...attribs}
-					id={id}
-					checked={value}
-					defaultChecked={defaultValue}
-			/>}
+			<input
+				ref={(el: HTMLInputElement) => onInputRef && onInputRef(el)}
+				className={inputClass}
+				aria-describedby={helpFieldId}
+				type="radio"
+				onInput={onChange}
+				{...attribs}
+				id={id} />
 			<label className="form-check-label" htmlFor={id}>
 				{label}
 			</label>
