@@ -44,11 +44,30 @@ namespace Api.TypeScript.Objects
             builder.AppendLine();
             builder.AppendLine($"export enum {_referenceEnum.Name} {{");
 
-            // Write each enum member
-            foreach (var value in Enum.GetValues(_referenceEnum))
-            {
-                builder.AppendLine($"    {value},");
-            }
+			// Write each enum member
+			var fields = _referenceEnum.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+			foreach (var field in fields)
+			{
+				string name = field.Name;
+				object value = field.GetRawConstantValue();
+
+                if (value == null)
+                {
+                    // ?!
+                    builder.AppendLine($"    {name}=null,");
+                }
+                else if (value is string)
+                {
+					builder.AppendLine($"    {name}=\"{value}\",");
+				}
+                else
+                {
+                    // assume numeric
+					builder.AppendLine($"    {name}={value},");
+				}
+
+			}
 
             builder.AppendLine("}");
         }
