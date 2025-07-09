@@ -21,6 +21,8 @@ namespace Api.Payments
 		private PermalinkService _permalinks;
 		private ProductConfig _config;
 		private PriceService _prices;
+		
+		private bool _isPermalinkSyncRunning = false;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
@@ -307,6 +309,14 @@ namespace Api.Payments
 			return "/product/" + product.Slug;
 		}
 
+		public bool IsSyncRunning
+		{
+			get
+			{
+				return _isPermalinkSyncRunning;
+			}
+		}
+
 		/// <summary>
 		/// A convenience brute-force method for ensuring that all required permalinks exist.
 		/// Best used after a major database edit (such as importing outside of SS).
@@ -314,6 +324,13 @@ namespace Api.Payments
 		/// <returns></returns>
 		public async ValueTask SyncPermalinks(Context context)
 		{
+			// this method is about to be exposed to an endpoint, in order to stop this from 
+			// firing multiple times, lets add a blocker.
+			if (_isPermalinkSyncRunning)
+			{
+				return;
+			}
+			_isPermalinkSyncRunning = true;
             Log.Warn("product", "Sync product permalinks");
 
 			var allProducts = await Where("", DataOptions.IgnorePermissions).ListAll(context);
@@ -328,6 +345,11 @@ namespace Api.Payments
 				// Permalink target which will be for whichever page wants to handle a product as its primary content.
 				// If a specific page for this product exists, it will ultimately pick that.
 				var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, product);
+
+				await Update(context, product, (ctx, product, original) =>
+				{
+					// noop. This triggers the UpdateProductCategoryMapping method. 
+				});
 
 				Product parentProduct = null;
 				if (product.VariantOfId.HasValue && product.VariantOfId.Value != 0)
@@ -358,7 +380,15 @@ namespace Api.Payments
 				links.Add(permalinkInfo);
 			}
 
-			await _permalinks.BulkCreate(context, links);
+			try
+			{
+				await _permalinks.BulkCreate(context, links);
+			}
+			catch (Exception ex)
+			{
+				Log.Error("Products/SyncPermalinks", ex);
+			}
+			_isPermalinkSyncRunning = false;
 		}
 
 		/// <summary>
