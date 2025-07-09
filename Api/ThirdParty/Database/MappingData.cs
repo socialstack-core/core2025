@@ -964,33 +964,44 @@ public struct MappingData
 		{
 			return false;
 		}
+
+		List<ulong> current = null;
+		List<ulong> original = null;
 		
-		// if values is null and originalMappings._values is not, then its changed.
-		if (_values == null)
-		{
-			return true;
-		}
-		
-		var existsInCurrent = _values.TryGetValue(key, out var result);
-		var existsInOriginal = originalMappings._values.TryGetValue(key, out var original);
+		// It's in there and not null
+		var existsInCurrent = _values != null && 
+			_values.TryGetValue(key, out current) && 
+			current != null;
+
+		// It's in the other one and not null
+		var existsInOriginal = originalMappings._values != null && 
+				originalMappings._values.TryGetValue(key, out original) && 
+				original != null;
 	
-		// 2 trues make a true, so if it doesn't exist in 
-		// 1 of them, this means 1 has changed. 
-		if (!(existsInOriginal && existsInCurrent))
+		if (existsInOriginal != existsInCurrent)
 		{
+			// In one and not the other
 			return true;
 		}
-		
+
+		if (!existsInOriginal)
+		{
+			// It's in neither so can't have changed.
+			return false;
+		}
+
+		// It's in both and neither is null.
+
 		// they've changed if diff sizes.
-		if (result.Count != original.Count)
+		if (current.Count != original.Count)
 		{
 			return true;
 		}
 
-		for (var i = 0; i < result.Count; i++)
+		for (var i = 0; i < current.Count; i++)
 		{
 			// compare items in order.
-			if (result[i] != original[i])
+			if (current[i] != original[i])
 			{
 				return true;
 			}
