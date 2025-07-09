@@ -54,10 +54,6 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 		updateQueryRef.current = updateQuery;
 	}, [updateQuery]);
 
-	useEffect(() => {
-		debounce.current.handle(query);
-	}, [query]);
-
 	return (
 		<div className="site-nav__search">
 			<button type="button" className="btn site-nav__search-trigger" popoverTarget="search_popover">
@@ -71,7 +67,11 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 				*/}
 			</button>
 			<div className="site-nav__search-wrapper" popover="auto" id="search_popover">
-				<input type="search" placeholder={searchPlaceholder} defaultValue={pageState.query.has('q') ? pageState.query.get('q')! : ''} onInput={(ev) => setQuery((ev.target as HTMLInputElement).value)} />
+				<input type="search" placeholder={searchPlaceholder} defaultValue={pageState.query.has('q') ? pageState.query.get('q')! : ''} onInput={(ev) => {
+					var qs = (ev.target as HTMLInputElement).value;
+					debounce.current.handle(qs);
+					setQuery(qs);
+				}} />
 			</div>
 			<div className="site-nav__search-dropdown">
 				{(!query || query.length == 0) && (

@@ -77,7 +77,6 @@ const Router: React.FC<{}> = () => {
 		const parts = url.split('?');
 		const query = new URLSearchParams((parts.length > 1) ? parts[1] : '');
 		var pgState = { ...pageState, url, query };
-		console.log(pgState);
 		setPage(pgState);
 	}
 	
@@ -109,8 +108,6 @@ const Router: React.FC<{}> = () => {
 		}
 
 		var changeMode = urlChangeMode(url);
-
-		console.log("change mode", changeMode, url, pageState.url);
 
 		if (changeMode == 0) {
 			// Noop
