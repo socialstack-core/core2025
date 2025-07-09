@@ -2,15 +2,21 @@ import Input from 'UI/Input';
 import Button from 'UI/Button';
 import { useEffect, useState, useRef } from "react";
 import { ProductCategoryFacet, AttributeValueFacet } from 'UI/Product/Search/Facets';
+import { ProductAttributeValue } from 'Api/ProductAttributeValue';
 
 /**
  * Props for the FilterList component.
  */
 interface SearchProps {
 	/**
-	 * filter facets array
+	 * All current attribute facets (attributes + values + counts of each one)
 	 */
-	facets: (ProductCategoryFacet | AttributeValueFacet)[],
+	facets: AttributeValueFacet[],
+
+	/**
+	 * An array of selected attribute values (red, green, whatever)
+	 */
+	selectedAttributeValues: ProductAttributeValue[],
 
 	/**
 	 * max number of filters initially visible
@@ -35,7 +41,7 @@ interface SearchProps {
 	/**
 	 * Do something when the filter changes.
 	 */
-	onChange: (values: ulong[]) => void
+	setSelectedAttributeValues: (values: ProductAttributeValue[]) => void
 }
 
 const DEFAULT_MAX_VISIBLE_FILTERS = 3;
@@ -46,32 +52,16 @@ const DEFAULT_SELECTED: ulong[] = [];
  * The FilterList React component.
  * @param props React props.
  */
-const FilterList: React.FC<SearchProps> = ({ facets, searchFilter, noBorder, ...props }) => {
+const FilterList: React.FC<SearchProps> = ({ facets, noBorder, selectedAttributeValues, setSelectedAttributeValues, ...props }) => {
 	const [expanded, setExpanded] = useState(false);
 	const maxVisible = props.maxVisible || DEFAULT_MAX_VISIBLE_FILTERS;
-	const hasFilter = searchFilter?.length > 0;
-
-	const [selectedValues, setSelectedValues] = useState<ulong[]>(DEFAULT_SELECTED);
-
 	const { onChange } = props;
 
 	if (!facets || !facets.length) {
 		return null;
 	}
 
-	// check - category or attribute facets?
-	const field = facets[0].type === "ProductCategoryFacet" ? 'category' : 'value';
-	const subField = facets[0].type === "ProductCategoryFacet" ? 'name' : 'value';
-
-	// filter visible items to searchFilter, if supplied
-	const filteredFacets = hasFilter ? facets.filter(facet => {
-		return (
-			facet[field] && facet[field][subField] &&
-			facet[field][subField].toLowerCase().includes(searchFilter.toLowerCase())
-		);
-	}) : facets;
-
-	const toggleText = expanded ? `Show less` : `Show more (${filteredFacets.length - maxVisible})`;
+	const toggleText = expanded ? `Show less` : `Show more (${facets.length - maxVisible})`;
 
 	let filterListClasses = ["ui-filter-list"];
 
@@ -81,35 +71,47 @@ const FilterList: React.FC<SearchProps> = ({ facets, searchFilter, noBorder, ...
 
 	return (
 		<div className={filterListClasses.join(' ')}>
-			{filteredFacets.map((facet, index) => {
-				if (!facet[field] || !facet[field][subField]) {
+			{facets.map((attributeFacet, index) => {
+				const attributeValue = attributeFacet.value;
+				const attributeValueText = attributeValue.value;
+
+				if (!attributeValue || !attributeValueText) {
 					return null;
 				}
 
 				return (
 					<Input
-						key={facet[field].value.id}
+						key={attributeValue.id}
 						style={{ display: expanded || index < maxVisible ? "flex" : "none" }}
 						type="checkbox"
 						sm
-						label={`${facet[field][subField]}${props.units ?? ''} (${facet.count})`}
+						label={`${attributeValueText}${props.units ?? ''} (${attributeFacet.count})`}
 						noWrapper
+						checked={!!selectedAttributeValues.find(av => av.id == attributeValue.id)}
 						onChange={(ev) => {
 							const target = ev.target as HTMLInputElement;
-						
 
-							const newArr = target.checked ?
-								[...selectedValues, facet[field].id] :
-								selectedValues.filter(id => id !== facet[field].id);
+							// This checkbox represents a singular *attribute value*.
+							// Thus when it's ticked, it's in the array and when it's not ticked we ensure it's excluded.
 
-							setSelectedValues(newArr);
+							if (target.checked) {
+								if (selectedAttributeValues.find(av => av.id == attributeValue.id)) {
+									// Already in there - ignore
+									return;
+								}
 
-							onChange(newArr)
+								// Add
+								setSelectedAttributeValues([...selectedAttributeValues, attributeValue]);
+							} else {
+								// Remove
+								setSelectedAttributeValues(selectedAttributeValues.filter(av => av.id != attributeValue.id));
+							}
+
 						}}
 					/>
 				);
 			})}
-			{filteredFacets.length > maxVisible && (
+			{facets.length > maxVisible && (
 				<Button
 					variant="link"
 					onClick={() => setExpanded(!expanded)}

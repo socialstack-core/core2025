@@ -9,6 +9,7 @@ import DualRange from 'UI/DualRange';
 import Promotion from 'UI/Promotion';
 import {useState} from "react";
 import searchApi, {ProductSearchType, SortDirection} from "Api/ProductSearchController";
+import {ProductAttributeValue } from "Api/ProductAttributeValue";
 import {useRouter} from "UI/Router";
 import {AttributeFacetGroup, AttributeValueFacet, ProductCategoryFacet} from "UI/Product/Search/Facets";
 import FilterList from "UI/Product/Search/FilterList";
@@ -46,10 +47,10 @@ const View: React.FC<ViewProps> = (props) => {
 	const [pagination, setPagination] = useState('page1');
 	const [minPrice, setMinPrice] = useState<double>(1);
 	const [maxPrice, setMaxPrice] = useState<double>(5000);
-
+	
 	const { pageState } = useRouter();
 	const { query } = pageState;
-	const [selectedFacets, setSelectedFacets] = useState<Record<uint, uint[]>>({});
+	const [selectedFacets, setSelectedFacets] = useState<ProductAttributeValue[]>([]);
 
 	
 	// TODO: calculate lowest and highest price
@@ -64,6 +65,43 @@ const View: React.FC<ViewProps> = (props) => {
 	const searchText = query?.get("q") ?? '';
 
 	const [products] = useApi(() => {
+		const appliedFacets = [
+			{
+				mapping: "productcategories",
+				ids: [productCategory.id]
+			}
+		];
+
+		if (selectedFacets.length) {
+			// Group them up by attribute. This is important because ultimately the server wants to make a query of the form..
+			// (Red or Blue or Green) and (200mm or 100mm)
+			// The server provides this or/and behaviour via or'ing inside each appliedFacet
+			// whilst and'ing the appliedFacets together.
+
+			// Map of attribId -> attribValueIds.
+			const uniqueAttributeMap : Map<int, int[]> = new Map<int, int[]>();
+
+			selectedFacets.forEach(attribValue => {
+				const attributeId = attribValue.productAttributeId;
+				let attributeValueSet = uniqueAttributeMap.get(attributeId);
+
+				if (!attributeValueSet) {
+					attributeValueSet = [];
+					uniqueAttributeMap.set(attributeId, attributeValueSet);
+				}
+
+				attributeValueSet.push(attribValue.id);
+			});
+
+			// Next for each attribute value group, add that appliedFacet.
+			uniqueAttributeMap.forEach((attribValueIds) => {
+				appliedFacets.push({
+					mapping: 'attributes',
+					ids: attribValueIds
+				});
+			});
+		}
+
 		return searchApi.faceted({
 			query: searchText,
 			pageOffset: initialPageOffset as int,
@@ -76,19 +114,7 @@ const View: React.FC<ViewProps> = (props) => {
 				field: "relevance",
 				direction: SortDirection.DESC
 			},
-			appliedFacets: [
-				{
-					mapping: "productcategories",
-					ids: [productCategory.id]
-				},
-				...(Object.keys(selectedFacets ?? {}) ?? []).map((attrId => {
-
-					return {
-						mapping: "attributes",
-						ids: selectedFacets[parseInt(attrId) as uint] || []
-					};
-				}))
-			]
+			appliedFacets
 		}, [
 			productApi.includes.calculatedprice,
 			productApi.includes.primaryCategory,
@@ -197,13 +223,11 @@ const View: React.FC<ViewProps> = (props) => {
 											{facet.attribute.name}
 										</legend>
 										<FilterList 
+											selectedAttributeValues={selectedFacets}
 											facets={facet.facetValues} 
 											units={facet.attribute.units}
 											maxVisible={4 as int}
-											onChange={(values: ulong[]) => {
-												selectedFacets[facet.attribute.id] = values;
-												setSelectedFacets({...selectedFacets});
-											}} 
+											setSelectedAttributeValues={setSelectedFacets}
 										/>
 									</fieldset>
 								</>;
