@@ -399,7 +399,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 							{/* VAT switch */}
 							<div className="site-nav__actions-vat">
-								<Input type="checkbox" xs isSwitch flipped label={`Ex VAT`} onChange={() => setLessTax(!lessTax)} value={lessTax} noWrapper />
+								<Input type="checkbox" xs isSwitch flipped label={`Ex VAT`} onChange={() => setLessTax(!lessTax)} checked={lessTax} noWrapper />
 							</div>
 
 							{/* toggle basket */}

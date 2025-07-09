@@ -267,15 +267,10 @@ const Router: React.FC<{}> = () => {
 	});
 	
 	const changeQuery = (query: Record<string, string>) => {
-		
 		const urlParams = new URLSearchParams();
 	
 		let hasChanged = false;
 		let currentUrl = pageState.url.split('?')[0];
-		
-		if (!currentUrl) {
-			return;
-		}
 		
 		Object.keys(query).forEach((key: string) => {
 			
@@ -297,7 +292,6 @@ const Router: React.FC<{}> = () => {
 		const nextUrl = qs ? `${currentUrl}?${qs}` : currentUrl;
 
 		go(nextUrl);
-		
 	}
 	
 	return <routerCtx.Provider

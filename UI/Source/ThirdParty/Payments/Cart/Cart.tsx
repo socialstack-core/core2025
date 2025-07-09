@@ -34,7 +34,7 @@ const Cart: React.FC<CartProps> = (props) => {
 		return <Alert type="info">
 			{`Active coupon:`}
 			<pre>
-				${couponTitle}
+				{couponTitle}
 			</pre>
 			<Button outlined variant="danger" onClick={() => setCoupon(null)}>{`Remove`}</Button>
 		</Alert>

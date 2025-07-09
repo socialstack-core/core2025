@@ -783,6 +783,11 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 	/// </summary>
 	public virtual async ValueTask<List<T>> CreateAll(Context context, List<T> set, DataOptions options = DataOptions.Default)
 	{
+		if (set == null || set.Count == 0)
+		{
+			return new List<T>();
+		}
+		
 		for(var i=0;i<set.Count;i++)
 		{
 			var previousPermState = context.IgnorePermissions;

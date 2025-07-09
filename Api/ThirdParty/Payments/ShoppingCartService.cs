@@ -427,7 +427,7 @@ namespace Api.Payments
 					await _productQuantities.Update(context, pQuantity, (Context ctx, ProductQuantity toUpdate, ProductQuantity orig) =>
 					{
 						toUpdate.Quantity = (uint)newQty;
-					});
+					}, DataOptions.IgnorePermissions);
 
 					// Ensure it's in the mapping set:
 					if (productQuantityMapping.IndexOf(pQuantity.Id) == -1)
