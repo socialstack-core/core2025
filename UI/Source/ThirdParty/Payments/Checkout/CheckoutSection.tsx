@@ -1,21 +1,24 @@
 
 interface CheckoutSectionProps {
-	title: string;
+	title?: string;
 	enabled?: boolean;
 }
 
-const CheckoutSection : React.FC<React.PropsWithChildren<CheckoutSectionProps>> = (props) => {
-	
-	// Opted for non-collapsible here - collapsibles just added extra clicks
-	const {title, children, enabled} = props;
-	
-	return <div>
-		<h2>{title}</h2>
-		<div>
-			{enabled ? children : `Please complete the steps above first.`}
-		</div>
-	</div>;
-	
+const CheckoutSection: React.FC<React.PropsWithChildren<CheckoutSectionProps>> = (props) => {
+	const { title, children, enabled } = props;
+
+	return <>
+		<section className="payment-checkout__section">
+			{title?.length > 0 && <>
+				<h2 className="payment-checkout__subtitle">
+					{title}
+				</h2>
+			</>}
+			<div className="payment-checkout__section-internal">
+				{enabled ? children : `Please complete the steps above first.`}
+			</div>
+		</section>
+	</>;
 }
 
 export default CheckoutSection;

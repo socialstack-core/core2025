@@ -1,5 +1,7 @@
 import ProductTable from 'UI/Payments/ProductTable';
 import Input from 'UI/Input';
+import Button from 'UI/Button';
+import Link from 'UI/Link';
 import Form from 'UI/Form';
 import Alert from 'UI/Alert';
 import Loading from 'UI/Loading';
@@ -38,8 +40,45 @@ const Checkout: React.FC<CheckoutProps> = (props) => {
 	const [sameAsDelivery, setSameAsDelivery] = useState<boolean>(true);
 	const [billingAddress, setBillingAddress] = useState<Address | undefined>();
 	const [deliveryDate, setDeliveryDate] = useState<DeliveryOption | undefined>();
-	const [estimates, setEstimates] = useState < ApiList<DeliveryOption> | undefined>();
-	
+	const [estimates, setEstimates] = useState<ApiList<DeliveryOption> | undefined>();
+
+	// TODO: currently this infers acceptance as soon as the order is confirmed;
+	//       allow option to display this as a checkbox which needs to be actively selected
+	const [acceptedTerms, setAcceptedTerms] = useState<boolean>(true);
+
+	enum CheckoutStep {
+		OrderContents,
+		DeliveryAddress,
+		BillingAddress,
+		DeliveryDate,
+		PaymentMethod,
+		TermsConditions
+	}
+
+	//const [currentStep, setCurrentStep] = useState(CheckoutStep.DeliveryAddress);
+	//useEffect(() => {
+	//}, [deliveryAddress]);
+
+	let currentStep: CheckoutStep = CheckoutStep.DeliveryAddress;
+
+	if (!!deliveryAddress) {
+		currentStep = CheckoutStep.BillingAddress;
+
+		if (sameAsDelivery || !!billingAddress) {
+			currentStep = CheckoutStep.DeliveryDate;
+
+			if (!!deliveryDate) {
+				currentStep = CheckoutStep.PaymentMethod;
+
+				// TODO
+				if (true) {
+					currentStep = CheckoutStep.TermsConditions;
+				}
+
+			}
+		}
+	}
+
 	// Gets the billing and delivery addresses
 	const [savedAddresses] = useApi(() => addressApi
 		.getCartAddresses()
@@ -62,12 +101,13 @@ const Checkout: React.FC<CheckoutProps> = (props) => {
 	
 	// Load delivery options for this cart
 	useEffect(() => {
+		var cartRef = getCartId();
 		
 		if(!deliveryAddress){
 			return;
 		}
-		
-		deliveryOptionApi.estimate(getCartId(), {
+
+		deliveryOptionApi.estimate(cartRef.id, cartRef.anonKey, {
 			deliveryAddressId: deliveryAddress.id
 		}).then(estimates => {
 
@@ -96,71 +136,124 @@ const Checkout: React.FC<CheckoutProps> = (props) => {
 		</div>;
 	}
 
-	return <div className="payment-checkout">
-		<h2 className="payment-checkout__title">
-			{`Checkout`}
-		</h2>
-			<div className="mb-3">
-			<AddressSelection title={`Delivery Address`} name='delivery' savedAddresses={savedAddresses} value={deliveryAddress} setValue={setDeliveryAddress} addressType='delivery' />
-			<AddressSelection title={`Billing Address`} name='billing' savedAddresses={savedAddresses} value={billingAddress} setValue={setBillingAddress} same={true} isSame={sameAsDelivery} setSameAs={setSameAsDelivery} addressType='billing' />
-			<CheckoutSection title={`Delivery date`} enabled={!!deliveryAddress} >
-				{estimates ? <DeliveryEstimates estimates={estimates} value={deliveryDate} setValue={setDeliveryDate} /> : <Loading />}
-				</CheckoutSection>
-				<CheckoutSection title={`Payment method`} enabled={!!deliveryAddress} >
-					{deferPayment ? <>
-						{`Buy now pay later: This order will be billed to your account.`}
-					</> : 
-						<Input type='payment' name='paymentMethod' label='Payment method' validate={['Required']} />
-					}
-				</CheckoutSection>
-				<ProductTable shoppingCart={shoppingCart} addToCart={addToCart} readonly lessTax={lessTax} />
-				<div className="form-check">
-					<label className="form-check-label" htmlFor="termsCheckbox">
-						{`By placing your order you agree to both the `}
-						<a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer">
-							{`terms and conditions`}
-						</a>
-						{` and `}
-						<a href="/privacy-policy" target="_blank" rel="noopener noreferrer">
-							{`privacy policy`}
-						</a>
-					</label>
-				</div>
-			</div>
-		
-		<Form 
-			action={shoppingCartApi.checkout}
-			failedMessage={`Unable to purchase`}
-			loadingMessage={`Purchasing..`}
-			onSuccess={info => {
-				
-				// Clear cart:
-				emptyCart();
-				
-				if (info?.action){
-					// Go to it now:
-					window.location.href = info.action;
-				} else {
-					var status = info?.purchase?.status || 0;
+	return <>
+		<div className="payment-checkout">
+			<h1 className="payment-checkout__title">
+				{`Checkout`}
+			</h1>
+			<ol className="payment-checkout__steps">
+				<li>
+					{/* order contents */}
+					<CheckoutSection title={`Order contents`} enabled={true}>
+						<ProductTable shoppingCart={shoppingCart} readOnly lessTax={lessTax} />
+					</CheckoutSection>
+				</li>
 
-					if (status >= 200 && status < 300){
-						setPage('/cart/complete?status=success');
-					}else if(status < 300){
-						setPage('/cart/complete?status=pending');
-					}else{
-						setPage('/cart/complete?status=failed');
+				<li>
+					{/* delivery address */}
+					<AddressSelection selectedTitle={`Delivering to`} unselectedTitle={`Select a delivery address`}
+						name='delivery' savedAddresses={savedAddresses}
+						value={deliveryAddress} setValue={setDeliveryAddress} addressType='delivery'
+						enabled={true}
+					/>
+				</li>
+
+				<li className={currentStep < CheckoutStep.BillingAddress ? "payment-checkout__step--disabled" : ""}>
+					{/* billing currentStep */}
+					<AddressSelection selectedTitle={`Billing Address`} unselectedTitle={`Select a billing address`}
+						name='billing' savedAddresses={savedAddresses}
+						value={billingAddress} setValue={setBillingAddress}
+						hasSame={true} isSame={sameAsDelivery} setSameAs={setSameAsDelivery} addressType='billing'
+						enabled={currentStep >= CheckoutStep.BillingAddress}
+					/>
+				</li>
+
+				<li className={currentStep < CheckoutStep.DeliveryDate ? "payment-checkout__step--disabled" : ""}>
+					{/* delivery date */}
+					<CheckoutSection title={`Delivery date`} enabled={currentStep >= CheckoutStep.DeliveryDate}>
+						{estimates ? <DeliveryEstimates estimates={estimates} value={deliveryDate} setValue={setDeliveryDate} /> : <Loading />}
+					</CheckoutSection>
+				</li>
+
+				<li className={currentStep < CheckoutStep.PaymentMethod ? "payment-checkout__step--disabled" : ""}>
+					{/* payment method */}
+					<CheckoutSection title={`Payment method`} enabled={currentStep >= CheckoutStep.PaymentMethod} >
+						{deferPayment ? <>
+							{`Buy now pay later: This order will be billed to your account.`}
+						</> :
+							<Input type='payment' name='paymentMethod' label='Payment method' validate={['Required']} />
+						}
+					</CheckoutSection>
+				</li>
+
+				<li className={currentStep < CheckoutStep.TermsConditions ? "payment-checkout__step--disabled" : ""}>
+					{/* terms and conditions / privacy policy */}
+					<CheckoutSection title={`Review terms`} enabled={currentStep >= CheckoutStep.TermsConditions}>
+						{/*
+						<Input type="checkbox" className="payment-checkout__terms"
+							checked={acceptedTerms ? true : undefined}
+							onChange={e => setAcceptedTerms(e.target.checked)} label={<>
+							{`By placing your order you agree to both the `}
+							<Link href="/terms-and-conditions" external>
+								{`terms and conditions`}
+							</Link>
+							{` and `}
+							<Link href="/privacy-policy" external>
+								{`privacy policy`}
+							</Link>.
+						</>} />
+						*/}
+						<p>
+							{`Please note, by placing your order you agree to both the `}
+							<Link href="/terms-and-conditions" external>
+								{`terms and conditions`}
+							</Link>
+							{` and `}
+							<Link href="/privacy-policy" external>
+								{`privacy policy`}
+							</Link>.
+						</p>
+					</CheckoutSection>
+				</li>
+
+			</ol>
+
+			<Form 
+				action={shoppingCartApi.checkout}
+				failedMessage={`Unable to purchase`}
+				loadingMessage={`Purchasing..`}
+				onSuccess={info => {
+				
+					// Clear cart:
+					emptyCart();
+				
+					if (info?.action){
+						// Go to it now:
+						window.location.href = info.action;
+					} else {
+						var status = info?.purchase?.status || 0;
+
+						if (status >= 200 && status < 300){
+							setPage('/cart/complete?status=success');
+						}else if(status < 300){
+							setPage('/cart/complete?status=pending');
+						}else{
+							setPage('/cart/complete?status=failed');
+						}
 					}
-				}
-			}}
-		>
-			<div className="payment-checkout__footer">
-				<button type="submit" className="btn btn-primary" disabled={!deliveryDate}>
-					<i className="fal fa-fw fa-credit-card" />
-					{`Confirm Purchase`}
-				</button>
-			</div>
-		</Form>
-	</div>;
+				}}
+			>
+				<div className="payment-checkout__footer">
+					<Button type="submit" disabled={currentStep < CheckoutStep.TermsConditions || !acceptedTerms ? true : undefined}>
+						<i className="fal fa-fw fa-credit-card" />
+						<span>
+							{`Confirm Purchase`}
+						</span>
+					</Button>
+				</div>
+			</Form>
+		</div>
+	</>;
 }
 
 export default Checkout;
