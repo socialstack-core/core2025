@@ -33,7 +33,7 @@ namespace Api.Payments
 		/// </summary>
 		/// <param name="ctx"></param>
 		/// <returns></returns>
-		protected async Task<Dictionary<uint, ProductCategoryNode>> GetLookup(Context ctx)
+		public async Task<Dictionary<uint, ProductCategoryNode>> GetLookup(Context ctx)
 		{
 			var tree = await GetTree(ctx);
 			return tree.IdLookup;
