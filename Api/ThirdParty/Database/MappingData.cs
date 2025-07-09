@@ -950,4 +950,53 @@ public struct MappingData
 
 		return true;
 	}
+	
+	/// <summary>
+	/// Similar to equals, compares if 2 mappings are different.
+	/// </summary>
+	/// <param name="key"></param>
+	/// <param name="originalMappings"></param>
+	/// <returns></returns>
+	public bool Changed(string key, MappingData originalMappings)
+	{
+		// if both are null, nothing has changed
+		if (_values == null && originalMappings._values == null)
+		{
+			return false;
+		}
+		
+		// if values is null and originalMappings._values is not, then its changed.
+		if (_values == null)
+		{
+			return true;
+		}
+		
+		var existsInCurrent = _values.TryGetValue(key, out var result);
+		var existsInOriginal = originalMappings._values.TryGetValue(key, out var original);
+	
+		// 2 trues make a true, so if it doesn't exist in 
+		// 1 of them, this means 1 has changed. 
+		if (!(existsInOriginal && existsInCurrent))
+		{
+			return true;
+		}
+		
+		// they've changed if diff sizes.
+		if (result.Count != original.Count)
+		{
+			return true;
+		}
+
+		for (var i = 0; i < result.Count; i++)
+		{
+			// compare items in order.
+			if (result[i] != original[i])
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 }

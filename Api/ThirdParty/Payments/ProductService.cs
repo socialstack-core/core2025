@@ -225,7 +225,10 @@ namespace Api.Payments
 			});
 			Events.Product.BeforeUpdate.AddEventListener(async (ctx, product, original) =>
 			{
-				await UpdateProductCategoryMapping(ctx, product);
+				if (product.Mappings.Changed("productcategories", original.Mappings))
+				{
+					await UpdateProductCategoryMapping(ctx, product);
+				}
 				return product;
 			});
 
@@ -324,72 +327,66 @@ namespace Api.Payments
 		/// <returns></returns>
 		public async ValueTask SyncPermalinks(Context context)
 		{
-			// this method is about to be exposed to an endpoint, in order to stop this from 
-			// firing multiple times, lets add a blocker.
-			if (_isPermalinkSyncRunning)
-			{
-				return;
-			}
-			_isPermalinkSyncRunning = true;
-            Log.Warn("product", "Sync product permalinks");
+		    // This method is about to be exposed to an endpoint, in order to stop this from 
+		    // firing multiple times, let's add a blocker.
+		    if (_isPermalinkSyncRunning)
+		    {
+		        return;
+		    }
 
-			var allProducts = await Where("", DataOptions.IgnorePermissions).ListAll(context);
-			var links = new List<PermalinkUrlTarget>();
+		    _isPermalinkSyncRunning = true;
+		    Log.Warn("product", "Sync product permalinks");
 
-			// Created if any variants exist
-			Dictionary<uint, Product> lookup = null;
+		    try
+		    {
+		        var allProducts = await Where("", DataOptions.IgnorePermissions).ListAll(context);
+		        var links = new List<PermalinkUrlTarget>();
 
+		        // Created if any variants exist
+		        Dictionary<uint, Product> lookup = null;
 
-			foreach (var product in allProducts)
-			{
-				// Permalink target which will be for whichever page wants to handle a product as its primary content.
-				// If a specific page for this product exists, it will ultimately pick that.
-				var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, product);
+		        foreach (var product in allProducts)
+		        {
+		            // Permalink target which will be for whichever page wants to handle a product as its primary content.
+		            // If a specific page for this product exists, it will ultimately pick that.
+		            var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, product);
 
-				await Update(context, product, (ctx, product, original) =>
-				{
-					// noop. This triggers the UpdateProductCategoryMapping method. 
-				});
+		            await Update(context, product, async (ctx, product, original) =>
+		            {
+		                // noop. This triggers the UpdateProductCategoryMapping method. 
+		                await UpdateProductCategoryMapping(ctx, product);
+		            });
 
-				Product parentProduct = null;
-				if (product.VariantOfId.HasValue && product.VariantOfId.Value != 0)
-				{
-					if (lookup == null)
-					{
-						lookup = new Dictionary<uint, Product>();
+		            Product parentProduct = null;
+		            if (product.VariantOfId.HasValue && product.VariantOfId.Value != 0)
+		            {
+		                lookup ??= allProducts.ToDictionary(p => p.Id);
 
-						foreach (var prod in allProducts)
-						{
-							lookup[prod.Id] = prod;
-						}
-					}
+		                if (!lookup.TryGetValue(product.VariantOfId.Value, out parentProduct))
+		                {
+		                    // Invalid variant!
+		                    Log.Warn(LogTag, $"Invalid variant: {product.Id} is a variant of #{product.VariantOfId.Value} but that parent product doesn't exist.");
+		                    continue;
+		                }
+		            }
 
-					if (!lookup.TryGetValue(product.VariantOfId.Value, out parentProduct))
-					{
-						// Invalid variant!
-						Log.Warn(LogTag, "Invalid variant: " + product.Id + " is a variant of #" + product.VariantOfId.Value + " but that parent product doesn't exist.");
-						continue;
-					}
-				}
+		            var permalinkInfo = new PermalinkUrlTarget()
+		            {
+		                Url = GetInitialProductUrl(product, parentProduct),
+		                Target = linkTarget
+		            };
 
-				var permalinkInfo = new PermalinkUrlTarget() {
-					Url = GetInitialProductUrl(product, parentProduct),
-					Target = linkTarget
-				};
+		            links.Add(permalinkInfo);
+		        }
 
-				links.Add(permalinkInfo);
-			}
-
-			try
-			{
-				await _permalinks.BulkCreate(context, links);
-			}
-			catch (Exception ex)
-			{
-				Log.Error("Products/SyncPermalinks", ex);
-			}
-			_isPermalinkSyncRunning = false;
+		        await _permalinks.BulkCreate(context, links);
+		    }
+		    finally
+		    {
+		        _isPermalinkSyncRunning = false;
+		    }
 		}
+
 
 		/// <summary>
 		/// True if it should error if an order for less than the min is placed.
