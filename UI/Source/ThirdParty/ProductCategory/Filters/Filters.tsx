@@ -4,7 +4,7 @@ import Input from 'UI/Input';
 import Link from "UI/Link";
 import { ProductCategoryFacet } from "UI/Product/Search/Facets";
 import {useSession} from "UI/Session";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 
 /**
  * Props for the List component.
@@ -22,10 +22,11 @@ interface FiltersProps {
  */
 const Filters: React.FC<FiltersProps> = (props) => {
 	
+	// currently unused [v]
 	const { session } = useSession();
 	
 	const [filter, setFilter] = useState<string>('');
-	const [showMore, setShowMore] = useState(false);
+	const [maxCategoriesVisible, setMaxCategoriesVisible] = useState<number>(3);
 
 	if (!props.content) {
 		return null;
@@ -33,44 +34,53 @@ const Filters: React.FC<FiltersProps> = (props) => {
 
 	const content = uniqueFacetCategories(props.content);
 
-	const { locale } = session;
+	const filteredContent = useMemo(() => {
+		return content
+			.filter(
+				facet => (
+					!filter || facet.category.name.toLowerCase().includes(filter.toLowerCase())
+				) && facet.category.primaryUrl
+			) ;
+	}, [filter, content]);
+
+	// currently unused [v]
+	// const { locale } = session;
 	
 	// TODO: need an individual filter flag for each category;
 	//       currently 'include' just triggers the checkbox rendering, but knows nothing about state
 	return (
 		<div className="ui-productcategory-filters">
-			<Input type="search" placeholder={`Search for a category`} noWrapper onInput={(ev) => setFilter((ev.target as HTMLInputElement).value)}/>
-			{content.map((facet, idx) => {
-				if (!filter && idx > 2 && !showMore) {
+			<Input 
+				type="search" 
+				placeholder={`Search for a category`} 
+				noWrapper 
+				onInput={(ev) => setFilter((ev.target as HTMLInputElement).value)}
+			/>
+			{filteredContent.map((facet, idx) => {
+				if (idx > maxCategoriesVisible - 1) {
 					return;
 				}
 
 				const { category } = facet;
 
-				if (!category.primaryUrl) {
-					return;
-				}
-
-				if (filter && filter.length != 0) {
-					if (!category.name.toLowerCase().includes(filter.toLowerCase())) {
-						return;
-					}
-				}
-
-				// const facet = facets.find(f => f.category.id === category.id);
-
 				return (
-					<Link href={'/category/' + category.slug}>
+					<Link key={'link-' + category.id} href={'/category/' + category.slug}>
 						{category.name} ({ facet.count ?? 0 })
 					</Link>
 				)
 			})}
-			{content.length > 2 && !filter && <Button
-				type={'button'}
-				onClick={() => setShowMore(!showMore)}
-			>
-				<span>{showMore ? `Show less` : `Show more`}</span>
-			</Button>}
+			{filteredContent.length > maxCategoriesVisible && (
+				<Button
+					type="button"
+					onClick={() =>
+						setMaxCategoriesVisible(prev =>
+							Math.min(prev + 5, filteredContent.length)
+						)
+					}
+				>
+					<span>{`Show more (${filteredContent.length - maxCategoriesVisible})`}</span>
+				</Button>
+			)}
 		</div>
 	);
 }
