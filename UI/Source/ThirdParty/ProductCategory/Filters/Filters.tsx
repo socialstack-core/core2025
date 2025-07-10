@@ -78,7 +78,7 @@ const Filters: React.FC<FiltersProps> = (props) => {
 						)
 					}
 				>
-					<span>{`Show more (${filteredContent.length - maxCategoriesVisible})`}</span>
+					<span>{`Show 5 more (${filteredContent.length - maxCategoriesVisible})`}</span>
 				</Button>
 			)}
 		</div>
