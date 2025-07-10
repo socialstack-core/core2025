@@ -4,8 +4,10 @@ import {ProductCategoryFacet} from "UI/Product/Search/Facets";
 import Link from 'UI/Link'
 
 import { useMemo, useState } from "react";
+import {ApiList} from "UI/Functions/WebRequest";
+import {useRouter} from "UI/Router";
 
-const ROOT_CATEGORY_ID: uint = 1;
+const ROOT_CATEGORY_ID: uint = 1 as uint;
 
 // basic props type for the category filters component.
 export type CategoryFilterProps = {
@@ -21,10 +23,6 @@ export type CategoryFilterProps = {
 // represents a tree branch structure
 // for category tree node.
 export type CategoryTreeNode = {
-	
-	// the category in the node
-	category: ProductCategory;
-	
 	// the facet (used for count etc...)
 	facet: ProductCategoryFacet;
 	
@@ -54,6 +52,12 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 		[currentCategory, categoryTree]
 	);
 	
+	// we've pulled this in to make sure the
+	// search query is persistent in the URL
+	// so when somebody clicks on a category
+	// the search query is retained.
+	const { pageState } = useRouter();
+	
 	// the top level categories can often have a lot of children
 	// so create a state item to hold the limit.
 	const [maxCategoryListing, setMaxCategoryListing] = useState(5);
@@ -62,7 +66,7 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 	const rootTreeItem = categoryTree.get(ROOT_CATEGORY_ID);
 	
 	// the actual root category
-	const root = rootTreeItem?.category;
+	const root = rootTreeItem?.facet.category;
 	
 	// try and get child categories from the current one.
 	// this will ALWAYS be an array, but to satisfy TypeScripts
@@ -79,6 +83,20 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 		return null;
 	}
 	
+	// we don't pull this into state, it's derived from a hook
+	// it's lifecycle is managed elsewhere, and query edits
+	// are debounced and cause a state update which in effect
+	// re-renders this. This is derived from pageState
+	// due to window.location not being SSR safe. 
+	let queryString = pageState.query.toString();
+	
+	// just in-case the toString() doesn't prepend 
+	// the query string start delimiter, we add one in.
+	// this simplifies code further down too.
+	if (!queryString.startsWith('?')) {
+		queryString = '?' + queryString;
+	}
+	
 	const renderRootCategory = () => {
 		return (
 			<ul>
@@ -93,7 +111,7 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 
 					return (
 						<li>
-							<Link href={category.primaryUrl}>
+							<Link href={category.primaryUrl + queryString}>
 								{category.name} ({treeNode?.facet?.count ?? 0})
 							</Link>
 						</li>
@@ -120,7 +138,7 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 		
 		return (
 			<li>
-				<Link href={root.primaryUrl}>
+				<Link href={root.primaryUrl + queryString}>
 					<i className={'fas fa-chevron-left'}/>
 					{`All products (${rootTreeItem.facet?.count ?? 0})`}
 				</Link>
@@ -132,9 +150,9 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 						parentCategoryPath.map(category => {
 							return (
 								<li>
-									<Link href={category.primaryUrl}>
+									<Link href={category.primaryUrl + queryString}>
 										<i className={'fas fa-chevron-left'}/>
-										{`${category.name} (${categoryTree.get(category.id).facet.count ?? 0})`}
+										{`${category.name} (${categoryTree.get(category.id)?.facet.count ?? 0})`}
 									</Link>
 								</li>
 							)
@@ -144,7 +162,7 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 						<li>
 							<Link href={'#'}>
 								{children.length != 0 && <i className={'fas fa-chevron-down'}/>}
-								{`${currentCategory.name} (${categoryTree.get(currentCategory.id).facet.count ?? 0})`}
+								{`${currentCategory.name} (${categoryTree.get(currentCategory.id)?.facet.count ?? 0})`}
 							</Link>
 						</li>
 						<ul>
@@ -157,8 +175,8 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 	
 								return (
 									<li>
-										<Link href={category.primaryUrl}>
-											{`${category.name} (${categoryTree.get(category.id).facet.count ?? 0})`}
+										<Link href={category.primaryUrl + queryString}>
+											{`${category.name} (${categoryTree.get(category.id)?.facet.count ?? 0})`}
 										</Link>
 									</li>
 								)
@@ -219,18 +237,18 @@ const getParentCategoryPath = (category: ProductCategory, categoryTree: Map<uint
 	while(current)
 	{
 		// push it to the path items array
-		pathItems.push(current.category);
+		pathItems.push(current.facet.category);
 		
 		// if the current category has no parent
 		// we've already pushed it to the pathItems
 		// array, so we can break the loop here
 		// and go straight to returning the path items.
 		// we also ignore the root category here.
-		if (!current.category.parentId || current.category.parentId === ROOT_CATEGORY_ID) {
+		if (!current.facet.category.parentId || current.facet.category.parentId === ROOT_CATEGORY_ID) {
 			break;
 		}
 		// otherwise ascend to the parent category.
-		current = categoryTree.get(current.category.parentId)
+		current = categoryTree.get(current.facet.category.parentId)
 	}
 	
 	// return the pathItems, they also need to be reversed 
@@ -273,9 +291,6 @@ const buildCategoryTree = (collection: ApiList<Product>): Map<uint, CategoryTree
 		console.error('[CategoryFilters] Collection has no secondary includes, a category tree cannot be built without the secondary includes', { name: 'productCategoryFacets' });
 		return map;
 	}
-	
-	// take the api response, and grab all categories from it, they're identifiable via the field 'category'
-	const categoryIncludes = collection.secondary.productCategoryFacets.includes.find(include => include.field === 'category')
 	// also grab the facets
 	const facets           = collection.secondary.productCategoryFacets.results;
 	
@@ -283,27 +298,44 @@ const buildCategoryTree = (collection: ApiList<Product>): Map<uint, CategoryTree
 	// this doesn't populate children, but adds the category and its facet information
 	// it also initialises an empty array of children, so calling .children will always
 	// result in an array.
-	categoryIncludes.values.forEach(category => {		
-		map.set(category.id, {
-			category: category,
-			facet: facets.find(facet => facet.productCategoryId === category.id),
+	facets.forEach((facet: ProductCategoryFacet) => {		
+		map.set(facet.category.id, {
+			facet,
 			children: []
 		});
 	})
-	
 	// second time around we have all the relevant category data setup, 
 	// we iterate over entries, 
-	map.entries().forEach(([categoryId, categoryTreeNode]) => {
+	// ignore any TS errors saying "forEach" doesn't exist on 
+	// MapIterator<uint, CategoryTreeNode>, it most certainly does.
+	// the entry is destructured here, noticed the first argument
+	// is omitted, this is by design, the node represents the 
+	// node holding the facet & children
+	map.entries().forEach(([, node]) => {
 		
-		// quick null check. 
-		if (!categoryTreeNode) {
-			return;
+		// destructure facet from the node, each node has facet & children
+		const { facet } = node;
+		
+		// get the parentId, fallback to the root category ID.
+		const parentId = (facet.category.parentId) || ROOT_CATEGORY_ID;
+		
+		// get the parent node, this differs from the last approach 
+		// as instead of performing a ".filter" and increasing the amount
+		// of operations being run, every category gets iterated over
+		// this appraoch reduces the amount of work.
+		const parentNode = map.get(parentId);
+		
+		// this should error out
+		// the parent ID can either be a non-zero value
+		// which is true, which means the next branch will
+		// skip, or it will fall back to the root category ID
+		// if the ID is falsy (empty, null or undefined) 
+		if (!parentNode) {
+			throw new Error("Couldn't identify the target category and failed to fallback on the root category ID")
 		}
 		
-		// assign the children. Some categories have no parent, 
-		// so parentId can be undefined, so we do a truthy check on it
-		// and then deep equality check on the categoryId equaling the parent ID.
-		categoryTreeNode.children = categoryIncludes.values.filter(category => category.parentId && category.parentId === categoryId);
+		// push the category to the parentNode children collection
+		parentNode!.children.push(facet.category)
 	})
 	
 	return map;
