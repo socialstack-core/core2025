@@ -4,33 +4,19 @@ import Input from 'UI/Input'
 export type MultiSelectOption = {
     value: string,
     count: number,
-    valueId: number
+    valueId: int
 }
 
 export type MultiSelectBoxProps = {
-    onChange: (values: ulong[]) => void;
+    onSetValue: (value: int, added: boolean) => void;
     defaultText: string;
-    value: ulong[]
+    value: int[],
     options: MultiSelectOption[]
 }
 
 export const MultiSelectBox = (props: MultiSelectBoxProps) => {
-    
+    const { value, onSetValue } = props;
     const [isOpen, setIsOpen] = useState(false);
-    const [value, setValue] = useState<ulong[]>();
-
-    useEffect(() => {
-        if (!value && props.value) {
-            // will only happen mount only.
-            setValue(props.value);
-            return;
-        }
-        
-        if (value && value != props.value) {
-            props.onChange(value);
-        }
-    }, [value]);
-    
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -59,7 +45,7 @@ export const MultiSelectBox = (props: MultiSelectBoxProps) => {
     
     return (
         <div 
-            className={'multi-select ' + (value?.length != 0 ? ' in-use' : '')} 
+            className={'multi-select'} 
             ref={ref}
             onClick={() => {
                 if (!isOpen) {
@@ -68,8 +54,7 @@ export const MultiSelectBox = (props: MultiSelectBoxProps) => {
             }}
         >
             <div onClick={() => setIsOpen(!isOpen)} className={'multi-select-title'}>
-                {props.defaultText} {props.value.length != 0 ? "(" + props.value.length + ")" : ''}
-
+                {props.defaultText}
                 {isOpen ? <i className={'fas fa-chevron-up'}/> : <i className={'fas fa-chevron-down'}/>}
             </div>
             {isOpen && (
@@ -82,14 +67,19 @@ export const MultiSelectBox = (props: MultiSelectBoxProps) => {
                                     type={'checkbox'} 
                                     label={option.value + ' (' + option.count + ')'}
                                     onChange={(event) => {
-                                        const newValue: ulong[] = value?.filter((existing) => existing !== option.valueId) ?? [];
-                                        
                                         if ((event.target as HTMLInputElement).checked) {
-                                            newValue.push(option.valueId as ulong);
+                                            // Is it already in there?
+                                            if (value.includes(option.valueId)) {
+                                                return;
+                                            }
+
+                                            onSetValue(option.valueId, true);
+                                        } else {
+                                            // Unchecked - remove this one.
+                                            onSetValue(option.valueId, false);
                                         }
-                                        setValue(newValue);
                                     }}
-                                    checked={value?.includes(option.valueId as ulong)}
+                                    checked={value.includes(option.valueId)}
                                />
                             </li>
                         )

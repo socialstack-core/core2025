@@ -211,6 +211,17 @@ public class MongoSearchEventListener
 					compoundDoc["filter"] = new BsonArray(filterClauses);
 				}
 
+				if (compoundDoc.ElementCount == 0)
+				{
+					// Admin panel with no query and no filters -
+					// atlas requires the compound to at least contain something, so we
+					// require _id to exist which it always does on MongoDB/ Atlas.
+					compoundDoc["must"] = new BsonArray
+					{
+						new BsonDocument("exists", new BsonDocument("path", "_id"))
+					};
+				}
+
 				var searchStage = new BsonDocument
 				{
 					{ "index", searchService.CurrentConfig().AtlasIndex ?? "default" },

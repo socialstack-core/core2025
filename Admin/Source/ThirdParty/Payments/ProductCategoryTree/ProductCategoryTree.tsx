@@ -10,7 +10,7 @@ import { MultiSelectBox } from "./MultiSelect";
 import productCategoryApi, {ProductCategory} from "Api/ProductCategory";
 import searchApi, {ProductSearchAppliedFacet, ProductSearchType, SortDirection} from "Api/ProductSearchController";
 import { ProductIncludes} from "Api/Includes";
-import ProductApi, { Product } from "Api/Product";
+import productApi, { Product } from "Api/Product";
 import { ApiList } from "UI/Functions/WebRequest";
 import { ProductAttribute } from "Api/ProductAttribute";
 import { ProductAttributeValue } from "Api/ProductAttributeValue";
@@ -44,27 +44,22 @@ type PageViewType = "list" | "tree";
  */
 export default function ProductCategoryTree({ noCreate }: ProductCategoryTreeProps) {
 
-
-	const { pageState } = useRouter();
-	
-	const [viewType, setViewType] = useState<PageViewType>(pageState.query?.get("query") ? "list" : "tree");
-	const [searchQuery, setSearchQuery] = useState(pageState.query?.get("query") ?? '');
+	const { pageState, updateQuery } = useRouter();
+	const queryText = pageState.query?.get("q");
+	const [viewType, setViewType] = useState<PageViewType>(queryText ? "list" : "tree");
 	const path = pageState.query?.get("path") || "";
-
-
 	const breadcrumbs = buildBreadcrumbs("/en-admin/product", "Products", path, "/en-admin/product");
 
-	const setSearchQueryRef = useRef(setSearchQuery);
-
+	const updateQueryRef = useRef(updateQuery);
 	const debounce = useRef(
 		new Debounce(
 			(query: string) => {
-				setSearchQueryRef.current(query);
+				updateQueryRef.current({ q: query });
 			}
 		)
 	);
 
-	setSearchQueryRef.current = setSearchQuery;
+	updateQueryRef.current = updateQuery;
 
 	const addProductUrl = "/en-admin/product/add";
 	const addCategoryUrl = "/en-admin/productcategory/add";
@@ -100,7 +95,7 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 					<div className="product-search">
 						<Input
 							type="search"
-							defaultValue={searchQuery}
+							defaultValue={queryText}
 							onChange={(ev) => {
 								debounce.current.handle((ev.target as HTMLInputElement).value)
 								setViewType("list")
@@ -118,7 +113,7 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
 							onLoadData={(path) => productCategoryApi.getTreeNodePath(path).then((resp) => resp)}
 						/>
 					) : (
-						<ProductListView query={searchQuery} />
+						<ProductListView />
 					)}
 				</div>
 
@@ -143,23 +138,7 @@ export default function ProductCategoryTree({ noCreate }: ProductCategoryTreePro
  * @property {string} [query] - Optional search query
  */
 type ProductListViewProps = {
-	query?: string;
 };
-
-const hydrateFacets = (): ProductSearchAppliedFacet[] => {
-	var req = parseProductUrl(location.href);
-	
-	var facets: ProductSearchAppliedFacet[] = [];
-	
-	Object.keys(req.facet).map((mapping: string) => {
-		if (!req.facet[mapping]) {
-			return;
-		}
-		facets.push({ mapping, ids: req.facet[mapping] })
-	})
-	
-	return facets;
-}
 
 /**
  * Displays a list view of products, including filtering and search functionality.
@@ -171,95 +150,83 @@ const hydrateFacets = (): ProductSearchAppliedFacet[] => {
 const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewProps) => {
 	const [searchResults, setSearchResults] = useState<ApiList<Product>>();
 	const [pageOffset, setPageOffset] = useState(0);
-	const [attributeFacets, setAttributeFacets] = useState<ProductSearchAppliedFacet[]>(hydrateFacets());
+	const [selectedAttributeValues, setSelectedAttributeValues] = useState<ProductAttributeValue[]>([]);
+	const [selectedCategories, setSelectedCategories] = useState<ProductCategory[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
-	
 	const [sortOrder, setSortOrder] = useState<SortField>({ field: null, direction: 'asc' }); // relevance by default
-
 	const { pageState } = useRouter();
-	
-	let categoryFacets = attributeFacets.filter(item => item.mapping == 'productcategories').flatMap(attr => attr.ids) as ulong[];
-	
-	if (categoryFacets.length == 0) {
-		categoryFacets.push(1 as uint); // top level category.
-	}
-
-	const queryPayload = {
-		query: props.query,
-		pageOffset: pageOffset as uint,
-		appliedFacets: [
-			{
-				mapping: "attributes",
-				ids: attributeFacets.filter(item => item.mapping != 'productcategories').flatMap(attr => attr.ids) as ulong[]
-			},
-			{
-				mapping: "productcategories",
-				ids: categoryFacets
-			}
-		],
-		searchType: ProductSearchType.Reductive,
-		sortOrder: {
-			field: sortOrder.field,
-			direction: sortOrder.direction === 'asc' ? SortDirection.ASC : SortDirection.DESC
-		}
-	};
+	const { query } = pageState;
+	const queryText = query?.get("q");
 
 	useEffect(() => {
-		if (props.query !== pageState.query?.get("query")) {
-			setAttributeFacets([]);
-		}
-	}, [props.query]);
-
-	useEffect(() => {
-
-		let facetStr = '';
-
-		attributeFacets.forEach(facet => {
-			if (!facet.ids) {
-				return;
-			}
-			facetStr += '&facet[' + facet.mapping + ']=' + facet.ids.join(',');
-		})
-		
-		const url = location.pathname + '?query=' + props.query + facetStr;
-		history.replaceState(null, '',url);
-
 		setLoading(true);
 
+		const appliedFacets = [] as ProductSearchAppliedFacet[];
+
+		if (selectedAttributeValues.length) {
+			// Group them up by attribute. This is important because ultimately the server wants to make a query of the form..
+			// (Red or Blue or Green) and (200mm or 100mm)
+			// The server provides this or/and behaviour via or'ing inside each appliedFacet
+			// whilst and'ing the appliedFacets together.
+
+			// Map of attribId -> attribValueIds.
+			const uniqueAttributeMap: Map<int, int[]> = new Map<int, int[]>();
+
+			selectedAttributeValues.forEach(attribValue => {
+				const attributeId = attribValue.productAttributeId;
+				let attributeValueSet = uniqueAttributeMap.get(attributeId);
+
+				if (!attributeValueSet) {
+					attributeValueSet = [];
+					uniqueAttributeMap.set(attributeId, attributeValueSet);
+				}
+
+				attributeValueSet.push(attribValue.id);
+			});
+
+			// Next for each attribute value group, add that appliedFacet.
+			uniqueAttributeMap.forEach((attribValueIds) => {
+				appliedFacets.push({
+					mapping: 'attributes',
+					ids: attribValueIds
+				});
+			});
+		}
+
+		if (selectedCategories.length) {
+			appliedFacets.push({
+				mapping: 'productcategories',
+				ids: selectedCategories.map(cat => cat.id)
+			});
+		}
+
 		searchApi
-			.faceted(queryPayload, [
-				new ProductIncludes().attributeValueFacets,
-				new ProductIncludes().productCategoryFacets,
-				new ProductIncludes().attributes.attribute,
-				new ProductIncludes().productcategories,
+			.faceted({
+				query: queryText,
+				pageOffset: pageOffset as uint,
+				pageSize: 200 as int,
+				appliedFacets,
+				minPrice: 1,
+				maxPrice: 5000,
+				inStockOnly: false,
+				searchType: ProductSearchType.Reductive,
+				sortOrder: {
+					field: sortOrder.field,
+					direction: sortOrder.direction === 'asc' ? SortDirection.ASC : SortDirection.DESC
+				}
+			}, [
+				productApi.includes.attributeValueFacets,
+				productApi.includes.productCategoryFacets,
+				productApi.includes.attributes.attribute,
+				productApi.includes.productcategories,
+				productApi.includes.productCategoryFacets.category,
 			])
 			.then((response) => {
 				setSearchResults(response);
 				setLoading(false);
 			});
-	}, [props.query, attributeFacets, sortOrder]);
+	}, [selectedAttributeValues, selectedCategories, queryText, sortOrder]);
 
-	useEffect(() => {
-		
-		if (!props.query) {
-			const GET = parseProductUrl(location.href);
-
-			if (GET.query) {
-				// update all from URL.
-				
-				const facets: ProductSearchAppliedFacet[] = [];
-				
-				Object.keys(GET.facet).forEach((mapping: string) => {
-					facets.push({ mapping, ids:GET.facet[mapping] });
-				})
-				
-				setAttributeFacets(facets);
-				
-			}
-		}
-		
-	}, [props.query]);
-	
 	const changeSortField = (field: string) => {
 		if (field == sortOrder.field) {
 			sortOrder.direction = sortOrder.direction === 'asc' ? 'desc' : 'asc';
@@ -280,17 +247,10 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 					{searchResults?.secondary && (
 						<SearchAttributeFilter
 							results={searchResults}
-							onFilterChange={(mappingName, values) => {
-								const facet = attributeFacets.find((facet) => facet.mapping === mappingName);
-
-								if (!facet) {
-									attributeFacets.push({ mapping: mappingName, ids: values });
-								} else {
-									facet.ids = values;
-								}
-								setAttributeFacets([...attributeFacets]);
-							}}
-							value={attributeFacets}
+							selectedAttributeValues={selectedAttributeValues}
+								setSelectedAttributeValues={setSelectedAttributeValues}
+							selectedCategories={selectedCategories}
+							setSelectedCategories={setSelectedCategories}
 						/>
 					)}
 					<table className="table products-table">
@@ -329,7 +289,7 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 								onClick={() => changeSortField('EditedUtc')}
 								className={sortOrder.field === 'EditedUtc' ? 'active' : ''}
 							>
-								Created
+								Edited
 								{sortOrder.field === 'EditedUtc' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
 							</th>
 
@@ -364,13 +324,30 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
  * Props for SearchAttributeFilter component
  * @typedef {Object} ProductAttributeFilterProps
  * @property {ApiList<Product>} results - Search results with includes
- * @property {(mappingName: string, values: ulong[]) => void} onFilterChange - Called when filter is changed
  * @property {ProductSearchAppliedFacet[]} value - Current filter values
  */
 type ProductAttributeFilterProps = {
 	results: ApiList<Product>;
-	onFilterChange: (mappingName: string, values: ulong[]) => void;
-	value: ProductSearchAppliedFacet[];
+
+	/**
+	 * An array of selected attribute values (red, green, whatever)
+	 */
+	selectedAttributeValues: ProductAttributeValue[],
+
+	/**
+	 * Do something when the attribs change.
+	 */
+	setSelectedAttributeValues: (values: ProductAttributeValue[]) => void
+
+	/**
+	 * An array of selected categories
+	 */
+	selectedCategories: ProductCategory[],
+
+	/**
+	 * Do something when the cats change.
+	 */
+	setSelectedCategories: (values: ProductCategory[]) => void
 };
 
 /**
@@ -381,7 +358,7 @@ type ProductAttributeFilterProps = {
  * @returns {JSX.Element}
  */
 const SearchAttributeFilter: React.FC<ProductAttributeFilterProps> = (props: ProductAttributeFilterProps) => {
-	const { results, onFilterChange, value } = props;
+	const { results, selectedAttributeValues, setSelectedAttributeValues, selectedCategories, setSelectedCategories } = props;
 
 	const attributeValueIds = results.secondary?.attributeValueFacets?.results;
 	if (!attributeValueIds) {
@@ -399,24 +376,30 @@ const SearchAttributeFilter: React.FC<ProductAttributeFilterProps> = (props: Pro
 		<div className="attribute-filters">
 			<CategoryFilter 
 				results={results} 
-				value={props.value?.find(facet => facet.mapping === 'category')?.ids ?? []} 
-				onCategoryFilterChange={(values: ulong[]) => {
-					onFilterChange('category', values);
-				}} 
+				value={selectedCategories} 
+				setSelectedCategories={setSelectedCategories}
 			/>
 			{uniqueAttributes(attributes).map((productAttribute: ProductAttribute) => {
 				const values = attributeValues.filter((val) => val.productAttributeId == productAttribute.id);
-				const selectedValues = value.find((facet) => facet.mapping == productAttribute.key);
-				const isInUse = value.find((item) => item.mapping === productAttribute.key);
-
+				
 				return (
-					<div key={productAttribute.id} className={`attribute-filter${isInUse ? " in-use" : ""}`}>
+					<div key={productAttribute.id} className={`attribute-filter`}>
 						<MultiSelectBox
-							onChange={(values: ulong[]) => {
-								onFilterChange(productAttribute.key!, values);
+							onSetValue={(valueId: int, added: boolean) => {
+								if (added) {
+									// Add value with ID #valueId
+									var valueToAdd = values.find(val => val.id == valueId);
+
+									if (valueToAdd) {
+										setSelectedAttributeValues([...selectedAttributeValues, valueToAdd]);
+									}
+								} else {
+									// Remove it
+									setSelectedAttributeValues(selectedAttributeValues.filter(val => val.id != valueId));
+								}
 							}}
 							defaultText={productAttribute.name}
-							value={selectedValues?.ids ?? []}
+							value={selectedAttributeValues.map(sav => sav.id)}
 							options={uniqueAttributeValues(values).map((val: ProductAttributeValue) => {
 								return {
 									value: val.value + (productAttribute.units ?? ""),
@@ -434,41 +417,44 @@ const SearchAttributeFilter: React.FC<ProductAttributeFilterProps> = (props: Pro
 
 type CategoryFilterProps = {
 	results: ApiList<Product>;
-	onCategoryFilterChange: (values: ulong[]) => void;
-	value: ulong[]
+	setSelectedCategories: (values: ProductCategory[]) => void;
+	value: ProductCategory[]
 }
 
 const CategoryFilter: React.FC<CategoryFilterProps> = (props) => {
 	
-	const { results } = props;
+	const { results, value, setSelectedCategories } = props;
 	
-	if (!results) {
-		return;
-	}
-	
-	let categories = results?.includes.find((include: { field: string }) => include.field === "productCategories")?.values ?? [];
-	categories = uniqueCategories(categories);
-	
-	if (categories.filter(Boolean).length == 0) {
-		return;
+	const categoryFacets = results?.secondary?.productCategoryFacets.results ?? [];
+
+	if (categoryFacets.length == 0) {
+		return null;
 	}
 
-
-	const secondaryFacets = results.secondary?.productCategoryFacets.results ?? [];
-	
 	return (
 		<div className={'attribute-filter'}>
 			<MultiSelectBox 
-				onChange={(values: ulong[]) => {
-					props.onCategoryFilterChange(values)
+				onSetValue={(valueId: int, added: boolean) => {
+					if (added) {
+						// Add value with ID #valueId
+						var category = categoryFacets.find(val => val.category?.id == valueId)?.category;
+
+						if (category) {
+							setSelectedCategories([...value, category]);
+						}
+					} else {
+						// Remove it
+						setSelectedCategories(value.filter(val => val.id != valueId));
+					}
 				}} 
 				defaultText={`Categories`} 
-				value={props.value} 
-				options={categories.map((category: ProductCategory) => {
-					
+				value={value.map(cat => cat.id)} 
+				options={categoryFacets.map((categoryFacet: ProductCategoryFacet) => {
+					const { category } = categoryFacet;
+
 					return {
 						value: category.name,
-						count: secondaryFacets.find((cat: any) => cat.productCategoryId === category.id)?.count ?? 0,
+						count: categoryFacet.count,
 						valueId: category.id,
 					}
 				})}
@@ -529,36 +515,3 @@ type ParsedQuery = {
 	query?: string;
 	facet: Record<string, ulong[]>;
 };
-
-/**
- * Parses a URL and extracts the 'query' string and 'facet' parameters.
- *
- * @param {string} url - The full URL to parse
- * @returns {ParsedQuery} - Parsed object containing query and facet map
- */
-function parseProductUrl(url: string): ParsedQuery {
-	const parsed = new URL(url);
-	const params = new URLSearchParams(parsed.search);
-	const result: ParsedQuery = { facet: {} };
-
-	// Extract query
-	const query = params.get("query");
-	if (query) {
-		result.query = query;
-	}
-
-	// Extract facet[key]=... values
-	for (const [key, value] of params.entries()) {
-		const match = key.match(/^facet\[(.+?)\]$/);
-		if (match) {
-			const facetKey = match[1];
-			const idList = value
-				.split(',')
-				.map((str: string) => parseInt(str, 10))
-				.filter((n: number) => !isNaN(n));
-			result.facet[facetKey] = idList;
-		}
-	}
-
-	return result;
-}
