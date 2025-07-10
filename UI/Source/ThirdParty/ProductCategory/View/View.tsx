@@ -183,17 +183,13 @@ const View: React.FC<ViewProps> = (props) => {
 						</legend>
 						<Input type="checkbox" onChange={(ev) => setShowInStockOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show in stock`} value={showInStockOnly} name="show-in-stock" noWrapper />
 					</fieldset>
-
-					{showableCategories.length != 0 && <>
-						<fieldset>
-							<legend>
-								{`All product categories`}
-							</legend>
-							<CategoryFilters content={showableCategories} />
-							{/* TODO: limit list to 3 items with "show more" */}
-						</fieldset>
-					</>}
-
+					<fieldset>
+						<legend>
+							{`All product categories`}
+						</legend>
+						<CategoryFilters collection={products} currentCategory={productCategory}/>
+						{/* TODO: limit list to 3 items with "show more" */}
+					</fieldset>
 					<DualRange 
 						className="ui-productcategory-view__price" 
 						label={`Price`} 

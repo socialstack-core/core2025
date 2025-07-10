@@ -272,7 +272,7 @@ public class ProductSearchService : AutoService
 
 			foreach (var product in search.Products)
 			{
-				var cats = product.Mappings.Get("productCategories");
+				var cats = product.Mappings.Get("childofcategories");
 
 				if (cats != null)
 				{
