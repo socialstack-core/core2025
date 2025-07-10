@@ -106,9 +106,6 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
         if (cartRef) {
             shoppingCartApi.loadAnon(cartRef.id, cartRef.anonKey || '', includeSet)
                 .then(response => {
-
-                    console.log(cartRef.id, cartRef.anonKey || '');
-
                     loadCart(response);
                     setLoading(false);
                 }).catch(e => {

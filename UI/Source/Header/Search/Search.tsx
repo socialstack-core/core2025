@@ -50,9 +50,7 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 		)
 	);
 
-	useEffect(() => {
-		updateQueryRef.current = updateQuery;
-	}, [updateQuery]);
+	updateQueryRef.current = updateQuery;
 
 	return (
 		<div className="site-nav__search">

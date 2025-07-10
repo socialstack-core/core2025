@@ -307,7 +307,7 @@ const Router: React.FC<{}> = () => {
 			document.removeEventListener("contentchange", onContentChange);
 			document.removeEventListener("websocketmessage", onWsMessage);
 		};
-	}, []);
+	}, [pageState]);
 	
 	var { page } = pageState;
 	
