@@ -1633,8 +1633,8 @@ public partial class AutoService
 				ServicedType,
 				fields,
 				childAdminPage,
-				navMenuIconRef,
-				navMenuLabel
+				navMenuLabel,
+				navMenuIconRef
 			]);
 		}
 	}

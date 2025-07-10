@@ -34,80 +34,51 @@ namespace Api.NavMenus
 			PageService pageSvc
 			) : base(Events.AdminNavMenuItem)
 		{
-			
-			Events.Permalink.BeforeCreate.AddEventListener(async (ctx, permalink) =>
+
+			Events.Page.BeforePageInstall.AddEventListener(async(ctx, builder) => 
 			{
-				var adminContext = new Context(1, 1, 1);
-				if (permalink.Target.StartsWith("page:"))
+				if (
+					builder == null || 
+					!builder.IsAdmin || 
+					string.IsNullOrEmpty(builder.Url) ||
+					builder.PageType != CommonPageType.AdminList
+				)
 				{
-					var id = permalink.Target.Split(':')[1];
-
-					if (string.IsNullOrEmpty(id))
-					{
-						throw new PublicException("Permalink target is missing appended ID", "permalink/bad-format");
-					}
-
-					if (uint.TryParse(id, out var pageId))
-					{
-						var page = await pageSvc.Get(adminContext, pageId, DataOptions.IgnorePermissions);
-
-						if (page == null)
-						{
-							throw new PublicException(
-								$"Permalink target is invalid, no page found with the ID {pageId}",
-								"permalink/invalid-target"
-							);
-						}
-
-						if (!page.Key.Contains(':'))
-						{
-							return permalink;
-						}
-
-						var pageKey = page.Key.Split(':');
-
-						if (pageKey.Length != 2)
-						{
-							return permalink;
-						}
-
-						var pageType = pageKey[0];
-						var entity   = pageKey[1];
-
-						if (pageType != "admin_list")
-						{
-							return permalink;
-						}
-
-						var svc = Services.Get(entity + "Service");
-
-						if (svc == null)
-						{
-							return permalink;
-						}
-					
-						var tidyPluralName = Pluralise.PluraliseWords(Pluralise.NiceName(svc.EntityName));
-						
-						// TODO: Pages/PageBuilder => Reconcile the title & icon somehow, its
-						// passed to the page builder, just need to get that context here somehow. 
-						var label = char.ToUpper(tidyPluralName[0]) + tidyPluralName[1..];
-						// for now...
-						const string icon = "fa:fa-rocket";
-						// no we have the page & permalink, construct the link.
-						
-						var adminNavMenuItem = new AdminNavMenuItem()
-						{
-							Title = tidyPluralName,
-							Url = permalink.Url,
-							IconRef = icon,
-							PageKey = page.Key
-						};
-						
-						await Create(adminContext, adminNavMenuItem);
-					}
+					// Non-admin list builder.
+					return builder;
 				}
 
-				return permalink;
+				// Create an admin nav menu link to the target page.
+				// You can disable this behaviour by ensuring both icon and title are blank.
+				var title = builder.AdminNavMenuTitle;
+				var icon = builder.AdminNavMenuIcon;
+
+				if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(icon))
+				{
+					// Intentionally requesting no admin link
+					return builder;
+				}
+
+				// Does this link exist? If yes, do nothing too.
+				var existing = await Where("PageKey=?", DataOptions.IgnorePermissions)
+					.Bind(builder.Key)
+					.First(ctx);
+
+				if (existing != null)
+				{
+					return builder;
+				}
+
+				var adminNavMenuItem = new AdminNavMenuItem()
+				{
+					Title = title,
+					Url = builder.Url,
+					IconRef = icon,
+					PageKey = builder.Key
+				};
+				
+				await Create(ctx, adminNavMenuItem, DataOptions.IgnorePermissions);
+				return builder;
 			});
 			
 			// Install example admin pages for demonstration / default setup.
