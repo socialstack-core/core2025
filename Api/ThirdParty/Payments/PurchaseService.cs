@@ -38,7 +38,9 @@ namespace Api.Payments
 			_prodQuantities = prodQuantities;
 			_products = products;
 			_prices = prices;
-			
+
+			InstallAdminPages("Orders", "fa:fa-shopping-basket", ["id", "total"]);
+
 			pages.Install(
 				new PageBuilder()
 				{
