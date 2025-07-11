@@ -81,13 +81,6 @@ const MediaCenter = (props) => {
     
     const [sorter, setSort] = useState({ field: 'id', direction: 'desc' });
     
-    // this has been added as it is used in the filter creation, which needs to 
-    // exist in this component due to the field queried in the media center (originalName) 
-    // isn't the conventional field that's queried across the board, that's commonly 'name'
-    // and instead of hacking in a filterFieldName, this has been designed in a way 
-    // where the filters are passed down to Loop, as Loop does support the filters.
-    const [pageIndex] = useState<uint>(getIntegerSearchParam('page', pageState.query, props.defaultPage || 1) as uint)
-    
     // page size is held in the URL too, under the param "limit" as seen below, it falls back to 20, the reason 
     // no mutating method has been declared here is it doesn't need to exist, when the param for this is changed,
     // the URL changes, which then in effect triggers the re-render needed to update this value. 
@@ -258,6 +251,11 @@ const MediaCenter = (props) => {
         }
         return c;
     }
+    
+    // the page number doesn't need state anymore
+    // it is now collected from the query string. 
+    // when one isn't present, it defaults to 1
+    const pageIndex = getIntegerSearchParam('page', pageState.query, props.defaultPage || 1) as uint;
 
     const renderEntry = (entry : Upload) => {
         var id = `upload_${entry.id}`;
@@ -596,7 +594,11 @@ const MediaCenter = (props) => {
     // have a start and a page limit, so these exist as absolutes.
     const filter: Partial<ListFilter> = {
         pageSize,
-        pageIndex
+        pageIndex,
+        sort: {
+            field: 'id',
+            direction: 'desc'
+        }
     } 
     
     // when a string is empty, in an if condition, it's executed as false, 
