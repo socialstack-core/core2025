@@ -194,11 +194,11 @@ public class MongoSearchEventListener
 							{
 								new BsonDocument("exists", new BsonDocument
 								{
-									{ "path", "InStock" }
+									{ "path", "Stock" }
 								}),
 								new BsonDocument("range", new BsonDocument
 								{
-									{ "path", "InStock" },
+									{ "path", "Stock" },
 									{ "gt", 0 }
 								})
 							}
@@ -255,8 +255,8 @@ public class MongoSearchEventListener
 						},
 						{ "productcategoriesFacet", new BsonArray
 							{
-								new BsonDocument("$unwind", "$Mappings.productcategories"),
-								new BsonDocument("$sortByCount", "$Mappings.productcategories")
+								new BsonDocument("$unwind", "$Mappings.childofcategories"),
+								new BsonDocument("$sortByCount", "$Mappings.childofcategories")
 							}
 						},
 						{ "attributesFacet", new BsonArray
@@ -351,8 +351,8 @@ public class MongoSearchEventListener
 					{
 						childFilters.Add(
 							Builders<Product>.Filter.And(
-								Builders<Product>.Filter.Exists("InStock", true),
-								Builders<Product>.Filter.Ne("InStock", 0)
+								Builders<Product>.Filter.Exists("Stock", true),
+								Builders<Product>.Filter.Ne("Stock", 0)
 							)
 						);
 					}
