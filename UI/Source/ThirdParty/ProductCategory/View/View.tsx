@@ -174,10 +174,18 @@ const View: React.FC<ViewProps> = (props) => {
 		maximumFractionDigits: 0
 	});
 	
-	let queryString = pageState.query.toString();
+	let queryString = pageState?.query?.toString();
 	
-	if (!queryString.startsWith("?")) {
+	// query string can be null, this should only run
+	// when query string is not null (empty strings are falsy, so we
+	// check that it's not null)
+	if (queryString !== null && !queryString.startsWith("?")) {
 		queryString = '?' + queryString;
+	}
+	// if its falsy, which means empty, null or undefined
+	// we give it an empty value
+	else if (!queryString) {
+		queryString = '';
 	}
 	
 	// moved breadcrumbs map function out of 
