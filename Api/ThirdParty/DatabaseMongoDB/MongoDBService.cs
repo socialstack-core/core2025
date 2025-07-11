@@ -193,7 +193,7 @@ public partial class MongoDBService : AutoService
 		var findOptions = new FindOptions<INSTANCE_TYPE>
 		{
 			Limit = (filterA.PageSize > 0 ? filterA.PageSize : null),
-			Skip = (filterA.PageSize > 0 ? filterA.PageSize * filterA.Offset : 0),
+			Skip = (filterA.Offset > 0 ? filterA.Offset : 0),
 		};
 
 		if (filterA.SortField != null)
