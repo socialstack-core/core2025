@@ -232,19 +232,31 @@ const View: React.FC<ViewProps> = (props) => {
 	if (!queryString.startsWith("?")) {
 		queryString = '?' + queryString;
 	}
+	
+	// moved breadcrumbs map function out of 
+	// the component props and into a seperate
+	// const up here, the ticket requires a home link
+	// so added the requirements in below. 
+	const breadcrumbs = [
+		{
+			name: 'Home',
+			href: '/'
+		}, 
+		...getCategoryParentPath().map(
+			category => ({
+				href: (
+					category.primaryUrl ?? '/category/' + category.slug
+				) + queryString,
+				name:
+					category.id === ROOT_CATEGORY_ID ? `All products` : category.name
+			})
+		)
+	]
 
 	return (
 		<>
 			<Breadcrumb
-				crumbs={getCategoryParentPath().map(
-					category => ({ 
-						href: (
-							category.primaryUrl ?? '/category/' + category.slug
-						) + queryString, 
-						name: 
-							category.id === ROOT_CATEGORY_ID ? `All products` : category.name 
-					})
-				)}
+				crumbs={breadcrumbs}
 			/>
 			<div className="ui-productcategory-view">
 				<div className="ui-productcategory-view__filters-wrapper">
