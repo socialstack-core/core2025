@@ -211,7 +211,7 @@ const Checkout: React.FC<CheckoutProps> = (props) => {
 					}
 				}}
 			>
-				<ol>
+				<ol className="payment-checkout__steps payment-checkout__steps--continued">
 					<li className={currentStep < CheckoutStep.PaymentMethod ? "payment-checkout__step--disabled" : ""}>
 						{/* payment method */}
 						<CheckoutSection title={`Payment method`} enabled={currentStep >= CheckoutStep.PaymentMethod} >

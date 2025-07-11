@@ -45,7 +45,7 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 	const debounce = useRef(
 		new Debounce(
 			(query: string) => {
-				updateQueryRef.current({q: query});
+				updateQueryRef.current({ q: query });
 			}
 		)
 	);
@@ -55,9 +55,12 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 	return (
 		<div className="site-nav__search">
 			<button type="button" className="btn site-nav__search-trigger" popoverTarget="search_popover">
+				{/*
 				<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
 					<path d="M14.3 12.58h-.91l-.32-.31a7.43 7.43 0 10-.8.8l.3.32v.9L18.3 20l1.7-1.7-5.7-5.72zm-6.87 0A5.14 5.14 0 117.42 2.3a5.14 5.14 0 01.01 10.28z" fill="currentColor" />
 				</svg>
+				*/}
+				<i className="fr fr-search"></i>
 				{/*
 				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 19">
 					<path d="M15.4 14.27a8.71 8.71 0 10-1.12 1.12l3.37 3.38a.81.81 0 001.12 0c.32-.3.32-.8 0-1.12l-3.36-3.37zm-6.68 1.56a7.14 7.14 0 010-14.25 7.14 7.14 0 010 14.25z" fill="#B50E7C" />
@@ -107,7 +110,8 @@ const Search: React.FC<SearchProps> = ({ searchPlaceholder, ...props }) => {
 						</Loop>
 					</div>
 				)}
-			</div>*/}
+			</div>
+			*/}
 		</div>
 	);
 }

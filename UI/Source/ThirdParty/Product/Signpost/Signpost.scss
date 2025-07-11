@@ -224,15 +224,21 @@ $signpost-border-radius: px_to_rem(8);
 	}
 }
 
-// TODO: find a better way of handling this
-// for some reason, the increase to width which appears centred elsewhere (e.g. product category view)
-// fails in the context of the basket popover window (offset to the right)
 .site-nav__basket-wrapper {
 
 	.ui-product-signpost {
 
+		// simplify layout when viewed within basket popover
+		&__image,
+		&__category {
+			display: none;
+		}
+
+			// TODO: find a better way of handling this
+			// for some reason, the increase to width which appears centred elsewhere (e.g. product category view)
+			// fails in the context of the basket popover window (offset to the right)
 		&__image {
-			margin-left: -$signpost-padding;
+			//margin-left: -$signpost-padding;
 		}
 
 	}

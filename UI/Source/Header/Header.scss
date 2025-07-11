@@ -127,6 +127,9 @@
 				width: px_to_rem(20);
 				height: px_to_rem(20);
 			}
+			i {
+				font-size: px_to_rem(20);
+			}
 		}
 
 		&-login-label,
@@ -175,6 +178,9 @@
 				width: px_to_rem(14);
 				height: px_to_rem(14);
 				transform: translateY(-1px);
+			}
+			i {
+				font-size: px_to_rem(14);
 			}
 
 		}
@@ -262,6 +268,9 @@
 				width: px_to_rem(14);
 				height: px_to_rem(14);
 				transform: translateY(-1px);
+			}
+			i {
+				font-size: px_to_rem(14);
 			}
 
 		}
@@ -460,6 +469,9 @@
 				width: px_to_rem(14);
 				height: px_to_rem(14);
 			}
+			i {
+				font-size: px_to_rem(14);
+			}
 
 			&--hide-label-mobile {
 
@@ -634,7 +646,7 @@
 		&__actions {
 			gap: px_to_rem(4);
 
-			.btn {
+			> .btn {
 				padding: px_to_rem(8) px_to_rem(16);  
 				min-height: px_to_rem(44);
 			}

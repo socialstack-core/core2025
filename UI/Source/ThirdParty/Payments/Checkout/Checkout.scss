@@ -21,7 +21,12 @@
 	}
 
 	&__steps {
-		counter-reset: checkout-steps;
+		$payment-checkout__steps: &;
+
+		&:not(#{$payment-checkout__steps}--continued) {
+			counter-reset: checkout-steps;
+		}
+
 		list-style: none;
 		padding-left: px_to_rem(32);
 		display: flex;
