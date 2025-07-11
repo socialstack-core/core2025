@@ -80,7 +80,7 @@ const View: React.FC<ViewProps> = (props) => {
 					href: crumb.primaryUrl
 				} as Crumb;
 
-			})]} />}
+			}), { name: product?.name, href: pageState.url }]} />}
 
 			{/* product images */}
 			<ProductCarousel product={product} currentVariant={currentVariant}/>
