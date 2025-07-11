@@ -13,6 +13,9 @@ import {ProductAttributeValue } from "Api/ProductAttributeValue";
 import {useRouter} from "UI/Router";
 import {AttributeFacetGroup, AttributeValueFacet, ProductCategoryFacet} from "UI/Product/Search/Facets";
 import FilterList from "UI/Product/Search/FilterList";
+import Breadcrumb from "UI/Breadcrumb";
+
+const ROOT_CATEGORY_ID: uint = 1 as uint;
 
 /**
  * Props for the View component.
@@ -138,7 +141,7 @@ const View: React.FC<ViewProps> = (props) => {
 	
 	const categoryFacets = (productCategoryFacets?.results || []) as ProductCategoryFacet[];
 	const attributeFacets = (attributeValueFacets?.results || []) as AttributeValueFacet[];
-
+	
 	
 	var attributeMap = new Map<uint, AttributeFacetGroup>();
 
@@ -170,93 +173,127 @@ const View: React.FC<ViewProps> = (props) => {
 		minimumFractionDigits: 0,
 		maximumFractionDigits: 0
 	});
-
-	const showableCategories = categoryFacets.filter(facet => facet.category.primaryUrl && facet.category.id != productCategory.id);
+	
+	let queryString = pageState?.query?.toString();
+	
+	// query string can be null, this should only run
+	// when query string is not null (empty strings are falsy, so we
+	// check that it's not null)
+	if (queryString !== null && !queryString.startsWith("?")) {
+		queryString = '?' + queryString;
+	}
+	// if its falsy, which means empty, null or undefined
+	// we give it an empty value
+	else if (!queryString) {
+		queryString = '';
+	}
+	
+	// moved breadcrumbs map function out of 
+	// the component props and into a seperate
+	// const up here, the ticket requires a home link
+	// so added the requirements in below. 
+	const breadcrumbs = [
+		{
+			name: 'Home',
+			href: '/'
+		}, 
+		...(productCategory.breadcrumb ?? []).map(breadcrumb => {
+			return ({
+				name: breadcrumb.id === ROOT_CATEGORY_ID ? `All products` : breadcrumb.name,
+				href: breadcrumb.primaryUrl
+			})
+		})
+	]
 
 	return (
-		<div className="ui-productcategory-view">
-			<div className="ui-productcategory-view__filters-wrapper">
-				<div className="ui-productcategory-view__filters">
-					<fieldset>
-						<legend>
-							{`Show / hide products`}
-						</legend>
-						<Input type="checkbox" onChange={(ev) => setShowInStockOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show in stock`} value={showInStockOnly} name="show-in-stock" noWrapper />
-					</fieldset>
-					<fieldset>
-						<legend>
-							{`All product categories`}
-						</legend>
-						<CategoryFilters collection={products} currentCategory={productCategory}/>
-						{/* TODO: limit list to 3 items with "show more" */}
-					</fieldset>
-					<DualRange 
-						className="ui-productcategory-view__price" 
-						label={`Price`} 
-						numberFormat={GBPound}
-						min={lowestPrice} 
-						max={highestPrice} 
-						step={step} 
-						defaultFrom={minPrice} 
-						defaultTo={maxPrice} 
-						onChange={(from: number, to: number) => {
-							setMinPrice(from);
-							setMaxPrice(to);
-						}}
-					/>
-					
-					{/* attributes */}
-					{attributeFacetGroups.length > 0 && <>
-						{
-							attributeFacetGroups.map(facet => {
-								// can include primaryUrl etc on facets as well if needed
-								// here though it is (probably, I haven't looked at the designs recently) exclusively a button
-								// which then restricts the search.
-
-								return <>
-									<fieldset key={facet.attribute.id}>
-										<legend>
-											{facet.attribute.name}
-										</legend>
-										<FilterList 
-											selectedAttributeValues={selectedFacets}
-											facets={facet.facetValues} 
-											units={facet.attribute.units}
-											maxVisible={4 as int}
-											setSelectedAttributeValues={setSelectedFacets}
-										/>
-									</fieldset>
-								</>;
-							})
-						}
-					</>}
+		<>
+			<Breadcrumb
+				crumbs={breadcrumbs}
+			/>
+			<div className="ui-productcategory-view">
+				<div className="ui-productcategory-view__filters-wrapper">
+					<div className="ui-productcategory-view__filters">
+						<fieldset>
+							<legend>
+								{`Show / hide products`}
+							</legend>
+							<Input type="checkbox" onChange={(ev) => setShowInStockOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show in stock`} value={showInStockOnly} name="show-in-stock" noWrapper />
+						</fieldset>
+						<fieldset>
+							<legend>
+								{`All product categories`}
+							</legend>
+							<CategoryFilters collection={products} currentCategory={productCategory}/>
+							{/* TODO: limit list to 3 items with "show more" */}
+						</fieldset>
+						<DualRange 
+							className="ui-productcategory-view__price" 
+							label={`Price`} 
+							numberFormat={GBPound}
+							min={lowestPrice} 
+							max={highestPrice} 
+							step={step} 
+							defaultFrom={minPrice} 
+							defaultTo={maxPrice} 
+							onChange={(from: number, to: number) => {
+								setMinPrice(from);
+								setMaxPrice(to);
+							}}
+						/>
+						
+						{/* attributes */}
+						{attributeFacetGroups.length > 0 && <>
+							{
+								attributeFacetGroups.map(facet => {
+									// can include primaryUrl etc on facets as well if needed
+									// here though it is (probably, I haven't looked at the designs recently) exclusively a button
+									// which then restricts the search.
+	
+									return <>
+										<fieldset key={facet.attribute.id}>
+											<legend>
+												{facet.attribute.name}
+											</legend>
+											<FilterList 
+												selectedAttributeValues={selectedFacets}
+												facets={facet.facetValues} 
+												units={facet.attribute.units}
+												maxVisible={4 as int}
+												setSelectedAttributeValues={setSelectedFacets}
+											/>
+										</fieldset>
+									</>;
+								})
+							}
+						</>}
+					</div>
+					<Promotion title={`Get 10% Off Our Bedroom Bestsellers`} description={`Save now on top-rated beds and accessories - Limited time offer`} url={`#`} />
 				</div>
-				<Promotion title={`Get 10% Off Our Bedroom Bestsellers`} description={`Save now on top-rated beds and accessories - Limited time offer`} url={`#`} />
+	
+				<header className="ui-productcategory-view__header">
+					<Input type="select" aria-label={`Sort by`} value={sortOrder} noWrapper>
+						<option value="relevance">
+							{`Relevance`}
+						</option>
+					</Input>
+	
+					{/* replace this with more typical pagination below product list? */}
+					<Input type="select" aria-label={`Show`} value={pagination} noWrapper>
+						<option value="page1">
+							{`20 out of 1,500 products`}
+						</option>
+					</Input>
+	
+					<div className="btn-group ui-btn-group" role="group" aria-label={`Select view style`}>
+						<Input type="radio" noWrapper label={`List`} groupIcon="fr-list" groupVariant="primary" value='list' checked={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
+						<Input type="radio" noWrapper label={`Small thumbnails`} groupIcon="fr-th-list" groupVariant="primary" value='small-thumbs' checked={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
+						<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value='large-thumbs' checked={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
+					</div>
+				</header>
+	
+				<ProductList content={products.results} viewStyle={viewStyle} />
 			</div>
-
-			<header className="ui-productcategory-view__header">
-				<Input type="select" aria-label={`Sort by`} value={sortOrder} noWrapper>
-					<option value="relevance">
-						{`Relevance`}
-					</option>
-				</Input>
-
-				{/* replace this with more typical pagination below product list? */}
-				<Input type="select" aria-label={`Show`} value={pagination} noWrapper>
-					<option value="page1">
-						{`20 out of 1,500 products`}
-					</option>
-				</Input>
-
-				<div className="btn-group ui-btn-group" role="group" aria-label={`Select view style`}>
-					<Input type="radio" noWrapper label={`List`} groupIcon="fr-list" groupVariant="primary" value='list' checked={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
-					<Input type="radio" noWrapper label={`Small thumbnails`} groupIcon="fr-th-list" groupVariant="primary" value='small-thumbs' checked={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
-					<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value='large-thumbs' checked={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
-				</div>
-			</header>
-
-			<ProductList content={products.results} viewStyle={viewStyle} />
-		</div>
+		</>
 	);
 }
 

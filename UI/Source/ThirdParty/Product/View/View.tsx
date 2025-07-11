@@ -11,6 +11,9 @@ import { useRouter } from 'UI/Router';
 import Button from 'UI/Button';
 import ProductVariants from 'UI/Product/Variants';
 
+
+const ROOT_CATEGORY_ID: uint = 1 as uint;
+
 /**
  * Props for the View component.
  */
@@ -64,18 +67,20 @@ const View: React.FC<ViewProps> = (props) => {
 		.sort((a, b) => a.amount - b.amount) : null;
 
 	var cheapestPrice = sortedPrices?.length ? sortedPrices[0] : null;
-
+	
+	// Added the required home breadcrumb as well as  
+	// overwrite of the root categories name to "All products"
 	return <>
 		<div className="ui-product-view">
 			{/* breadcrumb links */}
-			{product.breadcrumb && <Breadcrumb crumbs={product.breadcrumb.map(crumb => {
-
+			{product.breadcrumb && <Breadcrumb crumbs={[{ name: `Home`, href: '/' }, ...product.breadcrumb.map(crumb => {
+				
 				return {
-					name: crumb.name,
+					name: crumb.id === ROOT_CATEGORY_ID ? `All products` : crumb.name,
 					href: crumb.primaryUrl
 				} as Crumb;
 
-			})} />}
+			}), { name: product?.name, href: pageState.url }]} />}
 
 			{/* product images */}
 			<ProductCarousel product={product} currentVariant={currentVariant}/>
