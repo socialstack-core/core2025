@@ -13,6 +13,9 @@ import {ProductAttributeValue } from "Api/ProductAttributeValue";
 import {useRouter} from "UI/Router";
 import {AttributeFacetGroup, AttributeValueFacet, ProductCategoryFacet} from "UI/Product/Search/Facets";
 import FilterList from "UI/Product/Search/FilterList";
+import Breadcrumb from "UI/Breadcrumb";
+
+const ROOT_CATEGORY_ID: uint = 1 as uint;
 
 /**
  * Props for the View component.
@@ -138,7 +141,60 @@ const View: React.FC<ViewProps> = (props) => {
 	
 	const categoryFacets = (productCategoryFacets?.results || []) as ProductCategoryFacet[];
 	const attributeFacets = (attributeValueFacets?.results || []) as AttributeValueFacet[];
-
+	
+	// this function is similar to the one in CategoryFilters further down
+	// its purpose is to traverse the productcategoryFacets array and recursively
+	// ascend up categories, then return them in the reversed order
+	// to be used by the breadcrumbs component.
+	const getCategoryParentPath = (): ProductCategory[] => {
+		
+		// a small helper function
+		const getCategory = (id: uint): ProductCategory | undefined => {
+			return categoryFacets.find((facet: ProductCategoryFacet) => facet.category.id == id)?.category;
+		}
+		
+		// initialise the path items, it's never
+		// reassigned so use const.
+		const pathItems: ProductCategory[] = [];
+		
+		// the path includes the current category, so 
+		// we add it here, the nice side effect of this
+		// is if the root category is the current,
+		// it just exits early. 
+		pathItems.push(productCategory);
+		
+		// the current category could be the root category,
+		// in this case, we simply just return the root category
+		if (productCategory.id == ROOT_CATEGORY_ID) {
+			return pathItems;
+		}
+		// should sit under the root category
+		if (!productCategory.parentId) {
+			pathItems.push(getCategory(ROOT_CATEGORY_ID));
+			return pathItems;
+		}
+		
+		// start with the first parent as we've already pushed the current.
+		let current = getCategory(productCategory.parentId);
+		
+		// this doesn't run infinitely,
+		// there is no manual break in place
+		// however it will break when it reaches the root, 
+		// as getCategory can return a falsy value when the 
+		// category hasn't been found
+		while(current) {
+			// add the item
+			pathItems.push(current);
+			
+			// move on.
+			current = getCategory(current.parentId);
+		}
+		
+		// they're curreently in ascending order, we need
+		// them in descending (i.e parent => child not child => parent)
+		return pathItems.reverse();
+	}
+	
 	
 	var attributeMap = new Map<uint, AttributeFacetGroup>();
 
@@ -170,93 +226,110 @@ const View: React.FC<ViewProps> = (props) => {
 		minimumFractionDigits: 0,
 		maximumFractionDigits: 0
 	});
-
-	const showableCategories = categoryFacets.filter(facet => facet.category.primaryUrl && facet.category.id != productCategory.id);
+	
+	let queryString = pageState.query.toString();
+	
+	if (!queryString.startsWith("?")) {
+		queryString = '?' + queryString;
+	}
 
 	return (
-		<div className="ui-productcategory-view">
-			<div className="ui-productcategory-view__filters-wrapper">
-				<div className="ui-productcategory-view__filters">
-					<fieldset>
-						<legend>
-							{`Show / hide products`}
-						</legend>
-						<Input type="checkbox" onChange={(ev) => setShowInStockOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show in stock`} value={showInStockOnly} name="show-in-stock" noWrapper />
-					</fieldset>
-					<fieldset>
-						<legend>
-							{`All product categories`}
-						</legend>
-						<CategoryFilters collection={products} currentCategory={productCategory}/>
-						{/* TODO: limit list to 3 items with "show more" */}
-					</fieldset>
-					<DualRange 
-						className="ui-productcategory-view__price" 
-						label={`Price`} 
-						numberFormat={GBPound}
-						min={lowestPrice} 
-						max={highestPrice} 
-						step={step} 
-						defaultFrom={minPrice} 
-						defaultTo={maxPrice} 
-						onChange={(from: number, to: number) => {
-							setMinPrice(from);
-							setMaxPrice(to);
-						}}
-					/>
-					
-					{/* attributes */}
-					{attributeFacetGroups.length > 0 && <>
-						{
-							attributeFacetGroups.map(facet => {
-								// can include primaryUrl etc on facets as well if needed
-								// here though it is (probably, I haven't looked at the designs recently) exclusively a button
-								// which then restricts the search.
-
-								return <>
-									<fieldset key={facet.attribute.id}>
-										<legend>
-											{facet.attribute.name}
-										</legend>
-										<FilterList 
-											selectedAttributeValues={selectedFacets}
-											facets={facet.facetValues} 
-											units={facet.attribute.units}
-											maxVisible={4 as int}
-											setSelectedAttributeValues={setSelectedFacets}
-										/>
-									</fieldset>
-								</>;
-							})
-						}
-					</>}
+		<>
+			<Breadcrumb
+				crumbs={getCategoryParentPath().map(
+					category => ({ 
+						href: (
+							category.primaryUrl ?? '/category/' + category.slug
+						) + queryString, 
+						name: 
+							category.id === ROOT_CATEGORY_ID ? `All products` : category.name 
+					})
+				)}
+			/>
+			<div className="ui-productcategory-view">
+				<div className="ui-productcategory-view__filters-wrapper">
+					<div className="ui-productcategory-view__filters">
+						<fieldset>
+							<legend>
+								{`Show / hide products`}
+							</legend>
+							<Input type="checkbox" onChange={(ev) => setShowInStockOnly((ev.target as HTMLInputElement).checked)} isSwitch flipped label={`Only show in stock`} value={showInStockOnly} name="show-in-stock" noWrapper />
+						</fieldset>
+						<fieldset>
+							<legend>
+								{`All product categories`}
+							</legend>
+							<CategoryFilters collection={products} currentCategory={productCategory}/>
+							{/* TODO: limit list to 3 items with "show more" */}
+						</fieldset>
+						<DualRange 
+							className="ui-productcategory-view__price" 
+							label={`Price`} 
+							numberFormat={GBPound}
+							min={lowestPrice} 
+							max={highestPrice} 
+							step={step} 
+							defaultFrom={minPrice} 
+							defaultTo={maxPrice} 
+							onChange={(from: number, to: number) => {
+								setMinPrice(from);
+								setMaxPrice(to);
+							}}
+						/>
+						
+						{/* attributes */}
+						{attributeFacetGroups.length > 0 && <>
+							{
+								attributeFacetGroups.map(facet => {
+									// can include primaryUrl etc on facets as well if needed
+									// here though it is (probably, I haven't looked at the designs recently) exclusively a button
+									// which then restricts the search.
+	
+									return <>
+										<fieldset key={facet.attribute.id}>
+											<legend>
+												{facet.attribute.name}
+											</legend>
+											<FilterList 
+												selectedAttributeValues={selectedFacets}
+												facets={facet.facetValues} 
+												units={facet.attribute.units}
+												maxVisible={4 as int}
+												setSelectedAttributeValues={setSelectedFacets}
+											/>
+										</fieldset>
+									</>;
+								})
+							}
+						</>}
+					</div>
+					<Promotion title={`Get 10% Off Our Bedroom Bestsellers`} description={`Save now on top-rated beds and accessories - Limited time offer`} url={`#`} />
 				</div>
-				<Promotion title={`Get 10% Off Our Bedroom Bestsellers`} description={`Save now on top-rated beds and accessories - Limited time offer`} url={`#`} />
+	
+				<header className="ui-productcategory-view__header">
+					<Input type="select" aria-label={`Sort by`} value={sortOrder} noWrapper>
+						<option value="relevance">
+							{`Relevance`}
+						</option>
+					</Input>
+	
+					{/* replace this with more typical pagination below product list? */}
+					<Input type="select" aria-label={`Show`} value={pagination} noWrapper>
+						<option value="page1">
+							{`20 out of 1,500 products`}
+						</option>
+					</Input>
+	
+					<div className="btn-group ui-btn-group" role="group" aria-label={`Select view style`}>
+						<Input type="radio" noWrapper label={`List`} groupIcon="fr-list" groupVariant="primary" value='list' checked={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
+						<Input type="radio" noWrapper label={`Small thumbnails`} groupIcon="fr-th-list" groupVariant="primary" value='small-thumbs' checked={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
+						<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value='large-thumbs' checked={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
+					</div>
+				</header>
+	
+				<ProductList content={products.results} viewStyle={viewStyle} />
 			</div>
-
-			<header className="ui-productcategory-view__header">
-				<Input type="select" aria-label={`Sort by`} value={sortOrder} noWrapper>
-					<option value="relevance">
-						{`Relevance`}
-					</option>
-				</Input>
-
-				{/* replace this with more typical pagination below product list? */}
-				<Input type="select" aria-label={`Show`} value={pagination} noWrapper>
-					<option value="page1">
-						{`20 out of 1,500 products`}
-					</option>
-				</Input>
-
-				<div className="btn-group ui-btn-group" role="group" aria-label={`Select view style`}>
-					<Input type="radio" noWrapper label={`List`} groupIcon="fr-list" groupVariant="primary" value='list' checked={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
-					<Input type="radio" noWrapper label={`Small thumbnails`} groupIcon="fr-th-list" groupVariant="primary" value='small-thumbs' checked={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
-					<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value='large-thumbs' checked={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
-				</div>
-			</header>
-
-			<ProductList content={products.results} viewStyle={viewStyle} />
-		</div>
+		</>
 	);
 }
 
