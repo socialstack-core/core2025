@@ -27,11 +27,21 @@ public partial class BreadcrumbValueGenerator<T, ID> : VirtualFieldValueGenerato
 	/// <returns></returns>
 	public override async ValueTask GetValue(Context context, T forObject, Writer writer)
 	{
-		if (typeof(T) == typeof(Product))
+		if (typeof(T) == typeof(Product) || typeof(T) == typeof(ProductCategory))
 		{
-			var product = (Product)((object)forObject);
 
-			var primaryCategoryId = product.PrimaryCategoryId;
+			uint primaryCategoryId = 0;
+
+			if (typeof(T) == typeof(Product))
+			{
+				var product = (Product)((object)forObject);
+				primaryCategoryId = product.PrimaryCategoryId;
+			}
+			else
+			{
+				var category = (ProductCategory)((object)forObject);
+				primaryCategoryId = category.Id;
+			}
 
 			if (primaryCategoryId == 0)
 			{
@@ -91,7 +101,6 @@ public partial class BreadcrumbValueGenerator<T, ID> : VirtualFieldValueGenerato
 
 			return;
 		}
-
 		writer.WriteASCII("null");
 	}
 

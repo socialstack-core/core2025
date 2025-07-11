@@ -142,59 +142,6 @@ const View: React.FC<ViewProps> = (props) => {
 	const categoryFacets = (productCategoryFacets?.results || []) as ProductCategoryFacet[];
 	const attributeFacets = (attributeValueFacets?.results || []) as AttributeValueFacet[];
 	
-	// this function is similar to the one in CategoryFilters further down
-	// its purpose is to traverse the productcategoryFacets array and recursively
-	// ascend up categories, then return them in the reversed order
-	// to be used by the breadcrumbs component.
-	const getCategoryParentPath = (): ProductCategory[] => {
-		
-		// a small helper function
-		const getCategory = (id: uint): ProductCategory | undefined => {
-			return categoryFacets.find((facet: ProductCategoryFacet) => facet.category.id == id)?.category;
-		}
-		
-		// initialise the path items, it's never
-		// reassigned so use const.
-		const pathItems: ProductCategory[] = [];
-		
-		// the path includes the current category, so 
-		// we add it here, the nice side effect of this
-		// is if the root category is the current,
-		// it just exits early. 
-		pathItems.push(productCategory);
-		
-		// the current category could be the root category,
-		// in this case, we simply just return the root category
-		if (productCategory.id == ROOT_CATEGORY_ID) {
-			return pathItems;
-		}
-		// should sit under the root category
-		if (!productCategory.parentId) {
-			pathItems.push(getCategory(ROOT_CATEGORY_ID));
-			return pathItems;
-		}
-		
-		// start with the first parent as we've already pushed the current.
-		let current = getCategory(productCategory.parentId);
-		
-		// this doesn't run infinitely,
-		// there is no manual break in place
-		// however it will break when it reaches the root, 
-		// as getCategory can return a falsy value when the 
-		// category hasn't been found
-		while(current) {
-			// add the item
-			pathItems.push(current);
-			
-			// move on.
-			current = getCategory(current.parentId);
-		}
-		
-		// they're curreently in ascending order, we need
-		// them in descending (i.e parent => child not child => parent)
-		return pathItems.reverse();
-	}
-	
 	
 	var attributeMap = new Map<uint, AttributeFacetGroup>();
 
@@ -242,15 +189,12 @@ const View: React.FC<ViewProps> = (props) => {
 			name: 'Home',
 			href: '/'
 		}, 
-		...getCategoryParentPath().map(
-			category => ({
-				href: (
-					category.primaryUrl ?? '/category/' + category.slug
-				) + queryString,
-				name:
-					category.id === ROOT_CATEGORY_ID ? `All products` : category.name
+		...(productCategory.breadcrumb ?? []).map(breadcrumb => {
+			return ({
+				name: breadcrumb.id === ROOT_CATEGORY_ID ? `All products` : breadcrumb.name,
+				href: breadcrumb.primaryUrl
 			})
-		)
+		})
 	]
 
 	return (
