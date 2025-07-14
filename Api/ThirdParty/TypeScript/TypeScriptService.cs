@@ -32,6 +32,22 @@ namespace Api.TypeScript
         public TypeScriptService(AvailableEndpointService aes)
         {
             _aes = aes;
+
+            try
+            {
+                // attempt to delete the "TypeScript/Api" directory
+                // this will work in all cases EXCEPT first pull of the repo
+                // or when "TypeScript/Api" is manually deleted before 
+                // starting the application.
+                Directory.Delete("TypeScript/Api", true);
+            }
+            // don't need to assign a variable to the exception
+            // so we just catch it and Log a notice to the log.
+            catch (DirectoryNotFoundException)
+            {
+                Log.Info("TypeScriptService", "Directory not found");
+            }
+            
             SetupRules();
             SetupEvents();
             
