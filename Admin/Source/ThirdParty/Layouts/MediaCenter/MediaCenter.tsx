@@ -608,8 +608,11 @@ const MediaCenter = (props) => {
     // when a search value exists, we make the filter query the originalName, 
     // which is what is shown under the file's preview. 
     if (searchFilter) {
-        filter.query = 'originalName contains ?';
-        filter.args = [searchFilter]
+        // added cases for author and alt text
+        // so when the query partially matches the alt or
+        // author, results show for anything that matches. 
+        filter.query = 'originalName contains ? or author contains ? or alt contains ?';
+        filter.args = [searchFilter, searchFilter, searchFilter]
     }
     
     return <>
