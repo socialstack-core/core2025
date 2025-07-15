@@ -1,5 +1,9 @@
 .admin-page {
-	min-height: calc(100vh - var(--admin-header-height, 3.125rem));
+	
+	&:not(.modal .admin-page)
+	{
+		min-height: calc(100vh - var(--admin-header-height, 3.125rem));
+	}
 
 	> .loading:only-child {
 		min-height: calc(100vh - var(--admin-header-height, 3.125rem));
