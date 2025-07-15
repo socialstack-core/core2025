@@ -337,9 +337,9 @@ public class MongoSearchEventListener
 							continue;
 						}
 
-						if (search.SearchType == ProductSearchType.Reductive)
+						if (facet.Mapping.ToLower() == "productcategories")
 						{
-							childFilters.Add(Builders<Product>.Filter.All("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
+							childFilters.Add(Builders<Product>.Filter.In("Mappings.childofcategories", new BsonArray(ids)));
 						}
 						else
 						{
