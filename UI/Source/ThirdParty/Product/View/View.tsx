@@ -1,10 +1,10 @@
 import { Product } from 'Api/Product';
-import ProductCarousel from 'UI/Product/Carousel';
+import ProductCarousel, {CarouselItem} from 'UI/Product/Carousel';
 import ProductAbout from 'UI/Product/About';
 import ProductAttributes from 'UI/Product/Attributes';
 import ProductPrice from 'UI/Product/Price';
 import ProductQuantity from 'UI/Product/Quantity';
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import Breadcrumb, { Crumb } from 'UI/Breadcrumb';
 import ProductHeader from 'UI/Product/Header';
 import { useRouter } from 'UI/Router';
@@ -48,6 +48,12 @@ const View: React.FC<ViewProps> = (props) => {
 	const productTabs = Object.values(ProductTab);
 
 	const [selectedTab, setSelectedTab] = useState(ProductTab.About);
+	const [selectedThumbnail, setSelectedThumbnail] = useState<CarouselItem>();
+
+	useEffect(() => {
+		// here we reset the selected thumbnail and load the variant one in.
+		setSelectedThumbnail(undefined);
+	}, [variantSku]);
 
 	// TODO: approved?
 	const isApproved = true;
@@ -83,7 +89,27 @@ const View: React.FC<ViewProps> = (props) => {
 			}), { name: product?.name, href: pageState.url }]} />}
 
 			{/* product images */}
-			<ProductCarousel product={product} currentVariant={currentVariant}/>
+			<ProductCarousel 
+				product={product} 
+				currentVariant={currentVariant}
+				// this holds the current selected thumbnail from
+				// the useState above, this component tells
+				// the product carousel what to render
+				// a user can select a thumbnail
+				// different to the one from the attribute matrix
+				// thus we hold it as a separate state item. 
+				// when the attribute matrix is mutated, it
+				// should clear the selected thumbnail
+				selectedThumbnail={selectedThumbnail}
+				
+				// little subscriber to listen to when the thumb
+				// changes, this doesn't change the selected product
+				// discovered by the attribute matrix, this is just
+				// for looking at the different variants.
+				onThumbSelected={(thumbInfo: CarouselItem) => {
+					setSelectedThumbnail(thumbInfo);
+				}}
+			/>
 
 			{/* featured / title / stock info */}
 			<ProductHeader product={product} currentVariant={currentVariant} />

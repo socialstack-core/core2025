@@ -1,5 +1,9 @@
 $max-product-images: 5;
 
+.ui-product-images__thumbnail.active {
+	border: 3px solid #0E58B5;
+}
+
 .ui-product-images {
 	$product-images: &;
 	display: grid;
@@ -36,6 +40,8 @@ $max-product-images: 5;
 		overflow: hidden !important;
 		padding: 0 !important;
 		position: absolute;
+
+		
 		
 		@for $i from 1 through $max-product-images {
 			
@@ -48,10 +54,6 @@ $max-product-images: 5;
 				}
 				
 				~ #{$product-images}__thumbnails {
-					
-					#{$product-images}__thumbnail:nth-child(#{$i}) {
-						border: 3px solid #0E58B5;
-					}
 
 				}
 				
