@@ -291,6 +291,43 @@ namespace Api.Permissions{
 					{
 						// Contains the given value (can have other stuff in there). Same as Eq:
 						var val = B.ToMongoValue(localeCode, filter, context);
+						
+						if (val == null)
+						{
+							return Builders<INSTANCE_TYPE>.Filter.Eq(mem, (object)null);
+						}
+						
+						var t = val.GetType();
+						
+						if (t == typeof(uint))
+						{
+							return Builders<INSTANCE_TYPE>.Filter.Eq(mem, (uint)val);
+						}
+						else if (t == typeof(int))
+						{
+							return Builders<INSTANCE_TYPE>.Filter.Eq(mem, (int)val);
+						}
+						else if (t == typeof(long))
+						{
+							return Builders<INSTANCE_TYPE>.Filter.Eq(mem, (long)val);
+						}
+						else if (t == typeof(ulong))
+						{
+							return Builders<INSTANCE_TYPE>.Filter.Eq(mem, (ulong)val);
+						}
+						else if (t == typeof(float))
+						{
+							return Builders<INSTANCE_TYPE>.Filter.Eq(mem, (float)val);
+						}
+						else if (t == typeof(double))
+						{
+							return Builders<INSTANCE_TYPE>.Filter.Eq(mem, (double)val);
+						}
+						else if (t == typeof(string))
+						{
+							return Builders<INSTANCE_TYPE>.Filter.Eq(mem, (string)val);
+						}
+
 						return Builders<INSTANCE_TYPE>.Filter.Eq(mem, val);
 					}
 				}
@@ -373,7 +410,7 @@ namespace Api.Permissions{
 			if (Field.VirtualInfo != null)
 			{
 				// These are never localised.
-				return "mappings." + Field.Name;
+				return "Mappings." + Field.Name.ToLower();
 			}
 			else if (Field.FieldInfo != null)
 			{
