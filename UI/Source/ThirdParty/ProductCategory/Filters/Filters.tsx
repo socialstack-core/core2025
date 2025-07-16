@@ -100,7 +100,7 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 	const renderRootCategory = () => {
 		return (
 			<ul>
-				{children.filter(category => category.id !== 1).map((category, idx) => {
+				{children.map((category, idx) => {
 
 					if (idx >= maxCategoryListing) {
 						// hide any excess.
