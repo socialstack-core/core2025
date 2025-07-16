@@ -194,8 +194,23 @@ export default class AttributeSelect extends React.Component {
 							<span className="admin-multiselect__search-max">
 								<i>{`Max of ${this.props.max} added`}</i>
 							</span> :
-							<Search endpoint={productAttributeValueApi.list} includes={[productAttributeValueApi.includes.attribute]} exclude={excludeIds} field={fieldName} limit={5}
-								placeholder={`Find ${this.props.label} to add..`} onFind={entry => {
+							// edit cleaned this component JSX up a little to improve readability
+							<Search 
+								// the product attribute value API
+								endpoint={productAttributeValueApi.list}
+								// include attribute information with the request
+								includes={[productAttributeValueApi.includes.attribute]} 
+								// adds exclusions
+								exclude={excludeIds}
+								// sets the field name
+								field={fieldName} 
+								// limit to 5 results
+								limit={5}
+								// set the placeholder label
+								placeholder={`Find ${this.props.label} to add..`} 
+								// when results are returned push the value to the state,
+								// fire off an onChange handler from the props should one exist.
+								onFind={entry => {
 									if (!entry || this.state.value.some(entity => entity.id === entry.id)) {
 										return;
 									}
@@ -208,11 +223,10 @@ export default class AttributeSelect extends React.Component {
 									});
 
 									this.props.onChange && this.props.onChange({ target: { value: value.map(e => e.id) }, fullValue: value });
-								}} 
-								
+								}}
+								// called per iteration of the result set. 
 								onRender={result => this.renderResult(result)}
-
-								/>
+							/>
 						}
 					</div>
 				</footer>

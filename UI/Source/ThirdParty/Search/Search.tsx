@@ -14,14 +14,16 @@ export type SearchProps<T extends Content<uint>> = {
     onResults?: (results: T[]) => void;
     onQuery?: (filter: ListFilter, query: string) => void;
     onFind?: (result: T) => void;
-    onRender?: (result: T) => void;
+    // this should render some DOM when called
+    // the usage in the component is an LTR op. 
+    onRender?: (result: T) => React.ReactElement | void;
     placeholder?: string;
     searchText?: string;
     name?: string;
     className?: string;
     'data-theme'?: string;
     endpoint?: (filter?: ListFilter, includes?: ApiIncludes) => Promise<ApiList<T>>;
-    onInput: (value: string) => void
+    onInput?: (value: string) => void
 };
 
 type NoFieldWhereQuery = {
@@ -50,6 +52,15 @@ const Search = <T extends Content<uint>,>(props: SearchProps<T>) => {
 
     // Function to fetch search results from endpoint
     const fetchResults = (query: string) => {
+        
+        // empty strings are falsy, 
+        // when its empty nothing should happen.
+        // when no minLength is passed
+        if (!query) {
+            setResults(null);
+            return;
+        }
+        
         if (props.minLength && query.length < props.minLength) {
             setResults(null); // Clear results if query is too short
             return;
@@ -109,7 +120,7 @@ const Search = <T extends Content<uint>,>(props: SearchProps<T>) => {
                 placeholder={props.placeholder || 'Search...'}
                 type="text"
                 onInput={(e) => {
-                    props.onInput((e.target as HTMLInputElement).value)
+                    props.onInput && props.onInput((e.target as HTMLInputElement).value)
                 }}
                 onKeyUp={(e) => {
                     fetchResults((e.target as HTMLInputElement).value); 
