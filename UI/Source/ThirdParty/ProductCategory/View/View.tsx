@@ -14,6 +14,7 @@ import {useRouter} from "UI/Router";
 import {AttributeFacetGroup, AttributeValueFacet, ProductCategoryFacet} from "UI/Product/Search/Facets";
 import FilterList from "UI/Product/Search/FilterList";
 import Breadcrumb from "UI/Breadcrumb";
+import Paginator from "UI/Paginator";
 
 const ROOT_CATEGORY_ID: uint = 1 as uint;
 
@@ -47,14 +48,16 @@ const View: React.FC<ViewProps> = (props) => {
 	
 	const [viewStyle, setViewStyle] = useState('large-thumbs');
 	const [sortOrder, setSortOrder] = useState('relevance');
-	const [pagination, setPagination] = useState('page1');
+	
 	const [minPrice, setMinPrice] = useState<double>(1);
 	const [maxPrice, setMaxPrice] = useState<double>(5000);
 	
-	const { pageState } = useRouter();
+	const { pageState, updateQuery } = useRouter();
 	const { query } = pageState;
 	const [selectedFacets, setSelectedFacets] = useState<ProductAttributeValue[]>([]);
 
+	const currentPage = query?.has("page") ? parseInt(query?.get("page") ?? "1") : 1;
+	const pageSize = query?.has('limit') ? parseInt(query?.get("limit") ?? "20") : 20;
 	
 	// TODO: calculate lowest and highest price
 	let lowestPrice = 1;
@@ -107,7 +110,7 @@ const View: React.FC<ViewProps> = (props) => {
 
 		return searchApi.faceted({
 			query: searchText,
-			pageOffset: initialPageOffset as int,
+			pageOffset: (currentPage - 1) as int,
 			searchType: ProductSearchType.Expansive,
 			pageSize: 20 as uint,
 			minPrice: minPrice,
@@ -128,7 +131,7 @@ const View: React.FC<ViewProps> = (props) => {
 			productApi.includes.productCategoryFacets.category.primaryurl,
 			productApi.includes.attributeValueFacets.value.attribute.attributeGroup
 		])
-	}, [selectedFacets, minPrice, maxPrice, showInStockOnly, searchText]);
+	}, [selectedFacets, minPrice, maxPrice, showInStockOnly, searchText, currentPage, pageSize]);
 
 
 	if (!products) {
@@ -271,27 +274,41 @@ const View: React.FC<ViewProps> = (props) => {
 				</div>
 	
 				<header className="ui-productcategory-view__header">
+
+					<div className={'pagination-container'}>
+						<Paginator
+							pageIndex={currentPage}
+							pageSize={pageSize}
+							totalResults={products.totalResults}
+							onChange={(toPage: number) => {
+								updateQuery({ page: toPage.toString() })
+							}}
+							showInput={false}
+							showSummary={false}
+						/>
+					</div>
 					<Input type="select" aria-label={`Sort by`} value={sortOrder} noWrapper>
 						<option value="relevance">
 							{`Relevance`}
 						</option>
 					</Input>
-	
-					{/* replace this with more typical pagination below product list? */}
-					<Input type="select" aria-label={`Show`} value={pagination} noWrapper>
-						<option value="page1">
-							{`20 out of 1,500 products`}
-						</option>
-					</Input>
-	
 					<div className="btn-group ui-btn-group" role="group" aria-label={`Select view style`}>
 						<Input type="radio" noWrapper label={`List`} groupIcon="fr-list" groupVariant="primary" value='list' checked={viewStyle == 'list'} onChange={() => setViewStyle('list')} name="view-style" />
 						<Input type="radio" noWrapper label={`Small thumbnails`} groupIcon="fr-th-list" groupVariant="primary" value='small-thumbs' checked={viewStyle == 'small-thumbs'} onChange={() => setViewStyle('small-thumbs')} name="view-style" />
 						<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value='large-thumbs' checked={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
 					</div>
 				</header>
-	
 				<ProductList content={products.results} viewStyle={viewStyle} />
+				<div className={'pagination-container'}>
+					<Paginator
+						pageIndex={currentPage}
+						pageSize={pageSize}
+						totalResults={products.totalResults}
+						onChange={(toPage: number) => {
+							updateQuery({ page: toPage.toString() })
+						}}
+					/>
+				</div>
 			</div>
 		</>
 	);

@@ -215,8 +215,8 @@ public struct ContentStream<T, ID>
 	/// <summary>
 	/// True if the total should be included.
 	/// </summary>
-	public bool IncludeTotal;
-
+	public bool IncludeTotal = false;
+	
 	/// <summary>
 	/// A default content stream.
 	/// </summary>
@@ -277,7 +277,7 @@ public struct ContentStream<T, ID>
 				await _onResult(result, index);
 			}, onResult, null);
 
-		}, writer, stream, includes, Filter == null ? false : Filter.IncludeTotal, currentSecondarySource != null);
+		}, writer, stream, includes, Filter == null ? IncludeTotal : Filter.IncludeTotal, currentSecondarySource != null);
 
 		if (ReleaseFilter && Filter != null)
 		{
@@ -313,7 +313,7 @@ public struct ContentStream<T, ID>
 			// Keep asking the original for its next source if there are more.
 			currentSecondarySource = src.GetNextSource();
 		}
-
+		
 		if (hasSecondary)
 		{
 			// Close both

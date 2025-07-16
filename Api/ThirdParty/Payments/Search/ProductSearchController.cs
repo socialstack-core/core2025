@@ -57,7 +57,8 @@ public partial class ProductSearchController : AutoController
 			request.SortOrder, 
 			request.InStockOnly, 
 			request.AppliedFacets, 
-			request.PageOffset
+			request.PageOffset,
+			(int) request.PageSize
 		);
 
 		if (resultSet == null)
@@ -98,14 +99,16 @@ public partial class ProductSearchController : AutoController
 			resultSet.ResultFacets.Categories
 		);
 
-		return new ContentStream<Product, uint>() {
+		return new ContentStream<Product, uint>()
+		{
 			ServiceForType = _productService,
 			Source = new MultiStreamSource<Product, uint>(
-				new ListStreamSource<Product, uint>(
-					resultSet.Products
+				new ProductListStreamSource<Product, uint>(
+					resultSet
 				),
 				secondarySources
-			)
+			),
+			IncludeTotal = true
 		};
 	}
 	
