@@ -7,9 +7,9 @@ namespace Api.Payments
     public partial class ProductCategoryService : BaseCategoryService<ProductCategory, ProductCategoryNode>
     {
 
-        protected override string CategoryLabel => "Product Category";
-        protected override string CategoryFieldName => "ProductCategories";
-        protected override string CategoryUrlPrefix => "category";
+        public override string CategoryLabel => "Product Category";
+        public override string CategoryFieldName => "ProductCategories";
+        public override string CategoryUrlPrefix => "category";
 
         public ProductCategoryService(
             ProductService products,

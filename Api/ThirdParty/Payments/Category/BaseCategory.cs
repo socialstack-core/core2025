@@ -1,6 +1,5 @@
 using Api.AutoForms;
 using Api.Database;
-using Api.Startup;
 using Api.Translate;
 using Api.Users;
 
@@ -9,7 +8,7 @@ namespace Api.Payments
     ///summary
     ///Base class for content categories.
     /// </summary>
-    public abstract class BaseCategory : VersionedContent<uint>
+    public abstract partial class BaseCategory : VersionedContent<uint>
     {
         /// <summary>
         /// The name of the product category

@@ -25,17 +25,17 @@ namespace Api.Payments
         /// <summary>
         /// The label to use for the current category
         /// </summary>
-        protected abstract string CategoryLabel { get; }
+        public abstract string CategoryLabel { get; }
 
         /// <summary>
         /// The include mapping to use for the current category
         /// </summary>
-        protected abstract string CategoryFieldName { get; }
+        public abstract string CategoryFieldName { get; }
 
         /// <summary>
         /// The url prefix to use for the current category
         /// </summary>
-        protected abstract string CategoryUrlPrefix { get; }
+        public abstract string CategoryUrlPrefix { get; }
 
         protected readonly ProductService _productService;
         protected readonly PageService _pages;
