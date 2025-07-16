@@ -140,6 +140,14 @@ namespace Api.Payments
 		/// Indicates if this is a variant product related to a parent base product
 		/// </summary>
 		public uint? VariantOfId;
+		
+		/// <summary>
+		/// Continue selling when there is no stock
+		/// usually useful for products that can be
+		/// back-ordered. It's false by default.
+		/// </summary>
+		[Data("help", "Can this continue to be fulfilled even when there is no physical stock?")]
+		public bool ContinueSellingWithNoStock = false;
 
 		/// <summary>
 		/// The ID of the primary product category. This is just a convenience field for 

@@ -231,6 +231,53 @@ namespace Api.Payments
 				}
 				return product;
 			});
+			
+			// Added to make sure the ContinueSellingWithNoStock of the parent
+			// is mirrored to variants. This also doesn't execute when a variant
+			// is updated. Only parent products.
+			// my initial idea was to run "AfterUpdate", but that event didn't have the original
+			// passed into the scope, executing with "BeforeUpdate" means I can check whether this
+			// actually needs to run or can be skipped. Just a minor optimisation, this can reduce
+			// the workload a fair bit on products that have many many variants per say.
+			Events.Product.BeforeUpdate.AddEventListener(async (ctx, product, original) =>
+			{
+				// this event only fires when a change has been made, saves an unnecessary few calls & 
+				// updates, especially on products with many variants.
+				if (original.ContinueSellingWithNoStock == product.ContinueSellingWithNoStock)
+				{
+					return product;
+				}
+				// first, lets check if this is not a variant. 
+				// if it is, lets exit early.
+				if (product.VariantOfId.HasValue && product.VariantOfId.Value != 0)
+				{
+					return product;
+				}
+				
+				// here we know it's not a product, lets get all variants
+				var variants = await Where("VariantOfId = ?", DataOptions.IgnorePermissions).Bind(product.Id)
+					.ListAll(ctx);
+				
+				// iterate all the variants, if the variant
+				// shares the same value than the parent
+				// we skip the unnecessary update call. 
+				// else we update to keep it in sync. 
+				foreach (var variant in variants)
+				{
+					if (variant.ContinueSellingWithNoStock == product.ContinueSellingWithNoStock)
+					{
+						// skip, no point wasting an "Update" call.
+						continue;
+					}
+					
+					await Update(ctx, variant, (_, updateVariant, _) =>
+					{
+						updateVariant.ContinueSellingWithNoStock = product.ContinueSellingWithNoStock;
+					});
+				}
+				
+				return product;
+			});
 
 			Cache();
 		}
