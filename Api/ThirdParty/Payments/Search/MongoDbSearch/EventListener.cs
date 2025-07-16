@@ -185,7 +185,10 @@ public class MongoSearchEventListener
 						}
 					}
 				}
-
+				// TODO: There is now a property on Product called "ContinueSellingWithNoStock"
+				// if this is true, then InStock filter shouldn't apply to them
+				// as yes they're out of physical stock, they can still access the stock 
+				// to make a sale.
 				if (search.InStockOnly)
 				{
 					filterClauses.Add(new BsonDocument("compound", new BsonDocument
@@ -346,7 +349,10 @@ public class MongoSearchEventListener
 							childFilters.Add(Builders<Product>.Filter.In("Mappings." + facet.Mapping.ToLower(), new BsonArray(ids)));
 						}
 					}
-					
+					// TODO: There is now a property on Product called "ContinueSellingWithNoStock"
+					// if this is true, then InStock filter shouldn't apply to them
+					// as yes they're out of physical stock, they can still access the stock 
+					// to make a sale.
 					if (search.InStockOnly)
 					{
 						childFilters.Add(
