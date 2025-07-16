@@ -71,6 +71,7 @@ namespace Api.Payments
 					Url = "/cart/checkout",
 					Key = "cart_checkout",
 					Title = "Review your cart",
+					LoginRequired = true,
 					BuildBody = (PageBuilder builder) =>
 					{
 						return builder.AddTemplate(
@@ -83,6 +84,7 @@ namespace Api.Payments
 					Url = "/cart/purchases/${purchase.id}",
 					Key = "primary:purchase",
 					Title = "Viewing purchase",
+					LoginRequired = true,
 					PrimaryContentIncludes = "productQuantities",
 					BuildBody = (PageBuilder builder) =>
 					{

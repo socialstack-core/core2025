@@ -1189,20 +1189,12 @@ namespace Api.Pages
 			HttpRequest request = httpContext.Request;
 			HttpResponse response = httpContext.Response;
 
-			// The context is not authenticated yet. This is because a large 
-			// group of requests do not need to be authenticated at all and so we can do that only when necessary.
+			// Permission check - can the user actually see this page?
+			// If not, is there another role they must be where they can see the page?
+			// i.e. typically that is in the form of the page requiring the user to login first.
 
-			// If services have not finished starting up yet, wait.
-			var svcWaiter = Services.StartupWaiter;
-
-			if (svcWaiter != null)
-			{
-				await svcWaiter.Task;
-			}
 
 			var _config = (context.LocaleId < _configurationTable.Length) ? _configurationTable[context.LocaleId] : _defaultConfig;
-
-			// Route the URL through the URL tree.
 
 			response.ContentType = "text/html";
 			// response.Headers["Content-Encoding"] = "gzip";

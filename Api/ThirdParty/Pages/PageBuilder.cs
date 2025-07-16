@@ -1,4 +1,5 @@
 using Api.CanvasRenderer;
+using Api.Database;
 using Api.Translate;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,25 @@ public partial class PageBuilder
 	/// Default page title.
 	/// </summary>
 	public string Title;
+
+	/// <summary>
+	/// Setting this to true is a shortcut for representing an exclusion for the 'public' role from the page.
+	/// </summary>
+	public bool LoginRequired {
+		set {
+			if (value)
+			{
+				// public role is always #6. Roles.Public.Id isn't actually reliable when this is used 
+				// because we might be, for example, installing pages inside the role service constructor.
+				CustomMappings.Set("RoleExclusions", [6]);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Custom mappings for the page if any.
+	/// </summary>
+	public MappingData CustomMappings;
 
 	/// <summary>
 	/// Primary content includes, if any.
@@ -197,6 +217,7 @@ public partial class PageBuilder
 		var page = new Page(){
 			Url = Url,
 			Key = Key,
+			Mappings = CustomMappings,
 			Title = new Localized<string>(Title),
 			PrimaryContentIncludes = PrimaryContentIncludes,
 			PrimaryContentType = PrimaryContentType

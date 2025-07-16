@@ -276,6 +276,41 @@ namespace Api.Permissions{
 				}.Resolve(ast)
 			};
 		}
+		
+		/// <summary>
+		/// True if there is not a "RoleExclusions" mapping of {Thing}->{Context.Role}
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <typeparam name="ID"></typeparam>
+		/// <param name="node"></param>
+		/// <param name="ast"></param>
+		public static FilterTreeNode<T, ID> NotRoleExcluded<T, ID>(MemberFilterTreeNode<T, ID> node, FilterAst<T, ID> ast)
+			where T : Content<ID>, new()
+			where ID : struct, IConvertible, IEquatable<ID>, IComparable<ID>
+		{
+			if (node.Args.Count != 0)
+			{
+				throw new PublicException("NotRoleExcluded in a filter call takes 0 arguments", "filter_invalid");
+			}
+
+			return new OpFilterTreeNode<T, ID>()
+			{
+				Operation = "not",
+				A = new OpFilterTreeNode<T, ID>()
+				{
+					Operation = "contains",
+					A = new MemberFilterTreeNode<T, ID>()
+					{
+						Name = "RoleExclusions"
+					}.Resolve(ast),
+					B = new MemberFilterTreeNode<T, ID>()
+					{
+						Name = "RoleId",
+						OnContext = true
+					}.Resolve(ast)
+				}
+			};
+		}
 
 	}
 
@@ -393,7 +428,12 @@ namespace Api.Permissions{
 		/// </summary>
 		/// <returns></returns>
 		public static bool SetContains(List<ulong> values, ulong val)
-		{
+		{			
+			if (values == null)
+			{
+				return false;
+			}
+
 			foreach (var v in values)
 			{
 				if (val == v)
