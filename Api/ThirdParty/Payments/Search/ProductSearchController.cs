@@ -103,8 +103,8 @@ public partial class ProductSearchController : AutoController
 		{
 			ServiceForType = _productService,
 			Source = new MultiStreamSource<Product, uint>(
-				new ListStreamSource<Product, uint>(
-					resultSet.Products
+				new ProductListStreamSource<Product, uint>(
+					resultSet
 				),
 				secondarySources
 			),
