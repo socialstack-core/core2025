@@ -30,6 +30,27 @@ export type CategoryTreeNode = {
 	children: ProductCategory[];
 }
 
+// This removes any query string items
+// that are generally stale between category navigation.
+// Currently removes the page number, but can be extended.
+const filterResettableQueryStringItems = (params: URLSearchParams) => {
+	if (!params) {
+		return params;
+	}
+
+	const removableItemKeys = ["page"];
+	const newParams = new URLSearchParams();
+
+	params.forEach((value: string, key: string) => {
+		if (!removableItemKeys.includes(key)) {
+			newParams.append(key, value);
+		}
+	});
+
+	return newParams;
+};
+
+
 const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterProps) => {
 	
 	// in order to display the category filters, we need the product collection,
@@ -88,7 +109,7 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 	// are debounced and cause a state update which in effect
 	// re-renders this. This is derived from pageState
 	// due to window.location not being SSR safe. 
-	let queryString = pageState.query.toString();
+	let queryString = filterResettableQueryStringItems(pageState.query).toString();
 	
 	// just in-case the toString() doesn't prepend 
 	// the query string start delimiter, we add one in.
