@@ -99,7 +99,8 @@ public partial class ProductSearchController : AutoController
 			resultSet.ResultFacets.Categories
 		);
 
-		return new ContentStream<Product, uint>() {
+		return new ContentStream<Product, uint>()
+		{
 			ServiceForType = _productService,
 			Source = new MultiStreamSource<Product, uint>(
 				new ListStreamSource<Product, uint>(
@@ -108,7 +109,7 @@ public partial class ProductSearchController : AutoController
 				secondarySources
 			),
 			IncludeTotal = true
-		}.WithTotal(resultSet.Total);
+		};
 	}
 	
 }

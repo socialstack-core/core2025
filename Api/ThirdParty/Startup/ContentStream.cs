@@ -215,12 +215,7 @@ public struct ContentStream<T, ID>
 	/// <summary>
 	/// True if the total should be included.
 	/// </summary>
-	public bool IncludeTotal;
-	
-	/// <summary>
-	/// The total available results. 
-	/// </summary>
-	public int Total;
+	public bool IncludeTotal = false;
 	
 	/// <summary>
 	/// A default content stream.
@@ -228,18 +223,6 @@ public struct ContentStream<T, ID>
 	public ContentStream()
 	{
 		
-	}
-	
-	/// <summary>
-	/// Sets the total, this is only required so far
-	/// on the product search controller.
-	/// </summary>
-	/// <param name="total"></param>
-	/// <returns></returns>
-	public ContentStream<T,ID> WithTotal(int total)
-	{
-		Total = total;
-		return this;
 	}
 
 	/// <summary>
@@ -294,7 +277,7 @@ public struct ContentStream<T, ID>
 				await _onResult(result, index);
 			}, onResult, null);
 
-		}, writer, stream, includes, Filter == null ? false : Filter.IncludeTotal, currentSecondarySource != null);
+		}, writer, stream, includes, Filter == null ? IncludeTotal : Filter.IncludeTotal, currentSecondarySource != null);
 
 		if (ReleaseFilter && Filter != null)
 		{
@@ -333,21 +316,8 @@ public struct ContentStream<T, ID>
 		
 		if (hasSecondary)
 		{
-			writer.WriteASCII("}");
-			if (IncludeTotal)
-			{
-				writer.WriteASCII(",\"totalResults\": " + Total);
-			}
 			// Close both
-			writer.WriteASCII("}");
-		}
-		else
-		{
-			if (IncludeTotal)
-			{
-				writer.WriteASCII(",\"totalResults\": " + Total);
-			}
-			writer.WriteASCII("}");
+			writer.WriteASCII("}}");
 		}
 
 		if (stream != null)
