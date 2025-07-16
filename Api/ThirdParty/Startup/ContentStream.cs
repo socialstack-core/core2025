@@ -216,13 +216,30 @@ public struct ContentStream<T, ID>
 	/// True if the total should be included.
 	/// </summary>
 	public bool IncludeTotal;
-
+	
+	/// <summary>
+	/// The total available results. 
+	/// </summary>
+	public int Total;
+	
 	/// <summary>
 	/// A default content stream.
 	/// </summary>
 	public ContentStream()
 	{
 		
+	}
+	
+	/// <summary>
+	/// Sets the total, this is only required so far
+	/// on the product search controller.
+	/// </summary>
+	/// <param name="total"></param>
+	/// <returns></returns>
+	public ContentStream<T,ID> WithTotal(int total)
+	{
+		Total = total;
+		return this;
 	}
 
 	/// <summary>
@@ -313,11 +330,24 @@ public struct ContentStream<T, ID>
 			// Keep asking the original for its next source if there are more.
 			currentSecondarySource = src.GetNextSource();
 		}
-
+		
 		if (hasSecondary)
 		{
+			writer.WriteASCII("}");
+			if (IncludeTotal)
+			{
+				writer.WriteASCII(",\"totalResults\": " + Total);
+			}
 			// Close both
-			writer.WriteASCII("}}");
+			writer.WriteASCII("}");
+		}
+		else
+		{
+			if (IncludeTotal)
+			{
+				writer.WriteASCII(",\"totalResults\": " + Total);
+			}
+			writer.WriteASCII("}");
 		}
 
 		if (stream != null)

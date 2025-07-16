@@ -105,6 +105,25 @@
 	.ui-productcategory-list {
 		grid-area: products;
 	}
+	.pagination-container {
+		grid-column: 1 / -1;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		
+		ul.pagination {
+			justify-content: center;
+			align-items: center;
+		}
+	}
+	.ui-productcategory-view__header {
+		.pagination-container {
+			ul.pagination {
+				justify-content: left;
+			}
+		}
+	}
 }
 
 /*

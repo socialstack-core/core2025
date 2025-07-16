@@ -57,7 +57,8 @@ public partial class ProductSearchController : AutoController
 			request.SortOrder, 
 			request.InStockOnly, 
 			request.AppliedFacets, 
-			request.PageOffset
+			request.PageOffset,
+			(int) request.PageSize
 		);
 
 		if (resultSet == null)
@@ -105,8 +106,9 @@ public partial class ProductSearchController : AutoController
 					resultSet.Products
 				),
 				secondarySources
-			)
-		};
+			),
+			IncludeTotal = true
+		}.WithTotal(resultSet.Total);
 	}
 	
 }
