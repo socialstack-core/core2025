@@ -51,34 +51,37 @@ public partial class StdOutController : AutoController
 				reader.Halt = true;
 				return;
 			}
-			
-			// if the log level isn't enabled, skip it. 
-			switch (reader.Definition.Id)
+
+			if (filtering.Levels is not null)
 			{
-				case Schema.OkId:
-					if (!filtering.Levels.Contains("ok"))
-					{
-						return;
-					}
-					break;
-				case Schema.InfoId:
-					if (!filtering.Levels.Contains("info"))
-					{
-						return;
-					}
-					break;
-				case Schema.WarnId:
-					if (!filtering.Levels.Contains("warn"))
-					{
-						return;
-					}
-					break;
-				case Schema.ErrorId:
-					if (!filtering.Levels.Contains("error"))
-					{
-						return;
-					}
-					break;
+				// if the log level isn't enabled, skip it. 
+				switch (reader.Definition.Id)
+				{
+					case Schema.OkId:
+						if (!filtering.Levels.Contains("ok"))
+						{
+							return;
+						}
+						break;
+					case Schema.InfoId:
+						if (!filtering.Levels.Contains("info"))
+						{
+							return;
+						}
+						break;
+					case Schema.WarnId:
+						if (!filtering.Levels.Contains("warn"))
+						{
+							return;
+						}
+						break;
+					case Schema.ErrorId:
+						if (!filtering.Levels.Contains("error"))
+						{
+							return;
+						}
+						break;
+				}
 			}
 			
 			// check if the exceptions only bool is true, if so and 
