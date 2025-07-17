@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import {useEffect, useState, useCallback, useRef} from 'react';
 import Tile from 'Admin/Tile';
 import Alert from 'UI/Alert';
 import Input from 'UI/Input';
 import StdOutApi from 'Api/StdOutController';
 import { isoConvert } from 'UI/Functions/DateTools';
+import Debounce from "UI/Functions/Debounce";
 
 export type ModWindowScope = typeof window & {
     scrollMaxY: number;
@@ -34,6 +35,7 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
     // holds the log, fairly primitive. 
     const [log, setLog] = useState<StdEntry[]>([]);
     
+    
     // this filters out the log based on requirements, you can remove any of these items to see
     // a refined collection of stdout messages
     const [logLevelEnablement, setLogLevelEnablement] = useState<string[]>(['error', 'warn', 'info', 'ok']);
@@ -57,6 +59,15 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
     // type that term into the search bar in the header area, and 
     // see a list of messages containing that. 
     const [filterQuery, setFilterQuery] = useState<string>('');
+
+    // let's add a debounce, so we don't de-dos huh ;)
+    const debounce = useRef(
+        new Debounce(
+            (query: string) => {
+                setFilterQuery(query);
+            }
+        )
+    );
     
     // Let's face it, if you're looking purely for an exception, 
     // the last thing you want is to be looking through the entire log,
@@ -65,10 +76,10 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
     // enable this, and avoid alcoholism :)
     const [exceptionsOnly, setExceptionsOnly] = useState<boolean>(false);
     
-    // this is defaulted to 1000, it sounds like a lot, probably is. But it's a bunch
-    // of log messages, so there's no DB calls or anything, so what's the harm ;)
-    // That being said, I'd keep it at 1000, unless you really hate yourself. 
-    const [pageSize, setPageSize] = useState<int>(1000 as int);
+    // this is defaulted to 300, before it was set to 1000, but it sort of, well... it sucked.
+    // there's no DB calls or anything, so what's the harm I thought...
+    // That being said, I'd keep it at 300, unless you really hate yourself. 
+    const [pageSize, setPageSize] = useState<int>(300 as int);
     
     // Get rid of the useless TSParenthesizedType/ TypeScript info messages. 
     const [disableTypeScriptInfo, setDisableTypeScriptInfo] = useState<boolean>(false);
@@ -89,7 +100,7 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
                 // without restarting, congratulations!
                 newerThan: (fromDate ?? 0) as int,
                 
-                // the page size, it's set to 1000, by default
+                // the page size, it's set to 300, by default
                 // it's just the amount of entries that come through.
                 pageSize,
                 
@@ -381,7 +392,7 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
                     <Input
                         type="text"
                         defaultValue={filterQuery}
-                        onKeyUp={ev => setFilterQuery(ev.currentTarget.value)}
+                        onKeyUp={ev => debounce.current?.handle(ev.currentTarget.value)}
                     />
                 </div>
 
