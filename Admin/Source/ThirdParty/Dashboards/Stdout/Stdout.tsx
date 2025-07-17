@@ -89,8 +89,7 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
     
     const toggleLogEnablement = (key: string, checked: boolean) => {
         if (checked) {
-            logLevelEnablement.push(key);
-            setLogLevelEnablement([...logLevelEnablement]);
+            setLogLevelEnablement([...logLevelEnablement, key]);
         }
         else
         {
