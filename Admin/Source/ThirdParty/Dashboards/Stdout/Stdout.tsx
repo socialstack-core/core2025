@@ -35,6 +35,9 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
     // holds the log, fairly primitive. 
     const [log, setLog] = useState<StdEntry[]>([]);
     
+    // makes the header stick when you scroll
+    const [isSticky, setIsSticky] = useState<boolean>(true);
+    
     
     // this filters out the log based on requirements, you can remove any of these items to see
     // a refined collection of stdout messages
@@ -165,6 +168,16 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
         pageSize,
         disableTypeScriptInfo
     ]);
+    
+    useEffect(() => {
+        const evListener = () => {
+            setIsSticky(window.scrollY >= 60);
+        }
+        
+        window.addEventListener('scroll', evListener);
+        
+        return () => window.removeEventListener('scroll', evListener);
+    })
     
     // no point repeating myself for 4 inputs. 
     // this toggles the value dependent on the key.
@@ -321,7 +334,7 @@ const StdOut: React.FC<{}> = (): React.ReactNode => {
                 </Alert>
             </Tile>
 
-            <Tile className="stdout-controls">
+            <Tile className={"stdout-controls" + (isSticky ? ' scrolled' : '')}>
                 <div className="group">
                     <p>Log Level</p>
                     {['error', 'ok', 'warn', 'info'].map(level => (

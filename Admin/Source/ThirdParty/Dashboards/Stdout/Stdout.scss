@@ -59,6 +59,12 @@
 }
 
 .stdout-controls {
+	
+	&.scrolled {
+		position:fixed;
+		top: 50px;
+	}
+	
 	.group {
 		width:fit-content;
 		display: inline-block;
