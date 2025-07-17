@@ -52,7 +52,7 @@ const View: React.FC<ViewProps> = (props) => {
 
 	useEffect(() => {
 		// here we reset the selected thumbnail and load the variant one in.
-		setSelectedThumbnail(undefined);
+		setSelectedThumbnail((prev) => currentVariant ?? prev);
 	}, [variantSku]);
 
 	// TODO: approved?
