@@ -2,8 +2,8 @@ using Api.Contexts;
 using Api.Permissions;
 using Api.SocketServerLibrary;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Api.ErrorLogging;
 using Microsoft.AspNetCore.Http;
@@ -43,10 +43,72 @@ public partial class StdOutController : AutoController
 		bool first = true;
 
 		await Log.ReadSelfBackwards((LogTransactionReader reader) => {
-
-			if (rowCount > 300)
+			
+			// the row count now takes the page size into account
+			// use this at your own risk. (Defaults to 1k)
+			if (rowCount > filtering.PageSize)
 			{
 				reader.Halt = true;
+				return;
+			}
+			
+			// if the log level isn't enabled, skip it. 
+			switch (reader.Definition.Id)
+			{
+				case Schema.OkId:
+					if (!filtering.Levels.Contains("ok"))
+					{
+						return;
+					}
+					break;
+				case Schema.InfoId:
+					if (!filtering.Levels.Contains("info"))
+					{
+						return;
+					}
+					break;
+				case Schema.WarnId:
+					if (!filtering.Levels.Contains("warn"))
+					{
+						return;
+					}
+					break;
+				case Schema.ErrorId:
+					if (!filtering.Levels.Contains("error"))
+					{
+						return;
+					}
+					break;
+			}
+			
+			// check if the exceptions only bool is true, if so and 
+			// no StackTraceFieldDefId exists, we skip it.
+			if (filtering.ExceptionsOnly && !reader.Fields.Any(field =>
+				    field.Field is not null && field.Field.Id == Schema.StackTraceFieldDefId))
+			{
+				return;
+			}
+			
+			// react warnings can be pesky when looking for errors
+			// as eslint gives a "error" when rules of hooks are 
+			// broken, unfortunately this happens a lot. 
+			// my solution you ask? Ignorance is bliss. Nuke em.
+			if (filtering.DisableReactWarnings && FieldContainsMessage("react", reader.Fields))
+			{
+				return;
+			}
+			
+			// The console can contain a lot of "TSParenthesizedType" or "A type was ignored"
+			// so we can filter out this noise.
+			if (filtering.DisableTypeScriptInfo && (FieldContainsMessage("typescript", reader.Fields) || FieldContainsMessage("TSParenthesizedType", reader.Fields)))
+			{
+				return;
+			}
+			
+			// allows a fulltext search
+			if (!string.IsNullOrEmpty(filtering.QueryFilter) &&
+			    !FieldContainsMessage(filtering.QueryFilter, reader.Fields))
+			{
 				return;
 			}
 
@@ -162,6 +224,34 @@ public partial class StdOutController : AutoController
 		writer.Release();
 	}
 
+	/// <summary>
+	/// Used to perform a search on the fields for certain keywords
+	/// (Case-Insensitive)
+	/// </summary>
+	/// <param name="compare"></param>
+	/// <param name="fields"></param>
+	/// <returns></returns>
+	private static bool FieldContainsMessage(string compare, FieldData[] fields)
+	{
+		foreach (var field in fields)
+		{
+			if (field.Field is not null && field.Field.Id == Schema.MessageFieldDefId)
+			{
+				try
+				{
+					var messageText = field.GetNativeString()?.ToLower();
+
+					if (messageText is not null && messageText.Contains(compare, StringComparison.OrdinalIgnoreCase))
+					{
+						return true; // Skip this log entry
+					}
+				}
+				catch (NullReferenceException) {}
+			}
+		}
+
+		return false;
+	}
 }
 
 /// <summary>
@@ -174,6 +264,11 @@ public class LogFilteringModel
 	/// Use this to get results created since a previous request.
 	/// </summary>
 	public long NewerThan;
+	
+	/// <summary>
+	/// Allow a range
+	/// </summary>
+	public long OlderThan;
 
 	/// <summary>
 	/// Starting offset (from the tail of the file).
@@ -194,4 +289,33 @@ public class LogFilteringModel
 	/// Basic filter by tag for the moment.
 	/// </summary>
 	public string Tag;
+	
+	/// <summary>
+	/// Filter by the log levels.
+	/// </summary>
+	public string[] Levels = ["error", "warn", "info", "ok"];
+	
+	/// <summary>
+	/// Disable ESLint's react warnings
+	/// such as rules of hooks, and
+	/// incorrect hook usage. 
+	/// </summary>
+	public bool DisableReactWarnings = false;
+	
+	/// <summary>
+	/// A textual filter to apply.
+	/// </summary>
+	public string QueryFilter;
+	
+	/// <summary>
+	/// Toggles Exceptions only.
+	/// </summary>
+	public bool ExceptionsOnly = false;
+	
+	/// <summary>
+	/// Disables typescript info such as:
+	/// "A typescript type annotation was ignored"
+	/// "TSParenthesizedType"
+	/// </summary>
+	public bool DisableTypeScriptInfo = false;
 }
