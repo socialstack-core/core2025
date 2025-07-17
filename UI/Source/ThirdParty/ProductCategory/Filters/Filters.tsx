@@ -15,7 +15,7 @@ export type CategoryFilterProps = {
 	// this also must have the category facets.
 	// this gets checked in the component.
 	collection: ApiList<Product>,
-	
+
 	// the current 
 	currentCategory: ProductCategory;
 }
@@ -25,55 +25,76 @@ export type CategoryFilterProps = {
 export type CategoryTreeNode = {
 	// the facet (used for count etc...)
 	facet: ProductCategoryFacet;
-	
+
 	// any child categories. 
 	children: ProductCategory[];
 }
 
+// This removes any query string items
+// that are generally stale between category navigation.
+// Currently removes the page number, but can be extended.
+const filterResettableQueryStringItems = (params: URLSearchParams) => {
+	if (!params) {
+		return params;
+	}
+
+	const removableItemKeys = ["page"];
+	const newParams = new URLSearchParams();
+
+	params.forEach((value: string, key: string) => {
+		if (!removableItemKeys.includes(key)) {
+			newParams.append(key, value);
+		}
+	});
+
+	return newParams;
+};
+
+
 const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterProps) => {
-	
+
 	// in order to display the category filters, we need the product collection,
 	// we also need the current category we can collect the direct children
 	// of the current category and collect the parent categories 
 	// and build the category tree to work the same as amazon.
 	const { collection, currentCategory } = props;
-	
+
 	// parent state may change, but the collection isn't guaranteed to have changed, 
 	// store this in a useMemo to avoid state usage and a useEffect to populate.
 	const categoryTree = useMemo<Map<uint, CategoryTreeNode>>(
 		() => buildCategoryTree(collection),
 		[collection]
 	);
-	
+
 	// this is all categories **ABOVE** the current one
 	// this **DOES NOT** include the current category.
 	const parentCategoryPath = useMemo<ProductCategory[]>(
 		() => getParentCategoryPath(currentCategory, categoryTree),
 		[currentCategory, categoryTree]
 	);
-	
+
 	// we've pulled this in to make sure the
 	// search query is persistent in the URL
 	// so when somebody clicks on a category
 	// the search query is retained.
 	const { pageState } = useRouter();
-	
+
 	// the top level categories can often have a lot of children
 	// so create a state item to hold the limit.
 	const [maxCategoryListing, setMaxCategoryListing] = useState(5);
-	
+
 	// get the root tree item, the root category has a special condition
 	const rootTreeItem = categoryTree.get(ROOT_CATEGORY_ID);
-	
+
 	// the actual root category
 	const root = rootTreeItem?.facet.category;
-	
+
 	// try and get child categories from the current one.
 	// this will ALWAYS be an array, but to satisfy TypeScripts
 	// safety concerns, I've added a ?? [] to guarantee there is 
 	// always an array value.
 	const children: ProductCategory[] = categoryTree.get(currentCategory.id)?.children ?? [];
-	
+
 	// now we're passed hooks we can avoid the conditional hooks issue
 	// both useMemos are designed with collection & currentCategory being
 	// null, we'll exist early here when the current category isn't available
@@ -82,21 +103,21 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 	if (!currentCategory || !collection || !root) {
 		return null;
 	}
-	
+
 	// we don't pull this into state, it's derived from a hook
 	// it's lifecycle is managed elsewhere, and query edits
 	// are debounced and cause a state update which in effect
 	// re-renders this. This is derived from pageState
 	// due to window.location not being SSR safe. 
-	let queryString = pageState.query.toString();
-	
+	let queryString = filterResettableQueryStringItems(pageState.query).toString();
+
 	// just in-case the toString() doesn't prepend 
 	// the query string start delimiter, we add one in.
 	// this simplifies code further down too.
 	if (!queryString.startsWith('?')) {
 		queryString = '?' + queryString;
 	}
-	
+
 	const renderRootCategory = () => {
 		return (
 			<ul>
@@ -106,7 +127,7 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 						// hide any excess.
 						return;
 					}
-					
+
 					const treeNode = categoryTree.get(category.id);
 
 					return (
@@ -133,9 +154,9 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 			</ul>
 		)
 	}
-	
+
 	const renderNormalCategory = () => {
-		
+
 		return (
 			<li>
 				<Link href={root.primaryUrl + queryString}>
@@ -167,12 +188,12 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 						</li>
 						<ul>
 							{children.map((category, idx) => {
-	
+
 								if (idx >= maxCategoryListing) {
 									// hide any excess.
 									return;
 								}
-	
+
 								return (
 									<li>
 										<Link href={category.primaryUrl + queryString}>
@@ -200,7 +221,7 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 			</li>
 		)
 	}
-	
+
 	return (
 		<div className={'category-treeview'}>
 			{currentCategory?.id == root?.id ? renderRootCategory() : renderNormalCategory()}
@@ -209,27 +230,27 @@ const CategoryFilters: React.FC<CategoryFilterProps> = (props: CategoryFilterPro
 }
 
 const getParentCategoryPath = (category: ProductCategory, categoryTree: Map<uint, CategoryTreeNode>): ProductCategory[] => {
-	
+
 	// initialise an empty array ready for population
 	const pathItems: ProductCategory[] = [];
-	
+
 	// if the immediate category has no parent
 	// then return an empty array
 	if (!category?.parentId || category.parentId === ROOT_CATEGORY_ID) {
 		return pathItems;
 	}
-	
+
 	// initialise current ready for a while statement. 
 	// this gets the initial parent category. 
 	let current = categoryTree.get(category.parentId);
-	
+
 	// the initial parent may be null, 
 	// in this instance, same as above; return
 	// an empty array.
 	if (!current) {
 		return pathItems;
 	}
-	
+
 	// now we execute a while, 
 	// moving around the tree
 	// collection categories 
@@ -238,7 +259,7 @@ const getParentCategoryPath = (category: ProductCategory, categoryTree: Map<uint
 	{
 		// push it to the path items array
 		pathItems.push(current.facet.category);
-		
+
 		// if the current category has no parent
 		// we've already pushed it to the pathItems
 		// array, so we can break the loop here
@@ -250,7 +271,7 @@ const getParentCategoryPath = (category: ProductCategory, categoryTree: Map<uint
 		// otherwise ascend to the parent category.
 		current = categoryTree.get(current.facet.category.parentId)
 	}
-	
+
 	// return the pathItems, they also need to be reversed 
 	// as they start from the bottom now they here
 	// * drake wants to know your location *
@@ -258,20 +279,20 @@ const getParentCategoryPath = (category: ProductCategory, categoryTree: Map<uint
 	// [1133, 1132, 1110, 29, 5] so lets reverse them
 	// [5, 29, 1110, 1132, 1133] looks better. 
 	return pathItems.reverse();
-	
+
 }
 
 /**
  * Takes an ApiList<Product> with secondary includes & category facets
  * and builds a tree out of them.
  * @param {ApiList<Product>>} collection
- * @return {Map<uint, CategoryTreeNode>} - uint being the category ID, category tree node being the actual category/facet/children 
+ * @return {Map<uint, CategoryTreeNode>} - uint being the category ID, category tree node being the actual category/facet/children
  */
 const buildCategoryTree = (collection: ApiList<Product>): Map<uint, CategoryTreeNode> => {
-	
+
 	// create a map so all categories only have one instance.
 	const map = new Map<uint, CategoryTreeNode>();
-	
+
 	if (!collection) {
 		// the collection may not have loaded yet. 
 		// when the component first mounts, the useEffect
@@ -281,24 +302,24 @@ const buildCategoryTree = (collection: ApiList<Product>): Map<uint, CategoryTree
 		// at very least the 2nd execution of the useEffect calling it.
 		return map;
 	}
-	
+
 	// skip the '?' on the collection variable, we know its value-ful otherwise
 	// the "if" branch above would stop the executing by returning early.
 	if (!collection.secondary?.productCategoryFacets) {
 		// the current request doesn't have this facet enabled, 
 		// leave a message in the log and return out. 
-		
+
 		console.error('[CategoryFilters] Collection has no secondary includes, a category tree cannot be built without the secondary includes', { name: 'productCategoryFacets' });
 		return map;
 	}
 	// also grab the facets
 	const facets           = collection.secondary.productCategoryFacets.results;
-	
+
 	// first iterate the categories, fill in the map,
 	// this doesn't populate children, but adds the category and its facet information
 	// it also initialises an empty array of children, so calling .children will always
 	// result in an array.
-	facets.forEach((facet: ProductCategoryFacet) => {		
+	facets.forEach((facet: ProductCategoryFacet) => {
 		map.set(facet.category.id, {
 			facet,
 			children: []
@@ -312,19 +333,19 @@ const buildCategoryTree = (collection: ApiList<Product>): Map<uint, CategoryTree
 	// is omitted, this is by design, the node represents the 
 	// node holding the facet & children
 	map.entries().forEach(([, node]) => {
-		
+
 		// destructure facet from the node, each node has facet & children
 		const { facet } = node;
-		
+
 		// get the parentId, fallback to the root category ID.
 		const parentId = (facet.category.parentId) || ROOT_CATEGORY_ID;
-		
+
 		// get the parent node, this differs from the last approach 
 		// as instead of performing a ".filter" and increasing the amount
 		// of operations being run, every category gets iterated over
 		// this appraoch reduces the amount of work.
 		const parentNode = map.get(parentId);
-		
+
 		// this should error out
 		// the parent ID can either be a non-zero value
 		// which is true, which means the next branch will
@@ -333,11 +354,11 @@ const buildCategoryTree = (collection: ApiList<Product>): Map<uint, CategoryTree
 		if (!parentNode) {
 			throw new Error("Couldn't identify the target category and failed to fallback on the root category ID")
 		}
-		
+
 		// push the category to the parentNode children collection
 		parentNode!.children.push(facet.category)
 	})
-	
+
 	return map;
 }
 
