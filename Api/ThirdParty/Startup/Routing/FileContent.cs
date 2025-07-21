@@ -36,6 +36,11 @@ public struct FileContent {
 	public bool IsCompressed;
 	
 	/// <summary>
+	/// Set the content-disposition attachment filename.
+	/// </summary>
+	public string FileName;
+	
+	/// <summary>
 	/// Create a new fileContent struct.
 	/// </summary>
 	/// <param name="rawBytes"></param>
@@ -47,13 +52,14 @@ public struct FileContent {
 	/// As always, if it doesn't change frequently, you should cache that string in memory.
 	/// </param>
 	/// <param name="etag"></param>
-	public FileContent(byte[] rawBytes, string mimeType, bool isCompressed = false, string lastModded = null, string etag = null)
+	public FileContent(byte[] rawBytes, string mimeType, string fileName = null, bool isCompressed = false, string lastModded = null, string etag = null)
 	{
 		RawBytes = rawBytes;
 		MimeType = mimeType;
 		IsCompressed = isCompressed;
 		LastModifiedUtc = lastModded;
 		Etag = etag;
+		FileName = fileName;
 	}
 
 	/// <summary>
@@ -68,6 +74,11 @@ public struct FileContent {
 		if (IsCompressed)
 		{
 			response.Headers["Content-Encoding"] = "gzip";
+		}
+
+		if (!string.IsNullOrEmpty(FileName))
+		{
+			response.Headers.ContentDisposition = "attachment; filename=" + FileName;
 		}
 
 		if (Etag != null)

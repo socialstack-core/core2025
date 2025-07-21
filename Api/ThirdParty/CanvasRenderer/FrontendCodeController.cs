@@ -74,7 +74,7 @@ namespace Api.CanvasRenderer
 
 			if (file.Precompressed != null)
 			{
-				return new FileContent(file.Precompressed, mime, true);
+				return new FileContent(file.Precompressed, mime, null, true);
 			}
 
 			return new FileContent(file.FileContent, mime);
@@ -127,10 +127,10 @@ namespace Api.CanvasRenderer
 
 			if (file.Precompressed != null)
 			{
-				return new FileContent(file.Precompressed, "text/javascript; charset=UTF-8", true, file.LastModifiedUtcString, file.Etag);
+				return new FileContent(file.Precompressed, "text/javascript; charset=UTF-8", null, true, file.LastModifiedUtcString, file.Etag);
 			}
 
-			return new FileContent(file.FileContent, "text/javascript; charset=UTF-8", false, file.LastModifiedUtcString, file.Etag);
+			return new FileContent(file.FileContent, "text/javascript; charset=UTF-8", null, false, file.LastModifiedUtcString, file.Etag);
 		}
 
 		/// <summary>
@@ -167,10 +167,10 @@ namespace Api.CanvasRenderer
 
 			if (file.Precompressed != null)
 			{
-				return new FileContent(file.Precompressed, "text/css; charset=UTF-8", true, file.LastModifiedUtcString, file.Etag);
+				return new FileContent(file.Precompressed, "text/css; charset=UTF-8", null, true, file.LastModifiedUtcString, file.Etag);
 			}
 			
-			return new FileContent(file.FileContent, "text/css; charset=UTF-8", false, file.LastModifiedUtcString, file.Etag);
+			return new FileContent(file.FileContent, "text/css; charset=UTF-8", null, false, file.LastModifiedUtcString, file.Etag);
 		}
 		/// <summary>
 		/// Gets the main.css file for the admin area (site locale 1). The URL should be of the form /en-admin/pack/main.css?loc=1&amp;v=123123123123&amp;h=ma83md83jd7hdur8
