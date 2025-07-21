@@ -451,6 +451,26 @@ namespace Api.Permissions{
 		{
 			return filter.IsIncluded;
 		}
+		
+		/// <summary>
+		/// Steps through this tree building a MongoDB filter.
+		/// Note that if it encounters an array node, it will immediately resolve the value using values stored in the given filter instance.
+		/// </summary>
+		/// <param name="localeCode"></param>
+		/// <param name="filter"></param>
+		/// <param name="context"></param>
+		public override FilterDefinition<INSTANCE_TYPE> ToMongo<INSTANCE_TYPE>(string localeCode, Filter<T, ID> filter, Context context)
+		{
+			bool isIncluded = filter.IsIncluded;
+
+			if (isIncluded) {
+				// empty is equiv of 'true'
+				return FilterDefinition<INSTANCE_TYPE>.Empty;
+			}
+
+			// _id being eq to zero is the only false we have..
+			return Builders<INSTANCE_TYPE>.Filter.Eq("_id", ObjectId.Empty);
+		}
 	}
 	
 	/// <summary>
