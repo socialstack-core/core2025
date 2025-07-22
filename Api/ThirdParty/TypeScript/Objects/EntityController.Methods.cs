@@ -30,11 +30,17 @@ namespace Api.TypeScript.Objects
 
             _methods = new List<ControllerMethod>();
 
-            foreach (var method in controllerType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
+            foreach (var method in controllerType.GetMethods(BindingFlags.Instance | BindingFlags.Public))
             {
                 // Skip constructors and known CRUD methods
-                if (method.IsConstructor || knownCrudMethods.Contains(method.Name))
+                if (
+                    method.IsConstructor ||
+                    knownCrudMethods.Contains(method.Name) || 
+                    (method.DeclaringType is { IsGenericType: true } && method.DeclaringType.GetGenericTypeDefinition() == typeof(AutoController<,>))
+                )
+                {
                     continue;
+                }
 
                 // Only consider methods with route attributes
                 var httpAttr = method.GetCustomAttributes().FirstOrDefault(attr => attr is RouteAttribute or HttpMethodAttribute);
