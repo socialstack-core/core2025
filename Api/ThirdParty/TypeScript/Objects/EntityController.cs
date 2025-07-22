@@ -2,10 +2,8 @@
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using Api.Startup;
+using Api.TypeScript.Contracts;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 
 namespace Api.TypeScript.Objects
 {
@@ -20,10 +18,12 @@ namespace Api.TypeScript.Objects
     /// The resulting class extends <c>AutoController&lt;T, ID&gt;</c> and provides a typed frontend interface
     /// with IntelliSense and route bindings.
     /// </remarks>
-    public partial class EntityController : AbstractTypeScriptObject
+    public partial class EntityController : MethodCollector
     {
         private readonly (Type controllerType, Type entityType) _referenceTypes;
         private readonly ESModule _container;
+
+        public Type EntityType => _referenceTypes.entityType;
 
         /// <summary>
         /// Constructs an <see cref="EntityController"/> code generator instance.
@@ -43,17 +43,19 @@ namespace Api.TypeScript.Objects
 
             _container = container;
             _referenceTypes = (controllerType, entityType);
+            _container.SetEntityController(this);
 
-            foreach (var method in GetEndpointMethods())
-            {
-                if (method.ReturnType != _referenceTypes.entityType && !TypeScriptService.IsEntityType(method.ReturnType))
-                {
-                    container.AddType(method.ReturnType);
-                }
-                
-                TypeScriptService.EnsureParameterTypes(method.WebSafeParams, container);
-                TypeScriptService.EnsureApis(method, container, _referenceTypes.entityType);
-            }
+            // foreach (var method in GetEndpointMethods(controllerType))
+            // {
+            //     if (method.ReturnType != _referenceTypes.entityType && !TypeScriptService.IsEntityType(method.ReturnType))
+            //     {
+            //         container.AddType(method.ReturnType);
+            //         continue;
+            //     }
+            //     
+            //     TypeScriptService.EnsureTypeCreation(method.WebSafeParams.Select(param => param.ParameterType).ToList(), container);
+            //     TypeScriptService.EnsureApis(method, container, _referenceTypes.entityType);
+            // }
         }
 
         /// <summary>
@@ -81,117 +83,8 @@ namespace Api.TypeScript.Objects
             builder.AppendLine($"        super('/{baseUrl}', new {svc.GetGenericSignature(_referenceTypes.entityType)}Includes());");
             builder.AppendLine("    }");
             builder.AppendLine();
-
-            // Generate a method for each endpoint
-            foreach (var method in GetEndpointMethods())
-            {
-                var fullUrl = (baseUrlRoute != null ? baseUrlRoute.Template : "") + "/" + method.RequestUrl;
-                fullUrl = fullUrl.Replace("//", "/");
-
-                var isArrayType = method.IsApiList;
-
-                builder.AppendLine("    /**");
-                builder.AppendLine("     * Generated from a .NET type.");
-                builder.AppendLine($"     * @see {{{_referenceTypes.controllerType}}}::{{{method.Method.Name}}}");
-                builder.AppendLine($"     * @url '{fullUrl}'");
-                builder.AppendLine("     */");
-                builder.Append($"    {TypeScriptService.LcFirst(method.Method.Name)} = (");
-
-                int paramCount = 0;
-                if (method.RequiresSessionSet)
-                {
-                    builder.Append("setSession: (s: SessionResponse) => Session");
-                    paramCount++;
-                }
-
-                foreach (var param in method.WebSafeParams)
-                {
-                    if (paramCount > 0) builder.Append(", ");
-
-                    string paramType = param.ParameterType == typeof(JObject)
-                        ? svc.GetGenericSignature(_referenceTypes.entityType)
-                        : svc.GetGenericSignature(param.ParameterType);
-
-                    builder.Append($"{param.Name}{(param.IsOptional ? "?" : "")}: {paramType}");
-                    paramCount++;
-                }
-
-                if (method.RequiresIncludes)
-                {
-                    if (paramCount != 0)
-                    {
-                        builder.Append(", ");
-                    }
-                    builder.Append("includes?: ApiIncludes[]");
-                }
-
-                // Closing params and declaring return type
-                string call = "getJson";
-
-                if (isArrayType)
-                {
-                    if (method.ReturnType == _referenceTypes.entityType)
-                    {
-                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
-                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
-                    }
-                    else if (method.ReturnType.IsGenericTypeDefinition &&
-                             method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
-                    {
-                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
-                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
-                    }
-                    else
-                    {
-                        call = $"getJson<{svc.GetGenericSignature(method.ReturnType)}[]>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}[]> => {{");
-                    }
-                }
-                else
-                {
-                    if (method.RequiresSessionSet)
-                    {
-                        call = "getJson<SessionResponse>";
-                        _container.RequireWebApi(WebApis.GetJson);
-                        builder.Append($"): Promise<Session> => {{");
-                    }
-                    else if (TypeScriptService.IsEntityType(method.ReturnType))
-                    {
-                        call = $"getOne<{svc.GetGenericSignature(method.ReturnType)}>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
-                    }
-                    else if (method.ReturnType.IsGenericTypeDefinition &&
-                              method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
-                    {
-                        call = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
-                        builder.Append($"): Promise<ApiList<{svc.GetGenericSignature(method.ReturnType)}>> => {{");
-                    }
-                    else if (method.ReturnType == typeof(ValueTask) || method.ReturnType == typeof(void))
-                    {
-                        call = $"getText";
-                        builder.Append($"): Promise<string> => {{");
-                    }
-                    else
-                    {
-                        call = $"getJson<{svc.GetGenericSignature(method.ReturnType)}>";
-                        builder.Append($"): Promise<{svc.GetGenericSignature(method.ReturnType)}> => {{");
-                    }
-                }
-
-                builder.AppendLine();
-
-                var url = URLBuilder.BuildUrl(method);
-                
-                builder.AppendLine($"        return {call}(this.apiUrl + '{url}'{(method.SendsData ? $", {method.BodyParam.Name}" : "")})");
-                
-                if (method.RequiresSessionSet)
-                {
-                    builder.AppendLine("            .then(setSession)");
-                }
-
-                builder.AppendLine("    }");
-                builder.AppendLine();
-            }
+            
+            EndpointMethodToTypeScript.ConvertEndpointToTypeScript(GetType(), this, builder,  svc);
 
             builder.AppendLine("}");
             builder.AppendLine();

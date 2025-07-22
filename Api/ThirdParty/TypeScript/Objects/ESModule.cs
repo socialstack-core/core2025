@@ -3,7 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Amazon.S3.Model;
+using Api.Contexts;
 using Api.Database;
+using Api.Eventing;
+using Api.Permissions;
+using Api.Revisions;
+using Api.Startup;
+using Api.Users;
 using Newtonsoft.Json.Linq;
 
 namespace Api.TypeScript.Objects
@@ -30,6 +37,7 @@ namespace Api.TypeScript.Objects
         private readonly List<Type> _virtualFieldImportSymbols = [];
         private readonly HashSet<Type> _typeRegistry = [];
         private bool _isEntityModule = false;
+        private Dictionary<string, string> StrictImports = [];
 
         private static string[] IgnoreNamespaces =
         [
@@ -39,13 +47,28 @@ namespace Api.TypeScript.Objects
             "Api.Database"
         ];
 
-        private static string[] IgnoreTypes =
+        private static Type[] dbContentTypes =
         [
-            "Api.Startup.ContentStream`2",
-            "Api.Startup.ContentStreamSource`2",
-            "Api.Startup.ContentStream",
-            "Api.Startup.ContentStreamSource",
-            "Api.Startup.AutoService`2",
+            typeof(Content<>),
+            typeof(UserCreatedContent<>),
+            typeof(VersionedContent<>),
+            typeof(Revision<,>)
+        ];
+
+        private static Type[] IgnoreFrameworkTypes =
+        [
+            typeof(Content),
+            typeof(ContentStream<,>),
+            typeof(Filter<,>),
+            typeof(FilterAst<,>),
+            typeof(EventHandler<,>),
+            typeof(EndpointEventHandler<,>),
+            typeof(JToken),
+            typeof(JContainer),
+            typeof(ContentStreamSource<,>),
+            typeof(EventGroup<,>),
+            typeof(AutoService<,>),
+            typeof(Context)
         ];
 
         private EntityController _entityController;
@@ -87,7 +110,8 @@ namespace Api.TypeScript.Objects
         public void AddType(Type type)
         {
             type = TypeScriptService.UnwrapTypeNesting(type);
-
+            
+            // filter out some basic items.
             if (type == typeof(void) || type == typeof(ValueTask) ||
                 type == typeof(object) || type == typeof(JObject) ||
                 type.Namespace == "System")
@@ -95,6 +119,34 @@ namespace Api.TypeScript.Objects
                 return;
             }
             
+
+            if (IgnoreFrameworkTypes.Contains(type) || (type.IsGenericType && IgnoreFrameworkTypes.Contains(type.GetGenericTypeDefinition())))
+            {
+                return;
+            }
+
+            if (dbContentTypes.Contains(type) ||
+                (type.IsGenericType && dbContentTypes.Contains(type.GetGenericTypeDefinition())))
+            {
+                return;
+            }
+
+            if (type.Name.Contains("ApiList"))
+            {
+                return;
+            }
+
+            if (_typeRegistry.Contains(type))
+            {
+                return;
+            }
+
+            if (type.IsGenericTypeParameter)
+            {
+                return;
+            }
+            
+            // prevent any services or any of the Auto functionality
             if (type.IsGenericTypeDefinition)
             {
                 if (type.GetGenericTypeDefinition() == typeof(AutoService<>))
@@ -115,26 +167,6 @@ namespace Api.TypeScript.Objects
                 }
             }
 
-            if (type.BaseType is not null && type.BaseType.IsGenericTypeDefinition)
-            {
-                if (type.BaseType.GetGenericTypeDefinition() == typeof(AutoService<>))
-                {
-                    return;
-                }
-                if (type.BaseType.GetGenericTypeDefinition() == typeof(AutoController<>))
-                {
-                    return;
-                }
-                if (type.BaseType.GetGenericTypeDefinition() == typeof(AutoController<,>))
-                {
-                    return;
-                }
-                if (type.BaseType.Name.Contains("Service"))
-                {
-                    return;
-                }
-            }
-
             if (type == typeof(JsonString))
             {
                 return;
@@ -150,28 +182,31 @@ namespace Api.TypeScript.Objects
                     }
                 }
             }
-            
-            foreach (var ns in IgnoreTypes)
+
+            if (TypeScriptService.IsEntityType(type))
             {
-                if (type.FullName is not null)
+                if (IsEntityModule() && _entityController.EntityType != type)
                 {
-                    if (type.FullName.StartsWith(ns))
-                    {
-                        return;
-                    }
+                    return;
                 }
             }
-
+            
+            
             // Prevent recursive cycles
             if (!_typeRegistry.Add(type)) return;
-
-            // Limit to one entity per module
-            if (TypeScriptService.IsEntityType(type) &&
-                _types.Any(t => TypeScriptService.IsEntityType(t.GetReferenceType())))
+            
+            // this will take the base type through the same conditions.
+            if (type.BaseType is not null && _types.All(typeDef => typeDef.GetReferenceType() == type.BaseType))
             {
-                return;
-            }
+                var baseType = type.BaseType;
 
+                if (_typeRegistry.Contains(baseType))
+                {
+                    return;
+                }
+                AddType(baseType);
+            }
+            
             _types.Add(new TypeDefinition(type, this));
         }
 
@@ -320,12 +355,37 @@ namespace Api.TypeScript.Objects
             _types.ForEach(t => {
                 t.ImportVirtualFields(svc.modules);
             });
+            
+            _types.ForEach(type =>
+            {
+                if (!_normalImports.Any(import => import.Symbols.Contains(type.GetName())))
+                {
+                    if (IsEntityModule() && type.GetReferenceType() != _entityController.EntityType)
+                    {
+                        // let's add an import instead
+                        var existingItems = svc.modules.Where(module => module.IsEntity((type.GetReferenceType())));
+                        var existingModule = existingItems.FirstOrDefault();
+
+                        if (existingModule is not null)
+                        {
+                            // Import(type.GetName(), existingModule);
+                            _typeRegistry.Add(type.GetReferenceType());
+                        }
+                        return;
+                    }
+                }
+            });
 
             if (_normalImports.Count > 0)
             {
                 builder.AppendLine("// IMPORTS");
                 _normalImports.ForEach(i => i.ToSource(builder, svc));
                 builder.AppendLine();
+            }
+
+            foreach (var entry in StrictImports)
+            {
+                builder.AppendLine("import {" + entry.Key + "} from '" + entry.Value + "';");
             }
 
             if (_enums.Count > 0)
@@ -345,7 +405,7 @@ namespace Api.TypeScript.Objects
             builder.AppendLine("// TYPES");
             _types.ForEach(type =>
             {
-                if (!_normalImports.Any(import => import.Symbols.Contains(type.GetName())))
+                if (!_normalImports.Any(import => import.Symbols.Contains(type.GetName())) && !StrictImports.ContainsValue("Api/" + type.GetName()))
                 {
                     type.ToSource(builder, svc);
                 }
@@ -399,6 +459,21 @@ namespace Api.TypeScript.Objects
                    _apiIncludes.Count == 0 &&
                    _autoControllers.Count == 0 &&
                    _nonEntityControllers.Count == 0;
+        }
+
+        public bool IsEntity(Type virtualType)
+        {
+            return IsEntityModule() && _entityController.EntityType == virtualType;
+        }
+        
+        /// <summary>
+        ///  for explicit imports.
+        /// </summary>
+        /// <param name="virtualTypeName"></param>
+        /// <param name="path"></param>
+        public void AddRawImport(string virtualTypeName, string path)
+        {
+            StrictImports[virtualTypeName] = path;
         }
     }
 

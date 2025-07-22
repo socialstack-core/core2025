@@ -126,14 +126,14 @@ namespace Api.TypeScript.Objects
             {
                 if (TypeScriptService.IsEntityType(virtualField.Type))
                 {
-                    var existingInModule = modules.FirstOrDefault(m => m.HasTypeDefinition(virtualField.Type, out var typeDef) && m.IsEntityModule());
+                    var existingInModule = modules.FirstOrDefault(m => m.IsEntity(virtualField.Type));
                     if (existingInModule != null)
                     {
                         _container.Import(virtualField.Type, existingInModule);
                     }
                 }
                 else
-                {
+                {;
                     _container.AddType(virtualField.Type);
                 }
             }

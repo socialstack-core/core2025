@@ -59,7 +59,7 @@ namespace Api.TypeScript
             // Api/Content.
             content.SetFileName("Content");
 
-            var generics = new GenericTypeList();
+            var generics = new GenericTypeList(content);
             content.AddGenericTypes(generics);
             
             content.RequireWebApi(WebApis.GetList);

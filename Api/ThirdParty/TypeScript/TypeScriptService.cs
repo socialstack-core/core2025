@@ -133,7 +133,7 @@ namespace Api.TypeScript
             SetTypeOverwrite(typeof(ulong), "ulong");
             SetTypeOverwrite(typeof(float), "float");
             SetTypeOverwrite(typeof(double), "double");
-            SetTypeOverwrite(typeof(decimal), "decimal");
+            SetTypeOverwrite(typeof(decimal), "double");
 
             // String and boolean types
             SetTypeOverwrite(typeof(string), "string");

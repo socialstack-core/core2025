@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Api.Database;
@@ -16,6 +17,13 @@ namespace Api.TypeScript.Objects
 
         private readonly List<Type> _requiredImports = [];
 
+        private ESModule _container;
+        
+        public GenericTypeList(ESModule container)
+        {
+            _container = container;
+        }
+
         /// <summary>
         /// Adds a .NET type to the list of types to be emitted as TypeScript types.
         /// </summary>
@@ -23,10 +31,12 @@ namespace Api.TypeScript.Objects
         public void AddContentType(Type type)
         {
             _contentTypes.Add(type);
-
+            var svc = Services.Get<TypeScriptService>();
+    
             if (type == typeof(Content<>))
             {
                 // load all required imports.
+                List<Type> structsToGenerate = [];
                 
                 foreach (var globalField in ContentFields.GlobalVirtualFields.Values)
                 {
@@ -45,15 +55,39 @@ namespace Api.TypeScript.Objects
                     if(virtualInfo.IsList){
                         virtualType = virtualType.MakeArrayType();
                     }
+                    virtualType = virtualType.IsArray ? virtualType.GetElementType() : virtualType;
 
-                    if (virtualType.IsArray)
+                    if (
+                        TypeScriptService.IsEntityType(virtualType) ||
+                        (
+                            typeof(IEnumerable<>).IsAssignableFrom(virtualType) &&
+                            TypeScriptService.IsEntityType(virtualType.GetGenericArguments().First())
+                        )
+                    )
                     {
-                        _requiredImports.Add(virtualType.GetElementType());
-                        continue;
+                        var existingModule = svc.modules.FirstOrDefault(m => m.IsEntity(virtualType));
+
+                        if (existingModule is not null)
+                        {
+                            _container.AddRawImport(virtualType.Name, "Api/" + virtualType.Name);
+                        }
+                        else
+                        {
+                            // lets generate it .
+                            _container.AddType(virtualType);
+                        }
                     }
-                    
-                    _requiredImports.Add(virtualType);
+                    else
+                    {
+                        _container.AddType(virtualType);
+                    }
                 }
+                
+                foreach (var structure in structsToGenerate)
+                {
+                    _container.AddType(structure);
+                }
+
             }
         }
 
@@ -101,6 +135,7 @@ namespace Api.TypeScript.Objects
                     }
                 }
 
+
                 // Emit global virtual fields if the type is Content<>
                 if (type == typeof(Content<>))
                 {
@@ -125,10 +160,26 @@ namespace Api.TypeScript.Objects
                                 virtualType = virtualType.MakeArrayType();
                             }
                             var fieldName = TypeScriptService.LcFirst(globalField.VirtualInfo?.FieldName);
-                            
 
-                            EmitField(builder, svc, fieldName, virtualType);
-                            _requiredImports.Add(virtualType);
+                            if (
+                                TypeScriptService.IsEntityType(virtualType) ||
+                                (
+                                    typeof(IEnumerable<>).IsAssignableFrom(virtualType) &&
+                                    TypeScriptService.IsEntityType(virtualType.GetGenericArguments().First())
+                                ) || (
+                                    virtualType.IsArray && TypeScriptService.IsEntityType(virtualType.GetElementType())
+                                )
+                            )
+                            {
+                                // import, it's an entity and needs importing
+                                
+                                EmitField(builder, svc, fieldName, virtualType);
+                                _requiredImports.Add(virtualType);
+                            }
+                            else
+                            {
+                                EmitField(builder, svc, fieldName, virtualType);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -136,8 +187,12 @@ namespace Api.TypeScript.Objects
                         builder.AppendLine($"    // Error writing global virtual fields: {ex.Message}");
                     }
                 }
-
                 builder.AppendLine("}");
+                
+                builder.AppendLine();
+                
+                
+                
                 builder.AppendLine();
             }
         }

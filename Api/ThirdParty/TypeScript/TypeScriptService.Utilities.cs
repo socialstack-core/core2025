@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Api.Contexts;
 using Api.TypeScript.Objects;
 using Api.Translate;
 
@@ -127,28 +129,46 @@ namespace Api.TypeScript
         /// </summary>
         /// <param name="types"></param>
         /// <param name="module"></param>
-        public static void EnsureParameterTypes(List<ParameterInfo> types, ESModule module)
+        public static void EnsureTypeCreation(List<Type> types, ESModule module)
         {
-            foreach (var param in types)
+            // iterate types and ensure they're added when necessary
+            // this essentially pushes all types that meet the criteria 
+            // to be transformed into typescript equivalents.
+            foreach (var type in types)
             {
-                var type = param.ParameterType;
-                
-                if (type.IsGenericParameter)
+                if (module.HasTypeDefinition(type, out _))
                 {
                     continue;
                 }
+                // primitive types mustn't be transformed.
                 if (type.IsPrimitive)
                 {
                     continue;
                 }
 
-                if (type.BaseType is not null && type.BaseType.IsGenericTypeDefinition && type.BaseType.GetGenericTypeDefinition() == typeof(AutoService<>))
+                if (typeof(IEnumerable<>).IsAssignableFrom(type))
                 {
+                    EnsureTypeCreation(type.GetGenericArguments().ToList(), module);
                     continue;
                 }
-                if (type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == typeof(AutoService<>))
+
+                if (type.IsArray)
                 {
+                    EnsureTypeCreation([type.GetElementType()], module);
                     continue;
+                }
+                
+                // Added support for generic types, but they of course mustn't
+                // be an auto service, nor an auto controller
+                if (type.IsGenericType)
+                { 
+                    EnsureTypeCreation(type.GetGenericArguments().ToList(), module);
+                }
+                
+                // back iterate any needed types.
+                if (type.BaseType is not null && type.BaseType != typeof(object))
+                {
+                    EnsureTypeCreation([type.BaseType], module);
                 }
                 
                 module.AddType(type);
@@ -163,7 +183,7 @@ namespace Api.TypeScript
         /// <param name="selfType"></param>
         public static void EnsureApis(ControllerMethod method, ESModule module, Type selfType)
         {
-            var isArrayType = method.IsApiList;
+            var isArrayType = method.IsList;
 
             if (isArrayType)
             {
