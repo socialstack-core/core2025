@@ -298,17 +298,22 @@ const View: React.FC<ViewProps> = (props) => {
 						<Input type="radio" noWrapper label={`Large thumbnails`} groupIcon="fr-grid" groupVariant="primary" value='large-thumbs' checked={viewStyle == 'large-thumbs'} onChange={() => setViewStyle('large-thumbs')} name="view-style" />
 					</div>
 				</header>
-				<ProductList content={products.results} viewStyle={viewStyle} />
-				<div className={'pagination-container'}>
-					<Paginator
-						pageIndex={currentPage}
-						pageSize={pageSize}
-						totalResults={products.totalResults}
-						onChange={(toPage: number) => {
-							updateQuery({ page: toPage.toString() })
-						}}
-					/>
-				</div>
+				<ProductList 
+					content={products.results} 
+					viewStyle={viewStyle} 
+					paginator={(
+						<div className={'pagination-container'}>
+							<Paginator
+								pageIndex={currentPage}
+								pageSize={pageSize}
+								totalResults={products.totalResults}
+								onChange={(toPage: number) => {
+									updateQuery({ page: toPage.toString() })
+								}}
+							/>
+						</div>
+					)}
+				/>
 			</div>
 		</>
 	);

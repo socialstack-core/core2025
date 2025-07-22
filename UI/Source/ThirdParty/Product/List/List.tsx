@@ -14,6 +14,11 @@ interface ListProps {
 	 * determines if products should be shown in small thumbnail, large thumbnail or grid format
 	 */
 	viewStyle?: string
+
+	/**
+	 * Adds a paginator to the product list.
+	 */
+	paginator?: React.ReactElement
 }
 
 /**
@@ -37,6 +42,7 @@ const List: React.FC<ListProps> = (props: ListProps) => {
 					<Signpost content={product} />
 				</li>;
 			})}
+			{props.paginator}
 		</ul>
 	);
 }
