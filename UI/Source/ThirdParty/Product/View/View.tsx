@@ -10,6 +10,9 @@ import ProductHeader from 'UI/Product/Header';
 import { useRouter } from 'UI/Router';
 import Button from 'UI/Button';
 import ProductVariants from 'UI/Product/Variants';
+import {Upload} from "Api/Upload";
+import Link from "UI/Link";
+import {getUrl} from "UI/FileRef";
 
 
 const ROOT_CATEGORY_ID: uint = 1 as uint;
@@ -42,6 +45,7 @@ const View: React.FC<ViewProps> = (props) => {
 	enum ProductTab {
 		About = `About this product`,
 		Details = `Details & Specification`,
+		Downloads = `Downloads`
 		// hide FAQs tab until we have content to show
 		//FAQs = `FAQs`
 	}
@@ -110,7 +114,7 @@ const View: React.FC<ViewProps> = (props) => {
 					setSelectedThumbnail(thumbInfo);
 				}}
 			/>
-
+			
 			{/* featured / title / stock info */}
 			<ProductHeader product={product} currentVariant={currentVariant} />
 
@@ -161,6 +165,21 @@ const View: React.FC<ViewProps> = (props) => {
 								<ProductAttributes title={`Product details`} product={product} currentVariant={currentVariant} />
 							</>}
 
+							{tab == ProductTab.Downloads && <>
+								{product.productDownloads?.map((download: Upload) => {
+
+									if (!download.ref) {
+										return;
+									}
+
+									return (
+										<Link external={true} className={'product-download'} href={getUrl(download.ref)}>
+											{download.originalName}
+										</Link>
+									)
+								})}
+							</>}
+							
 							{tab == ProductTab.FAQs && <>
 								{`:: TODO ::`}
 							</>}
