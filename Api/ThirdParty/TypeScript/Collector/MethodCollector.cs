@@ -127,6 +127,12 @@ public abstract class MethodCollector : AbstractTypeScriptObject
             {
                 controllerMethod.RequiresIncludes = true;
             }
+
+            if (method.DeclaringType.IsGenericType &&
+                method.DeclaringType.GetGenericTypeDefinition() == typeof(AutoController<,>))
+            {
+                controllerMethod.RequiresIncludes = true;
+            }
             
             // if it returns the context, it most certainly
             // needs the session set
