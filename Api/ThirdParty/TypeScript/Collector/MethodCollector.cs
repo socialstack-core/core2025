@@ -117,7 +117,7 @@ public abstract class MethodCollector : AbstractTypeScriptObject
             controllerMethod.RequiresIncludes = false;
             
             // if the response is a content stream, we need includes too.
-            if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+            if (controllerMethod.ReturnType.IsGenericType && controllerMethod.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
             {
                 controllerMethod.RequiresIncludes = true;
             }
