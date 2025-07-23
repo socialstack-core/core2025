@@ -28,6 +28,7 @@ public abstract class MethodCollector : AbstractTypeScriptObject
         // we ignore constructors
         foreach (var method in controller.GetMethods(BindingFlags.Instance | BindingFlags.Public))
         {
+            
             if (method.IsConstructor)
             {
                 continue;
@@ -75,6 +76,7 @@ public abstract class MethodCollector : AbstractTypeScriptObject
             {
                 continue;
             }
+            
             
             // create the controller method instance
             var controllerMethod = new ControllerMethod()

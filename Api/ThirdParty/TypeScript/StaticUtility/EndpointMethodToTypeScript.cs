@@ -118,7 +118,7 @@ namespace Api.TypeScript
                 // append the Promise enclosed return type
                 // the return type at this point is the 
                 // typescript return type.
-                output.Append(" Promise<" + returnType + ">");
+                output.Append(" Promise<" + returnType + $">");
                 
                 // now the arrow
                 output.Append(" => {");
@@ -166,8 +166,8 @@ namespace Api.TypeScript
                     if (method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
                     {
                         // A content stream. ApiList<T> where T is just a type parameter
-                        caller = $"getList<{svc.GetGenericSignature(method.ReturnType)}>";
-                        returnType = $"ApiList<{method.ReturnType.Name}>";   
+                        caller = $"getList<{svc.GetGenericSignature(method.ReturnType.GetGenericArguments()[0])}>";
+                        returnType = $"ApiList<{svc.GetGenericSignature(method.ReturnType.GetGenericArguments()[0])}>";
                     }
                     else
                     {
@@ -188,6 +188,23 @@ namespace Api.TypeScript
                 // this else block means no collection is present, this is purely 
                 // singular objects or plaintext responses.
                 
+                // most collections are generic stemming from bases 
+                // like IEnumerable<>, however SocialStack has a
+                // type called ContentStream, this needs to be handled
+                // as seen below.
+                // if the return type is generic.
+                if (method.ReturnType.IsGenericType)
+                {
+                    if (method.ReturnType.GetGenericTypeDefinition() == typeof(ContentStream<,>))
+                    {
+                        // A content stream. ApiList<T> where T is just a type parameter
+                        caller = $"getList<{svc.GetGenericSignature(method.ReturnType.GetGenericArguments()[0])}>";
+                        returnType = $"ApiList<{svc.GetGenericSignature(method.ReturnType.GetGenericArguments()[0])}>";
+
+                        return (returnType, caller);
+                    }
+                }
+
                 // when a session set is required.
                 // its return type and caller can
                 // only be these two set.

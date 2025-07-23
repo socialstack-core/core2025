@@ -44,18 +44,22 @@ namespace Api.TypeScript.Objects
             _container = container;
             _referenceTypes = (controllerType, entityType);
             _container.SetEntityController(this);
+            _container.RequireWebApi(WebApis.GetJson);
+            _container.RequireWebApi(WebApis.GetList);
+            _container.RequireWebApi(WebApis.GetOne);
+            _container.RequireWebApi(WebApis.GetText);
 
-            // foreach (var method in GetEndpointMethods(controllerType))
-            // {
-            //     if (method.ReturnType != _referenceTypes.entityType && !TypeScriptService.IsEntityType(method.ReturnType))
-            //     {
-            //         container.AddType(method.ReturnType);
-            //         continue;
-            //     }
-            //     
-            //     TypeScriptService.EnsureTypeCreation(method.WebSafeParams.Select(param => param.ParameterType).ToList(), container);
-            //     TypeScriptService.EnsureApis(method, container, _referenceTypes.entityType);
-            // }
+            foreach (var method in GetEndpointMethods(controllerType))
+            {
+                if (method.ReturnType != _referenceTypes.entityType && !TypeScriptService.IsEntityType(method.ReturnType))
+                {
+                    container.AddType(method.ReturnType);
+                    continue;
+                }
+                
+                TypeScriptService.EnsureTypeCreation(method.WebSafeParams.Select(param => param.ParameterType).ToList(), container);
+                TypeScriptService.EnsureApis(method, container, _referenceTypes.entityType);
+            }
         }
 
         /// <summary>
@@ -84,7 +88,7 @@ namespace Api.TypeScript.Objects
             builder.AppendLine("    }");
             builder.AppendLine();
             
-            EndpointMethodToTypeScript.ConvertEndpointToTypeScript(GetType(), this, builder,  svc);
+            EndpointMethodToTypeScript.ConvertEndpointToTypeScript(_referenceTypes.controllerType, this, builder,  svc);
 
             builder.AppendLine("}");
             builder.AppendLine();
