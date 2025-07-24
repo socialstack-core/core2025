@@ -126,7 +126,7 @@ namespace Api.TypeScript
                 // clear a line for readability
                 output.AppendLine();
                 
-                output.AppendLine($"        return {caller}(this.apiUrl + '{URLBuilder.BuildUrl(endpoint)}'{(endpoint.SendsData ? $", {endpoint.BodyParam.Name}" : "")})");
+                output.AppendLine($"        return {caller}(this.apiUrl + '{URLBuilder.BuildUrl(endpoint)}'{(endpoint.SendsData ? $", {endpoint.BodyParam.Name}" : ", undefined")}, {{ method: '{endpoint.RequestMethod}' }} )");
                 
                 if (endpoint.RequiresSessionSet)
                 {

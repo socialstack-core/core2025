@@ -77,6 +77,16 @@ public abstract class MethodCollector : AbstractTypeScriptObject
                 continue;
             }
             
+            var requestMethod = httpAttribute switch
+            {
+                HttpGetAttribute => "GET",
+                HttpPostAttribute => "POST",
+                HttpPutAttribute => "PUT",
+                HttpDeleteAttribute => "DELETE",
+                HttpPatchAttribute => "PATCH",
+                RouteAttribute => "ANY", // Optional: or you can handle this differently
+                _ => "UNKNOWN"
+            };
             
             // create the controller method instance
             var controllerMethod = new ControllerMethod()
@@ -86,7 +96,8 @@ public abstract class MethodCollector : AbstractTypeScriptObject
                 Method = method,
                 // Initialise an array of web safe params. 
                 WebSafeParams = [],
-                RequestUrl = GetRouteTemplate(httpAttribute)
+                RequestUrl = GetRouteTemplate(httpAttribute),
+                RequestMethod = requestMethod,
             };
 
             controllerMethod.RequestUrl = URLBuilder.BuildUrl(controllerMethod);
