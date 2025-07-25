@@ -42,7 +42,7 @@ namespace Api.AvailableEndpoints
 		/// Gets the time (in both ticks and as a timestamp) that the service last started at.
 		/// </summary>
 		[HttpGet("uptime")]
-		[Returns(typeof(Context))]
+		[Returns(typeof(UptimeResult))]
 		public async ValueTask Uptime(HttpContext httpContext)
 		{
 			if (_upTime == null)
@@ -72,5 +72,30 @@ namespace Api.AvailableEndpoints
         }
 		
     }
+
+	/// <summary>
+	/// Result from the uptime endpoint.
+	/// </summary>
+	public struct UptimeResult {
+		/// <summary>
+		/// System has been up since the given date.
+		/// </summary>
+		public UptimeSince Since;
+	}
+
+	/// <summary>
+	/// System uptime since.
+	/// </summary>
+	public struct UptimeSince {
+		/// <summary>
+		/// Utc ticks (C#).
+		/// </summary>
+		public long UtcTicks;
+
+		/// <summary>
+		/// Utc timestamp text.
+		/// </summary>
+		public string Utc;
+	}
 
 }
