@@ -1012,7 +1012,7 @@ public partial class AutoService<T, ID> : AutoService, ContentStreamSource<T, ID
 				}
 				
 				if (mainType == typeof(DateTime) || mainType == typeof(string) || 
-					mainType == typeof(decimal) || mainType == typeof(MappingData) ||
+					mainType == typeof(decimal) || mainType == typeof(MappingData) || mainType == typeof(JsonString) ||
 					(mainType.IsGenericType && mainType.GetGenericTypeDefinition() == typeof(Localized<>)))
 				{
 					var eq = mainType.GetMethod("Equals", new Type[] { mainType, mainType });
