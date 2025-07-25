@@ -49,5 +49,10 @@ namespace Api.TypeScript.Objects
         /// The set of usable parameters
         /// </summary>
         public List<ParameterInfo> WebSafeParams { get; set; }
+        
+        /// <summary>
+        /// Takes the request method.
+        /// </summary>
+        public string RequestMethod { set; get; }
     }
 }
