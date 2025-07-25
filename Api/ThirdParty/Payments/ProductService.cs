@@ -221,7 +221,7 @@ namespace Api.Payments
 				}
 
 				//Has a price been deleted?
-				await DeleteUnusedPrices(context, toUpdate, original);
+				// await DeleteUnusedPrices(context, toUpdate, original);
 
 				return toUpdate;
 			});
