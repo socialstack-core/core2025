@@ -54,7 +54,6 @@ namespace Api.TypeScript.Objects
                 if (method.ReturnType != _referenceTypes.entityType && !TypeScriptService.IsEntityType(method.ReturnType))
                 {
                     container.AddType(method.ReturnType);
-                    continue;
                 }
                 
                 TypeScriptService.EnsureTypeCreation(method.WebSafeParams.Select(param => param.ParameterType).ToList(), container);
