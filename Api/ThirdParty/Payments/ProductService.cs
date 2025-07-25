@@ -92,6 +92,11 @@ namespace Api.Payments
 					field.Module = "Admin/Payments/Variants/ValueEditor";
 				}
 
+				if (field.Name == "PriceTiers")
+				{
+					field.Module = "Admin/Payments/PriceTable";
+				}
+
 				return new ValueTask<JsonField<Product, uint>>(field);
             });
 
@@ -215,6 +220,9 @@ namespace Api.Payments
 					await _permalinks.BulkCreate(context, [permalinkInfo]);
 				}
 
+				//Has a price been deleted?
+				await DeleteUnusedPrices(context, toUpdate, original);
+
 				return toUpdate;
 			});
 			
@@ -282,14 +290,38 @@ namespace Api.Payments
 			Cache();
 		}
 
+		private async ValueTask DeleteUnusedPrices(Context context, Product toUpdate, Product original)
+		{
+			//Has a price been deleted?
+			var currentPrices = toUpdate.Mappings.Get("priceTiers");
+			var originalPrices = original.Mappings.Get("priceTiers");
+			if (currentPrices.Count < originalPrices.Count)
+			{
+				//Find the prices that have been deleted
+				var deletedIds = originalPrices.Where(x => !currentPrices.Contains(x)).ToList();
+
+				foreach (var id in deletedIds)
+				{
+					//Check if any other product references this and, if not delete the price
+					var products = await ListByTarget<Price, uint>(context, (uint)id, "priceTiers");
+
+					if (products == null || products.Count == 1 && products.Contains(original))
+					{
+						//The price is uniquely used by this product so we should delete it too
+						await _prices.Delete(context, (uint)id);
+					}
+				}
+			}
+		}
+
 		private async ValueTask UpdateProductCategoryMapping(Context context, Product product)
 		{
 			// couldn't add as a dep due to circular ref
 			var _categories = Services.Get<ProductCategoryService>();
-			
+
 			// contains all the uint => PCNode mappings, can be null too.
 			var tree = await _categories.GetLookup(context);
-			
+
 			var allCats = new List<ulong>();
 
 			var mappings = product.Mappings.Get("productcategories");
@@ -302,7 +334,7 @@ namespace Api.Payments
 
 			foreach (var catId in mappings)
 			{
-				if (!tree.TryGetValue((uint) catId, out var categoryNode))
+				if (!tree.TryGetValue((uint)catId, out var categoryNode))
 				{
 					continue;
 				}
@@ -310,12 +342,12 @@ namespace Api.Payments
 				{
 					continue;
 				}
-				
-				allCats.AddRange(categoryNode.BreadcrumbCategories.Select(category => (ulong) category.Id));
+
+				allCats.AddRange(categoryNode.BreadcrumbCategories.Select(category => (ulong)category.Id));
 			}
-			
+
 			product.Mappings.Set("childOfCategories", allCats.Distinct().ToList());
-			
+
 		}
 		
 		/// <summary>
