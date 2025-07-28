@@ -64,6 +64,17 @@ public struct JsonString : IEquatable<JsonString>, IEquatable<string>
 	public override int GetHashCode() => _value == null ? 0 : _value.GetHashCode();
 
 	/// <summary>
+	/// Equals operator, used by Diff.
+	/// </summary>
+	/// <param name="left"></param>
+	/// <param name="right"></param>
+	/// <returns></returns>
+	public static bool Equals(JsonString left, JsonString right)
+	{
+		return left._value == right._value;
+	}
+
+	/// <summary>
 	/// Equals operator for jsonstrings.
 	/// </summary>
 	/// <param name="left"></param>

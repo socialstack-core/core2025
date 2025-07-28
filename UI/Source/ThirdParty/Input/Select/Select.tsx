@@ -97,10 +97,10 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			className={selectClass}
 			{...attribs}
 		>
-			<option disabled={clearable ? undefined : true} hidden={clearable ? undefined : true}
+			{clearable && <option
 				selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
 				{noSelection}
-			</option>
+			</option>}
 			{options.results.map((entry : any) => <option
 				value={contentTypeValue
 					? entry[contentTypeValue]
@@ -126,10 +126,10 @@ const Select: React.FC<CustomInputTypeProps<"select">> = (props) => {
 			onChange={onSelectChange}
 			{...attribs}
 		>
-			<option disabled={clearable ? undefined : true} hidden={clearable ? undefined : true}
+			{clearable && <option disabled={clearable ? undefined : true}
 				selected={value == noSelectionValue || undefined ? true : undefined} value={noSelectionValue}>
 				{noSelection}
-			</option>
+			</option>}
 			{children}
 		</select>
 	);

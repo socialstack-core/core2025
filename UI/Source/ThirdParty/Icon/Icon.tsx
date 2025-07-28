@@ -49,22 +49,22 @@ interface IconBaseProps {
 	/**
 	 * sizing flags
 	 */
-	xxs: Boolean,
-	xs: Boolean,
-	sm: Boolean,
-	md: Boolean,
-	lg: Boolean,
-	xl: Boolean,
-	xxl: Boolean,
-	x2: Boolean,
-	x3: Boolean,
-	x4: Boolean,
-	x5: Boolean,
-	x6: Boolean,
-	x7: Boolean,
-	x8: Boolean,
-	x9: Boolean,
-	x10: Boolean,
+	xxs?: Boolean,
+	xs?: Boolean,
+	sm?: Boolean,
+	md?: Boolean,
+	lg?: Boolean,
+	xl?: Boolean,
+	xxl?: Boolean,
+	x2?: Boolean,
+	x3?: Boolean,
+	x4?: Boolean,
+	x5?: Boolean,
+	x6?: Boolean,
+	x7?: Boolean,
+	x8?: Boolean,
+	x9?: Boolean,
+	x10?: Boolean,
 }
 
 /**

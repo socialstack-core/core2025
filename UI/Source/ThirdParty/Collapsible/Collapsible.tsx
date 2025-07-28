@@ -20,6 +20,7 @@ interface CollapsibleProps {
 	
 	defaultClick?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
 	onClick?: () => void,
+	onToggled?: (state: boolean) => void,
 
 	/**
 	 * True if the collapsible remains always open.
@@ -185,7 +186,6 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 	let largeIcon = props.icon; // must be an <Icon>
 
 	function toggleEvent(e: React.ToggleEvent<HTMLDetailsElement>) {
-
 		if (props.onOpen && e.newState == "open") {
 			props.onOpen(e);
 		}
@@ -194,6 +194,9 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 			props.onClose(e);
 		}
 
+		const newState = e.newState == "open";
+		setOpen(newState);
+		props.onToggled && props.onToggled(newState);
 	}
 
 	return <details className={detailsClass} onToggle={toggleEvent} open={isOpen} onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>) => {
@@ -206,7 +209,6 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 		}
 		if (!alwaysOpen) {
 			props.onClick && props.onClick();
-			!noContent && setOpen(!isOpen);
 		} else {
 			e.preventDefault();
 			e.stopPropagation();
