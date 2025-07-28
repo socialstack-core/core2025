@@ -1,15 +1,13 @@
 using Api.Contexts;
 using Api.Database;
-using Api.Eventing;
 using Api.Permissions;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Threading.Tasks;
 using System.IO;
 using Api.CsvExport;
+using Api.Startup;
 using Api.Startup.Routing;
-using Azure;
 using Microsoft.AspNetCore.Http;
 
 
@@ -38,7 +36,7 @@ public partial class AutoController<T,ID>
 	/// </summary>
 	/// <returns></returns>
 	[HttpPost("list.csv")]
-	public virtual async ValueTask<FileContent?> ListCSV(Context context, HttpResponse response, [FromBody] JObject filters, [FromQuery] string includes = null)
+	public virtual async ValueTask<FileContent?> ListCSV(Context context, HttpResponse response, [FromBody] ListFilter filters, [FromQuery] string includes = null)
 	{
 		var filter = _service.LoadFilter(filters) as Filter<T, ID>;
 		filter = await _service.EventGroup.EndpointStartRevisionList.Dispatch(context, filter, response);
