@@ -2,6 +2,7 @@ import Link from 'UI/Link';
 import Search from 'UI/Search';
 import AutoFormExtensions, {AutoFormType} from "Admin/AutoForm/AutoFormExtensions";
 import {ListFilter} from "Api/Content";
+import {useRouter} from "UI/Router";
 
 /**
  * Props for the SubHeader component.
@@ -63,6 +64,8 @@ export interface Breadcrumb {
  */
 const SubHeader: React.FC<React.PropsWithChildren<SubHeaderProps>> = (props) => {
 	
+	const { pageState } = useRouter();
+	
 	const SearchOverride = props.contentType && props.pageType ? AutoFormExtensions.getCustomSearchProvider(props.contentType, props.pageType) : undefined;
 
 	return (
@@ -102,7 +105,7 @@ const SubHeader: React.FC<React.PropsWithChildren<SubHeaderProps>> = (props) => 
 							className="admin-page__search"
 							placeholder={`Search..`}
 							onQuery={props.onQuery}
-							searchText={props.defaultSearchValue}
+							searchText={pageState.query.get("q") ?? ""}
 							onInput={(value: string) => {
 								props.onInput && props.onInput(value);
 							}}
