@@ -77,7 +77,11 @@ export default class AttributeSelect extends React.Component {
 	}
 
     renderResult(result) {
-
+		if (!result.attribute)
+		{
+			console.error('Orphaned attribute' , result)
+			return;
+		}
 		return (
 			<>
 				{result.attribute.name}{`:`}&nbsp;{result.value}{result.attribute.units?result.attribute.units:''}

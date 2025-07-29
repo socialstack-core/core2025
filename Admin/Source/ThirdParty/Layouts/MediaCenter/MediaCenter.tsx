@@ -92,7 +92,7 @@ const MediaCenter = (props) => {
     const [deleting, setDeleting] = useState<boolean>(false);
     const [deleteCount, setDeleteCount] = useState<number>(0);
     const [deleteFailed, setDeleteFailed] = useState<boolean>(false);
-    const [searchFilter, setSearchFilter] = useState<string | null>(pageState.query.get("q"));
+    const searchFilter = pageState.query.get("q");
     const [filterTagId, setFilterTagId] = useState<uint | null>(null);
 
     let sort = sorter;
@@ -669,6 +669,9 @@ const MediaCenter = (props) => {
                         customChangeHandler={(pageNumber: number) => {
                             updateQuery({ page: pageNumber.toString() });
                         }}
+                        includes={[
+                            uploadApi.includes.tags
+                        ]}
                     >
                         {renderEntry}
                     </Loop>
