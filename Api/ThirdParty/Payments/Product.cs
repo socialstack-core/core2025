@@ -61,6 +61,13 @@ namespace Api.Payments
 		[Data("readonly", true)]
         public string Slug;
 
+		/// <summary>
+		/// In the atomic currency unit (pence), the nominal value of free samples used for tax purposes.
+		/// This must be set if the configured price is zero. It is not triggered in the event 
+		/// that an order's value is discounted to zero through coupons or other promotions.
+		/// </summary>
+		public uint? FreeSampleNominalValue;
+
         /// <summary>
         /// True if this product is billed by usage.
         /// </summary>
