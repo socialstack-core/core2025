@@ -134,7 +134,7 @@ namespace Api.Payments
 					baseProduct = await _products.Create(context, new Product()
 					{
 						Id = 500010,
-						Name = "Mobile data, £10 for 1000GB",
+						Name = "Mobile data, ï¿½10 for 1000GB",
 						PriceId = 500010,
 						PriceStrategy = 1,
 						MinQuantity = 1000
@@ -209,7 +209,7 @@ namespace Api.Payments
 					baseProduct = await _products.Create(context, new Product()
 					{
 						Id = 500020,
-						Name = "Mobile data, £10 for 1000GB (Step always)",
+						Name = "Mobile data, ï¿½10 for 1000GB (Step always)",
 						PriceId = 500010,
 						PriceStrategy = 2,
 						MinQuantity = 1000
@@ -462,7 +462,8 @@ namespace Api.Payments
 			var isSubscriptionProduct = product.BillingFrequency != 0;
 
 			// Get the product price tiers:
-			var tiers = await _products.GetPriceTiers(context, product);
+			var prices = await _products.GetPriceTiers(context, product);
+			var tiers = prices.TiersToUse;
 
 			if (tiers == null || tiers.Count == 0)
 			{

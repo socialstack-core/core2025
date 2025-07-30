@@ -66,12 +66,23 @@ const View: React.FC<ViewProps> = (props) => {
 	const hasVariants = product.variants?.length > 0;
 
 	var sortedPrices = hasVariants ? product.variants.map(product => {
-		if (!product?.calculatedPrice?.length) {
+		var tiers = null;
+
+		if(product?.calculatedPrice){
+			var calculatedPrice = product.calculatedPrice;
+			
+			if(calculatedPrice.discountedPrice && calculatedPrice.discountedPrice.length > 0){
+				tiers = calculatedPrice.discountedPrice;
+			}else if(calculatedPrice.listedPrice && calculatedPrice.listedPrice.length > 0){
+				tiers = calculatedPrice.listedPrice;
+			}
+		}
+		if (tiers) {
 			return null;
 		}
 
 		// The highest tier is always the cheapest per-unit price
-		return product.calculatedPrice[product.calculatedPrice.length - 1];
+		return tiers[tiers.length - 1];
 	})
 		.filter(price => !!price) // strip the nulls
 		.sort((a, b) => a.amount - b.amount) : null;
