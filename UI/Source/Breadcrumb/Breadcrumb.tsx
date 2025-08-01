@@ -14,7 +14,11 @@ interface BreadcrumbProps {
 	 */
 	includeCurrent?: boolean,
 
-	crumbs?: Crumb[]
+	currentLabel?: string,
+
+	crumbs?: Crumb[],
+
+	help?: string
 }
 
 /**
@@ -22,7 +26,7 @@ interface BreadcrumbProps {
  * @param props React props.
  */
 const Breadcrumb: React.FC<BreadcrumbProps> = (props) => {
-	const { includeCurrent, crumbs } = props;
+	const { includeCurrent, crumbs, currentLabel, help } = props;
 
 	if (!crumbs) {
 		return null;
@@ -40,14 +44,22 @@ const Breadcrumb: React.FC<BreadcrumbProps> = (props) => {
 					</Link>
 				</li>)
 			}
-			{includeCurrent && <>
+			{(includeCurrent || currentLabel) && <>
 				<li>
 					<span className="site-breadcrumb__item site-breadcrumb__item--current">
-						{`Current page`}
+						{currentLabel || `Current page`}
 					</span>
 				</li>
 			</>}
 		</menu>
+		{help && <>
+			<Link xs href={help} className="site-breadcrumb__help">
+				<i className="fr fr-question-circle"></i>
+				<span>
+					{`Help`}
+				</span>
+			</Link>
+		</>}
 	</nav>;
 }
 
