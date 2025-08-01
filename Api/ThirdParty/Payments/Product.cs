@@ -167,7 +167,7 @@ namespace Api.Payments
 		/// <summary>
 		/// JsonString containing the default price tiers for this product
 		/// </summary>
-		[JsonIgnore]
+		[Module("Admin/Payments/PriceTable")]
 		public JsonString PriceTiersJson;
 
 		private List<Price> _priceTiers;
@@ -175,11 +175,12 @@ namespace Api.Payments
 		/// <summary>
 		/// The list of default prices for this product extracted from PriceTiers
 		/// </summary>
+		[JsonIgnore]
 		public List<Price> PriceTiers
 		{
 			get
 			{
-				if (_priceTiers == null)
+				if (_priceTiers == null && PriceTiersJson.ValueOf() != null)
 				{
 					_priceTiers = JsonConvert.DeserializeObject<List<Price>>(PriceTiersJson.ToString());
 				}

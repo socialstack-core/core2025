@@ -219,6 +219,9 @@ namespace Api.Payments
 					await _permalinks.BulkCreate(context, [permalinkInfo]);
 				}
 
+				//Update prices
+				toUpdate.UpdatePricesJson();
+
 				return toUpdate;
 			});
 
