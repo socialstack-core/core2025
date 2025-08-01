@@ -54,6 +54,9 @@ public class JsonStringSerializer : IBsonSerializer<JsonString>
                 value = BsonDocumentSerializer.Instance.Deserialize(context);
                 break;
 
+            case BsonType.Null:
+                return new JsonString(null);
+
             case BsonType.Array:
                 value = BsonArraySerializer.Instance.Deserialize(context);
                 break;
