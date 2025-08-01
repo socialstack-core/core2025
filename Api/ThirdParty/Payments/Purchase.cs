@@ -21,10 +21,12 @@ namespace Api.Payments
 		/// 200 = Fulfilled.
 		/// 201 = BNPL ready for fulfilment.
 		/// 202 = Paid and ready for fulfilment.
+		/// 203 = Pending approval. Only incurred if your site specifically creates some form of approval mechanism.
 		/// 101 = Started submit to gateway. If a purchase is stuck in this state you MUST check if the gateway received the request at all.
 		/// 102 = Pending at payment gateway.
 		/// 500 = Failed (payment gateway rejection).
 		/// 400 = Failed (user sourced fault).
+		/// 401 = Not approved.
 		/// </summary>
 		public uint Status;
 
@@ -90,14 +92,39 @@ namespace Api.Payments
 		public string CurrencyCode;
 
 		/// <summary>
-		/// Cost excluding tax.
+		/// Total sum of products less any tax. If delivery is free, this equals TotalCostLessTax.
+		/// </summary>
+		public ulong ProductsCostLessTax;
+
+		/// <summary>
+		/// Total sum of products including any tax. If delivery is free, this equals TotalCost.
+		/// </summary>
+		public ulong ProductsCost;
+
+		/// <summary>
+		/// Cost excluding tax, including delivery.
 		/// </summary>
 		public ulong TotalCostLessTax;
 
 		/// <summary>
-		/// The total cost in the currency codes native atomic unit, inclusive of any tax.
+		/// The total cost in the currency codes native atomic unit, inclusive of any tax and delivery.
 		/// </summary>
 		public ulong TotalCost;
+		
+		/// <summary>
+		/// Delivery cost excluding tax.
+		/// </summary>
+		public ulong DeliveryCostLessTax;
+
+		/// <summary>
+		/// The delivery cost in the currency codes native atomic unit, inclusive of any tax.
+		/// </summary>
+		public ulong DeliveryCost;
+
+		/// <summary>
+		/// Present if apportionment was calculated based on the tax status of the delivered goods.
+		/// </summary>
+		public double? DeliveryApportionment;
 
 		/// <summary>
 		/// True if any of the products in this purchase are subs.

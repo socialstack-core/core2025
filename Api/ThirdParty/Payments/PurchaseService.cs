@@ -25,19 +25,22 @@ namespace Api.Payments
 		private ProductService _products;
 		private SubscriptionService _subscriptions;
 		private PriceService _prices;
+		private DeliveryService _deliveries;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
 		public PurchaseService(PaymentMethodService paymentMethods, PageService pages, 
 			PaymentGatewayService gateways, ProductQuantityService prodQuantities, 
-			ProductService products, EmailTemplateService emails, PriceService prices, LocaleService locales) : base(Events.Purchase)
+			ProductService products, EmailTemplateService emails, PriceService prices, 
+			LocaleService locales, DeliveryService deliveries) : base(Events.Purchase)
         {
 			_paymentMethods = paymentMethods;
 			_gateways = gateways;
 			_prodQuantities = prodQuantities;
 			_products = products;
 			_prices = prices;
+			_deliveries = deliveries;
 
 			InstallAdminPages("Orders", "fa:fa-shopping-basket", ["id", "total"]);
 
@@ -415,10 +418,9 @@ namespace Api.Payments
 			// Throw if the info has any error info in it (such as invalid coupons, pricing issues etc).
 			_prodQuantities.RequireNoErrors(pricingInfo);
 
-			var toPay = excludeTax ? pricingInfo.TotalLessTax : pricingInfo.Total;
-
 			var purchase = new Purchase()
 			{
+				UserId = context.UserId,
 				TaxJurisdiction = pricingInfo.TaxJurisdiction,
 				CouponId = pricingInfo.CouponId,
 				CurrencyCode = pricingInfo.CurrencyCode,
@@ -428,15 +430,45 @@ namespace Api.Payments
 				HasSubscriptions = pricingInfo.HasSubscriptionProducts,
 				// Tax exclusions are highly regulated. Do not use unless you know the relevant laws.
 				ExcludeTax = excludeTax,
-				TotalCost = pricingInfo.Total,
-				TotalCostLessTax = pricingInfo.TotalLessTax,
+				ProductsCost = pricingInfo.Total,
+				ProductsCostLessTax = pricingInfo.TotalLessTax,
 				DeliveryAddressId = deliveryAddressId,
 				BillingAddressId = billingAddressId,
 				DeliveryOptionId = deliveryOptionId,
 				BuyNowPayLater = paymentMethod == null,
-				Status = paymentMethod == null ? (uint)(toPay == 0 ? 202 : 201): 0, // Straight to completion. Free stuff goes to 202, bnpl unpaid 201.
 				PaymentMethodId = paymentMethod == null ? 0 : paymentMethod.Id
 			};
+
+			// Calculate delivery if any.
+			var deliveryInfo = _prodQuantities.GetDeliveryDetail(pricingInfo);
+
+			if (deliveryOptionId == 0)
+			{
+				// Delivery cost is simply zero. This option includes both collection and digital goods only orders.
+				purchase.DeliveryCost = 0;
+				purchase.DeliveryCostLessTax = 0;
+			}
+			else
+			{
+				purchase.DeliveryApportionment = deliveryInfo.Value.TaxApportion;
+
+				// Ask delivery option service for the prices it stated.
+				var deliveryEstimate = await _deliveries.GetEstimate(context, deliveryOptionId);
+
+				if(deliveryEstimate == null)
+				{
+					throw new PublicException("A delivery option is required but one was not provided.", "delivery/required");
+				}
+
+				purchase.DeliveryCost = deliveryEstimate.Price;
+				purchase.DeliveryCostLessTax = deliveryEstimate.PriceLessTax;
+			}
+
+			purchase.TotalCost = purchase.ProductsCost + purchase.DeliveryCost;
+			purchase.TotalCostLessTax = purchase.ProductsCostLessTax + purchase.DeliveryCostLessTax;
+			
+			var toPay = excludeTax ? purchase.TotalCostLessTax : purchase.TotalCost;
+			purchase.Status = paymentMethod == null ? (uint)(toPay == 0 ? 202 : 201) : 0; // Straight to completion. Free stuff goes to 202, bnpl unpaid 201.
 
 			// Copying in the product set - this creates new ones, it *does not* use the same PQ Id.
 			// This is to avoid modding the quantity during the payment being processed:

@@ -21,6 +21,26 @@ namespace Api.Payments
 		public ShoppingCart Cart;
 
 		/// <summary>
+		/// The set of pricing info for everything in the cart.
+		/// </summary>
+		public ProductQuantityPricing Pricing;
+
+		/// <summary>
+		/// Tax calc to use.
+		/// </summary>
+		public TaxCalculator TaxCalculator;
+
+		/// <summary>
+		/// Info used for pricing the delivery.
+		/// </summary>
+		public DeliveryPricingInfo DeliveryPricing;
+
+		/// <summary>
+		/// Applicable tax jurisdiction.
+		/// </summary>
+		public string TaxJurisdiction;
+
+		/// <summary>
 		/// The target address.
 		/// </summary>
 		public Address Target;
@@ -46,7 +66,17 @@ namespace Api.Payments
 		/// The price in whole pennies/ cents etc.
 		/// </summary>
 		public uint Price;
-		
+
+		/// <summary>
+		/// The applied tax apportioning ratio.
+		/// </summary>
+		public double TaxApportionment;
+
+		/// <summary>
+		/// The price in whole pennies/ cents etc (less apportioned tax).
+		/// </summary>
+		public uint PriceLessTax;
+
 		/// <summary>
 		/// The currency that the price is in.
 		/// </summary>
