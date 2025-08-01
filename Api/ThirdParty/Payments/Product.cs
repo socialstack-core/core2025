@@ -63,16 +63,9 @@ namespace Api.Payments
 		public string Slug;
 
 		/// <summary>
-		/// In the atomic currency unit (pence), the nominal value of free samples used for tax purposes.
-		/// This must be set if the configured price is zero. It is not triggered in the event 
-		/// that an order's value is discounted to zero through coupons or other promotions.
+		/// True if this product is billed by usage.
 		/// </summary>
-		public uint? FreeSampleNominalValue;
-
-        /// <summary>
-        /// True if this product is billed by usage.
-        /// </summary>
-        [Data("help", "Tick this if this product is billed after it has been used based on the amount of usage it has had.")]
+		[Data("help", "Tick this if this product is billed after it has been used based on the amount of usage it has had.")]
 		public bool IsBilledByUsage;
 
 		/// <summary>
@@ -167,16 +160,14 @@ namespace Api.Payments
 		/// <summary>
 		/// JsonString containing the default price tiers for this product
 		/// </summary>
+		[JsonIgnore]
 		public JsonString PriceTiersJson;
 
-		[JsonProperty("test")]
-		public List<Price> _priceTiers;
+		private List<Price> _priceTiers;
 
 		/// <summary>
 		/// The list of default prices for this product extracted from PriceTiers
 		/// </summary>
-		[Module("Admin/Payments/PriceTable")]
-		[JsonProperty("PriceTiers")]
 		public List<Price> PriceTiers
 		{
 			get
@@ -191,7 +182,7 @@ namespace Api.Payments
 		}
 
 		/// <summary>
-		/// Update the PriceTiers json for this product. Intended to be used before Product.Create or inside Product.Update to save any changes made to pricing
+		/// Update the PriceTiers json for this product.
 		/// </summary>
 		public void UpdatePricesJson()
 		{
