@@ -197,6 +197,18 @@
 		display: none !important;
 	}
 
+	&--disabled {
+
+		#{$collapsible}-summary,
+		#{$collapsible}__summary {
+			cursor: default;
+		}
+
+		#{$collapsible}-icon {
+			visibility: hidden;
+		}
+	}
+
 	&:last-child {
 
 		#{$collapsible}-summary,

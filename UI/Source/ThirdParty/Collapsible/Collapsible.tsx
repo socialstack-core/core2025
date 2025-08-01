@@ -17,7 +17,7 @@ interface CollapsibleProps {
 	 * True if the collapsible does not apply a min width.
 	 */
 	noMinWidth?: boolean,
-	
+
 	defaultClick?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
 	onClick?: () => void,
 	onToggled?: (state: boolean) => void,
@@ -72,7 +72,7 @@ interface CollapsibleProps {
 	 * 
 	 */
 	expanderLeft?: boolean,
-	
+
 	/**
 	 * 
 	 */
@@ -91,7 +91,12 @@ interface CollapsibleProps {
 	/**
 	 * An optional set of buttons to display inside the collapsible header.
 	 */
-	buttons?: CollapsibleButton[]
+	buttons?: CollapsibleButton[],
+
+	/**
+	 * True if this collpasible is disabled.
+	*/
+	disabled?: boolean
 };
 
 interface CollapsibleButton {
@@ -153,7 +158,8 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 		alwaysOpen,
 		hidden,
 		dropdownTitle,
-		expanderLeft
+		expanderLeft,
+		disabled
 	} = props;
 	var noContent = !props.children;
 	var [isOpen, setOpen] = useState(noContent ? false : !!props.open);
@@ -173,6 +179,10 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 
 	if (hidden) {
 		detailsClass += " collapsible--hidden";
+	}
+
+	if (disabled) {
+		detailsClass += " collapsible--disabled";
 	}
 
 	if (noContent) {
@@ -209,14 +219,15 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 		}
 		if (!alwaysOpen) {
 			props.onClick && props.onClick();
+			!noContent && setOpen(!isOpen);
 		} else {
 			e.preventDefault();
 			e.stopPropagation();
 		}
 
 	}}>
-		<summary className={summaryClass} onClick={(e : React.MouseEvent<HTMLElement, MouseEvent>) => {
-			if (e.defaultPrevented) {
+		<summary className={summaryClass} onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+			if (e.defaultPrevented || disabled) {
 				return;
 			}
 
@@ -263,41 +274,41 @@ const Collapsible: React.FC<React.PropsWithChildren<CollapsibleProps>> = props =
 						{props.jsx}
 					</span>}
 					{props.buttons?.map(button => {
-							var variant = button.variant || 'primary';
-							var btnClass = 'btn btn-sm btn-outline-' + variant;
+						var variant = button.variant || 'primary';
+						var btnClass = 'btn btn-sm btn-outline-' + variant;
 
-							// split button
-							if (button.children && button.children.length) {
-								var dropdownJsx = <>
-									{button.icon}
-									<span className={button.showLabel ? '' : 'sr-only'}>
-										{button.text}
-									</span>
-								</>;
-
-								return <Dropdown label={dropdownJsx} variant={'outline-' + variant} isSmall noMinWidth={noMinWidth}
-									disabled={button.disabled} splitCallback={button.onClick} title={dropdownTitle} items={button.children} />;
-
-							}
-
-							// standard button
-							if (button.onClick instanceof Function) {
-								return <button type="button" className={btnClass} onClick={button.onClick} title={button.text} disabled={button.disabled}>
-									{button.icon}
-									<span className={button.showLabel ? '' : 'sr-only'}>
-										{button.text}
-									</span>
-								</button>;
-							}
-
-							return <a href={button.onClick} className={btnClass} title={button.text} target={button.target}>
+						// split button
+						if (button.children && button.children.length) {
+							var dropdownJsx = <>
 								{button.icon}
 								<span className={button.showLabel ? '' : 'sr-only'}>
 									{button.text}
 								</span>
-							</a>;
+							</>;
 
-						})
+							return <Dropdown label={dropdownJsx} variant={'outline-' + variant} isSmall noMinWidth={noMinWidth}
+								disabled={button.disabled} splitCallback={button.onClick} title={dropdownTitle} items={button.children} />;
+
+						}
+
+						// standard button
+						if (button.onClick instanceof Function) {
+							return <button type="button" className={btnClass} onClick={button.onClick} title={button.text} disabled={button.disabled}>
+								{button.icon}
+								<span className={button.showLabel ? '' : 'sr-only'}>
+									{button.text}
+								</span>
+							</button>;
+						}
+
+						return <a href={button.onClick} className={btnClass} title={button.text} target={button.target}>
+							{button.icon}
+							<span className={button.showLabel ? '' : 'sr-only'}>
+								{button.text}
+							</span>
+						</a>;
+
+					})
 					}
 				</div>
 			}
