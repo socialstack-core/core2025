@@ -17,6 +17,7 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 
 // mobile first
 .ui-product-view {
+	$ui-product-view: &;
 	color: var(--secondary);
     display: flex;
 	flex-direction: column;
@@ -34,6 +35,23 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 		display: flex;
 		gap: 1rem 0;
 		flex-wrap: wrap;
+
+		&:hover {
+
+			#{$ui-product-view}__tab-link {
+
+				> input[type="radio"] {
+
+					// temporarily hide selected underline when hovering
+					&:checked + label {
+						border-bottom-color: transparent;
+					}
+				}
+
+			}
+
+		}
+
 	}
 
 	&__tab-link {
@@ -66,7 +84,17 @@ body:has(.ui-product-images__slides .ui-product-images__slide[open]) {
 		&:hover {
 
 			label {
-				border-bottom-color: var(--tab-link, var(--primary));
+				border-bottom-color: var(--tab-link--selected, var(--secondary));
+				color: var(--tab-link--hover, var(--secondary));
+			}
+
+			> input[type="radio"] {
+
+				// reinstate underline for selected item
+				// (otherwise removed by &__tab-links:hover styling above)
+				&:checked + label {
+					border-bottom-color: var(--tab-link--selected, var(--secondary)) !important;
+				}
 			}
 
 		}
