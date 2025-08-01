@@ -59,6 +59,11 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
 	xl?: boolean,
 
 	/**
+	 * True if the button should function as a close button.
+	 */
+	close?: boolean,
+
+	/**
 	 * True if the button should wrap text inside it.
 	 */
 	allowWrap?: boolean,
@@ -86,7 +91,7 @@ interface ButtonProps extends React.HTMLAttributes<HTMLElement>  {
  */
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 	children, className, tag, href, external, variant,
-	disabled, outlined, allowWrap, xs, sm, md, lg, xl, ...props
+	disabled, outlined, close, allowWrap, xs, sm, md, lg, xl, ...props
 }) => {
 	let buttonType = props.type || props.buttonType;
 	let externalLink = props.externalLink?.trim();
@@ -157,6 +162,10 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 		classes.unshift("btn-xl");
 	}
 
+	if (close) {
+		classes.unshift("btn--close");
+	}
+
 	classes.unshift("btn-" + (outlined ? "outline-" : "") + variant);
 	classes.unshift("ui-btn");
 	classes.unshift("btn");
@@ -214,6 +223,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = ({
 			disabled={Tag != "a" && disabled ? true : undefined}
 			inert={Tag == "a" && disabled ? true : undefined}
 			aria-disabled={disabled ? "true" : undefined}
+			aria-label={close ? `Close` : undefined}
 			tabIndex={disabled ? -1 : undefined}
 			href={Tag == "a" ? href : undefined}
 			target={href && external ? "_blank" : undefined}
