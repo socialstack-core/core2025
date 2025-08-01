@@ -93,11 +93,6 @@ namespace Api.Payments
 					field.Module = "Admin/Payments/Variants/ValueEditor";
 				}
 
-				if (field.Name == "PriceTiers")
-				{
-					field.Module = "Admin/Payments/PriceTable";
-				}
-
 				return new ValueTask<JsonField<Product, uint>>(field);
 			});
 
@@ -224,9 +219,6 @@ namespace Api.Payments
 					await _permalinks.BulkCreate(context, [permalinkInfo]);
 				}
 
-				//Has a price been deleted?
-				// await DeleteUnusedPrices(context, toUpdate, original);
-
 				return toUpdate;
 			});
 
@@ -292,30 +284,6 @@ namespace Api.Payments
 			});
 
 			Cache();
-		}
-
-		private async ValueTask DeleteUnusedPrices(Context context, Product toUpdate, Product original)
-		{
-			//Has a price been deleted?
-			var currentPrices = toUpdate.Mappings.Get("priceTiers");
-			var originalPrices = original.Mappings.Get("priceTiers");
-			if (currentPrices.Count < originalPrices.Count)
-			{
-				//Find the prices that have been deleted
-				var deletedIds = originalPrices.Where(x => !currentPrices.Contains(x)).ToList();
-
-				foreach (var id in deletedIds)
-				{
-					//Check if any other product references this and, if not delete the price
-					var products = await ListByTarget<Price, uint>(context, (uint)id, "priceTiers");
-
-					if (products == null || products.Count == 1 && products.Contains(original))
-					{
-						//The price is uniquely used by this product so we should delete it too
-						await _prices.Delete(context, (uint)id);
-					}
-				}
-			}
 		}
 
 		private async ValueTask UpdateProductCategoryMapping(Context context, Product product)
@@ -492,11 +460,8 @@ namespace Api.Payments
 			var prices = new PriceComparison();
 
 			//Get the default and custom prices
-			prices.Original = await _prices.ListBySource(context, product, "priceTiers", DataOptions.IgnorePermissions);
+			prices.Original = product.PriceTiers;
 			prices.Discounted = await Events.Product.Pricing.Dispatch(context, prices.Discounted, product);
-
-			// Tiers is not necessarily sorted, so:
-			prices.SortPrices();
 
 			return prices;
 		}
@@ -531,9 +496,6 @@ namespace Api.Payments
 					return _tiersToUse;
 				}
 
-				//Make sure it is sorted
-				SortPrices();
-
 				//Check what is populated
 				if (Discounted != null && Discounted.Count > 0)
 				{
@@ -547,27 +509,6 @@ namespace Api.Payments
 				return _tiersToUse;
 			}
 			set => _tiersToUse = value;
-		}
-
-		/// <summary>
-		/// Make sure both lists are sorted based on MinimumQuantity
-		/// </summary>
-		public void SortPrices()
-		{
-			SortPricesList(Original);
-			SortPricesList(Discounted);
-		}
-
-		private void SortPricesList(List<Price> prices)
-		{
-			if (prices != null && prices.Count > 0)
-			{
-
-				prices.Sort((Price a, Price b) =>
-				{
-					return a.MinimumQuantity.CompareTo(b.MinimumQuantity);
-				});
-			}
 		}
 	}
     

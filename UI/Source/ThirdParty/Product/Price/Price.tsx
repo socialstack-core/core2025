@@ -53,14 +53,13 @@ const Price: React.FC<PriceProps> = (props) => {
 	} else {
 		// NB: This will be replaced again when per-user pricing and the tax resolver is added
 		var tiers = null;
-
 		if(product?.calculatedPrice && locale){
 			var calculatedPrice = product.calculatedPrice;
 			
 			if(calculatedPrice.discountedPrice && calculatedPrice.discountedPrice.length > 0){
 				tiers = calculatedPrice.discountedPrice;
-			}else if(calculatedPrice.listedPrice && calculatedPrice.listedPrice.length > 0){
-				tiers = calculatedPrice.listedPrice;
+			}else if(calculatedPrice.listPrice && calculatedPrice.listPrice.length > 0){
+				tiers = calculatedPrice.listPrice;
 			}
 		}
 

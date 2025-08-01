@@ -73,8 +73,8 @@ const View: React.FC<ViewProps> = (props) => {
 			
 			if(calculatedPrice.discountedPrice && calculatedPrice.discountedPrice.length > 0){
 				tiers = calculatedPrice.discountedPrice;
-			}else if(calculatedPrice.listedPrice && calculatedPrice.listedPrice.length > 0){
-				tiers = calculatedPrice.listedPrice;
+			}else if(calculatedPrice.listPrice && calculatedPrice.listPrice.length > 0){
+				tiers = calculatedPrice.listPrice;
 			}
 		}
 		if (tiers) {

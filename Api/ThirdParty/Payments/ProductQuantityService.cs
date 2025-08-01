@@ -462,8 +462,8 @@ namespace Api.Payments
 			var isSubscriptionProduct = product.BillingFrequency != 0;
 
 			// Get the product price tiers:
-			var prices = await _products.GetPriceTiers(context, product);
-			var tiers = prices.TiersToUse;
+			var priceComparison = await _products.GetPriceTiers(context, product);
+			var tiers = priceComparison.TiersToUse;
 
 			if (tiers == null || tiers.Count == 0)
 			{

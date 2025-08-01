@@ -1,6 +1,8 @@
 using Api.Contexts;
 using Api.Database;
 using Api.SocketServerLibrary;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -85,7 +87,7 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 				var val = ParseJsonString(span, ref i);
 				value = (T)(object)val;
 			}
-			else if(typeof(T) == typeof(JsonString))
+			else if (typeof(T) == typeof(JsonString))
 			{
 				int valStart = i;
 				i = FindSubJsonEnd(span, i);
@@ -162,7 +164,7 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 					depth++;
 				}
 			}
-			else if(current == '}' || current == ']')
+			else if (current == '}' || current == ']')
 			{
 				depth--;
 			}
@@ -384,7 +386,7 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 	{
 		Set(context.LocaleId, value);
 	}
-	
+
 	/// <summary>
 	/// Set the value for "en".
 	/// </summary>
@@ -395,7 +397,7 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 		{
 			_values = new();
 		}
-		
+
 		_values["en"] = value;
 	}
 
@@ -491,7 +493,7 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 		{
 			return default;
 		}
-		
+
 		T val;
 
 		if (locale != null)
@@ -567,7 +569,7 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 			value = default;
 			return false;
 		}
-		
+
 		if (locale != null)
 		{
 			if (_values.TryGetValue(locale.Code, out value))
@@ -590,7 +592,7 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 		{
 			return default;
 		}
-		
+
 		if (_values.TryGetValue("en", out T val))
 		{
 			return val;
@@ -811,7 +813,7 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 	/// True if this localized set is empty.
 	/// </summary>
 	public bool IsEmpty => _values == null || _values.Count == 0;
-	
+
 	/// <summary>
 	/// The number of entries in the set.
 	/// </summary>
@@ -857,4 +859,19 @@ public struct Localized<T> : ILocalized, IEquatable<Localized<T>>
 
 		return true;
 	}
+}
+
+public class LocalizedConverter<T> : JsonConverter<Localized<T>>
+{
+    public override Localized<T> ReadJson(JsonReader reader, Type objectType, Localized<T> existingValue, bool hasExistingValue, JsonSerializer serializer)
+    {
+        // Read raw JSON string of the object
+        var obj = JObject.Load(reader);
+        return Localized<T>.Parse(obj.ToString());
+    }
+
+    public override void WriteJson(JsonWriter writer, Localized<T> value, JsonSerializer serializer)
+    {
+        serializer.Serialize(writer, value);
+    }
 }
