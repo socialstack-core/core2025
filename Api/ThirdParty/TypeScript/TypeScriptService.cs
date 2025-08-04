@@ -61,7 +61,8 @@ namespace Api.TypeScript
                 // Create a container to hold the API/*.ts files.
                 // It exists such that ultimately the UI bundle compiles files present here as well.
                 var container = new SourceFileContainer(Path.GetFullPath("TypeScript/Api"), "Api");
-                
+
+                container = Events.TypeScript.ApiContainer.Dispatch(container);
                 
                 CreateApiSchema(container);
 

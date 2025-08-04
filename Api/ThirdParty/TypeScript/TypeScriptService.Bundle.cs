@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using Api.CanvasRenderer;
+using Api.Eventing;
 
 namespace Api.TypeScript
 {
@@ -71,6 +72,8 @@ namespace Api.TypeScript
 					output.Append("\"]");
 				}
 			}
+
+			output = Events.TypeScript.TSConfigPaths.Dispatch(output);
 
 			output.Append(", \"Api/*\": [\"TypeScript/Api/*\"]");
 
