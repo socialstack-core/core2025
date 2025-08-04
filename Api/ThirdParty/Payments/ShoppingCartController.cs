@@ -115,7 +115,7 @@ namespace Api.Payments
 	/// <summary>
 	/// Checking out a cart.
 	/// </summary>
-	public struct CheckoutInfo
+	public partial struct CheckoutInfo
 	{
 		/// <summary>
 		/// The cart ID.

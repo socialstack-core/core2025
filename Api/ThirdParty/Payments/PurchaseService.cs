@@ -402,15 +402,13 @@ namespace Api.Payments
 		/// For example, a UK VAT registered business selling to another VAT registered business in the EU can exclude tax but must use the VEIS system.
 		/// UK B2B is not tax exempt in this way.</param>
 		/// <param name="dupeKey"></param>
-		/// <param name="deliveryAddressId"></param>
-		/// <param name="billingAddressId"></param>
-		/// <param name="deliveryOptionId"></param>
+		/// <param name="checkoutInfo"></param>
 		/// <returns></returns>
 		public async ValueTask<PurchaseAndAction> CreateAndExecute(
 			Context context, ProductQuantityPricing pricingInfo, 
 			string contentTypeName, uint contentId, 
 			PaymentMethod paymentMethod, bool excludeTax, 
-			uint deliveryAddressId, uint billingAddressId, uint deliveryOptionId, 
+			CheckoutInfo checkoutInfo, 
 			ulong dupeKey = 0)
 		{
 			var locale = await context.GetLocale();
@@ -432,17 +430,20 @@ namespace Api.Payments
 				ExcludeTax = excludeTax,
 				ProductsCost = pricingInfo.Total,
 				ProductsCostLessTax = pricingInfo.TotalLessTax,
-				DeliveryAddressId = deliveryAddressId,
-				BillingAddressId = billingAddressId,
-				DeliveryOptionId = deliveryOptionId,
+				DeliveryAddressId = checkoutInfo.DeliveryAddressId,
+				BillingAddressId = checkoutInfo.BillingAddressId,
+				DeliveryOptionId = checkoutInfo.DeliveryOptionId,
 				BuyNowPayLater = paymentMethod == null,
 				PaymentMethodId = paymentMethod == null ? 0 : paymentMethod.Id
 			};
 
+			// Handle any custom checkout fields:
+			await Events.Purchase.Checkout.Dispatch(context, purchase, checkoutInfo);
+
 			// Calculate delivery if any.
 			var deliveryInfo = _prodQuantities.GetDeliveryDetail(pricingInfo);
 
-			if (deliveryOptionId == 0)
+			if (checkoutInfo.DeliveryOptionId == 0)
 			{
 				// Delivery cost is simply zero. This option includes both collection and digital goods only orders.
 				purchase.DeliveryCost = 0;
@@ -453,7 +454,7 @@ namespace Api.Payments
 				purchase.DeliveryApportionment = deliveryInfo.Value.TaxApportion;
 
 				// Ask delivery option service for the prices it stated.
-				var deliveryEstimate = await _deliveries.GetEstimate(context, deliveryOptionId);
+				var deliveryEstimate = await _deliveries.GetEstimate(context, checkoutInfo.DeliveryOptionId);
 
 				if(deliveryEstimate == null)
 				{

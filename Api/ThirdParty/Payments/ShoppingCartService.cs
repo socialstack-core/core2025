@@ -151,9 +151,8 @@ namespace Api.Payments
 					   // Yes, it is correct to display someone a VAT
 					   // free price and then charge them VAT on top of it anyway!
 
-				checkoutInfo.DeliveryAddressId,
-				checkoutInfo.BillingAddressId,
-				checkoutInfo.DeliveryOptionId
+
+				checkoutInfo
 			);
 			// The cart itself will have its status updated when the purchase transitions
 			// (i.e. after any action has concluded).
