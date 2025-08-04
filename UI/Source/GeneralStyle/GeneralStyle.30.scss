@@ -63,3 +63,8 @@ html .container {
 #react-root > #wrapper > #content + footer {
 	margin-top: px_to_rem(40);
 }
+
+// ensure there's padding around the main page content
+#react-root > #wrapper > #content > main:not(:has(> .container:first-child)) {
+	padding: 0 px_to_rem(20);
+}

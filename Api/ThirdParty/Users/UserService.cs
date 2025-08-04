@@ -5,6 +5,7 @@ using Api.Eventing;
 using Api.Startup;
 using Org.BouncyCastle.Security;
 using System;
+using Api.Pages;
 
 namespace Api.Users
 {
@@ -38,7 +39,7 @@ namespace Api.Users
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public UserService() : base(Events.User)
+		public UserService(PageService pages) : base(Events.User)
 		{
 			var config = GetConfig<UserServiceConfig>();
 			_config = config;
@@ -174,7 +175,22 @@ namespace Api.Users
 				
 				return user;
 			});
-			
+
+			pages.Install(
+				new PageBuilder()
+				{
+					Url = "login",
+					Key = "login",
+					Title = "Login to your account",
+					BuildBody = (PageBuilder builder) =>
+					{
+						return builder.AddTemplate(
+							new CanvasRenderer.CanvasNode("UI/LoginForm")
+						);
+					}
+				}
+			);
+
 			config.OnChange += () => {
 				SetupCookieName();
 				return new ValueTask();

@@ -649,9 +649,11 @@ namespace Api.Payments
                 // B2B VAT registered corps in the UK for example still charge VAT to each other.
                 false, 
                 
-                subscription.DeliveryAddressId,
-                subscription.BillingAddressId,
-                subscription.DeliveryOptionId,
+                new CheckoutInfo {
+					DeliveryAddressId = subscription.DeliveryAddressId,
+					BillingAddressId = subscription.BillingAddressId,
+					DeliveryOptionId = subscription.DeliveryOptionId
+				},
 
                 timePeriodKey
             );

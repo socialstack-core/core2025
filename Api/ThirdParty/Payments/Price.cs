@@ -4,6 +4,7 @@ using Api.Database;
 using Api.Startup;
 using Api.Translate;
 using Api.Users;
+using Newtonsoft.Json;
 
 
 namespace Api.Payments
@@ -12,8 +13,6 @@ namespace Api.Payments
 	/// <summary>
 	/// A Price
 	/// </summary>
-	[ListAs("PriceTiers", Explicit = true)]
-	[ImplicitFor("PriceTiers", typeof(Product))]
 	public partial class Price : VersionedContent<uint>
 	{
 		/// <summary>
@@ -22,8 +21,9 @@ namespace Api.Payments
 		[Data("help", "A whole number in the smallest unit of the currency (pence/ cents).")]
 		[Data("required", true)]
 		[Data("validate", "Required")]
+		[JsonConverter(typeof(LocalizedConverter<uint>))]
 		public Localized<uint> Amount;
-		
+
 		/// <summary>
 		/// Min quantity required for this price.
 		/// </summary>

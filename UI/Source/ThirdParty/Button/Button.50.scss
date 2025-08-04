@@ -170,6 +170,10 @@ $btn-variants: (
 		white-space: normal;
     }
 
+	&.btn--inline {
+		display: inline-flex;
+	}
+
 	&:disabled,
 	&.disabled,
 	&[inert] {
@@ -202,13 +206,19 @@ $btn-variants: (
 
 	&-md,
 	&--md {
-		--btn-min-height: var(--btn-sm-min-height, #{$default-btn-md-min-height});
-		--btn-padding: var(--btn-sm-padding, #{$default-btn-md-padding});
-		--btn-font-size: var(--btn-sm-font-size, #{$default-btn-md-font-size});
-		--btn-font-weight: var(--btn-sm-font-weight, #{$default-btn-md-font-weight});
-		--btn-border-radius: var(--btn-sm-border-radius, #{$default-btn-md-border-radius});
-		--btn-icon: var(--btn-sm-icon, #{$default-btn-md-icon});
-		--btn-gap: var(--btn-sm-gap, #{$default-btn-md-gap});
+		--btn-min-height: var(--btn-md-min-height, #{$default-btn-md-min-height});
+		--btn-padding: var(--btn-md-padding, #{$default-btn-md-padding});
+		--btn-font-size: var(--btn-md-font-size, #{$default-btn-md-font-size});
+		--btn-font-weight: var(--btn-md-font-weight, #{$default-btn-md-font-weight});
+		--btn-border-radius: var(--btn-md-border-radius, #{$default-btn-md-border-radius});
+		--btn-icon: var(--btn-md-icon, #{$default-btn-md-icon});
+		--btn-gap: var(--btn-md-gap, #{$default-btn-md-gap});
+
+		&.btn--close {
+			width: var(--btn-md-min-height, #{$default-btn-md-min-height});
+			height: var(--btn-md-min-height, #{$default-btn-md-min-height});
+		}
+
 	}
 
 	&-lg,
@@ -235,6 +245,10 @@ $btn-variants: (
 
 }
 
+a.btn {
+	display: inline-flex;
+}
+
 fieldset:disabled .btn {
 	opacity: .5;
 }
@@ -246,6 +260,12 @@ fieldset:disabled .btn {
 	font-weight: var(--btn-font-weight);
 	border-radius: var_to_rem(--btn-border-radius);
 	gap: var_to_rem(--btn-gap);
+	
+	&.btn--close {
+		width: var_to_rem(--btn-min-height);
+		height: var_to_rem(--btn-min-height);
+		padding: 0;
+	}
 	
 	> svg {
 		max-width: var_to_rem(--btn-icon);
@@ -337,7 +357,9 @@ fieldset:disabled .btn {
 }
  
 // grouped buttons
-.btn-group.ui-btn-group {
+.btn-group {
+
+	&.ui-btn-group {
 
 	.btn.ui-btn {
 		--btn-padding: 0;
@@ -348,4 +370,21 @@ fieldset:disabled .btn {
 		background-color: var(--secondary);
 		border-color: var(--secondary);
 	}
+
+	}
+
+	&-sm {
+
+		.btn.ui-btn {
+			--btn-min-height: var(--btn-sm-min-height, #{$default-btn-sm-min-height});
+			--btn-padding: var(--btn-sm-padding, #{$default-btn-sm-padding});
+			--btn-font-size: var(--btn-sm-font-size, #{$default-btn-sm-font-size});
+			--btn-font-weight: var(--btn-sm-font-weight, #{$default-btn-sm-font-weight});
+			--btn-border-radius: var(--btn-sm-border-radius, #{$default-btn-sm-border-radius});
+			--btn-icon: var(--btn-sm-icon, #{$default-btn-sm-icon});
+			--btn-gap: var(--btn-sm-gap, #{$default-btn-sm-gap});
+		}
+
+	}
+
 }

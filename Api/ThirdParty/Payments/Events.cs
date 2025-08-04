@@ -143,6 +143,11 @@ namespace Api.Eventing
 		/// </summary>
 		public EventHandler<Purchase> BeforeExecute;
 
+		/// <summary>
+		/// Called during checkout. Map any custom fields from a checkout submission to the purchase here.
+		/// </summary>
+		public EventHandler<Purchase, CheckoutInfo> Checkout;
+
 	}
 
 	/// <summary>

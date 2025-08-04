@@ -239,6 +239,53 @@ fieldset {
 // NB: Bootstrap allows for field-level sizing (sm/lg);
 // chances that we'll need to support this for individual fields are vanishingly thin,
 // so preference is to set the size for either the entire form or a specific fieldset (see above)
+.ui-form-control {
+
+	&:where(.ui-form-control--xs) {
+		@include sizeXs();
+	}
+
+	&:where(.ui-form-control--sm) {
+		@include sizeSm();
+	}
+
+	&:where(.ui-form-control--md) {
+		@include sizeMd();
+	}
+
+	&:where(.ui-form-control--lg) {
+		@include sizeLg();
+	}
+
+	&:where(.ui-form-control--xl) {
+		@include sizeXl();
+	}
+
+}
+
+.ui-form-select {
+
+	&:where(.ui-form-select--xs) {
+		@include sizeXs();
+	}
+
+	&:where(.ui-form-select--sm) {
+		@include sizeSm();
+	}
+
+	&:where(.ui-form-select--md) {
+		@include sizeMd();
+	}
+
+	&:where(.ui-form-select--lg) {
+		@include sizeLg();
+	}
+
+	&:where(.ui-form-select--xl) {
+		@include sizeXl();
+	}
+
+}
 
 // form labels
 .form-label.ui-form-label {

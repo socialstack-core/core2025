@@ -7,27 +7,9 @@
 }
 
 .ui-link {
-    cursor: pointer;
-	display: inline-flex;
-	align-items: center;
-	//justify-content: center;  
-	color: var(--ui-link-color, #{$default-link-color});
-	white-space: normal;
-	
-	&:hover {
-		color: var(--ui-link-hover, #{$default-link-hover});
-	}
-
-	&:focus {
-		outline: 1px dotted currentColor;
-	}
 
 	&--nowrap {
 		white-space: nowrap;
-	}
-
-	&[inert] {
-		opacity: .5;
 	}
 
 	// override	vars based on size
@@ -73,7 +55,13 @@
 
 }
 
-.ui-link {
+:where(.ui-link) {
+    cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	//justify-content: center;  
+	color: var(--ui-link-color, #{$default-link-color});
+	white-space: normal;
 	font-size: var_to_rem(--ui-link-font-size);
 	font-weight: var(--ui-link-font-weight);
 	gap: var_to_rem(--ui-link-gap);
@@ -136,4 +124,16 @@
 		text-decoration: none !important;
 	}
 
+	
+	&:hover {
+		color: var(--ui-link-hover, #{$default-link-hover});
+	}
+
+	&:focus {
+		outline: 1px dotted currentColor;
+	}
+
+	&[inert] {
+		opacity: .5;
+	}
 }

@@ -17,25 +17,26 @@ namespace Api.Payments
 	/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 	/// </summary>
 	public partial class ProductService : AutoService<Product>
-    {
+	{
 		private PermalinkService _permalinks;
 		private ProductConfig _config;
 		private PriceService _prices;
-		
+
 		private bool _isPermalinkSyncRunning = false;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
 		public ProductService(PermalinkService permalinks, PageService pages, PriceService prices) : base(Events.Product)
-        {
+		{
 			_permalinks = permalinks;
 			_prices = prices;
 			_config = GetConfig<ProductConfig>();
 
 			InstallAdminPages("Products", "fa:fa-shopping-basket", ["id", "name", "minQuantity"]);
 
-			Events.Product.BeforeCreate.AddEventListener(async (Context context, Product product) => {
+			Events.Product.BeforeCreate.AddEventListener(async (Context context, Product product) =>
+			{
 				if (product == null)
 				{
 					return null;
@@ -53,52 +54,47 @@ namespace Api.Payments
 			});
 
 			HashSet<string> excludeFields = new HashSet<string>() { "Categories", "Tags" };
-            HashSet<string> nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };
+			HashSet<string> nonAdminExcludeFields = new HashSet<string>() { "RolePermits", "UserPermits" };
 
-            Events.Product.BeforeSettable.AddEventListener((Context ctx, JsonField<Product, uint> field) =>
-            {
-                if (field == null)
-                {
-                    return new ValueTask<JsonField<Product, uint>>(field);
-                }
+			Events.Product.BeforeSettable.AddEventListener((Context ctx, JsonField<Product, uint> field) =>
+			{
+				if (field == null)
+				{
+					return new ValueTask<JsonField<Product, uint>>(field);
+				}
 
-                // hide the core taxonomy fields as we have product specific ones
-                if (excludeFields.Contains(field.Name))
-                {
-                    field.Writeable = false;
-                    field.Hide = true;
-                }
+				// hide the core taxonomy fields as we have product specific ones
+				if (excludeFields.Contains(field.Name))
+				{
+					field.Writeable = false;
+					field.Hide = true;
+				}
 
-                // only admin can amend the critical fields
+				// only admin can amend the critical fields
 				// todo move this into a seperate service for all entites? 
-                if (field.ForRole != Roles.Developer && field.ForRole != Roles.Admin && nonAdminExcludeFields.Contains(field.Name))
-                {
-                    field.Writeable = false;
-                    field.Hide = true;
-                }
+				if (field.ForRole != Roles.Developer && field.ForRole != Roles.Admin && nonAdminExcludeFields.Contains(field.Name))
+				{
+					field.Writeable = false;
+					field.Hide = true;
+				}
 
 				if (field.Name == "Attributes" || field.Name == "AdditionalAttributes")
 				{
 					field.Module = "Admin/Payments/AttributeSelect";
 				}
 
-                if (field.Name == "ProductCategories")
-                {
-                    field.Module = "Admin/Payments/ProductCategorySelect";
-                }
+				if (field.Name == "ProductCategories")
+				{
+					field.Module = "Admin/Payments/ProductCategorySelect";
+				}
 
 				if (field.Name == "Variants")
 				{
 					field.Module = "Admin/Payments/Variants/ValueEditor";
 				}
 
-				if (field.Name == "PriceTiers")
-				{
-					field.Module = "Admin/Payments/PriceTable";
-				}
-
 				return new ValueTask<JsonField<Product, uint>>(field);
-            });
+			});
 
 			Events.Page.BeforePageInstall.AddEventListener((Context context, PageBuilder builder) =>
 			{
@@ -143,7 +139,8 @@ namespace Api.Payments
 				}
 			);
 
-			Events.Product.AfterCreate.AddEventListener(async (Context context, Product product) => {
+			Events.Product.AfterCreate.AddEventListener(async (Context context, Product product) =>
+			{
 
 				// Permalink target which will be for whichever page wants to handle a product as its primary content.
 				// If a specific page for this product exists, it will ultimately pick that.
@@ -158,7 +155,7 @@ namespace Api.Payments
 					if (parentProduct == null)
 					{
 						throw new PublicException(
-							"Product is a variant of #" + product.VariantOfId + " but that product does not exist.", 
+							"Product is a variant of #" + product.VariantOfId + " but that product does not exist.",
 							"product/parent_not_found"
 						);
 					}
@@ -176,8 +173,9 @@ namespace Api.Payments
 
 				return product;
 			});
-			
-			Events.Product.BeforeUpdate.AddEventListener(async (Context context, Product toUpdate, Product original) => {
+
+			Events.Product.BeforeUpdate.AddEventListener(async (Context context, Product toUpdate, Product original) =>
+			{
 
 				if (toUpdate == null)
 				{
@@ -207,7 +205,8 @@ namespace Api.Payments
 					toUpdate.VariantOfId != original.VariantOfId || // Variant of changed (usually to/from 0)
 					(toUpdate.Slug != original.Slug && toUpdate.VariantOfId == 0) || // Slug changed and not a variant
 					(toUpdate.Sku != original.Sku && toUpdate.VariantOfId != 0) // Sku changed and is a variant
-				) {
+				)
+				{
 
 					// Update the permalink. It's possible that this will attempt to create a duplicate
 					// in which case it functionally acts like the requested one is the new canonical link.
@@ -220,15 +219,15 @@ namespace Api.Payments
 					await _permalinks.BulkCreate(context, [permalinkInfo]);
 				}
 
-				//Has a price been deleted?
-				// await DeleteUnusedPrices(context, toUpdate, original);
+				//Update prices
+				toUpdate.UpdatePricesJson();
 
 				return toUpdate;
 			});
-			
+
 			Events.Product.BeforeCreate.AddEventListener(async (ctx, product) =>
 			{
-				await UpdateProductCategoryMapping(ctx, product);	
+				await UpdateProductCategoryMapping(ctx, product);
 				return product;
 			});
 			Events.Product.BeforeUpdate.AddEventListener(async (ctx, product, original) =>
@@ -239,7 +238,7 @@ namespace Api.Payments
 				}
 				return product;
 			});
-			
+
 			// Added to make sure the ContinueSellingWithNoStock of the parent
 			// is mirrored to variants. This also doesn't execute when a variant
 			// is updated. Only parent products.
@@ -261,11 +260,11 @@ namespace Api.Payments
 				{
 					return product;
 				}
-				
+
 				// here we know it's not a product, lets get all variants
 				var variants = await Where("VariantOfId = ?", DataOptions.IgnorePermissions).Bind(product.Id)
 					.ListAll(ctx);
-				
+
 				// iterate all the variants, if the variant
 				// shares the same value than the parent
 				// we skip the unnecessary update call. 
@@ -277,41 +276,17 @@ namespace Api.Payments
 						// skip, no point wasting an "Update" call.
 						continue;
 					}
-					
+
 					await Update(ctx, variant, (_, updateVariant, _) =>
 					{
 						updateVariant.ContinueSellingWithNoStock = product.ContinueSellingWithNoStock;
 					});
 				}
-				
+
 				return product;
 			});
 
 			Cache();
-		}
-
-		private async ValueTask DeleteUnusedPrices(Context context, Product toUpdate, Product original)
-		{
-			//Has a price been deleted?
-			var currentPrices = toUpdate.Mappings.Get("priceTiers");
-			var originalPrices = original.Mappings.Get("priceTiers");
-			if (currentPrices.Count < originalPrices.Count)
-			{
-				//Find the prices that have been deleted
-				var deletedIds = originalPrices.Where(x => !currentPrices.Contains(x)).ToList();
-
-				foreach (var id in deletedIds)
-				{
-					//Check if any other product references this and, if not delete the price
-					var products = await ListByTarget<Price, uint>(context, (uint)id, "priceTiers");
-
-					if (products == null || products.Count == 1 && products.Contains(original))
-					{
-						//The price is uniquely used by this product so we should delete it too
-						await _prices.Delete(context, (uint)id);
-					}
-				}
-			}
 		}
 
 		private async ValueTask UpdateProductCategoryMapping(Context context, Product product)
@@ -349,7 +324,7 @@ namespace Api.Payments
 			product.Mappings.Set("childOfCategories", allCats.Distinct().ToList());
 
 		}
-		
+
 		/// <summary>
 		/// Adds a validation layer to <c>Product</c> only,
 		/// this checks fields strictly on the product.
@@ -370,7 +345,7 @@ namespace Api.Payments
 			{
 				throw new PublicException("The product slug cannot be empty.", "product-validation/no-slug");
 			}
-			
+
 			return ValueTask.FromResult(product);
 		}
 
@@ -406,64 +381,64 @@ namespace Api.Payments
 		/// <returns></returns>
 		public async ValueTask SyncPermalinks(Context context)
 		{
-		    // This method is about to be exposed to an endpoint, in order to stop this from 
-		    // firing multiple times, let's add a blocker.
-		    if (_isPermalinkSyncRunning)
-		    {
-		        return;
-		    }
+			// This method is about to be exposed to an endpoint, in order to stop this from 
+			// firing multiple times, let's add a blocker.
+			if (_isPermalinkSyncRunning)
+			{
+				return;
+			}
 
-		    _isPermalinkSyncRunning = true;
-		    Log.Warn("product", "Sync product permalinks");
+			_isPermalinkSyncRunning = true;
+			Log.Warn("product", "Sync product permalinks");
 
-		    try
-		    {
-		        var allProducts = await Where("", DataOptions.IgnorePermissions).ListAll(context);
-		        var links = new List<PermalinkUrlTarget>();
+			try
+			{
+				var allProducts = await Where("", DataOptions.IgnorePermissions).ListAll(context);
+				var links = new List<PermalinkUrlTarget>();
 
-		        // Created if any variants exist
-		        Dictionary<uint, Product> lookup = null;
+				// Created if any variants exist
+				Dictionary<uint, Product> lookup = null;
 
-		        foreach (var product in allProducts)
-		        {
-		            // Permalink target which will be for whichever page wants to handle a product as its primary content.
-		            // If a specific page for this product exists, it will ultimately pick that.
-		            var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, product);
+				foreach (var product in allProducts)
+				{
+					// Permalink target which will be for whichever page wants to handle a product as its primary content.
+					// If a specific page for this product exists, it will ultimately pick that.
+					var linkTarget = _permalinks.CreatePrimaryTargetLocator(this, product);
 
-		            await Update(context, product, async (ctx, product, original) =>
-		            {
-		                // noop. This triggers the UpdateProductCategoryMapping method. 
-		                await UpdateProductCategoryMapping(ctx, product);
-		            });
+					await Update(context, product, async (ctx, product, original) =>
+					{
+						// noop. This triggers the UpdateProductCategoryMapping method. 
+						await UpdateProductCategoryMapping(ctx, product);
+					});
 
-		            Product parentProduct = null;
-		            if (product.VariantOfId.HasValue && product.VariantOfId.Value != 0)
-		            {
-		                lookup ??= allProducts.ToDictionary(p => p.Id);
+					Product parentProduct = null;
+					if (product.VariantOfId.HasValue && product.VariantOfId.Value != 0)
+					{
+						lookup ??= allProducts.ToDictionary(p => p.Id);
 
-		                if (!lookup.TryGetValue(product.VariantOfId.Value, out parentProduct))
-		                {
-		                    // Invalid variant!
-		                    Log.Warn(LogTag, $"Invalid variant: {product.Id} is a variant of #{product.VariantOfId.Value} but that parent product doesn't exist.");
-		                    continue;
-		                }
-		            }
+						if (!lookup.TryGetValue(product.VariantOfId.Value, out parentProduct))
+						{
+							// Invalid variant!
+							Log.Warn(LogTag, $"Invalid variant: {product.Id} is a variant of #{product.VariantOfId.Value} but that parent product doesn't exist.");
+							continue;
+						}
+					}
 
-		            var permalinkInfo = new PermalinkUrlTarget()
-		            {
-		                Url = GetInitialProductUrl(product, parentProduct),
-		                Target = linkTarget
-		            };
+					var permalinkInfo = new PermalinkUrlTarget()
+					{
+						Url = GetInitialProductUrl(product, parentProduct),
+						Target = linkTarget
+					};
 
-		            links.Add(permalinkInfo);
-		        }
+					links.Add(permalinkInfo);
+				}
 
-		        await _permalinks.BulkCreate(context, links);
-		    }
-		    finally
-		    {
-		        _isPermalinkSyncRunning = false;
-		    }
+				await _permalinks.BulkCreate(context, links);
+			}
+			finally
+			{
+				_isPermalinkSyncRunning = false;
+			}
 		}
 
 
@@ -477,7 +452,7 @@ namespace Api.Payments
 		/// Gets the product tiers for a given product. The result is null if there are none.
 		/// </summary>
 		/// <returns></returns>
-		public async ValueTask<List<Price>> GetPriceTiers(Context context, Product product)
+		public async ValueTask<PriceComparison> GetPriceTiers(Context context, Product product)
 		{
 			if (product == null)
 			{
@@ -485,24 +460,58 @@ namespace Api.Payments
 			}
 
 			// System generated contextual pricing if necessary:
-			List<Price> tiers = null;
-			tiers = await Events.Product.Pricing.Dispatch(context, tiers, product);
+			var prices = new PriceComparison();
 
-			if (tiers == null)
+			//Get the default and custom prices
+			prices.Original = product.PriceTiers;
+			prices.Discounted = await Events.Product.Pricing.Dispatch(context, prices.Discounted, product);
+
+			return prices;
+		}
+	}
+
+	/// <summary>
+	/// A class that contains the default price tiers of a product and the discounted price tiers, if they exist
+	/// </summary>
+	public class PriceComparison
+	{
+		/// <summary>
+		/// The default price tiers
+		/// </summary>
+		public List<Price> Original;
+
+		/// <summary>
+		/// The discounted price tiers
+		/// </summary>
+		public List<Price> Discounted;
+
+		private List<Price> _tiersToUse;
+
+		/// <summary>
+		/// Find the tiers to be used
+		/// </summary>
+		public List<Price> TiersToUse
+		{
+			get
 			{
-				// System default prices (priceTiers mapping on a product)
-				tiers = await _prices.ListBySource(context, product, "priceTiers", DataOptions.IgnorePermissions);
-			}
+				if (_tiersToUse != null)
+				{
+					return _tiersToUse;
+				}
 
-			if (tiers != null && tiers.Count > 0)
-			{
-				// Tiers is not necessarily sorted, so:
-				tiers.Sort((Price a, Price b) => {
-					return a.MinimumQuantity.CompareTo(b.MinimumQuantity);
-				});
-			}
+				//Check what is populated
+				if (Discounted != null && Discounted.Count > 0)
+				{
+					_tiersToUse = Discounted;
+				}
+				else
+				{
+					_tiersToUse = Original;
+				}
 
-			return tiers;
+				return _tiersToUse;
+			}
+			set => _tiersToUse = value;
 		}
 	}
     

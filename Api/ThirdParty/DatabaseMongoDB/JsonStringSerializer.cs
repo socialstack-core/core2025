@@ -44,18 +44,34 @@ public class JsonStringSerializer : IBsonSerializer<JsonString>
     /// <returns></returns>
     public JsonString Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
     {
-        // Deserialize the subdocument into a BsonDocument
-        var doc = BsonDocumentSerializer.Instance.Deserialize(context);
+        var bsonType = context.Reader.GetCurrentBsonType();
 
-        // Convert the BsonDocument back into a JSON string
-        var json = doc.ToJson(new JsonWriterSettings {
+        BsonValue value;
+
+        switch (bsonType)
+        {
+            case BsonType.Document:
+                value = BsonDocumentSerializer.Instance.Deserialize(context);
+                break;
+
+            case BsonType.Null:
+                return new JsonString(null);
+
+            case BsonType.Array:
+                value = BsonArraySerializer.Instance.Deserialize(context);
+                break;
+
+            default:
+                throw new FormatException($"Unexpected BSON type: {bsonType}");
+        }
+
+        var json = value.ToJson(new JsonWriterSettings
+        {
             OutputMode = JsonOutputMode.RelaxedExtendedJson,
-            // Turning on indentation but setting the chars to
-            // blank eliminates most of the default spaces it adds.
-			Indent = true,
-			NewLineChars = "",
-			IndentChars = ""
-		});
+            Indent = true,
+            NewLineChars = "",
+            IndentChars = ""
+        });
 
         return new JsonString(json);
     }

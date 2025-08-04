@@ -10,6 +10,8 @@ using Api.Startup;
 using Api.Addresses;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Mysqlx.Crud;
+using Microsoft.AspNetCore.Http;
 
 namespace Api.Payments
 {
@@ -21,14 +23,20 @@ namespace Api.Payments
     {
 		private DeliveryOptionService _options;
 		private AddressService _addresses;
+		private ProductQuantityService _productQuantities;
+		private ShoppingCartService _carts;
+		private PriceService _prices;
 
 		/// <summary>
 		/// Instanced automatically. Use injection to use this service, or Startup.Services.Get.
 		/// </summary>
-		public DeliveryService(DeliveryOptionService options, AddressService addresses)
+		public DeliveryService(DeliveryOptionService options, AddressService addresses, 
+			ProductQuantityService productQuantities, PriceService prices)
         {
+			_prices = prices;
 			_options = options;
 			_addresses = addresses;
+			_productQuantities = productQuantities;
 		}
 
 		/// <summary>
@@ -50,6 +58,25 @@ namespace Api.Payments
 			}
 
 			return await EstimateDelivery(context, cart, address);
+		}
+
+		/// <summary>
+		/// Gets the parsed delivery estimate for the given delivery option ID.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="deliveryOptionId"></param>
+		/// <returns></returns>
+		public async ValueTask<DeliveryEstimate> GetEstimate(Context context, uint deliveryOptionId)
+		{
+			// Load the option:
+			var option = await _options.Get(context, deliveryOptionId, DataOptions.IgnorePermissions);
+
+			if (option == null)
+			{
+				return null;
+			}
+
+			return Newtonsoft.Json.JsonConvert.DeserializeObject<DeliveryEstimate>(option.InformationJson);
 		}
 
 		/// <summary>
@@ -102,9 +129,36 @@ namespace Api.Payments
 				}
 			}
 
+			if (_carts == null)
+			{
+				_carts = Services.Get<ShoppingCartService>();
+			}
+
+			var inCart = await _carts.GetProductQuantities(context, cart);
+			var taxJurisdiction = await _addresses.GetTaxJurisdiction(context, targetAddress);
+
+			// Calculate the total values of what's in the cart - this impacts tax due on the delivery itself:
+			var pricingInfo = await _productQuantities.GetPricing(context, inCart, taxJurisdiction, cart.CouponId);
+
+			var deliveryPricingDetail = _productQuantities.GetDeliveryDetail(pricingInfo);
+
+			if (deliveryPricingDetail == null)
+			{
+				// Not physically delivered or deliverable.
+				return null;
+			}
+
+			// Get tax calc:
+			var taxCalc = await _prices.GetTaxCalculator(context, taxJurisdiction);
+
 			// Collect the estimates now. This is very site specific so you'll need to create a handler for this event.
-			var estimate = await Events.DeliveryOption.Estimate.Dispatch(context, new DeliveryEstimates() {
+			var estimate = await Events.DeliveryOption.Estimate.Dispatch(context, new DeliveryEstimates()
+			{
 				Cart = cart,
+				DeliveryPricing = deliveryPricingDetail.Value,
+				TaxJurisdiction = taxJurisdiction,
+				Pricing = pricingInfo,
+				TaxCalculator = taxCalc,
 				Target = targetAddress
 			});
 

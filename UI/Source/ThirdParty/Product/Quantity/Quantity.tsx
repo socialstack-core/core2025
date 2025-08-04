@@ -166,28 +166,40 @@ const Quantity: React.FC<QuantityProps> = (props) => {
 
 	if (priceOverride) {
 		amount = priceOverride.amount;
-	} else if (product?.calculatedPrice && product?.calculatedPrice.length && locale) {
+	} else {
 		// NB: This will be replaced again when per-user pricing and the tax resolver is added
-		var tiers = product.calculatedPrice;
-		hasOptions = tiers.length > 1;
+		var tiers = null;
 
-		// Get the lowest one:
-		var tier = tiers[0];
-
-		if (hasOptions) {
-			for (var i = 1; i < tiers.length; i++) {
-				var current = tiers[i];
-
-				if (current.amount < tier.amount) {
-					tier = current;
-				}
+		if(product?.calculatedPrice && locale){
+			var calculatedPrice = product.calculatedPrice;
+			
+			if(calculatedPrice.discountedPrice && calculatedPrice.discountedPrice.length > 0){
+				tiers = calculatedPrice.discountedPrice;
+			}else if(calculatedPrice.listPrice && calculatedPrice.listPrice.length > 0){
+				tiers = calculatedPrice.listPrice;
 			}
 		}
 
-		amount = lessTax ? tier.amountLessTax : tier.amount;
-	}
-	else {
-		disabled = !quantity ? true : undefined;
+		if(!tiers){
+			disabled = !quantity ? true : undefined;
+		}else{
+			hasOptions = tiers.length > 1;
+
+			// Get the lowest one:
+			var tier = tiers[0];
+
+			if (hasOptions) {
+				for (var i = 1; i < tiers.length; i++) {
+					var current = tiers[i];
+
+					if (current.amount < tier.amount) {
+						tier = current;
+					}
+				}
+			}
+
+			amount = lessTax ? tier.amountLessTax : tier.amount;
+		}
 	}
 
 	return (

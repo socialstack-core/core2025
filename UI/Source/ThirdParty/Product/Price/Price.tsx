@@ -41,18 +41,40 @@ const Price: React.FC<PriceProps> = (props) => {
 	// TODO: retrieve associated price (see priceId)
 	// NB: also needs to account for:
 	// - global incl / excl VAT setting (see header)
-	// - multiple options (set to lowest price so this can be displayed as "From £X.XX")
+	// - multiple options (set to lowest price so this can be displayed as "From ï¿½X.XX")
 	let currencyCode: string | undefined;
 	let amount: ulong | undefined;
 	let hasOptions = false;
+	let oldPrice = 0;
 
 	if (override) {
 		currencyCode = override.currencyCode;
 		amount = override.amount;
 		hasOptions = !!isFrom;
-	} else if (product?.calculatedPrice && product?.calculatedPrice.length && locale) {
+	} else {
 		// NB: This will be replaced again when per-user pricing and the tax resolver is added
-		var tiers = product.calculatedPrice;
+		var tiers = null;
+		if(product?.calculatedPrice && locale){
+			var calculatedPrice = product.calculatedPrice;
+			
+			if(calculatedPrice.discountedPrice && calculatedPrice.discountedPrice.length > 0){
+				tiers = calculatedPrice.discountedPrice;
+				oldPrice = calculatedPrice.listPrice;
+			}else if(calculatedPrice.listPrice && calculatedPrice.listPrice.length > 0){
+				tiers = calculatedPrice.listPrice;
+			}
+		}
+
+		if(!tiers){
+			currencyCode = locale.currencyCode;
+
+			return (
+				<span className="ui-product-price">
+					{formatPOA({ currencyCode })}
+				</span>
+			);
+		}
+
 		hasOptions = tiers.length > 1;
 
 		// Get the lowest one:
@@ -71,19 +93,7 @@ const Price: React.FC<PriceProps> = (props) => {
 		currencyCode = locale.currencyCode;
 		amount = lessTax ? tier.amountLessTax : tier.amount;
 	}
-	else {
-		currencyCode = locale.currencyCode;
-
-		return (
-			<span className="ui-product-price">
-				{formatPOA({ currencyCode })}
-			</span>
-		);
-	}
-
-	// TODO: optional previous price
-	let oldPrice = 0;
-
+	
 	return (
 		<span className="ui-product-price">
 			{hasOptions && <span className="ui-product-price--from">{`From`}</span>}

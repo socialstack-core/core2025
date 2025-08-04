@@ -1,43 +1,44 @@
-using System;
+using System.Collections.Generic;
 using Api.AutoForms;
 using Api.Database;
 using Api.Startup;
 using Api.Translate;
 using Api.Users;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 
 namespace Api.Payments
 {
-	
+
 	/// <summary>
 	/// A Product. Price is specified via price tiers as a product can have bulk discounts.
 	/// Typically though you would include calculatedPrice as that resolves both customer 
 	/// specific pricing and provides with/without tax results.
 	/// </summary>
 
-    [ListAs("OptionalExtras", IsPrimary = false)]
-    [ImplicitFor("OptionalExtras", typeof(Product))]
+	[ListAs("OptionalExtras", IsPrimary = false)]
+	[ImplicitFor("OptionalExtras", typeof(Product))]
 
-    [ListAs("Accessories", IsPrimary = false)]
-    [ImplicitFor("Accessories", typeof(Product))]
+	[ListAs("Accessories", IsPrimary = false)]
+	[ImplicitFor("Accessories", typeof(Product))]
 
-    [ListAs("Suggestions", IsPrimary = false)]
-    [ImplicitFor("Suggestions", typeof(Product))]
+	[ListAs("Suggestions", IsPrimary = false)]
+	[ImplicitFor("Suggestions", typeof(Product))]
 
-    [ListAs("Variants", IsPrimary = false)]
-    [ImplicitFor("Variants", typeof(Product))]
+	[ListAs("Variants", IsPrimary = false)]
+	[ImplicitFor("Variants", typeof(Product))]
 
-    [HasVirtualField("primaryCategory", typeof(ProductCategory), "PrimaryCategoryId")]
+	[HasVirtualField("primaryCategory", typeof(ProductCategory), "PrimaryCategoryId")]
 
 	[HasSecondaryResult("attributeValueFacets", typeof(AttributeValueFacet))]
 	[HasSecondaryResult("productCategoryFacets", typeof(ProductCategoryFacet))]
 	public partial class Product : VersionedContent<uint>
 	{
-        /// <summary>
-        /// The unique identifier for product
-        /// </summary>
-        [DatabaseField(Length = 200)]
-        public string Sku;
+		/// <summary>
+		/// The unique identifier for product
+		/// </summary>
+		[DatabaseField(Length = 200)]
+		public string Sku;
 
 		/// <summary>
 		/// 0 = Physical
@@ -46,27 +47,34 @@ namespace Api.Payments
 		[Module("Admin/Payments/ProductTypes")]
 		public uint ProductType;
 
-        /// <summary>
-        /// The name of the product
-        /// </summary>
-        [DatabaseField(Length = 200)]
-        [Data("required", "true")]
-        [Data("validate", "Required")]
+		/// <summary>
+		/// The name of the product
+		/// </summary>
+		[DatabaseField(Length = 200)]
+		[Data("required", "true")]
+		[Data("validate", "Required")]
 		public Localized<string> Name;
 
-        /// <summary>
-        /// The slug for product
-        /// </summary>
-        [DatabaseField(Length = 1000)]
+		/// <summary>
+		/// The slug for product
+		/// </summary>
+		[DatabaseField(Length = 1000)]
 		[Data("readonly", true)]
-        public string Slug;
+		public string Slug;
+
+		/// <summary>
+		/// In the atomic currency unit (pence), the nominal value of free samples used for tax purposes.
+		/// This must be set if the configured price is zero. It is not triggered in the event 
+		/// that an order's value is discounted to zero through coupons or other promotions.
+		/// </summary>
+		public uint? FreeSampleNominalValue;
 
         /// <summary>
-        /// True if this product is billed by usage.
-        /// </summary>
-        [Data("help", "Tick this if this product is billed after it has been used based on the amount of usage it has had.")]
+		/// True if this product is billed by usage.
+		/// </summary>
+		[Data("help", "Tick this if this product is billed after it has been used based on the amount of usage it has had.")]
 		public bool IsBilledByUsage;
-		
+
 		/// <summary>
 		/// Used to indicate if this product recurs and if so, the frequency.
 		/// 0 = One off
@@ -78,40 +86,40 @@ namespace Api.Payments
 		[Module("Admin/Payments/BillingFrequencies")]
 		public uint BillingFrequency;
 
-        /// <summary>
-        /// Used to indicate if this product is tax exempt
-        /// 0 = No
-        /// 1 = Yes
-        /// 2 = Eligibility required
-        /// </summary>
-        [Module("Admin/Payments/TaxExempt")]
-        [Data("help", "Identify if the product is tax exempt")]
-        public uint TaxExempt;
+		/// <summary>
+		/// Used to indicate if this product is tax exempt
+		/// 0 = No
+		/// 1 = Yes
+		/// 2 = Eligibility required
+		/// </summary>
+		[Module("Admin/Payments/TaxExempt")]
+		[Data("help", "Identify if the product is tax exempt")]
+		public uint TaxExempt;
 
-        /// <summary>
-        /// Used to indicate the availability of the product
-        /// 0 = Yes
-        /// 1 = Pre order
-        /// 2 = No (permanently)
-        /// 3 = No (awaiting stock)
-        /// </summary>
-        [Module("Admin/Payments/Availability")]
-        [Data("help", "Identify if the product is currently available")]
-        public uint Availability;
+		/// <summary>
+		/// Used to indicate the availability of the product
+		/// 0 = Yes
+		/// 1 = Pre order
+		/// 2 = No (permanently)
+		/// 3 = No (awaiting stock)
+		/// </summary>
+		[Module("Admin/Payments/Availability")]
+		[Data("help", "Identify if the product is currently available")]
+		public uint Availability;
 
-        /// <summary>
+		/// <summary>
 		/// The content of this product.
 		/// </summary>
 		[Data("type", "canvas")]
-        [Data("main", "false")]
-        public Localized<JsonString> DescriptionJson;
+		[Data("main", "false")]
+		public Localized<JsonString> DescriptionJson;
 
-        /// <summary>
-        /// The raw metadata/content of this product, used for free text search
-        /// </summary>
-        [Data("readonly", true)]
+		/// <summary>
+		/// The raw metadata/content of this product, used for free text search
+		/// </summary>
+		[Data("readonly", true)]
 		[JsonIgnore]
-        public string DescriptionRaw;
+		public string DescriptionRaw;
 
 		/// <summary>
 		/// The feature image ref
@@ -128,8 +136,8 @@ namespace Api.Payments
 		/// 2 = Step always. maxQuantity * tierPrice per tier always.
 		/// </summary>
 		[Module("Admin/Payments/PriceStrategies")]
-        [Data("help", "If you're using tiers, this defines the calculation used for the final price.")]
-        public uint PriceStrategy;
+		[Data("help", "If you're using tiers, this defines the calculation used for the final price.")]
+		public uint PriceStrategy;
 
 		/// <summary>
 		/// Available stock. Null indicates it is unlimited.
@@ -140,7 +148,7 @@ namespace Api.Payments
 		/// Indicates if this is a variant product related to a parent base product
 		/// </summary>
 		public uint? VariantOfId;
-		
+
 		/// <summary>
 		/// Continue selling when there is no stock
 		/// usually useful for products that can be
@@ -155,6 +163,58 @@ namespace Api.Payments
 		/// </summary>
 		[JsonIgnore]
 		public uint PrimaryCategoryId => (uint)Mappings.GetFirst("ProductCategories");
+
+		/// <summary>
+		/// JsonString containing the default price tiers for this product
+		/// </summary>
+		[Module("Admin/Payments/PriceTable")]
+		public JsonString PriceTiersJson;
+
+		private List<Price> _priceTiers;
+
+		/// <summary>
+		/// The list of default prices for this product extracted from PriceTiers
+		/// </summary>
+		[JsonIgnore]
+		public List<Price> PriceTiers
+		{
+			get
+			{
+				if (_priceTiers == null && PriceTiersJson.ValueOf() != null)
+				{
+					_priceTiers = JsonConvert.DeserializeObject<List<Price>>(PriceTiersJson.ToString());
+				}
+				return _priceTiers;
+			}
+			set => _priceTiers = value;
+		}
+
+		/// <summary>
+		/// Update the PriceTiers json for this product.
+		/// </summary>
+		public void UpdatePricesJson()
+		{
+			if (_priceTiers == null)
+			{
+				return;
+			}
+
+			//Make sure the order is correct before saving
+			SortPrices();
+
+			PriceTiersJson = new JsonString(JsonConvert.SerializeObject(_priceTiers));
+
+			//reset _prices in the cache
+			_priceTiers = null;
+		}
+
+		/// <summary>
+		/// Sort the prices for based on minimum quantity
+		/// </summary>
+		private void SortPrices()
+		{
+			PriceTiers.Sort((a, b) => a.MinimumQuantity.CompareTo(b.MinimumQuantity));
+		}
 	}
 
 }
