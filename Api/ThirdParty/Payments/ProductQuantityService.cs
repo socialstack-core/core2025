@@ -474,7 +474,7 @@ namespace Api.Payments
 			{
 				var product = lineItem.Product;
 
-				if (product == null || product.ProductType == 0)
+				if (product == null || product.ProductType != 0)
 				{
 					continue;
 				}
