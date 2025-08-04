@@ -28,7 +28,7 @@ interface AddressSelectionProps {
 
 	isSame?: boolean;
 
-	savedAddresses: ApiList<Address>;
+	savedAddresses: Address[];
 
 	addressType: 'delivery' | 'billing';
 
@@ -102,7 +102,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = (props) => {
 			</div>}
 			{(!hasSame || !isSame) && <>
 				<div className="payment-checkout__address-selection">
-					{savedAddresses.results.map(savedAddress => {
+					{savedAddresses.map(savedAddress => {
 						return <AddressCard address={savedAddress} selectedAddress={value} onChange={() => setValue(savedAddress)} name={name} />
 					})}
 				</div>

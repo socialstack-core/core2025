@@ -143,6 +143,19 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
         return result;
     }
 
+    let cartIsDigitalOnly = () => {
+        var result = true;
+
+        shoppingCart?.productQuantities?.forEach(productQty => {
+            var product = productQty?.product;
+            if (product?.productType === 0) {
+                result = false;
+            }
+        });
+
+        return result;
+    };
+
     let cartIsEmpty = () => {
         return !shoppingCart?.productQuantities?.length;
     };
@@ -195,6 +208,7 @@ export const Provider: React.FC<React.PropsWithChildren> = (props) => {
                 hasSubscriptions,
                 lessTax,
                 setLessTax,
+                cartIsDigitalOnly,
                 setCoupon,
 				getCartId,
                 cartContents: shoppingCart?.cartContents
