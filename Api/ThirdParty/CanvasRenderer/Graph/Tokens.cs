@@ -25,6 +25,10 @@ namespace Api.CanvasRenderer
         /// </summary>
         public string _sourceText;
 
+        /// <summary>
+        /// Create a new token executor.
+        /// </summary>
+        /// <param name="d"></param>
         public Tokens(JToken d) : base(d)
         {
         }
