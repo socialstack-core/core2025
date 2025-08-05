@@ -153,7 +153,7 @@ const Checkout: React.FC<CheckoutProps> = (props) => {
 				<li>
 					{/* delivery address */}
 					<AddressSelection selectedTitle={`Delivering to`} unselectedTitle={`Select a delivery address`}
-						name='delivery' savedAddresses={savedAddresses}
+						name='delivery' savedAddresses={savedAddresses.results}
 						value={deliveryAddress} setValue={setDeliveryAddress} addressType='delivery'
 						enabled={true}
 					/>
@@ -162,7 +162,7 @@ const Checkout: React.FC<CheckoutProps> = (props) => {
 				<li className={currentStep < CheckoutStep.BillingAddress ? "payment-checkout__step--disabled" : ""}>
 					{/* billing currentStep */}
 					<AddressSelection selectedTitle={`Billing Address`} unselectedTitle={`Select a billing address`}
-						name='billing' savedAddresses={savedAddresses}
+						name='billing' savedAddresses={savedAddresses.results}
 						value={billingAddress} setValue={setBillingAddress}
 						hasSame={true} isSame={sameAsDelivery} setSameAs={setSameAsDelivery} addressType='billing'
 						enabled={currentStep >= CheckoutStep.BillingAddress}
