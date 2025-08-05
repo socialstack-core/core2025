@@ -9,6 +9,7 @@ import Loop from "UI/Loop";
 import Loading from "UI/Loading";
 import Button from "UI/Button";
 import Link from "UI/Link";
+import Paginator from "UI/Paginator";
 
 type TreeViewType = 'tree' | 'list';
 
@@ -16,7 +17,7 @@ type TreeViewType = 'tree' | 'list';
 export default function ProductAttributeTree(props) {
 	var addUrl = '/en-admin/productattribute/add';
 	var addGroupUrl = '/en-admin/productattributegroup/add';
-	const { pageState } = useRouter();
+	const { pageState, updateQuery } = useRouter();
 	const { query } = pageState;
 	var path = query?.get("path") || "";
 
@@ -34,12 +35,18 @@ export default function ProductAttributeTree(props) {
 	const [sortField, setSortField] = useState<string>('id');
 	const [sortOrder, setSortOrder] = useState<string>('ASC');
 
+	// grab the current page
+	const currentPage: uint = (pageState.query?.has("page") ? parseInt(pageState.query?.get("page") ?? "1") : 1) as uint;
+
+	// and the page size.
+	const pageSize: uint = (pageState.query?.has('limit') ? parseInt(pageState.query?.get("limit") ?? "10") : 20) as uint;
+
 	useEffect(() => {
 		
 		if (!attributes) {
 			productAttributeApi.list({
-				pageIndex: 0 as uint, 
-				pageSize: 20 as uint,
+				pageIndex: (currentPage - 1 as uint),
+				pageSize,
 				sort: {
 					field: sortField,
 					direction: sortOrder.toLowerCase()
@@ -50,14 +57,14 @@ export default function ProductAttributeTree(props) {
 			})
 		}
 		
-	}, [attributes, sortField, sortOrder]);
+	}, [attributes, sortField, sortOrder, pageSize, currentPage]);
 
 	useEffect(() => {
 
 		if (!searchQuery || searchQuery.length == 0) {
 			productAttributeApi.list({
-				pageIndex: 0 as uint,
-				pageSize: 20 as uint,
+				pageIndex: (currentPage - 1) as uint,
+				pageSize: pageSize,
 				sort: {
 					field: sortField,
 					direction: sortOrder.toLowerCase()
@@ -68,14 +75,14 @@ export default function ProductAttributeTree(props) {
 				})
 		}
 
-	}, [searchQuery, sortField, sortOrder]);
+	}, [searchQuery, sortField, sortOrder, pageSize, currentPage]);
 
 	useEffect(() => {
 		
 		if (searchQuery && searchQuery.length != 0) {
 			productAttributeApi.list({
-				pageIndex: 0 as uint,
-				pageSize: 20 as uint,
+				pageIndex: (currentPage - 1) as uint,
+				pageSize: pageSize,
 				sort: {
 					field: sortField,
 					direction: sortOrder.toLowerCase()
@@ -88,7 +95,7 @@ export default function ProductAttributeTree(props) {
 			})
 		}
 		
-	}, [searchQuery, sortField, sortOrder]);
+	}, [searchQuery, sortField, sortOrder, pageSize, currentPage]);
 	
 	
 	return (
@@ -160,14 +167,32 @@ export default function ProductAttributeTree(props) {
 	
 						}} /> : 
 						(attributes ? (
-							<ListView 
-								userCanEdit={userCanEditAttribute} 
-								results={attributes}
-								sortOrder={sortOrder}
-								sortField={sortField}
-								setSortField={(field) => setSortField(field)}
-								setSortDirection={order => setSortOrder(order)}
-							/>
+							<>
+								<Paginator
+									totalResults={attributes?.totalResults}
+									pageSize={pageSize}
+									pageIndex={currentPage}
+									onChange={(toPage: number) => {
+										updateQuery({ page: toPage.toString() })
+									}}
+								/>
+								<ListView 
+									userCanEdit={userCanEditAttribute} 
+									results={attributes}
+									sortOrder={sortOrder}
+									sortField={sortField}
+									setSortField={(field) => setSortField(field)}
+									setSortDirection={order => setSortOrder(order)}
+								/>
+								<Paginator
+									totalResults={attributes?.totalResults}
+									pageSize={pageSize}
+									pageIndex={currentPage}
+									onChange={(toPage: number) => {
+										updateQuery({ page: toPage.toString() })
+									}}
+								/>
+							</>
 						) : <Loading />)
 					}
 				</div>
