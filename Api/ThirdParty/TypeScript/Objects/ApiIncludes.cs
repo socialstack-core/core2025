@@ -127,9 +127,20 @@ namespace Api.TypeScript.Objects
 
                 foreach (var virtualField in virtuals)
                 {
+
+                    if (virtualField.Type is null)
+                    {
+                        builder.AppendLine($"    get {TypeScriptService.LcFirst(virtualField.FieldName)}() {{");
+                        builder.AppendLine($"        return new ApiIncludes(this.toString(), '{virtualField.FieldName.ToLower()}');");
+                        builder.AppendLine("    }");
+                        continue;
+                    }
+                    
                     builder.AppendLine($"    get {TypeScriptService.LcFirst(virtualField.FieldName)}() {{");
 
                     var targetType = virtualField.Type.Name;
+                    
+                    
                     
                     builder.AppendLine($"        return new {targetType}Includes(this.toString(), '{virtualField.FieldName.ToLower()}');");
                     builder.AppendLine("    }");

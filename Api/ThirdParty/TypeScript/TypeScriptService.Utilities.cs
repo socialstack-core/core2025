@@ -40,6 +40,11 @@ namespace Api.TypeScript
         {
             while (true)
             {
+                if (type is null)
+                {
+                    contentType = null;
+                    return false;
+                }
                 // Check if the type is generic and is a ValueTask<>
                 if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 {

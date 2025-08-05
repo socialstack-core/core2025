@@ -109,6 +109,11 @@ namespace Api.TypeScript.Objects
         /// </summary>
         public void AddType(Type type)
         {
+            if (type is null)
+            {
+                return;
+            }
+
             type = TypeScriptService.UnwrapTypeNesting(type);
             
             // filter out some basic items.

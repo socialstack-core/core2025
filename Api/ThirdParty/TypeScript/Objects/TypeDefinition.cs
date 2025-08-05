@@ -210,7 +210,14 @@ namespace Api.TypeScript.Objects
 
             foreach (var virtualField in virtualFields)
             {
-                builder.AppendLine($"    {TypeScriptService.LcFirst(virtualField.FieldName)}{(TypeScriptService.IsNullable(virtualField.Type) ? "?:" : ":")} {svc.GetGenericSignature(virtualField.Type)};");
+                if (virtualField.Type is null)
+                {
+                    builder.AppendLine($"    {TypeScriptService.LcFirst(virtualField.FieldName)}?: Content<uint>");
+                }
+                else
+                {
+                    builder.AppendLine($"    {TypeScriptService.LcFirst(virtualField.FieldName)}{(TypeScriptService.IsNullable(virtualField.Type) ? "?:" : ":")} {svc.GetGenericSignature(virtualField.Type)};");
+                }
             }
         }
     }
