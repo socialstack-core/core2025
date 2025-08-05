@@ -19,6 +19,8 @@ import Button from "UI/Button";
 import {SortField} from "Admin/AutoList";
 import Time from "UI/Time";
 import Debounce from "UI/Functions/Debounce";
+import Paginator from "UI/Paginator";
+import {ProductCategoryFacet} from "UI/Product/Search/Facets";
 
 /**
  * Props for the ProductCategoryTree component
@@ -149,14 +151,19 @@ type ProductListViewProps = {
  */
 const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewProps) => {
 	const [searchResults, setSearchResults] = useState<ApiList<Product>>();
-	const [pageOffset, setPageOffset] = useState(0);
 	const [selectedAttributeValues, setSelectedAttributeValues] = useState<ProductAttributeValue[]>([]);
 	const [selectedCategories, setSelectedCategories] = useState<ProductCategory[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [sortOrder, setSortOrder] = useState<SortField>({ field: null, direction: 'asc' }); // relevance by default
-	const { pageState } = useRouter();
+	const { pageState, updateQuery } = useRouter();
 	const { query } = pageState;
 	const queryText = query?.get("q");
+
+	// grab the current page
+	const currentPage: uint = (pageState.query?.has("page") ? parseInt(pageState.query?.get("page") ?? "1") : 1) as uint;
+
+	// and the page size.
+	const pageSize: uint = (pageState.query?.has('limit') ? parseInt(pageState.query?.get("limit") ?? "10") : 20) as uint;
 
 	useEffect(() => {
 		setLoading(true);
@@ -202,9 +209,9 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 
 		searchApi
 			.faceted({
-				query: queryText,
-				pageOffset: pageOffset as uint,
-				pageSize: 200 as int,
+				query: queryText ?? '',
+				pageOffset: (currentPage - 1) as uint,
+				pageSize: pageSize,
 				appliedFacets,
 				minPrice: 1,
 				maxPrice: 5000,
@@ -225,7 +232,7 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 				setSearchResults(response);
 				setLoading(false);
 			});
-	}, [selectedAttributeValues, selectedCategories, queryText, sortOrder]);
+	}, [selectedAttributeValues, selectedCategories, queryText, sortOrder, pageSize, currentPage]);
 
 	const changeSortField = (field: string) => {
 		if (field == sortOrder.field) {
@@ -253,6 +260,14 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 							setSelectedCategories={setSelectedCategories}
 						/>
 					)}
+					<Paginator
+						totalResults={searchResults?.totalResults}
+						pageSize={pageSize}
+						pageIndex={currentPage}
+						onChange={(toPage: number) => {
+							updateQuery({ page: toPage.toString() })
+						}}
+					/>
 					<table className="table products-table">
 						<thead>
 						<tr>
@@ -266,10 +281,10 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 							<th>Image</th>
 							<th 
 								onClick={() => changeSortField('Name.en')}
-								className={sortOrder.field === 'name.en' ? 'active' : ''}
+								className={sortOrder.field === 'Name.en' ? 'active' : ''}
 							>
 								Name
-								{sortOrder.field === 'name.en' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
+								{sortOrder.field === 'Name.en' ? <i className={'fas fa-chevron-' + (sortOrder.direction == 'asc' ? 'up' : 'down')}/> : null}
 							</th>
 							<th 
 								onClick={() => changeSortField('Sku')}
@@ -314,6 +329,14 @@ const ProductListView: React.FC<ProductListViewProps> = (props: ProductListViewP
 						))}
 						</tbody>
 					</table>
+					<Paginator
+						totalResults={searchResults?.totalResults}
+						pageSize={pageSize}
+						pageIndex={currentPage}
+						onChange={(toPage: number) => {
+							updateQuery({ page: toPage.toString() })
+						}}
+					/>
 				</div>
 			)}
 		</div>
