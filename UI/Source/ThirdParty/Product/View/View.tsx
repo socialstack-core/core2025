@@ -1,18 +1,18 @@
 import { Product } from 'Api/Product';
-import ProductCarousel, { CarouselItem } from 'UI/Product/Carousel';
+import ProductCarousel, {CarouselItem} from 'UI/Product/Carousel';
 import ProductAbout from 'UI/Product/About';
 import ProductAttributes from 'UI/Product/Attributes';
 import ProductPrice from 'UI/Product/Price';
 import ProductQuantity from 'UI/Product/Quantity';
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import Breadcrumb, { Crumb } from 'UI/Breadcrumb';
 import ProductHeader from 'UI/Product/Header';
 import { useRouter } from 'UI/Router';
 import Button from 'UI/Button';
 import ProductVariants from 'UI/Product/Variants';
-import { Upload } from "Api/Upload";
+import {Upload} from "Api/Upload";
 import Link from "UI/Link";
-import { getUrl } from "UI/FileRef";
+import {getUrl} from "UI/FileRef";
 
 
 const ROOT_CATEGORY_ID: uint = 1 as uint;
@@ -36,42 +36,20 @@ const View: React.FC<ViewProps> = (props) => {
 	const { product } = props;
 	const { pageState, setPage } = useRouter();
 	const { query, url } = pageState;
-
+	
 	// Selected variant (if any) is..
 	const variantSku = query?.get("sku");
 	const currentVariant: Product | undefined = variantSku ? product.variants?.find(prod => prod.sku == variantSku) : undefined;
 
-	const downloads = product.productDownloads?.filter((download: Upload) => download.ref);
-
-	// TODO
-	const faqs = [];
-
 	// NB: if additional tabs are required, be sure to update $tab-count accordingly (see View.scss)
 	enum ProductTab {
-		About = `About`,
+		About = `About this product`,
 		Details = `Details & Specification`,
-		Downloads = `Downloads`,
-		FAQs = `FAQs`
+		Downloads = `Downloads`
+		// hide FAQs tab until we have content to show
+		//FAQs = `FAQs`
 	}
-
-	function getTabs(): ProductTab[] {
-		const tabs: ProductTab[] = [
-			ProductTab.About,
-			ProductTab.Details
-		];
-
-		if (downloads.length) {
-			tabs.push(ProductTab.Downloads);
-		}
-
-		if (faqs.length) {
-			tabs.push(ProductTab.FAQs);
-		}
-
-		return tabs;
-	}
-
-	const productTabs = Object.values(getTabs());
+	const productTabs = Object.values(ProductTab);
 
 	const [selectedTab, setSelectedTab] = useState(ProductTab.About);
 	const [selectedThumbnail, setSelectedThumbnail] = useState<CarouselItem>();
@@ -85,21 +63,21 @@ const View: React.FC<ViewProps> = (props) => {
 	const isApproved = true;
 
 	// variant checks
-	const hasVariants = product.variants?.length > 0;
+	const hasVariants = (product.variants ?? [])?.length > 0;
 
-	var sortedPrices = hasVariants ? product.variants.map(product => {
+	var sortedPrices = hasVariants ? (product.variants ?? []).map(product => {
 		var tiers = null;
 
-		if (product?.calculatedPrice) {
+		if(product?.calculatedPrice){
 			var calculatedPrice = product.calculatedPrice;
-
-			if (calculatedPrice.discountedPrice && calculatedPrice.discountedPrice.length > 0) {
+			
+			if(calculatedPrice.discountedPrice && calculatedPrice.discountedPrice.length > 0){
 				tiers = calculatedPrice.discountedPrice;
-			} else if (calculatedPrice.listPrice && calculatedPrice.listPrice.length > 0) {
+			}else if(calculatedPrice.listPrice && calculatedPrice.listPrice.length > 0){
 				tiers = calculatedPrice.listPrice;
 			}
 		}
-		if (tiers) {
+		if (!tiers) {
 			return null;
 		}
 
@@ -110,14 +88,14 @@ const View: React.FC<ViewProps> = (props) => {
 		.sort((a, b) => a.amount - b.amount) : null;
 
 	var cheapestPrice = sortedPrices?.length ? sortedPrices[0] : null;
-
+	
 	// Added the required home breadcrumb as well as  
 	// overwrite of the root categories name to "All products"
 	return <>
 		<div className="ui-product-view">
 			{/* breadcrumb links */}
 			{product.breadcrumb && <Breadcrumb crumbs={[{ name: `Home`, href: '/' }, ...product.breadcrumb.map(crumb => {
-
+				
 				return {
 					name: crumb.id === ROOT_CATEGORY_ID ? `All products` : crumb.name,
 					href: crumb.primaryUrl
@@ -126,8 +104,8 @@ const View: React.FC<ViewProps> = (props) => {
 			}), { name: product?.name, href: pageState.url }]} />}
 
 			{/* product images */}
-			<ProductCarousel
-				product={product}
+			<ProductCarousel 
+				product={product} 
 				currentVariant={currentVariant}
 				// this holds the current selected thumbnail from
 				// the useState above, this component tells
@@ -138,7 +116,7 @@ const View: React.FC<ViewProps> = (props) => {
 				// when the attribute matrix is mutated, it
 				// should clear the selected thumbnail
 				selectedThumbnail={selectedThumbnail}
-
+				
 				// little subscriber to listen to when the thumb
 				// changes, this doesn't change the selected product
 				// discovered by the attribute matrix, this is just
@@ -147,7 +125,7 @@ const View: React.FC<ViewProps> = (props) => {
 					setSelectedThumbnail(thumbInfo);
 				}}
 			/>
-
+			
 			{/* featured / title / stock info */}
 			<ProductHeader product={product} currentVariant={currentVariant} />
 
@@ -181,7 +159,7 @@ const View: React.FC<ViewProps> = (props) => {
 						</div>
 					</>;
 				})}
-			</div>
+				</div>
 
 			{/* tab panels */}
 			<div className="ui-product-view__tab-panels">
@@ -191,11 +169,11 @@ const View: React.FC<ViewProps> = (props) => {
 					return <>
 						<div className="ui-product-view__tab-panel" id={panelId}>
 							{tab == ProductTab.About && <>
-								<ProductAbout product={product} currentVariant={currentVariant} />
+								<ProductAbout title={`About this product`} product={product} currentVariant={currentVariant} />
 							</>}
 
 							{tab == ProductTab.Details && <>
-								<ProductAttributes product={product} currentVariant={currentVariant} />
+								<ProductAttributes title={`Product details`} product={product} currentVariant={currentVariant} />
 							</>}
 
 							{tab == ProductTab.Downloads && <>
@@ -212,7 +190,7 @@ const View: React.FC<ViewProps> = (props) => {
 									)
 								})}
 							</>}
-
+							
 							{tab == ProductTab.FAQs && <>
 								{`:: TODO ::`}
 							</>}
@@ -220,7 +198,7 @@ const View: React.FC<ViewProps> = (props) => {
 					</>;
 				})}
 			</div>
-
+			
 			{/* price info */}
 			<div className="ui-product-view__price-info">
 
