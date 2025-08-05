@@ -1,7 +1,21 @@
 $max-product-images: 5;
 
-.ui-product-images__thumbnail.active {
-	border: 3px solid #0E58B5;
+:root {
+	// set defaults
+	--carousel-preview-size: #{px_to_rem(279)};
+	--carousel-thumbnail-size: #{px_to_rem(76)};
+
+	// desktop overrides
+	//--carousel-preview-size: #{px_to_rem(344)};
+	//--carousel-thumbnail-size: #{px_to_rem(92)};
+
+	--carousel-thumbnail-background: #fff;
+	--carousel-thumbnail-border-radius: #{px_to_rem(10)};
+	--carousel-thumbnail-border: 3px solid transparent;
+	--carousel-thumbnail-border--active: 3px solid #0E58B5;
+	--carousel-thumbnail-label-background: #999;
+	--carousel-thumbnail-gradient: linear-gradient(225deg, rgba(255, 255, 255, 0) 0%, rgba(74, 74, 73, 0.10) 100%);
+	--carousel-lightbox-background: rgba(0,0,0, .8);
 }
 
 .ui-product-images {
@@ -41,8 +55,6 @@ $max-product-images: 5;
 		padding: 0 !important;
 		position: absolute;
 
-		
-		
 		@for $i from 1 through $max-product-images {
 			
 			&:nth-child(#{$i}):checked {
@@ -54,6 +66,10 @@ $max-product-images: 5;
 				}
 				
 				~ #{$product-images}__thumbnails {
+
+					#{$product-images}__thumbnail:nth-child(#{$i}) {
+						//border: 3px solid #0E58B5;
+					}
 
 				}
 				
@@ -125,6 +141,10 @@ $max-product-images: 5;
 			inset: 0;
 			background: linear-gradient(225deg, rgba(255, 255, 255, 0) 0%, rgba(74, 74, 73, 0.10) 100%);
 			border-radius: px_to_rem(10);
+		}
+
+		&.active {
+			border: 3px solid #0E58B5;
 		}
 
 	}

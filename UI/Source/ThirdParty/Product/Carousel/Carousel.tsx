@@ -39,6 +39,7 @@ interface CarouselProps {
 }
 
 const Carousel: React.FC<CarouselProps> = ({ product, currentVariant, onThumbSelected, selectedThumbnail }: CarouselProps) => {
+	var activeProduct = currentVariant || product;
 	
 	// we use useMemo here as this is derived from props, doesn't need
 	// any state, and should only mutate when changing products.
@@ -48,7 +49,7 @@ const Carousel: React.FC<CarouselProps> = ({ product, currentVariant, onThumbSel
 		// nullish coalesce (i.e. fallback)
 		// so we're always guaranteed an array
 		// which means .map is always valid.
-		return (product.variants ?? [])
+		const mainImages = (product.variants ?? [])
 			// we want essentially 2 things from each variant, we want its ID and we want its featureRef. 
 			.map((variant) => ({ id: variant.id, featureRef: variant.featureRef }))
 			// filter out any item where featureRef is falsy
@@ -56,6 +57,11 @@ const Carousel: React.FC<CarouselProps> = ({ product, currentVariant, onThumbSel
 			// i.e. null
 			// i.e. undefined
 			.filter(item => Boolean(item.featureRef));
+		
+		const additionalImages = ((product.productImages ?? []).map(item => ({ id: product.id, featureRef: item.ref })))
+			.filter(item => Boolean(item.featureRef))
+		
+		return [...mainImages, ...additionalImages]
 		// product is its only dependency.
 	}, [product])
 	
@@ -121,55 +127,58 @@ const Carousel: React.FC<CarouselProps> = ({ product, currentVariant, onThumbSel
 
 		return <Image size={512} fileRef={defaultImageRef} className="ui-product-images__slide ui-product-images__slide--empty" />;
 	}
-	
+
+	const hasRelatedImages = allItems.length != 0;
+	let productImagesClasses = ["ui-product-images"];
+
+	if (!hasRelatedImages) {
+		productImagesClasses.push("ui-product-images--single");
+	}
+
 	return (
-		<div className={'ui-product-images'}>
-			{/* 
-			* hidden radio buttons (these drive image selection) 
-			* (left in from original) 
-			* without at least one radio field the
-			* preview image seems to disappear due to
-			* some SCSS I'm currently unsure of. 
-			* probably a conan job :)
-			*/}
-			<input type="radio" name="carousel" id={`carousel_1`} checked />
-			{allItems.map((_, i) => {
-				return <input type="radio" name="carousel" id={`carousel_${i+2}`} />
-			})}
-			
-			{/* thumbnail images */}
-			<div className="ui-product-images__thumbnails">
-				{/* 
-					* this is the product's feature ref
-					* and exists purely for the actual "product" not
-					* a variant. 
-				*/}
-				<label 
-					onClick={() => onThumbSelected && onThumbSelected(product)} 
-					htmlFor={`current_1`} 
-					className={"ui-product-images__thumbnail " + (highlightedVariant.id === product.id ? 'active' : '')}
-					ref={highlightedVariant.id === product.id ? activeThumbnailRef : undefined}
-				>
-					<Image 
-						size={100} 
-						fileRef={product.featureRef || defaultImageRef} 
-					/>
-				</label>
-				{/* variant iteration, this iterates a collection of carousel items that belong purely to variants */}
-				{allItems.map((item, i) => {
-					// when clicked, this sets the parent state to selected variant. 
-					return (
-						<label 
-							onClick={() => onThumbSelected && onThumbSelected(item)} 
-							htmlFor={`current_${i + 2}`} 
-							className={"ui-product-images__thumbnail " + (highlightedVariant?.id === item.id ? 'active' : '')}
-							ref={highlightedVariant.id === item.id ? activeThumbnailRef : undefined}
-						>
-							<Image size={100} fileRef={item.featureRef || defaultImageRef} />
-						</label>
-					);
+		<div className={productImagesClasses.join(' ')}>
+			{hasRelatedImages && <>
+				{/* hidden radio buttons (these drive image selection) */}
+				<input type="radio" name="carousel" id={`carousel_1`} checked />
+				{allItems.map((_, i) => {
+					return <input type="radio" name="carousel" id={`carousel_${i+2}`} />
 				})}
-			</div>
+			
+				{/* thumbnail images */}
+				<div className="ui-product-images__thumbnails">
+					{/* 
+						* this is the product's feature ref
+						* and exists purely for the actual "product" not
+						* a variant. 
+					*/}
+					<label 
+						onClick={() => onThumbSelected && onThumbSelected(product)} 
+						htmlFor={`current_1`} 
+						className={"ui-product-images__thumbnail " + (highlightedVariant.id === product.id ? 'active' : '')}
+						ref={highlightedVariant.id === product.id ? activeThumbnailRef : undefined}
+					>
+						<Image 
+							size={100} 
+							fileRef={product.featureRef || defaultImageRef} 
+						/>
+					</label>
+					{/* variant iteration, this iterates a collection of carousel items that belong purely to variants */}
+					{allItems.map((item, i) => {
+						// when clicked, this sets the parent state to selected variant. 
+						return (
+							<label 
+								onClick={() => onThumbSelected && onThumbSelected(item)} 
+								htmlFor={`current_${i + 2}`} 
+								className={"ui-product-images__thumbnail " + (highlightedVariant?.id === item.id ? 'active' : '')}
+								ref={highlightedVariant.id === item.id ? activeThumbnailRef : undefined}
+							>
+								<Image size={100} fileRef={item.featureRef || defaultImageRef} />
+							</label>
+						);
+					})}
+				</div>
+			</>}
+
 			<div className="ui-product-images__slides">
 				{renderImage(highlightedVariant)}
 			</div>
