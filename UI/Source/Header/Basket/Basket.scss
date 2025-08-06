@@ -51,24 +51,6 @@
 	&__basket {
 
 		&-wrapper {
-			position: fixed;
-			left: auto;
-			top: 0;
-			right: 0;
-			bottom: 0;
-			border: 0;
-			margin: 0;
-			padding: px_to_rem(20) px_to_rem(12);
-			width: 100vw;
-			max-width: px_to_rem(340);
-			height: 100vh;
-			height: 100dvh;
-			box-shadow: none;
-			transform: translateX(100%);
-			transition-property: transform, box-shadow, overlay, display;
-			transition-duration: .3s;
-			transition-timing-function: ease-in-out;
-			transition-behavior: allow-discrete;
 			display: flex;
 			flex-direction: column;
 			gap: px_to_rem(24);
@@ -79,36 +61,6 @@
 				gap: px_to_rem(10);
 				font-size: px_to_rem(15);
 				font-weight: 600;
-			}
-
-			// NB: for polyfill support
-			// (do not combine with following rule)
-			&.\:popover-open {
-				box-shadow: px_to_rem(-16) 0 px_to_rem(16) 0 rgba(#210818, 25%);
-				transform: none;
-
-				&::backdrop {
-					background-color: rgba(#210818, 25%);
-				}
-
-			}
-
-			&:popover-open {
-				box-shadow: px_to_rem(-16) 0 px_to_rem(16) 0 rgba(#210818, 25%);
-				transform: none;
-
-				&::backdrop {
-					background-color: rgba(#210818, 25%);
-				}
-
-			}
-
-			&::backdrop {
-				background-color: transparent;
-				transition-property: background-color, overlay, display;
-				transition-duration: .3s;
-				transition-timing-function: ease-in-out;
-				transition-behavior: allow-discrete;
 			}
 
 		}
@@ -133,36 +85,6 @@
 			justify-content: center;
 			font-size: px_to_rem(15);
 			min-height: px_to_rem(44);
-		}
-
-	}
-
-}
-
-@starting-style {
-
-	.site-nav {
-
-		&__basket-wrapper {
-
-			&.\:popover-open {
-				box-shadow: none;
-				transform: translateX(100%);
-
-				&::backdrop {
-					background-color: transparent;
-				}
-			}
-
-			&:popover-open {
-				box-shadow: none;
-				transform: translateX(100%);
-
-				&::backdrop {
-					background-color: transparent;
-				}
-			}
-
 		}
 
 	}

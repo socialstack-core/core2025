@@ -1,4 +1,4 @@
-import NotificationBadge from 'UI/NotificationBadge';
+import Popover from 'UI/Popover';
 import Loading from "UI/Loading";
 import BasketItem from 'UI/Product/Signpost';
 import Link from "UI/Link";
@@ -76,24 +76,24 @@ const Basket: React.FC<BasketProps> = ({ ...props }) => {
 		</Button>
 
 		{/* basket popover */}
-		<div className="site-nav__basket-wrapper" popover="auto" id="basket_popover">
-				{loading && <>
-					<Loading />
-				</>}
-				{!loading && <>
-				<header>
-					<h2 className="site-nav__basket-title">
-						<i className="fr fr-shopping-basket"></i>
-						{`Shopping basket`}
-					</h2>
-					{!cartIsEmpty() && <>
-						{/*
-						<span>
-							{formatCurrency(basketTotal, { currencyCode })}
-						</span>
-						<NotificationBadge count={basketCount} />
-					*/}
-						{formatCurrency(basketTotal, { currencyCode })} {`(${basketCount})`}
+		<Popover method="auto" id="basket_popover" alignment="right" blurBackground={true} className="site-nav__basket-wrapper">
+			{loading && <>
+				<Loading />
+			</>}
+			{!loading && <>
+			<header>
+				<h2 className="site-nav__basket-title">
+					<i className="fr fr-shopping-basket"></i>
+					{`Shopping basket`}
+				</h2>
+				{!cartIsEmpty() && <>
+					{/*
+					<span>
+						{formatCurrency(basketTotal, { currencyCode })}
+					</span>
+					<NotificationBadge count={basketCount} />
+				*/}
+					{formatCurrency(basketTotal, { currencyCode })} {`(${basketCount})`}
 				</>}
 			</header>
 			</>}
@@ -120,7 +120,7 @@ const Basket: React.FC<BasketProps> = ({ ...props }) => {
 					{`View order`}
 				</Link>
 			</>}
-		</div>
+		</Popover>
 	</>;
 }
 

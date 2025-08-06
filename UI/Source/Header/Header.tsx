@@ -1,6 +1,5 @@
 import Image from 'UI/Image';
 import Html from 'UI/Html';
-import NotificationBadge from 'UI/NotificationBadge';
 import { useSession } from 'UI/Session';
 import defaultLogoRef from './example-logo.png';
 import { getContactLink } from 'UI/Functions/ContactTools';
@@ -23,6 +22,8 @@ import Button from "UI/Button";
 import Input from "UI/Input";
 import HeaderSearch from 'UI/Header/Search';
 import HeaderBasket from 'UI/Header/Basket';
+import HeaderAccount from 'UI/Header/Account';
+import Popover from "UI/Popover";
 
 // TODO: swap to 0 once "care-home-nursing-home-supplies-equipment" is no longer a thing
 const PARENT_CATEGORY_ID = 1;
@@ -431,21 +432,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 							{/* account */}
 							{user && <>
-								<Button sm outlined className="site-nav__actions-account">
-									{/*
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 36" fill="none">
-										<path d="M22.5106 9C22.5106 4.035 18.4756 0 13.5106 0C8.54556 0 4.51056 4.035 4.51056 9C4.51056 13.965 8.54556 18 13.5106 18C18.4756 18 22.5106 13.965 22.5106 9ZM7.51056 9C7.51056 5.685 10.1956 3 13.5106 3C16.8256 3 19.5106 5.685 19.5106 9C19.5106 12.315 16.8256 15 13.5106 15C10.1956 15 7.51056 12.315 7.51056 9Z" fill="currentColor" />
-										<path d="M0.0105591 33V34.5C0.0105591 35.325 0.685559 36 1.51056 36C2.33556 36 3.01056 35.325 3.01056 34.5V33C3.01056 28.035 7.04556 24 12.0106 24H15.0106C19.9756 24 24.0106 28.035 24.0106 33V34.5C24.0106 35.325 24.6856 36 25.5106 36C26.3356 36 27.0106 35.325 27.0106 34.5V33C27.0106 26.385 21.6256 21 15.0106 21H12.0106C5.39556 21 0.0105591 26.385 0.0105591 33Z" fill="currentColor" />
-									</svg>
-									*/}
-									<i className="fr fr-user"></i>
-									<span className="sr-only">
-										{`Account`}
-									</span>
-									{notificationCount > 0 && <>
-										<NotificationBadge icon={notificationBellSVG} />
-									</>}
-								</Button>
+								<HeaderAccount />
 							</>}
 
 						</div>
@@ -590,7 +577,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 											</Html>
 											{link.labelSuffix}
 										</Button>
-										<div className="site-nav__secondary-wrapper" popover="auto" id={link.popoverTarget}>
+										<Popover method="auto" id={link.popoverTarget} alignment="right" blurBackground={true} underHeader={true} className="site-nav__secondary-wrapper">
 											<menu className="site-nav__secondary-menu">
 												{link.children.map(sublink => {
 													return <li>
@@ -602,7 +589,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 													</li>;
 												})}
 											</menu>
-										</div>
+										</Popover>
 									</div>
 							</>;
 						})}
