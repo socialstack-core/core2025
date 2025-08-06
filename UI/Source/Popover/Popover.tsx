@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export type PopoverAlignment = 'left' | 'right' | 'top' | 'bottom' | 'center';
 const DEFAULT_METHOD = 'auto';
@@ -48,6 +48,11 @@ interface PopoverProps {
 	underHeader?: boolean,
 
 	/**
+	 * set true if background should remain accessible
+	 */
+	backgroundActive?: boolean,
+
+	/**
 	 * optional flags to indicate when popover should appear without trigger
 	 * (e.g. filters - could be behind a trigger for mobile, but visible on desktop)
 	 */
@@ -61,9 +66,11 @@ interface PopoverProps {
  * @param props React props.
  */
 const Popover: React.FC<PopoverProps> = (props) => {
-	const { className, id, children, blurBackground, underHeader, tabletPortraitVisible, tabletLandscapeVisible, desktopVisible } = props;
+	const { className, id, children, blurBackground, underHeader, backgroundActive,
+		tabletPortraitVisible, tabletLandscapeVisible, desktopVisible } = props;
 	const method = props.method || DEFAULT_METHOD;
 	const alignment = props.alignment || DEFAULT_ALIGNMENT;
+	const popoverRef = useRef();
 
 	useEffect(() => {
 		let minWidth = 0;
@@ -130,10 +137,71 @@ const Popover: React.FC<PopoverProps> = (props) => {
 		`;
 		document.head.appendChild(styleEl);
 
+		if (popoverRef.current) {
+			popoverRef.current.addEventListener("beforetoggle", toggleHandler);
+		}
+
 		return () => {
+
+			if (popoverRef.current) {
+				popoverRef.current.removeEventListener("beforetoggle", toggleHandler);
+			}
+
 			document.head.removeChild(styleEl);
 		};
 	}, []);
+
+	// toggle inert status on background while popover is open (unless backgroundActive set),
+	// NB: although the Popover API does support true modals, these are only accessible via JavaScript
+	//     doing it in this way allows us to support popovers without relying on JS,
+	//     while using progressive enhancement to disable the background when JS is available
+	const toggleHandler = (event) => {
+
+		if (backgroundActive) {
+			return;
+		}
+
+		var reactRoot = window.SERVER ? undefined : document.querySelector("#react-root");
+
+		if (!reactRoot) {
+			return;
+		}
+
+		const header = reactRoot.querySelector("#wrapper > header");
+		const content = reactRoot.querySelector("#wrapper > #content");
+		const footer = reactRoot.querySelector("#wrapper > #content ~ footer");
+
+		if (event.newState === "open") {
+
+			if (header && !underHeader) {
+				header.setAttribute("inert", "");
+			}
+
+			if (content) {
+				content.setAttribute("inert", "");
+			}
+
+			if (footer) {
+				footer.setAttribute("inert", "");
+			}
+
+		} else {
+
+			if (header && !underHeader) {
+				header.removeAttribute("inert");
+			}
+
+			if (content) {
+				content.removeAttribute("inert");
+			}
+
+			if (footer) {
+				footer.removeAttribute("inert");
+			}
+
+		}
+
+	};
 
 	let popoverClasses = ['ui-popover'];
 	popoverClasses.push(`ui-popover--${alignment}`);
@@ -153,7 +221,7 @@ const Popover: React.FC<PopoverProps> = (props) => {
 	}
 
 	return (
-		<div className={popoverClasses.join(' ')} popover={method} id={id}>
+		<div className={popoverClasses.join(' ')} popover={method} id={id} ref={popoverRef}>
 			{children}
 		</div>
 	);

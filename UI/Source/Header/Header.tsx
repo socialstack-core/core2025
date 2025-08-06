@@ -470,80 +470,81 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 											{link.label}
 										</Html>
 										{link.labelSuffix}
-									</Button>
-										<div key={`primary_${i}`} ref={(el) => setPrimaryMenuRef(el, i)} className="site-nav__primary-wrapper" popover="auto" id={link.popoverTarget}>
-										{/* standard dropdown list of sublinks */}
-										{link.children && <>
-											<menu className="site-nav__primary-menu">
-												{link.children.map(sublink => {
-													return <li>
-														{sublink.url && sublink.url.length > 0 && <>
-															<Link href={sublink.url} className="site-nav__primary-sublink">
-																{sublink.label}
-															</Link>
-														</>}
-													</li>;
-												})}
-											</menu>
-										</>}
-
-										{/* special case - list product categories */}
-										{link.productCategories && <>
-											{!productSubCategories && <Loading />}
-											{productSubCategories && <>
-
-												{/* link back to parent category */}
-												{productCategory?.parentId != null && <>
-													<Button sm variant="link" className="site-nav__primary-back" onClick={() => {
-														if (productCategory?.parentId) {
-															setCategoryId(productCategory.parentId!)
-														}
-													}}>
-														<i className="fr fr-arrow-90"></i>
-														<span>
-															{/* workaround for top level products currently labelled "Care Home & Nursing Home Supplies & Equipment" */}
-															{parentCategory.id == 1 ? `All products` : parentCategory.name}
-														</span>
-													</Button>
-													<h2 className="site-nav__primary-title">
-														{productCategory.name}
-													</h2>
-												</>}
-
-												{/* current category */}
-												{productCategory && <>
-													<Link href={productCategory.primaryUrl} className="site-nav__primary-sublink">
-														<span>
-															{productCategory.parentId == null && <>
-																{`All products`}
-															</>}
-															{productCategory.parentId != null && <>
-																{`All ${productCategory.name}`}
-															</>}
-														</span>
-														<i className="fr fr-arrow-right"></i>
-													</Link>
-												</>}
-
-												{/* subcategories */}
+										</Button>
+										<Popover alignment="left" blurBackground={true} underHeader={true}
+											key={`primary_${i}`} ref={(el) => setPrimaryMenuRef(el, i)} className="site-nav__primary-wrapper" method="auto" id={link.popoverTarget}>
+											{/* standard dropdown list of sublinks */}
+											{link.children && <>
 												<menu className="site-nav__primary-menu">
-													{productSubCategories.map(subcategory => {
-														// NB: filter on isDraft?
+													{link.children.map(sublink => {
 														return <li>
-															<Button variant="link" className="site-nav__primary-sublink" externalLink={subcategory.primaryUrl} onClick={() => {
-																setCategoryId(subcategory.id)
-															}}>
-																<span>
-																	{subcategory.name}
-																</span>
-																<i className="fr fr-arrow-right"></i>
-															</Button>
+															{sublink.url && sublink.url.length > 0 && <>
+																<Link href={sublink.url} className="site-nav__primary-sublink">
+																	{sublink.label}
+																</Link>
+															</>}
 														</li>;
 													})}
 												</menu>
 											</>}
-										</>}
-									</div>
+
+											{/* special case - list product categories */}
+											{link.productCategories && <>
+												{!productSubCategories && <Loading />}
+												{productSubCategories && <>
+
+													{/* link back to parent category */}
+													{productCategory?.parentId != null && <>
+														<Button sm variant="link" className="site-nav__primary-back" onClick={() => {
+															if (productCategory?.parentId) {
+																setCategoryId(productCategory.parentId!)
+															}
+														}}>
+															<i className="fr fr-arrow-90"></i>
+															<span>
+																{/* workaround for top level products currently labelled "Care Home & Nursing Home Supplies & Equipment" */}
+																{parentCategory.id == 1 ? `All products` : parentCategory.name}
+															</span>
+														</Button>
+														<h2 className="site-nav__primary-title">
+															{productCategory.name}
+														</h2>
+													</>}
+
+													{/* current category */}
+													{productCategory && <>
+														<Link href={productCategory.primaryUrl} className="site-nav__primary-sublink">
+															<span>
+																{productCategory.parentId == null && <>
+																	{`All products`}
+																</>}
+																{productCategory.parentId != null && <>
+																	{`All ${productCategory.name}`}
+																</>}
+															</span>
+															<i className="fr fr-arrow-right"></i>
+														</Link>
+													</>}
+
+													{/* subcategories */}
+													<menu className="site-nav__primary-menu">
+														{productSubCategories.map(subcategory => {
+															// NB: filter on isDraft?
+															return <li>
+																<Button variant="link" className="site-nav__primary-sublink" externalLink={subcategory.primaryUrl} onClick={() => {
+																	setCategoryId(subcategory.id)
+																}}>
+																	<span>
+																		{subcategory.name}
+																	</span>
+																	<i className="fr fr-arrow-right"></i>
+																</Button>
+															</li>;
+														})}
+													</menu>
+												</>}
+											</>}
+										</Popover>
 								</div>
 							</>;
 						})}

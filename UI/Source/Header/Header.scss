@@ -314,55 +314,9 @@
 		}
 
 		&-wrapper {
-			position: fixed;
 			color: var(--primary);
-			left: 0;
-			// no need to account for page scroll position as header is using position: sticky
-			//top: calc(var(--site-header-height) - var(--page-scroll-y));
-			top: var(--site-header-height);
-			right: 0;
-			bottom: 0;
-			border: 0;
-			margin: 0;
-			padding: px_to_rem(24) px_to_rem(20);
-			width: 100vw;
-			max-width: px_to_rem(340);
-			height: auto;
-			box-shadow: px_to_rem(16) 0 px_to_rem(16) 0 rgba(#210818, 25%);
-			transform: translateX(-100%);
-			transition-property: transform, overlay, display;
-			transition-duration: .3s;
-			transition-timing-function: ease-in-out;
-			transition-behavior: allow-discrete;
-
-			// NB: for polyfill support
-			// (do not combine with following rule)
-			&.\:popover-open {
-				transform: none;
-
-				&::backdrop {
-					//background: rgba(#210818, 25%);
-				}
-			}
-
-			&:popover-open {
-				transform: none;
-
-				&::backdrop {
-					//background: rgba(#210818, 25%);
-				}
-			}
-
-			/*
-			&::backdrop {
-				background-color: transparent;
-				transition-property: background-color, overlay, display;
-				transition-duration: .3s;
-				transition-timing-function: ease-in-out;
-				transition-behavior: allow-discrete;
-			}
-			*/
-
+			//padding: px_to_rem(24) px_to_rem(20);
+			//box-shadow: px_to_rem(16) 0 px_to_rem(16) 0 rgba(#210818, 25%);
 		}
 
 	}
@@ -478,35 +432,6 @@
 				-webkit-font-smoothing: antialiased;
 				-moz-osx-font-smoothing: grayscale;
 			}
-		}
-
-	}
-
-}
-
-@starting-style {
-
-	.site-nav {
-
-		&__nav-links-wrapper,
-		&__primary-wrapper {
-
-			&.\:popover-open {
-				transform: translateX(-100%);
-			
-				&::backdrop {
-					background-color: transparent;
-				}
-			}
-
-			&:popover-open {
-				transform: translateX(-100%);
-
-				&::backdrop {
-					background-color: transparent;
-				}
-			}
-
 		}
 
 	}
@@ -659,42 +584,4 @@
 
 	}
 
-}
-
-@mixin blurTransition() {
-	transition: filter .2s ease;
-}
-
-@mixin blurFilter() {
-	filter: blur(2px) grayscale(25%);
-}
-
-#content,
-#content ~ footer {
-	@include blurTransition();
-}
-
-// for popover polyfill support (do not merge with following rule)
-body:has(.site-nav__primary-wrapper.\:popover-open) {
-	//padding-right: var(--vertical-scroll-width, 0);
-
-	#content {
-		@include blurFilter();
-
-		~ footer {
-			@include blurFilter();
-		}
-	}
-}
-
-body:has(.site-nav__primary-wrapper:popover-open) {
-	//padding-right: var(--vertical-scroll-width, 0);
-
-	#content {
-		@include blurFilter();
-
-		~ footer {
-			@include blurFilter();
-		}
-	}
 }
