@@ -55,6 +55,7 @@ public class JsonStringSerializer : IBsonSerializer<JsonString>
                 break;
 
             case BsonType.Null:
+				context.Reader.ReadNull();
                 return new JsonString(null);
 
             case BsonType.Array:
