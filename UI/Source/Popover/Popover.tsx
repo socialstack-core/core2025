@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+//import { toggleFocusable } from 'UI/Functions/ToggleFocusable';
 
 export type PopoverAlignment = 'left' | 'right' | 'top' | 'bottom' | 'center';
 const DEFAULT_METHOD = 'auto';
@@ -85,6 +86,9 @@ const Popover: React.FC<PopoverProps> = (props) => {
 			minWidth = 1360;
 		}
 
+		// for those wondering "but ... why?!" with respect to CSS embedded in the component;
+		// this is so that behaviour can be controlled on a per-popover basis
+		// (e.g. some popovers may blur the background, some may not)
 		const mediaQuery = (minWidth == 0) ? '' : `
 			@media only screen and (min-width: ${minWidth}px) {
 				#${id} {
@@ -101,35 +105,41 @@ const Popover: React.FC<PopoverProps> = (props) => {
 				}
 			}`;
 
+		const backgroundRules = `
+			filter: blur(2px) grayscale(25%);
+			pointer-events: none;
+		`;
+
+		// NB: odd-looking ".\:popover-open" references are required by the popover API polyfill
 		const styleEl = document.createElement('style');
 		styleEl.textContent = `
 			body:has(#${id}.ui-popover--blur-bg.\:popover-open) {
 				#content {
-					filter: blur(2px) grayscale(25%);
+					${backgroundRules}
 
 					~ footer {
-						filter: blur(2px) grayscale(25%);
+						${backgroundRules}
 					}
 				}
 			}
 			body:has(#${id}.ui-popover--blur-bg:popover-open) {
 				#content {
-					filter: blur(2px) grayscale(25%);
+					${backgroundRules}
 
 					~ footer {
-						filter: blur(2px) grayscale(25%);
+						${backgroundRules}
 					}
 				}
 			}
 
 			body:has(#${id}.ui-popover--full.ui-popover--blur-bg.\:popover-open) {
 				#wrapper > header {
-					filter: blur(2px) grayscale(25%);
+					${backgroundRules}
 				}
 			}
 			body:has(#${id}.ui-popover--full.ui-popover--blur-bg:popover-open) {
 				#wrapper > header {
-					filter: blur(2px) grayscale(25%);
+					${backgroundRules}
 				}
 			}
 
@@ -138,23 +148,28 @@ const Popover: React.FC<PopoverProps> = (props) => {
 		document.head.appendChild(styleEl);
 
 		if (popoverRef.current) {
-			popoverRef.current.addEventListener("beforetoggle", toggleHandler);
+			//popoverRef.current.addEventListener("beforetoggle", toggleHandler);
+			popoverRef.current.addEventListener("focusout", focusHandler);
 		}
 
 		return () => {
 
 			if (popoverRef.current) {
-				popoverRef.current.removeEventListener("beforetoggle", toggleHandler);
+				//popoverRef.current.removeEventListener("beforetoggle", toggleHandler);
+				popoverRef.current.removeEventListener("focusout", focusHandler);
 			}
 
 			document.head.removeChild(styleEl);
 		};
 	}, []);
 
-	// toggle inert status on background while popover is open (unless backgroundActive set),
-	// NB: although the Popover API does support true modals, these are only accessible via JavaScript
-	//     doing it in this way allows us to support popovers without relying on JS,
-	//     while using progressive enhancement to disable the background when JS is available
+/*
+	// disable background while popover is open (unless backgroundActive set),
+	// - while we could use <dialog> to gain modal support, this can only be controlled via JavaScript
+	// - it's also an all or nothing approach (e.g. we can't disable everything *except* the header)
+	// - we use the Popover API to allow panels to be toggled without relying on JavaScript support
+	// - can't use HTML inert attribute as this is liable to disable the contents of the popover itself
+	// - note that CSS pointer-events rules are used to disable mouse interaction
 	const toggleHandler = (event) => {
 
 		if (backgroundActive) {
@@ -174,33 +189,47 @@ const Popover: React.FC<PopoverProps> = (props) => {
 		if (event.newState === "open") {
 
 			if (header && !underHeader) {
-				header.setAttribute("inert", "");
+				toggleFocusable(header, false);
 			}
 
 			if (content) {
-				content.setAttribute("inert", "");
+				toggleFocusable(content, false);
 			}
 
 			if (footer) {
-				footer.setAttribute("inert", "");
+				toggleFocusable(footer, false);
 			}
 
 		} else {
 
 			if (header && !underHeader) {
-				header.removeAttribute("inert");
+				toggleFocusable(header, true);
 			}
 
 			if (content) {
-				content.removeAttribute("inert");
+				toggleFocusable(content, true);
 			}
 
 			if (footer) {
-				footer.removeAttribute("inert");
+				toggleFocusable(footer, true);
 			}
 
 		}
 
+	};
+*/
+	// checks for focus leaving the popover - close if this happens, otherwise we run the risk of focusing a blurred background element
+	const focusHandler = () => {
+
+		if (backgroundActive) {
+			return;
+		}
+
+		setTimeout(() => {
+			if (!popoverRef.current.contains(document.activeElement)) {
+				popoverRef.current.hidePopover();
+			}
+		}, 0);
 	};
 
 	let popoverClasses = ['ui-popover'];

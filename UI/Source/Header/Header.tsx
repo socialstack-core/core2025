@@ -161,6 +161,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 		};
 	}, []);
 
+	/*
 	// set up handler to watch for primary menu popovers being closed
 	useEffect(() => {
 		requestAnimationFrame(() => {
@@ -191,6 +192,7 @@ const Header: React.FC<HeaderProps> = ({ contactNumber, logoRef, message, search
 
 		});
 	}, [primaryLinks.length]);
+	*/
 
 	function useScrollLock(lock: boolean) {
 		useEffect(() => {
