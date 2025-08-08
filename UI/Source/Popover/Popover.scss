@@ -62,6 +62,13 @@
 		max-height: var(--ui-popover-max-height);
 		width: 100vw;
 		transform: translateY(-100%);
+
+		&.ui-popover--under-header {
+			transform: translateY(calc(-1 * (var(--site-header-height, 0) + 100%)));
+			top: var(--site-header-height, 0);
+			height: auto;
+		}
+
 	}
 
 	&--bottom {

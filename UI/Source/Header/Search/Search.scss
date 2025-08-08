@@ -8,6 +8,10 @@
 		flex: 1;
 
 		&-trigger {
+			// use !important to prevent default hover behaviour
+			color: #222 !important;
+			background: transparent !important;
+			border: 0;
 			border-radius: px_to_rem(8);
 			padding: px_to_rem(8) px_to_rem(6);
 			min-height: px_to_rem(44);
@@ -25,51 +29,6 @@
 		}
 
 		&-wrapper {
-			position: absolute;
-			left: 0;
-			top: var(--site-header-height);
-			right: 0;
-			bottom: auto;
-			border: 0;
-			margin: 0;
-			padding: px_to_rem(4);
-			width: 100vw;
-			box-shadow: 0 px_to_rem(16) px_to_rem(16) 0 rgba(#210818, 25%);
-			opacity: 0;
-			transform: translateY(-100%);
-			transition-property: opacity, transform, overlay, display;
-			transition-duration: .3s;
-			transition-timing-function: ease-in-out;
-			transition-behavior: allow-discrete;
-
-			// NB: for polyfill support
-			// (do not combine with following rule)
-			&.\:popover-open {
-				opacity: 1;
-				transform: none;
-
-				&::backdrop {
-					//background-color: rgba(#210818, 25%);
-				}
-			}
-
-			&:popover-open {
-				opacity: 1;
-				transform: none;
-
-				&::backdrop {
-					//background-color: rgba(#210818, 25%);
-				}
-			}
-
-			&::backdrop {
-				background-color: transparent;
-				transition-property: background-color, overlay, display;
-				transition-duration: .3s;
-				transition-timing-function: ease-in-out;
-				transition-behavior: allow-discrete;
-			}
-
 		}
 
 		input[type="search"] {
@@ -88,6 +47,10 @@
 
 			&:hover, &:focus {
 				border-color: var(--primary);
+			}
+
+			&:focus {
+				box-shadow: 0 0 0 0.25rem var(--primary-shadow);
 			}
 
 			&::placeholder {
@@ -160,36 +123,6 @@
 
 }
 
-@starting-style {
-
-	.site-nav {
-
-		&__search-wrapper {
-
-			&.\:popover-open {
-				opacity: 0;
-				transform: translateY(-100%);
-
-				&::backdrop {
-					background-color: transparent;
-				}
-			}
-
-			&:popover-open {
-				opacity: 0;
-				transform: translateY(-100%);
-
-				&::backdrop {
-					background-color: transparent;
-				}
-			}
-
-		}
-
-	}
-
-}
-
 @media only screen and (min-width: 1024px) {
 
 	.site-nav {
@@ -203,13 +136,8 @@
 			}
 
 			&-wrapper {
-				position: static;
-				padding: 0;
-				display: block;
-				width: 100%;
-				box-shadow: none;
-				opacity: 1;
-				transform: none;
+				// prevent focus box-shadow being clipped
+				overflow: visible;
 			}
 
 			input[type="search"] {

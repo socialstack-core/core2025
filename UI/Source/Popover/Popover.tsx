@@ -92,8 +92,14 @@ const Popover: React.FC<PopoverProps> = (props) => {
 		const mediaQuery = (minWidth == 0) ? '' : `
 			@media only screen and (min-width: ${minWidth}px) {
 				#${id} {
+					position: static;
 					visibility: visible;
 					transform: none;
+					padding: 0;
+					display: block;
+					box-shadow: none;
+					opacity: 1;
+					width: 100%;
 				}
 
 				#${id}::backdrop {
